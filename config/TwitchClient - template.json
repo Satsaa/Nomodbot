@@ -1,0 +1,7 @@
+{
+	"identity": {
+	  "username": "<bot username>",
+	  "password": "oauth:<token>"
+	},
+	"channels": []
+}

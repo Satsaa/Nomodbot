@@ -2,3 +2,4 @@
 node_modules/*
 .eslintrc.js
 config/TwitchClient.json
+config/TwitterClient.json
