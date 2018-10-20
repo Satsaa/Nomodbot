@@ -1,0 +1,9 @@
+{
+	"identity": {
+	  "username": "<your bots username>",
+	  "password": "oauth:<your oauth token>"
+	},
+	"channels": [
+		"#<initial join channel>"
+	]
+}
