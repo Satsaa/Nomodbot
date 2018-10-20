@@ -11,49 +11,49 @@ client.on('message', function (channel, userstate, message, self) {
   // Handle different message types..
   switch (userstate['message-type']) {
     case 'action':
-      // This is an action message..
+      console.log(`* [${channel}] Unknown message type ${userstate['message-type']}`)
       break
     case 'chat':
-      // This is a chat message..
+      console.log(`* [${channel}] Unknown message type ${userstate['message-type']}`)
       break
     case 'whisper':
-      // This is a whisper..
+      console.log(`* [${channel}] Unknown message type ${userstate['message-type']}`)
       break
     default:
-      // Something else ?
+      console.log(`* [${channel}] Unknown message type ${userstate['message-type']}`)
       break
   }
 })
 
 client.on('timeout', function (channel, username, reason, duration) {
-  // Do your stuff.
+  console.log(`* [${channel}] ${username} timedout for ${duration} seconds (${reason})`)
 })
 
 client.on('notice', function (channel, msgid, message) {
   switch (msgid) {
     case 'msg_timedout':
-      console.log(`message`)
+      console.log(`* [${channel}] message`)
       break
     case 'msg_ratelimit':
-      console.log(`message`)
+      console.log(`* [${channel}] message`)
       break
     case 'msg_emoteonly':
-      console.log(`message`)
+      console.log(`* [${channel}] message`)
       break
     case 'msg_subsonly':
-      console.log(`message`)
+      console.log(`* [${channel}] message`)
       break
     case 'emote_only_off':
-      console.log(`message`)
+      console.log(`* [${channel}] message`)
       break
     case 'emote_only_on':
-      console.log(`message`)
+      console.log(`* [${channel}] message`)
       break
     case 'msg_banned':
-      console.log(`message`)
+      console.log(`* [${channel}] message`)
       break
     default:
-      console.log(`message`)
+      console.log(`* [${channel}] message`)
       break
   }
 })
