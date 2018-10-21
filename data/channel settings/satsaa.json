@@ -1,0 +1,15 @@
+{
+  "timedout": false,
+  "timedoutduration": false,
+  "moderator": false,
+  "subscriber": false,
+  "banned": false,
+  "hardcommands": {
+    "?echo": "echo",
+    "?commands": "commands",
+    "?quote": "quote"
+  },
+  "commands": {
+    "#test": "test response text"
+  }
+}

@@ -1,4 +1,11 @@
 {
+  "connection": {
+	  "reconnect": true,
+    "maxReconnectAttempts": 9001,
+    "maxReconnectInterval": "30000",
+    "reconnectDecay": "3",
+    "reconnectInterval": "1000"
+	},
 	"identity": {
 	  "username": "<bot username>",
 	  "password": "oauth:<token>"
