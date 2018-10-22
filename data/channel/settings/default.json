@@ -1,0 +1,27 @@
+{
+  "timedout": false,
+  "timedoutduration": false,
+  "moderator": false,
+  "subscriber": false,
+  "banned": false,
+  "hardcommands": {
+    "?echo": "echo",
+    "?commands": "commands",
+    "?quote": "quote"
+  },
+  "commands": {
+    "#test": "test response text"
+  },
+  "messagetimes": [],
+  "roomstate": {
+    "broadcaster-lang":null,
+    "emote-only":false,
+    "followers-only":"-1",
+    "r9k":false,
+    "rituals":false,
+    "room-id":"61365582",
+    "slow":false,
+    "subs-only":false,
+    "channel":"#satsaa"
+  }
+}
