@@ -1,10 +1,12 @@
 {
-  "timedout": false,
-  "timedoutduration": false,
+  "timeout_start": null,
+  "timeout_end": null,
   "moderator": false,
   "subscriber": false,
   "banned": false,
-  "hardcommands": {
+  "last_message": "",
+  "antiDuplicate": true,
+  "hard_commands": {
     "?echo": "echo",
     "?commands": "commands",
     "?quote": "quote"
@@ -12,7 +14,6 @@
   "commands": {
     "#test": "test response text"
   },
-  "messagetimes": [],
   "roomstate": {
     "broadcaster-lang":null,
     "emote-only":false,

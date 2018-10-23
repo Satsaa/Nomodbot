@@ -5,6 +5,7 @@ var commands = require('./commands/loader.js')
 let msgHandler = require('./handlers/MsgHandler.js')
 var bot = {}
 bot.global = require('./data/chat/global.json')
+
 var opts = require('./config/TwitchClient.json')
 var client = new tmi.Client(opts)
 msgHandler.refer(client, bot)
@@ -43,7 +44,6 @@ client.on('notice', function (channel, msgid, message) {
 
 client.on('timeout', function (channel, username, reason, duration) {
   console.log(`* [${channel}] ${username} timedout for ${duration} seconds (${reason})`)
-  process.exit(1)
 })
 
 client.on('ban', function (channel, username, reason) {
@@ -73,7 +73,6 @@ client.on('roomstate', function (channel, state) {
 })
 
 client.on('emoteonly', function (channel, enabled) {
-  partChannel('#satsaa')
   if (enabled) {
     console.log(`* [${channel}] Emoteonly turned ON`)
   } else {

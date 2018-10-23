@@ -1,11 +1,12 @@
 {
-  "timedout": false,
-  "timedoutduration": false,
-  "moderator": false,
+  "timeout_start": null,
+  "timeout_end": null,
+  "moderator": true,
   "subscriber": false,
   "banned": false,
-  "lastmessage": "",
-  "hardcommands": {
+  "last_message": "",
+  "antiDuplicate": true,
+  "hard_commands": {
     "?echo": "echo",
     "?commands": "commands",
     "?quote": "quote"
@@ -14,14 +15,14 @@
     "#test": "test response text"
   },
   "roomstate": {
-    "broadcaster-lang": null,
-    "emote-only": false,
-    "followers-only": "-1",
-    "r9k": false,
-    "rituals": false,
-    "room-id": "61365582",
-    "slow": false,
-    "subs-only": false,
-    "channel": "#satsaa"
+    "broadcaster-lang":null,
+    "emote-only":false,
+    "followers-only":"-1",
+    "r9k":false,
+    "rituals":false,
+    "room-id":"61365582",
+    "slow":false,
+    "subs-only":false,
+    "channel":"#satsaa"
   }
 }
