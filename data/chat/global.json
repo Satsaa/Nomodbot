@@ -1,6 +1,6 @@
 {
-  "user_limit": 20,
-  "moderator_limit": 100,
+  "user_limit": 19,
+  "moderator_limit": 99,
   "whisper_limit_sec": 3,
   "whisper_limit_min": 100,
   "message_delay_ms": 1100,

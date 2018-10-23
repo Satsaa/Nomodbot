@@ -13,7 +13,10 @@ module.exports.receive = (channel, userstate, message, self) => {
     case 'chat':
       // console.log(`[${channel} (${userstate['message-type']})] ${userstate.username}: ${message}`)
       if (!self) {
-        chat(channel, message)
+        setInterval(() => {
+          chat(channel, message)
+          console.log(`m/30s ${bot.global.user_times.length}`)
+        }, 1000)
       }
       break
     case 'whisper':
@@ -28,12 +31,17 @@ module.exports.receive = (channel, userstate, message, self) => {
 function chat (channel, message) {
   bot[channel].antiDuplicate = !bot[channel].antiDuplicate
   if (bot[channel].antiDuplicate) {
-    message = message + '\u206D' // '⁭' // U+206D
+    message = message + '\u206D ' + Date.now() / 1000 // U+206D = ACTIVATE ARABIC FORM SHAPING // avoids duplicate messages
   }
-  if (bot[channel].moderator) { // Moderator, no speed limit
+  if (bot[channel].moderator) { // Moderator, no speed limit, max 100 per 30 sec tho
+    parseTimes(1)
+    if (bot.global.moderator_times.length >= bot.global.moderator_limit) {
+      console.log(`* [Ratelimit] Dropped [${channel}]: ${message}`)
+      return
+    }
     client.say(channel, message).then(() => {
       bot[channel].last_message = message
-      bot.global.user_times.push(Date.now())
+      bot.global.moderator_times.push(Date.now())
     }).catch((err) => {
       console.log(`* [${channel}] Msg failed: ${err}`)
     })
@@ -44,13 +52,13 @@ let chatQueue = [] // [[channel, message],...]
 function queueChat (channel, message) {
   chatQueue.push([channel, message])
 
-  console.log(`length ${chatQueue.length}`)
+  // console.log(`length ${chatQueue.length}`)
   if (chatQueue.length - 1 > 0) return
 
   setTimeout(() => { // send one message and init interval if needed afterwards
+    bot.global.user_times.push(Date.now())
     client.say(chatQueue[0][0], chatQueue[0][1]).then(() => {
       bot[chatQueue[0][0]].last_message = message
-      bot.global.user_times.push(Date.now())
       chatQueue.shift()
     }).catch((err) => {
       console.log(`* [${chatQueue[0][0]}] Msg failed: ${err}`)
@@ -59,9 +67,9 @@ function queueChat (channel, message) {
         let queueInteval = setInterval(() => { // send messages in intervals afterwards
           parseTimes()
           if (bot.global.user_times.length >= bot.global.user_limit) return // Rate limiting
+          bot.global.user_times.push(Date.now())
           client.say(chatQueue[0][0], chatQueue[0][1]).then(() => {
             bot[chatQueue[0][0]].last_message = message
-            bot.global.user_times.push(Date.now())
             chatQueue.shift()
           }).catch((err) => {
             console.log(`* [${chatQueue[0][0]}] Msg failed: ${err}`)
@@ -77,7 +85,6 @@ function queueChat (channel, message) {
     parseTimes()
     if (bot.global.user_times.length >= bot.global.user_limit) {
       // (oldest_message_time + 30 * 1000) - current time // next message when rate limit is not full anymore
-      console.log((bot.global.user_times[0] + 30 * 1000) - Date.now())
       return (bot.global.user_times[0] + 30 * 1000) - Date.now()
     }
 
