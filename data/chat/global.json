@@ -1,4 +1,5 @@
 {
+  "limit_period": 30,
   "user_limit": 19,
   "moderator_limit": 99,
   "whisper_limit_sec": 3,
