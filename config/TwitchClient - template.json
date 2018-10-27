@@ -7,7 +7,7 @@
     "reconnectInterval": "1000"
 	},
 	"identity": {
-	  "username": "<bot username>",
+	  "username": "<bot username (lower case)>",
 	  "password": "oauth:<token>"
 	},
 	"channels": []

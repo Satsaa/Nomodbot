@@ -1,10 +1,9 @@
 {
   "timeout_end": null,
-  "moderator": false,
+  "mod": false,
   "subscriber": false,
   "banned": false,
-  "last_message": "",
-  "antiDuplicate": true,
+  "last_msg": "",
   "hard_commands": {
     "?echo": "echo",
     "?commands": "commands",

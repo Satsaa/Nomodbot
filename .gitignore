@@ -3,5 +3,6 @@ node_modules/*
 .eslintrc.js
 config/TwitchClient.json
 config/TwitterClient.json
-data/channel/settings
+data/channel/settings/*
+object examples/*
 -data/channel/settings/default.json

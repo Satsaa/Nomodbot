@@ -1,13 +1,16 @@
 {
   "limit_period": 30,
   "user_limit": 19,
-  "moderator_limit": 99,
-  "whisper_limit_sec": 3,
-  "whisper_limit_min": 100,
+  "mod_limit": 3,
+  "whisper_limit_sec": 2,
+  "whisper_limit_min": 59,
+  "whisper_limit_accounts": 40,
   "message_delay_ms": 1100,
   "whisper_delay_ms": 334,
   "channels": [
     "#satsaa"
+  ],
+  "whisper_commands": [
   ],
   "user_times": [
     1540205443000,
@@ -15,16 +18,23 @@
     1540205453000,
     1540205472000
   ],
-  "whisper_times": [
+  "mod_times": [
     1540205443000,
     1540205450000,
     1540205453000,
     1540205472000
   ],
-  "moderator_times": [
+  "whisper_times_sec": [
     1540205443000,
     1540205450000,
     1540205453000,
     1540205472000
-  ]
+  ],
+  "whisper_times_min": [
+    1540205443000,
+    1540205450000,
+    1540205453000,
+    1540205472000
+  ],
+  "whisper_accounts": []
 }
