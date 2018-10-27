@@ -39,46 +39,6 @@ function updateBot (channel, userstate, message) {
   console.log(`* [${channel}] updated bot obj`)
 }
 
-function whisper (channel, message) {
-  if (bot.global.whisper_accounts.includes(channel)) {
-    bot.global.whisper_accounts.push(channel)
-    if (bot.global.whisper_accounts.length >= 40) { // implement account rate limiting in the future
-      console.log(`* ${bot.global.whisper_accounts.length} whisper accounts reached!`)
-    }
-  }
-  queueWhisper(channel, message)
-}
-
-let whisperQueue = [] // [[channel, message],...]
-function queueWhisper (channel, message) {
-  whisperQueue.push([channel, message])
-  if (whisperQueue.length !== 1) return // return if queue is active
-
-  setTimeout(timeoutMsg, getTimeout())
-
-  function timeoutMsg () {
-    client.whisper(whisperQueue[0][0], whisperQueue[0][1]).then(() => {
-      whisperQueue.shift()
-      bot.global.whisper_times_sec.push(Date.now())
-      bot.global.whisper_times_min.push(Date.now())
-    }).catch((err) => {
-      console.log(`* [${whisperQueue[0][0]}] Whisper failed: ${err}`)
-    }).finally(() => {
-      if (whisperQueue.length) { // continue queue
-        setTimeout(timeoutMsg, getTimeout())
-      }
-    })
-  }
-
-  function getTimeout () {
-    parseWhisperTimes()
-    // (oldest_message_time + 1/60 * 1000) - current time // ms until limit is not full anymore // + 50 for parse func safety
-    if (bot.global.whisper_times_sec.length >= bot.global.whisper_limit_sec) return (bot.global.whisper_times_sec[0] + 1 * 1000) - Date.now() + 50
-    if (bot.global.whisper_times_min.length >= bot.global.whisper_limit_min) return (bot.global.whisper_times_min[0] + 60 * 1000) - Date.now() + 50
-    return 0
-  }
-}
-
 function chat (channel, message) {
   if (bot[channel].mod) { // mod, no speed limit, max 100 per 30 sec tho
     parseTimes(1)
@@ -99,41 +59,14 @@ function chat (channel, message) {
   }
 }
 
-function antiDupe (channel, message) { // remove or add 2 chars at msg end to avoid duplicate messages
-  if (bot[channel].last_msg.endsWith(' \u206D')) {
-    message.slice(-2)
-    return message
-  } else {
-    return message + ' \u206D' // U+206D = ACTIVATE ARABIC FORM SHAPING // invisible character
+function whisper (channel, message) {
+  if (bot.global.whisper_accounts.includes(channel)) {
+    bot.global.whisper_accounts.push(channel)
+    if (bot.global.whisper_accounts.length >= 40) { // implement account rate limiting in the future
+      console.log(`* ${bot.global.whisper_accounts.length} whisper accounts reached!`)
+    }
   }
-}
-
-let modQueue = [] // [[channel, message],...]
-function queueModChat (channel, message) {
-  modQueue.push([channel, message])
-  if (modQueue.length !== 1) return // return if queue is active
-
-  setTimeout(timeoutMsg, getTimeout())
-
-  function timeoutMsg () {
-    client.say(modQueue[0][0], antiDupe(channel, modQueue[0][1])).then(() => {
-      bot.global.mod_times.push(Date.now())
-      modQueue.shift()
-    }).catch((err) => {
-      console.log(`* [${modQueue[0][0]}] Msg failed: ${err}`)
-    }).finally(() => {
-      parseTimes(1)
-      if (modQueue.length) { // continue queue
-        setTimeout(timeoutMsg, getTimeout())
-      }
-    })
-  }
-
-  function getTimeout () {
-    parseTimes(1)
-    // (oldest_message_time + bot.global.limit_period * 1000) - current time // ms until limit is not full anymore
-    return (bot.global.mod_times[0] + bot.global.limit_period * 1000) - Date.now() + 50 // + 50 so parse parsetimeout() removes the oldest time
-  }
+  queueWhisper(channel, message)
 }
 
 let chatQueue = [] // [[channel, message],...]
@@ -181,7 +114,74 @@ function queueChat (channel, message) {
   }
 }
 
-// remove messages from time lists that exceed limit_periods age
+let modQueue = [] // [[channel, message],...]
+function queueModChat (channel, message) {
+  modQueue.push([channel, message])
+  if (modQueue.length !== 1) return // return if queue is active
+
+  setTimeout(timeoutMsg, getTimeout())
+
+  function timeoutMsg () {
+    client.say(modQueue[0][0], antiDupe(channel, modQueue[0][1])).then(() => {
+      bot.global.mod_times.push(Date.now())
+      modQueue.shift()
+    }).catch((err) => {
+      console.log(`* [${modQueue[0][0]}] Msg failed: ${err}`)
+    }).finally(() => {
+      parseTimes(1)
+      if (modQueue.length) { // continue queue
+        setTimeout(timeoutMsg, getTimeout())
+      }
+    })
+  }
+
+  function getTimeout () {
+    parseTimes(1)
+    // (oldest_message_time + bot.global.limit_period * 1000) - current time // ms until limit is not full anymore
+    return (bot.global.mod_times[0] + bot.global.limit_period * 1000) - Date.now() + 50 // + 50 so parse parsetimeout() removes the oldest time
+  }
+}
+
+let whisperQueue = [] // [[channel, message],...]
+function queueWhisper (channel, message) {
+  whisperQueue.push([channel, message])
+  if (whisperQueue.length !== 1) return // return if queue is active
+
+  setTimeout(timeoutMsg, getTimeout())
+
+  function timeoutMsg () {
+    client.whisper(whisperQueue[0][0], whisperQueue[0][1]).then(() => {
+      whisperQueue.shift()
+      bot.global.whisper_times_sec.push(Date.now())
+      bot.global.whisper_times_min.push(Date.now())
+    }).catch((err) => {
+      console.log(`* [${whisperQueue[0][0]}] Whisper failed: ${err}`)
+    }).finally(() => {
+      if (whisperQueue.length) { // continue queue
+        setTimeout(timeoutMsg, getTimeout())
+      }
+    })
+  }
+
+  function getTimeout () {
+    parseWhisperTimes()
+    // (oldest_message_time + 1/60 * 1000) - current time // ms until limit is not full anymore // + 50 for parse func safety
+    if (bot.global.whisper_times_sec.length >= bot.global.whisper_limit_sec) return (bot.global.whisper_times_sec[0] + 1 * 1000) - Date.now() + 50
+    if (bot.global.whisper_times_min.length >= bot.global.whisper_limit_min) return (bot.global.whisper_times_min[0] + 60 * 1000) - Date.now() + 50
+    return 0
+  }
+}
+
+function antiDupe (channel, message) { // remove or add 2 chars at msg end to avoid duplicate messages
+  if (bot[channel].last_msg.endsWith(' \u206D')) {
+    message.slice(-2)
+    return message
+  } else {
+    return message + ' \u206D' // U+206D = ACTIVATE ARABIC FORM SHAPING // 0 width character
+  }
+}
+
+// remove messages from time lists that exceed limit_period sec age
 function parseTimes (mod = 0) {
   let time = Date.now()
   if (mod) {
