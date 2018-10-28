@@ -4,12 +4,14 @@
   "subscriber": false,
   "banned": false,
   "last_msg": "",
-  "hard_commands": {
+  "commands": {
     "?echo": "echo",
-    "?commands": "commands",
+    "?join": "join",
+    "?part": "part",
+    "?manlyquote": "manlyquote",
     "?quote": "quote"
   },
-  "commands": {
+  "custom_commands": {
     "#test": "test response text"
   },
   "roomstate": {

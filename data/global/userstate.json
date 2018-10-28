@@ -1,7 +1,7 @@
 {
   "limit_period": 30,
   "user_limit": 19,
-  "mod_limit": 3,
+  "mod_limit": 99,
   "whisper_limit_sec": 2,
   "whisper_limit_min": 59,
   "whisper_limit_accounts": 40,
@@ -10,8 +10,7 @@
   "channels": [
     "#satsaa"
   ],
-  "whisper_commands": [
-  ],
+  "whisper_commands": {},
   "user_times": [
     1540205443000,
     1540205450000,

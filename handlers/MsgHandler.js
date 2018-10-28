@@ -1,8 +1,13 @@
-var client = {}
-var bot = {}
-module.exports.refer = (clientRef, botRef) => {
+var cmdHandler = require('../handlers/CmdHandler.js')
+
+let twitch = {}
+let client = {}
+let bot = {}
+module.exports.refer = (clientRef, botRef, twitchRef) => {
   client = clientRef
   bot = botRef
+  twitch = twitchRef
+  cmdHandler.refer(client, bot, twitch)
 }
 
 module.exports.receive = (channel, userstate, message, self) => {
@@ -12,16 +17,29 @@ module.exports.receive = (channel, userstate, message, self) => {
       break
     case 'chat':
       if (self) updateBot(channel, userstate, message)
-      // console.log(`[${channel} (${userstate['message-type']})] ${userstate["display-name"]}: ${message}`)
-      if (!self) {
-        chat(channel, message)
+      else {
+        console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
+
+        const parse = message.split(' ') // Split message to an array
+        const commandName = parse[0].toLowerCase() // Command name (first word)
+
+        if (bot[channel].commands.hasOwnProperty(commandName)) {
+          cmdHandler.handle(channel, bot[channel].commands[commandName], parse.splice(1))
+          return
+        } else {
+          if (bot[channel].custom_commands.hasOwnProperty(commandName)) {
+            cmdHandler.custom(channel, bot[channel].commands[commandName], parse.splice(1))
+            return
+          }
+        }
+        console.log(`no command detected`)
       }
       break
     case 'whisper':
       if (!self) {
         whisper(channel, message)
       }
-      // console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
+      console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
       break
     default:
       console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
@@ -33,13 +51,16 @@ function updateBot (channel, userstate, message) {
   if (message.length) { bot[channel].last_msg = message }
   bot[channel].banned = false
   bot[channel].timeout_end = null
-  bot[channel].mod = userstate.mod // false if broadcaster
-  if (channel.endsWith(client.username)) { bot[channel].mod = true } // broadcaster = mod
+  if (bot[channel].mod !== userstate.mod) {
+    bot[channel].mod = userstate.mod // false if broadcaster
+    if (channel.endsWith(client.username)) { bot[channel].mod = true } // broadcaster = mod
+    if (bot[channel].mod) console.log(`* [${channel}] Moderator granted`)
+    else console.log(`* [${channel}] Moderator revoked`)
+  }
   bot[channel].subscriber = userstate.subscriber
-  console.log(`* [${channel}] updated bot obj`)
 }
 
-function chat (channel, message) {
+module.exports.chat = (channel, message) => {
   if (bot[channel].mod) { // mod, no speed limit, max 100 per 30 sec tho
     parseTimes(1)
     if (bot.global.mod_times.length >= bot.global.mod_limit) { // if ratelimit is full
@@ -69,6 +90,11 @@ function whisper (channel, message) {
   queueWhisper(channel, message)
 }
 
+/*
+client.say and client.whisper:
+1: There is no possible way to know if a message has been sent successfully unless we create two connections.
+These promises will always be resolved unless you are trying to send a message and you’re not connected to server.
+*/
 let chatQueue = [] // [[channel, message],...]
 function queueChat (channel, message) {
   chatQueue.push([channel, message])
@@ -165,7 +191,7 @@ function queueWhisper (channel, message) {
 
   function getTimeout () {
     parseWhisperTimes()
-    // (oldest_message_time + 1/60 * 1000) - current time // ms until limit is not full anymore // + 50 for parse func safety
+    // (oldest_message_time + {1 or 60} * 1000) - current time // ms until limit is not full anymore // + 50 for parse func safety
     if (bot.global.whisper_times_sec.length >= bot.global.whisper_limit_sec) return (bot.global.whisper_times_sec[0] + 1 * 1000) - Date.now() + 50
     if (bot.global.whisper_times_min.length >= bot.global.whisper_limit_min) return (bot.global.whisper_times_min[0] + 60 * 1000) - Date.now() + 50
     return 0

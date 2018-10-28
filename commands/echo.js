@@ -1,12 +1,9 @@
+module.exports.run = (params) => {
+  if (params.length !== 0) {
+    return params.join(' ')
+  }
+}
 
-module.exports.execute = (value) => {
-  return new Promise(function (resolve, reject) {
-    setTimeout(() => {
-      if (value !== 'asd') {
-        resolve(value)
-      } else {
-        reject(new Error('No params, no echo'))
-      }
-    }, 2000)
-  })
+module.exports.help = () => {
+  return 'Repeat text. command <text->'
 }
