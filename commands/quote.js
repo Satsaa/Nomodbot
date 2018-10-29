@@ -37,5 +37,5 @@ module.exports.run = (channel, params) => {
 }
 
 module.exports.help = () => {
-  return 'Returns a random channel quote. command [<index>]'
+  return 'Returns a random channel quote. command [<index>], Adds a quote. command add <quote->, Deletes a quote. command del <index>'
 }

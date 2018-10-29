@@ -24,15 +24,12 @@ module.exports.receive = (channel, userstate, message, self) => {
         const commandName = parse[0].toLowerCase() // Command name (first word)
 
         if (bot[channel].commands.hasOwnProperty(commandName)) {
-          cmdHandler.handle(channel, bot[channel].commands[commandName], parse.splice(1))
-          return
+          cmdHandler.handle(channel, userstate, bot[channel].commands[commandName], parse.splice(1))
         } else {
           if (bot[channel].custom_commands.hasOwnProperty(commandName)) {
             cmdHandler.custom(channel, bot[channel].commands[commandName], parse.splice(1))
-            return
           }
         }
-        console.log(`no command detected`)
       }
       break
     case 'whisper':

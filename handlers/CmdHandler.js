@@ -11,12 +11,14 @@ module.exports.refer = (clientRef, botRef, twitchRef) => {
 }
 
 let echo = require('../commands/echo.js')
+let exit = require('../commands/exit.js')
+let myiq = require('../commands/myiq.js')
 let join = require('../commands/join.js')
 let part = require('../commands/part.js')
 let manlyquote = require('../commands/manlyquote.js')
 let quote = require('../commands/quote.js')
 
-module.exports.handle = (channel, command, params) => {
+module.exports.handle = (channel, userstate, command, params) => {
   console.log(`* [${channel}] Running ${command}`)
   let msg = null
   switch (command) {
@@ -28,6 +30,12 @@ module.exports.handle = (channel, command, params) => {
       break
     case 'part':
       msg = part.run(params)
+      break
+    case 'exit':
+      msg = exit.run(params)
+      break
+    case 'myiq':
+      msg = myiq.run(userstate, params)
       break
     case 'manlyquote':
       msg = manlyquote.run(params)

@@ -6,6 +6,7 @@ exports.msgHandler = msgHandler
 
 var bot = {}
 bot.global = require('./data/global/userstate.json')
+exports.bot = bot
 
 var opts = require('./config/TwitchClient.json')
 var client = new tmi.Client(opts)
@@ -77,7 +78,8 @@ client.on('roomstate', (channel, state) => {
   if (bot.hasOwnProperty(channel)) {
     console.log(`* [${channel}] Roomstate: ${JSON.stringify(state)}`)
     for (let element in state) {
-      bot[channel].roomstate[element] = element
+      bot[channel].roomstate[element] = state[element]
+      console.log(`* bot.${channel}.roomstate.${element} = state.${element}`)
     }
   } else {
     roomstateQueue[channel] = state
@@ -118,7 +120,7 @@ function joinChannel (channels) { // Allows multichannel
       console.log(`* [${channel}] Settings loaded`)
       if (roomstateQueue.hasOwnProperty(channel)) {
         for (let element in roomstateQueue[channel]) {
-          bot[channel].roomstate[element] = element
+          bot[channel].roomstate[element] = roomstateQueue[channel][element]
         }
         console.log(`* [${channel}] Initial roomstate loaded`)
         delete roomstateQueue[channel]
@@ -128,7 +130,7 @@ function joinChannel (channels) { // Allows multichannel
 }
 exports.joinChannel = joinChannel
 
-module.exports.partChannel = function partChannel (channels) {
+function partChannel (channels) {
   if (typeof channels === 'string') { // channels is used as an array but a single channel string is supported
     channels = [channels]
   }
@@ -141,7 +143,7 @@ module.exports.partChannel = function partChannel (channels) {
   })
   saveChannel(channels)
 }
-// module.exports.partChannel = partChannel
+module.exports.partChannel = partChannel
 
 function saveChannel (channels) {
   if (typeof channels === 'string') { // channels is used as an array but a single channel string is supported
@@ -153,4 +155,29 @@ function saveChannel (channels) {
       console.log(`* [${channel}] Settings saved`)
     })
   })
+}
+
+if (typeof bot.global.save_interval === 'undefined' || !(bot.global.save_interval === -1 || bot.global.save_interval > 0)) {
+  console.log(`* [ERROR] data\\global\\userstate.json -> save_interval must be -1 (disabled) or positive`)
+} else {
+  let saveInterval = setInterval(save, bot.global.save_interval * 1000)
+} // created save interval
+
+function save () {
+  let channels = []
+  for (var key in bot) {
+    if (key.startsWith('#')) {
+      channels.push(key)
+    }
+  }
+  channels.forEach((channel) => {
+    fs.writeFile('./data/channel/settings/' + channel + '.json', JSON.stringify(bot[channel], null, 2), 'utf8', (err) => {
+      if (err) throw err
+    })
+  })
+  console.log(`* [CHANNELS] Settings saved`)
+  fs.writeFile('./data/global/userstate.json', JSON.stringify(bot.global, null, 2), 'utf8', (err) => {
+    if (err) throw err
+  })
+  console.log(`* [BOT] Saved`)
 }

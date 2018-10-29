@@ -6,6 +6,8 @@
   "last_msg": "",
   "commands": {
     "?echo": "echo",
+    "?exit": "exit",
+    "?myiq": "myiq",
     "?join": "join",
     "?part": "part",
     "?manlyquote": "manlyquote",
