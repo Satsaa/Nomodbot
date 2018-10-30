@@ -11,7 +11,10 @@
     "?join": "join",
     "?part": "part",
     "?manlyquote": "manlyquote",
-    "?quote": "quote"
+    "?quote": "quote",
+    "?meme": "meme",
+    "?response": "response",
+    "?artifact": "artifact"
   },
   "custom_commands": {
     "#test": "test response text"

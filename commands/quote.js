@@ -2,7 +2,7 @@ const fs = require('fs')
 let util = require('../util.js')
 let quotes = {}
 
-module.exports.run = (channel, params) => {
+module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     if (!(quotes.hasOwnProperty(channel))) {
       fs.access('./data/channel/quotes/' + channel + '.json', fs.constants.F_OK, (err) => {
@@ -19,23 +19,52 @@ module.exports.run = (channel, params) => {
           resolve(quote(channel, params))
         }
       })
-    }
-    resolve(quote(channel, params))
+    } else resolve(quote(channel, params))
 
     function quote (channel, params) {
       quotes[channel] = require('../data/channel/quotes/' + channel + '.json')
+
+      if (typeof params[1] !== 'undefined') {
+        if (params[1].toLowerCase() === 'list') { // list quotes
+          return 'Unsupported'
+        } else if (params[1].toLowerCase() === 'add') { // add a quote
+          if (!params[2]) return 'You must specify text for the quote! (param 2+)'
+          quotes[channel][quotes[channel].length] = params.slice(2).join(' ')
+          save(channel, quotes[channel])
+          return `Added quote ${quotes[channel].length}: ${params.slice(2).join(' ')}`
+        } else if (params[1].toLowerCase() === 'del') { // delete a quote
+          if (!params[2]) return 'You must specify a quote index! (param 2)'
+          if (isNaN(parseInt(params[2], 10))) return 'You must enter a valid number! (param 2)'
+          if (typeof quotes[channel][params[2] - 1] === 'undefined') return 'Invalid quote index'
+          quotes[channel].splice(params[2] - 1, 1)
+          save(channel, quotes[channel])
+          return 'Deleted quote ' + (params[2])
+        }
+      }
       let random = 1
-      params[0] = params[0] - 1
-      if (isNaN(parseInt(params[0], 10)) || params[0] > quotes[channel].length) {
+      let index = Math.floor(params[1] - 1)
+      if (isNaN(parseInt(index, 10)) || index > quotes[channel].length) {
         random = util.getRandomInt(0, quotes[channel].length)
       } else {
-        random = params[0]
+        random = index
       }
-      return (params[0] > quotes[channel].length || params[0] < 0 ? 'Max index: ' + quotes[channel][quotes[channel].length - 1] : quotes[channel][random])
+      return (`${isNaN(index) ? random + 1 : ''} ${index >= quotes[channel].length || index < 0 ? `Max index: ${quotes[channel].length} ${quotes[channel][quotes[channel].length - 1]}` : quotes[channel][random]}`)
+    }
+
+    function save (channel, quotes) {
+      fs.writeFile('./data/channel/quotes/' + channel + '.json', JSON.stringify(quotes, null, 2), (err) => {
+        if (!err) {
+          console.log(`* [${channel}] Modified quote file`)
+        } else {
+          console.log(`* [${channel}] FAILED TO MODIFY QUOTE FILE: ${err}`)
+        }
+      })
     }
   })
 }
 
 module.exports.help = () => {
-  return 'Returns a random channel quote. command [<index>], Adds a quote. command add <quote->, Deletes a quote. command del <index>'
+  return new Promise((resolve, reject) => {
+    resolve('Returns a channel quote: command [<index>]. Returns list of quotes: command list. Adds a quote: command add <quote...>. Deletes a quote: command del <index>')
+  })
 }

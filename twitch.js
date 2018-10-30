@@ -143,7 +143,7 @@ function partChannel (channels) {
   })
   saveChannel(channels)
 }
-module.exports.partChannel = partChannel
+exports.partChannel = partChannel
 
 function saveChannel (channels) {
   if (typeof channels === 'string') { // channels is used as an array but a single channel string is supported

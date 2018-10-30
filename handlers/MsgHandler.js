@@ -20,14 +20,16 @@ module.exports.receive = (channel, userstate, message, self) => {
       else {
         console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
 
-        const parse = message.split(' ') // Split message to an array
-        const commandName = parse[0].toLowerCase() // Command name (first word)
+        const params = message.split(' ') // Split message to an array
+        const commandName = params[0].toLowerCase() // Command name (first word)
 
         if (bot[channel].commands.hasOwnProperty(commandName)) {
-          cmdHandler.handle(channel, userstate, bot[channel].commands[commandName], parse.splice(1))
+          let command = bot[channel].commands[commandName]
+          cmdHandler.handle(command, channel, userstate, params)
         } else {
           if (bot[channel].custom_commands.hasOwnProperty(commandName)) {
-            cmdHandler.custom(channel, bot[channel].commands[commandName], parse.splice(1))
+            let text = bot[channel].custom_commands[commandName]
+            cmdHandler.customHandle(text, channel, userstate, params)
           }
         }
       }

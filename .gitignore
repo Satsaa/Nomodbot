@@ -7,3 +7,4 @@ object examples/*
 data/channel/settings/*
 -data/channel/settings/default.json
 data/channel/quotes/*
+data/channel/memes/*

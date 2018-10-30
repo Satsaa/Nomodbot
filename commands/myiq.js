@@ -1,19 +1,23 @@
 
 let util = require('../util.js')
 
-module.exports.run = (userstate, params) => {
-  let user
-  if (params.length === 0) {
-    user = userstate['display-name']
-  } else {
-    user = params[0]
-  }
-  let iq = Math.round(util.RandomNormal(-50, 1005, 3))
-  return `${user}'s iq is ${iq.toString()}${getEmote(iq)}`
+module.exports.run = (channel, userstate, params) => {
+  return new Promise((resolve, reject) => {
+    let user
+    if (params.length === 1) {
+      user = userstate['display-name']
+    } else {
+      user = params[1]
+    }
+    let iq = Math.round(util.RandomNormal(-50, 1005, 3))
+    resolve(`${user}'s iq is ${iq.toString()}${getEmote(iq)}`)
+  })
 }
 
 module.exports.help = () => {
-  return 'Return actual iq of a chatter. command [<recipient>]'
+  return new Promise((resolve, reject) => {
+    resolve('Return actual iq of a chatter: command [<recipient>]')
+  })
 }
 
 // get what emote to use with iq statement. i = iq, e = emote
