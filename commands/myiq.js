@@ -10,13 +10,13 @@ module.exports.run = (channel, userstate, params) => {
       user = params[1]
     }
     let iq = Math.round(util.RandomNormal(-50, 1005, 3))
-    resolve(`${user}'s iq is ${iq.toString()}${getEmote(iq)}`)
+    resolve(`${user}'s RealIQ is ${iq.toString()}${getEmote(iq)}`)
   })
 }
 
 module.exports.help = () => {
   return new Promise((resolve, reject) => {
-    resolve('Return actual iq of a chatter: command [<recipient>]')
+    resolve('Return real iq of a chatter: command [<recipient>]')
   })
 }
 

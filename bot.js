@@ -1,5 +1,9 @@
 const fs = require('fs')
+
 let twitch = require('./twitch.js')
+
+let twitter = require('./twitter.js')
+twitter.refer(twitch)
 
 function exitHandler (options, exitCode) {
   if (options.cleanup) {

@@ -45,7 +45,7 @@ module.exports.handle = (command, channel, userstate, params) => {
   if (typeof commands[command] === 'undefined') {
     console.log(`* [${channel}] ${command} doesn't exist or ${command}.js isn't loaded`)
   } else {
-    commands[command].run(channel, userstate, params).then(function (msg) {
+    commands[command].run(channel, userstate, params).then((msg) => {
       if (msg !== null) {
         twitch.msgHandler.chat(channel, msg)
       }
