@@ -8,3 +8,4 @@ config/DeepAi.json
 data/*
 !data/global/
 !data/default/
+data/global/myiq.json
