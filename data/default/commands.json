@@ -1,0 +1,12 @@
+{
+  "?echo": "echo",
+  "?exit": "exit",
+  "?myiq": "myiq",
+  "?join": "join",
+  "?part": "part",
+  "?manlyquote": "manlyquote",
+  "?quote": "quote",
+  "?meme": "meme",
+  "?response": "response",
+  "?artifact": "artifact"
+}

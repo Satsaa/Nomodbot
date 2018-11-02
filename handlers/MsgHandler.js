@@ -7,7 +7,6 @@ module.exports.refer = (clientRef, botRef, twitchRef) => {
   client = clientRef
   bot = botRef
   twitch = twitchRef
-  cmdHandler.refer(client, bot, twitch)
 }
 
 module.exports.receive = (channel, userstate, message, self) => {
@@ -27,8 +26,8 @@ module.exports.receive = (channel, userstate, message, self) => {
           let command = bot[channel].commands[commandName]
           cmdHandler.handle(command, channel, userstate, params)
         } else {
-          if (bot[channel].custom_commands.hasOwnProperty(commandName)) {
-            let text = bot[channel].custom_commands[commandName]
+          if (bot[channel].responses.hasOwnProperty(commandName)) {
+            let text = bot[channel].responses[commandName]
             cmdHandler.customHandle(text, channel, userstate, params)
           }
         }
@@ -47,20 +46,20 @@ module.exports.receive = (channel, userstate, message, self) => {
 }
 
 function updateBot (channel, userstate, message) {
-  if (message.length) { bot[channel].last_msg = message }
-  bot[channel].banned = false
-  bot[channel].timeout_end = null
-  if (bot[channel].mod !== userstate.mod) {
-    bot[channel].mod = userstate.mod // false if broadcaster
-    if (channel.endsWith(client.username)) { bot[channel].mod = true } // broadcaster = mod
-    if (bot[channel].mod) console.log(`* [${channel}] Moderator granted`)
+  if (message.length) { bot[channel].channel.last_msg = message }
+  bot[channel].channel.banned = false
+  bot[channel].channel.timeout_end = null
+  if (bot[channel].channel.mod !== userstate.mod) {
+    bot[channel].channel.mod = userstate.mod // false if broadcaster
+    if (channel.endsWith(client.username)) { bot[channel].channel.mod = true } // broadcaster = mod
+    if (bot[channel].channel.mod) console.log(`* [${channel}] Moderator granted`)
     else console.log(`* [${channel}] Moderator revoked`)
   }
-  bot[channel].subscriber = userstate.subscriber
+  bot[channel].channel.subscriber = userstate.subscriber
 }
 
 module.exports.chat = (channel, message) => {
-  if (bot[channel].mod) { // mod, no speed limit, max 100 per 30 sec tho
+  if (bot[channel].channel.mod) { // mod, no speed limit, max 100 per 30 sec tho
     parseTimes(1)
     if (bot.global.mod_times.length >= bot.global.mod_limit) { // if ratelimit is full
       queueModChat(channel, message)
@@ -72,9 +71,6 @@ module.exports.chat = (channel, message) => {
       console.log(`* [${channel}] Msg failed: ${err}`)
     })
   } else { // user needs limits
-    if (bot[channel].antiDuplicate) { // add character to avoid duplicate messages
-      message = message + '\u206D' // U+206D = ACTIVATE ARABIC FORM SHAPING // invisible character
-    }
     queueChat(channel, message)
   }
 }
@@ -198,7 +194,7 @@ function queueWhisper (channel, message) {
 }
 
 function antiDupe (channel, message) { // remove or add 2 chars at msg end to avoid duplicate messages
-  if (bot[channel].last_msg.endsWith(' \u206D')) {
+  if (bot[channel].channel.last_msg.endsWith(' \u206D')) {
     message.slice(-2)
     return message
   } else {

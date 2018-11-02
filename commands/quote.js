@@ -5,9 +5,9 @@ let quotes = {}
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     if (!(quotes.hasOwnProperty(channel))) {
-      fs.access('./data/channel/quotes/' + channel + '.json', fs.constants.F_OK, (err) => {
+      fs.access('./data/' + channel + '/quotes.json', fs.constants.F_OK, (err) => {
         if (err) { // create channel quote base
-          fs.writeFile('./data/channel/quotes/' + channel + '.json', '[]', (err) => {
+          fs.writeFile('./data/' + channel + '/quotes.json', '[]', (err) => {
             if (!err) {
               console.log(`* [${channel}] Created quote file`)
               resolve(quote(channel, params))
@@ -22,7 +22,7 @@ module.exports.run = (channel, userstate, params) => {
     } else resolve(quote(channel, params))
 
     function quote (channel, params) {
-      quotes[channel] = require('../data/channel/quotes/' + channel + '.json')
+      quotes[channel] = require('../data/' + channel + '/quotes.json')
 
       if (typeof params[1] !== 'undefined') {
         if (params[1].toLowerCase() === 'list') { // list quotes
@@ -52,7 +52,7 @@ module.exports.run = (channel, userstate, params) => {
     }
 
     function save (channel, quotes) {
-      fs.writeFile('./data/channel/quotes/' + channel + '.json', JSON.stringify(quotes, null, 2), (err) => {
+      fs.writeFile('./data/' + channel + '/quotes.json', JSON.stringify(quotes, null, 2), (err) => {
         if (!err) {
           console.log(`* [${channel}] Modified quote file`)
         } else {

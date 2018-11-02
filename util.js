@@ -25,7 +25,7 @@ module.exports.MSToDHM = (ms) => {
   var d = Math.floor(ms / cd)
   var h = Math.floor((ms - d * cd) / ch)
   var m = Math.round((ms - d * cd - h * ch) / 60000)
-  var pad = function (n) { return n < 10 ? '0' + n : n }
+  var pad = (n) => { return n < 10 ? '0' + n : n }
   if (m === 60) {
     h++
     m = 0

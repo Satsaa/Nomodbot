@@ -16,9 +16,6 @@
     "?response": "response",
     "?artifact": "artifact"
   },
-  "custom_commands": {
-    "#test": "test response text"
-  },
   "roomstate": {
     "broadcaster-lang":null,
     "emote-only":false,

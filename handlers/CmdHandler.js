@@ -1,30 +1,3 @@
-let twitch = {}
-let client = {}
-let bot = {}
-module.exports.refer = (clientRef, botRef, twitchRef) => {
-  twitch = twitchRef
-  client = clientRef
-  bot = botRef
-
-  for (var cmd in commands) {
-    if (typeof commands[cmd].run !== 'function') {
-      console.log(`* [ERROR] ${cmd} doesn't have an exported run function and is therefore unloaded`)
-      delete commands[cmd]
-    } else {
-      if (typeof commands[cmd].help !== 'function') {
-        console.log(`* [ERROR] ${cmd} doesn't have an exported help function and is therefore unloaded`)
-        delete commands[cmd]
-      } else {
-        if (typeof commands[cmd].refer === 'function') {
-          commands[cmd].refer(twitch) // refer command if needed
-        }
-        if (typeof commands[cmd].init === 'function') {
-          commands[cmd].init(twitch) // init command if needed
-        }
-      }
-    }
-  }
-}
 
 let commands = {}
 
@@ -39,6 +12,25 @@ commands['meme'] = require('../commands/meme.js')
 commands['response'] = require('../commands/response.js')
 commands['artifact'] = require('../commands/artifact.js')
 
+for (var cmd in commands) {
+  if (typeof commands[cmd].run !== 'function') {
+    console.log(`* [ERROR] ${cmd} doesn't have an exported run function and is therefore unloaded`)
+    delete commands[cmd]
+  } else {
+    if (typeof commands[cmd].help !== 'function') {
+      console.log(`* [ERROR] ${cmd} doesn't have an exported help function and is therefore unloaded`)
+      delete commands[cmd]
+    } else {
+      if (typeof commands[cmd].refer === 'function') {
+        commands[cmd].refer(noModBot) // refer command if needed
+      }
+      if (typeof commands[cmd].init === 'function') {
+        commands[cmd].init(noModBot) // init command if needed
+      }
+    }
+  }
+}
+
 module.exports.handle = (command, channel, userstate, params) => {
   console.log(`* [${channel}] Running ${command}`)
   let msg = null
@@ -47,12 +39,12 @@ module.exports.handle = (command, channel, userstate, params) => {
   } else {
     commands[command].run(channel, userstate, params).then((msg) => {
       if (msg !== null) {
-        twitch.msgHandler.chat(channel, msg)
+        noModBot.msgHandler.chat(channel, msg)
       }
     })
   }
 }
 
 module.exports.customHandle = (text, channel, userstate, params) => {
-  twitch.msgHandler.chat(channel, text)
+  noModBot.msgHandler.chat(channel, text)
 }

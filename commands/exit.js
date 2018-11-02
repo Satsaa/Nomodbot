@@ -5,7 +5,7 @@ let quotes = {}
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     resolve(null)
-    process.exit(1)
+    process.exit(0)
   })
 }
 

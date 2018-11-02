@@ -1,5 +1,5 @@
 const fs = require('fs')
-let quotes = require('../data/global/quotes/manlyQuotes.json')
+let quotes = require('../data/global/manlyQuotes.json')
 let util = require('../util.js')
 
 module.exports.run = (channel, userstate, params) => {
@@ -35,7 +35,7 @@ module.exports.run = (channel, userstate, params) => {
     }
 
     function save (channel, quotes) {
-      fs.writeFile('./data/global/quotes/manlyQuotes.json', JSON.stringify(quotes, null, 2), (err) => {
+      fs.writeFile('./data/global/manlyQuotes.json', JSON.stringify(quotes, null, 2), (err) => {
         if (!err) {
           console.log(`* [GLOBAL] Modified manly file`)
         } else {

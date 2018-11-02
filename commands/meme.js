@@ -5,9 +5,9 @@ let memes = {}
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     if (!(memes.hasOwnProperty(channel))) {
-      fs.access('./data/channel/memes/' + channel + '.json', fs.constants.F_OK, (err) => {
+      fs.access('./data/' + channel + '/memes.json', fs.constants.F_OK, (err) => {
         if (err) { // create channel meme base
-          fs.writeFile('./data/channel/memes/' + channel + '.json', '[]', (err) => {
+          fs.writeFile('./data/' + channel + '/memes.json', '[]', (err) => {
             if (!err) {
               console.log(`* [${channel}] Created meme file`)
               resolve(meme(channel, params))
@@ -23,7 +23,7 @@ module.exports.run = (channel, userstate, params) => {
     resolve(meme(channel, params))
 
     function meme (channel, params) {
-      memes[channel] = require('../data/channel/memes/' + channel + '.json')
+      memes[channel] = require('../data/' + channel + '/memes.json')
 
       if (typeof params[1] !== 'undefined') {
         if (params[1].toLowerCase() === 'list') { // list memes
@@ -55,7 +55,7 @@ module.exports.run = (channel, userstate, params) => {
     }
 
     function save (channel, memes) {
-      fs.writeFile('./data/channel/memes/' + channel + '.json', JSON.stringify(memes, null, 2), (err) => {
+      fs.writeFile('./data/' + channel + '/memes.json', JSON.stringify(memes, null, 2), (err) => {
         if (!err) {
           console.log(`* [${channel}] Modified to meme file`)
         } else {

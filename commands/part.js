@@ -1,16 +1,11 @@
-let twitch = {}
-module.exports.refer = (twitchRef) => {
-  twitch = twitchRef
-}
-
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     params.shift()
     params.forEach(channel => {
       if (channel.startsWith('#')) {
-        twitch.partChannel(channel)
+        noModBot.partChannel(channel)
       } else {
-        twitch.partChannel('#' + channel)
+        noModBot.partChannel('#' + channel)
       }
     })
     resolve(null)

@@ -17,7 +17,7 @@ client.connect()
 
 client.on('message', msgHandler.receive)
 
-client.on('notice', function (channel, msgid, message) {
+client.on('notice', (channel, msgid, message) => {
   switch (msgid) {
     case 'msg_timedout':
       console.log(`* [${channel}] ${message}`)
@@ -34,52 +34,51 @@ client.on('notice', function (channel, msgid, message) {
   }
 })
 
-client.on('timeout', function (channel, username, reason, duration) {
+client.on('timeout', (channel, username, reason, duration) => {
   if (username === client.username) {
-    bot[channel].timeout_end = Date.now() + duration * 1000
-    console.log(bot[channel].timeout_end)
+    bot[channel].channel.timeout_end = Date.now() + duration * 1000
+    console.log(bot[channel].channel.timeout_end)
   }
   console.log(`* [${channel}] ${username} timedout for ${duration} seconds (${reason})`)
 })
 
-client.on('ban', function (channel, username, reason) {
+client.on('ban', (channel, username, reason) => {
   if (username === client.username) {
-    bot[channel].banned = true
+    bot[channel].channel.banned = true
   }
   console.log(`* [${channel}] ${username} banned for ${reason}`)
 })
 
-client.on('mod', function (channel, username) {
+client.on('mod', (channel, username) => {
   if (username === client.username) {
-    bot[channel].mod = true
+    bot[channel].channel.mod = true
   }
 })
 
-client.on('connecting', function (address, port) {
-  console.log(`* connecting to ${address}:${port}`)
+client.on('connecting', (address, port) => {
+  console.log(`* connecting...`)
 })
 
-client.on('connected', function (address, port) {
-  console.log(`* Connected to ${address}:${port}`)
+client.on('connected', (address, port) => {
+  console.log(`* Connected`)
   joinChannel('#satsaa')
 })
 
-client.on('disconnected', function (reason) {
+client.on('disconnected', (reason) => {
   console.log(`* Disconnected (${reason})`)
   process.exit(0)
 })
 
-client.on('reconnect', function () {
+client.on('reconnect', () => {
   console.log(`* Attempting to reconnect`)
 })
 
 let roomstateQueue = {} // {channel: roomstate}
 client.on('roomstate', (channel, state) => {
   if (bot.hasOwnProperty(channel)) {
-    console.log(`* [${channel}] Roomstate: ${JSON.stringify(state)}`)
+    // console.log(`* [${channel}] Roomstate: ${JSON.stringify(state)}`)
     for (let element in state) {
       bot[channel].roomstate[element] = state[element]
-      console.log(`* bot.${channel}.roomstate.${element} = state.${element}`)
     }
   } else {
     roomstateQueue[channel] = state
@@ -91,23 +90,56 @@ function joinChannel (channels) { // Allows multichannel
     channels = [channels]
   }
   channels.forEach((channel) => {
-    client.join(channel).then(function (data) { // data returns channel
-      console.log(`* [${channel}] Joined`)
-      // data\channel\settings\#satsaa.json
-      const dataPath = './data/channel/settings/' + channel + '.json'
-      fs.access(dataPath, fs.constants.F_OK, (err) => {
-        if (err) { // create channel options
-          // console.log(`* [${channel}] Creating settings file`)
-          fs.copyFile('./data/channel/settings/default.json', dataPath, err => {
-            if (err) throw err
-            console.log(`* [${channel}] Settings file created`)
-            loadSettings(channel, dataPath)
-          })
-        } else {
-          loadSettings(channel, dataPath)
+    client.join(channel).then((data) => { // data returns channel
+      bot[channel] = {}
+      fs.access('./data/' + channel + '/responses.json', fs.constants.F_OK, (err) => {
+        console.log(`* [${channel}] Responses loaded`)
+        if (!err) { // Load response file if its created. NO need to precreate it here
+          bot[channel].responses = require('./data/' + channel + '/responses.json')
         }
+        fs.access('./data/' + channel + '/roomstate.json', fs.constants.F_OK, (err) => {
+          console.log(`* [${channel}] Roomstate loaded`)
+          if (!err) { // Load response file if its created. NEED to precreate it here
+            bot[channel].roomstate = require('./data/' + channel + '/roomstate.json')
+          } else {
+            fs.copyFile('./data/default/roomstate.json', './data/' + channel + '/roomstate.json', err => {
+              if (err) throw err
+              console.log(`* [${channel}] Roomstate file created`)
+              bot[channel].roomstate = require('./data/' + channel + '/roomstate.json')
+            })
+          }
+          fs.access('./data/' + channel + '/commands.json', fs.constants.F_OK, (err) => {
+            console.log(`* [${channel}] Commands loaded`)
+            if (!err) { // Load commands file if its created. NEED to precreate it here
+              bot[channel].commands = require('./data/' + channel + '/commands.json')
+            } else {
+              fs.copyFile('./data/default/commands.json', './data/' + channel + '/commands.json', err => {
+                if (err) throw err
+                console.log(`* [${channel}] Commands file created`)
+                bot[channel].commands = require('./data/' + channel + '/commands.json')
+              })
+            }
+            console.log(`* [${channel}] Joined`)
+            const dataPath = './data/' + channel + '/channel.json'
+            fs.mkdir('./data/' + channel, {}, (err) => {
+              if (err && err.code !== 'EEXIST') throw err
+              fs.access(dataPath, fs.constants.F_OK, (err) => {
+                if (err) { // create channel options
+                  // console.log(`* [${channel}] Creating settings file`)
+                  fs.copyFile('./data/default/channel.json', dataPath, err => {
+                    if (err) throw err
+                    console.log(`* [${channel}] Settings file created`)
+                    loadSettings(channel, dataPath)
+                  })
+                } else {
+                  loadSettings(channel, dataPath)
+                }
+              })
+            })
+          })
+        })
       })
-    }).catch(function (err) {
+    }).catch((err) => {
       console.log(`* [${channel}] Error joining: ${err}`)
     })
   })
@@ -116,7 +148,7 @@ function joinChannel (channels) { // Allows multichannel
     fs.readFile(dataPath, 'utf8', (err, data) => { // data returns channel
       // console.log(`* [${channel}] Loading settings`)
       if (err) throw err
-      bot[channel] = JSON.parse(data)
+      bot[channel].channel = JSON.parse(data)
       console.log(`* [${channel}] Settings loaded`)
       if (roomstateQueue.hasOwnProperty(channel)) {
         for (let element in roomstateQueue[channel]) {
@@ -150,17 +182,18 @@ function saveChannel (channels) {
     channels = [channels]
   }
   channels.forEach((channel) => {
-    fs.writeFile('./data/channel/settings/' + channel + '.json', JSON.stringify(bot[channel], null, 2), 'utf8', (err) => {
+    fs.writeFile('./data/' + channel + '/channel.json', JSON.stringify(bot[channel].channel, null, 2), 'utf8', (err) => {
       if (err) throw err
       console.log(`* [${channel}] Settings saved`)
     })
   })
 }
 
+let saveInterval
 if (typeof bot.global.save_interval === 'undefined' || !(bot.global.save_interval === -1 || bot.global.save_interval > 0)) {
   console.log(`* [ERROR] data\\global\\userstate.json -> save_interval must be -1 (disabled) or positive`)
 } else {
-  let saveInterval = setInterval(save, bot.global.save_interval * 1000)
+  saveInterval = setInterval(save, bot.global.save_interval * 1000)
 } // created save interval
 
 function save () {
@@ -171,7 +204,7 @@ function save () {
     }
   }
   channels.forEach((channel) => {
-    fs.writeFile('./data/channel/settings/' + channel + '.json', JSON.stringify(bot[channel], null, 2), 'utf8', (err) => {
+    fs.writeFile('./data/' + channel + '/channel.json', JSON.stringify(bot[channel].channel, null, 2), 'utf8', (err) => {
       if (err) throw err
     })
   })

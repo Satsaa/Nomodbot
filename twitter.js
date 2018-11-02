@@ -10,11 +10,6 @@ var client = new Twitter({
   access_token_secret: opts.access_token_secret
 })
 
-let twitch = {}
-module.exports.refer = (twitchRef) => {
-  twitch = twitchRef
-}
-
 // STANDARD STREAMING PARAMETERS -> https://developer.twitter.com/en/docs/tweets/filter-realtime/guides/basic-stream-parameters
 // Trump: 25073877 | 3minbot: 2899773086 | Dota2: 176507184 | wykrhm: 44680622
 // Artifact: 891000584836235265 | IceFrog: 17388199 | self: 917998149309992962
@@ -28,7 +23,7 @@ stream.on('error', (error) => {
   throw error
 })
 
-stream.on('data', function (tweet) {
+stream.on('data', (tweet) => {
   if (!tweet || tweet.in_reply_to_user_id_str != null || ('retweeted_status' in tweet)) { return } // replies are ignored as they are likely retweets
   console.log(`* Tweet from ${tweet.user.screen_name}`)
   // console.log(tweet)
@@ -39,14 +34,14 @@ stream.on('data', function (tweet) {
     captionURL(imageUrl).then((caption) => {
       if (caption) caption = ' ⠀⠀⠀⠀⠀⠀ Image of ' + caption
 
-      twitch.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+      noModBot.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.text.substring(0, tweet.display_text_range[1])}
       twitter.com/statuses/${tweet.id_str}
       ${caption || tweet.entities.media[0].media_url}`)
     }).catch((err) => {
       console.log(err)
 
-      twitch.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+      noModBot.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.text.substring(0, tweet.display_text_range[1])}
       twitter.com/statuses/${tweet.id_str}
       ${tweet.entities.media[0].media_url}`)
@@ -59,20 +54,20 @@ stream.on('data', function (tweet) {
     captionURL(imageUrl).then((caption) => {
       if (caption) caption = ' ⠀⠀⠀⠀⠀⠀ Image of ' + caption
 
-      twitch.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+      noModBot.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.extended_tweet.full_text.substring(0, tweet.extended_tweet.display_text_range[1])}
       twitter.com/statuses/${tweet.id_str}
       ${caption || tweet.extended_tweet.entities.media[0].media_url}`)
     }).catch((err) => {
       console.log(err)
 
-      twitch.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+      noModBot.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.extended_tweet.full_text.substring(0, tweet.extended_tweet.display_text_range[1])}
       twitter.com/statuses/${tweet.id_str}
       ${tweet.extended_tweet.entities.media[0].media_url}`)
     })
   } else {
-    twitch.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+    noModBot.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
     ${tweet.extended_tweet && tweet.extended_tweet.full_text ? tweet.extended_tweet.full_text : tweet.text}
     twitter.com/statuses/${tweet.id_str}`)
   }
@@ -136,14 +131,14 @@ function captionURL (URL) {
 var fs = require('fs')
 // var request = require('request')
 
-function captionFile () {
+function captionFile (path) {
   request.post({
     url: 'https://api.deepai.org/api/neuraltalk',
     headers: {
       'Api-Key': deepAi['Api-Key']
     },
     formData: {
-      'image': fs.createReadStream('/path/to/your/file.jpg')
+      'image': fs.createReadStream(path)
     }
   }, (err, httpResponse, body) => {
     if (err) {

@@ -4,8 +4,7 @@ node_modules/*
 config/TwitchClient.json
 config/TwitterClient.json
 object examples/*
-data/channel/settings/*
--data/channel/settings/default.json
-data/channel/quotes/*
-data/channel/memes/*
 config/DeepAi.json
+data/*
+!data/global/
+!data/default/
