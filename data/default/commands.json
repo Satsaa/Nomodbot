@@ -8,5 +8,6 @@
   "?quote": "quote",
   "?meme": "meme",
   "?response": "response",
-  "?artifact": "artifact"
+  "?artifact": "artifact",
+  "?reload": "reload"
 }

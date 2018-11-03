@@ -18,7 +18,7 @@ module.exports.run = (channel, userstate, params) => {
     })
 
     function main (channel, userstate, params) {
-      if (params[2].charAt(0) !== '?' && userstate['username'] !== noModBot.bot.config.master) return 'You must be a bot operator to add responses without \'?\' prefix'
+      if (params[2].charAt(0) !== '?' && !noModBot.bot.config.masters.includes(userstate['username'])) return 'You must be a bot operator to edit responses without \'?\' prefix!'
       noModBot.bot[channel].responses = require('../data/' + channel + '/responses.json')
       if (typeof params[1] !== 'undefined') {
         if (params[1].toLowerCase() === 'add') { // add a response

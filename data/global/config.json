@@ -1,5 +1,7 @@
 {
-	"master":"satsaa",
+	"masters": [
+    "satsaa"
+  ],
   "save": false,
   "save_interval": 300,
   "limit_period": 30,

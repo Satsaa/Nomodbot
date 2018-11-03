@@ -11,6 +11,7 @@ commands['quote'] = require('../commands/quote.js')
 commands['meme'] = require('../commands/meme.js')
 commands['response'] = require('../commands/response.js')
 commands['artifact'] = require('../commands/artifact.js')
+commands['reload'] = require('../commands/reload.js')
 
 for (var cmd in commands) {
   if (typeof commands[cmd].run !== 'function') {

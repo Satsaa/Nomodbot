@@ -5,7 +5,6 @@ let msgHandler = require('./handlers/MsgHandler.js')
 exports.msgHandler = msgHandler
 
 var bot = {}
-bot.global = {}
 bot.internal = require('./data/global/internal.json')
 bot.config = require('./data/global/config.json')
 exports.bot = bot
@@ -90,6 +89,9 @@ let roomstateQueue = {} // {channel: roomstate}
 function loadRoomstateFromQueue (channel) {
   return new Promise((resolve, reject) => {
     if (roomstateQueue.hasOwnProperty(channel)) {
+      if (!bot[channel].roomstate) {
+        bot[channel].roomstate = {}
+      }
       for (let element in roomstateQueue[channel]) {
         bot[channel].roomstate[element] = roomstateQueue[channel][element]
       }
