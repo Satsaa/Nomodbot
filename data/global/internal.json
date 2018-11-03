@@ -1,23 +1,17 @@
 {
-  "save_interval": 120,
-  "limit_period": 30,
-  "user_limit": 19,
-  "mod_limit": 99,
-  "whisper_limit_sec": 2,
-  "whisper_limit_min": 59,
-  "whisper_limit_accounts": 40,
-  "message_delay_ms": 1100,
-  "whisper_delay_ms": 334,
   "channels": [
     "#satsaa"
   ],
   "whisper_commands": {},
   "user_times": [
-    1541127504788,
-    1541127511246
+    1541208077595,
+    1541208079103,
+    1541208083105,
+    1541208086124,
+    1541208090274
   ],
   "mod_times": [
-    1541127473239
+    1541200639053
   ],
   "whisper_times_sec": [
     1540205443000,

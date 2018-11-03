@@ -24,12 +24,20 @@ module.exports.run = (channel, userstate, params) => {
         user = params[1]
       }
       let iq = Math.round(util.RandomNormal(-50, 1005, 3))
+
       let recordChannel = getRecord(iq, userstate['display-name'], local)
       let recordGlobal = getGlobalRecord(iq, userstate['display-name'])
+      let recordLowChannel = getLowRecord(iq, userstate['display-name'], local)
+      let recordLowGlobal = getLowGlobalRecord(iq, userstate['display-name'])
+
       if (recordGlobal[0]) {
         return `${user}'s RealIQ is ${iq.toString()}${getEmote(iq)} Beat global record by ${recordGlobal[2]} by ${iq - recordGlobal[1]} IQ! PogChamp `
       } else if (recordChannel[0]) {
         return `${user}'s RealIQ is ${iq.toString()}${getEmote(iq)} Beat channel record by ${recordChannel[2]} by ${iq - recordChannel[1]} IQ! PogChamp `
+      } else if (recordLowGlobal[0]) {
+        return `${user}'s RealIQ is ${iq.toString()}${getEmote(iq)} Beat global low record by ${recordChannel[2]} by ${iq - recordChannel[1]} IQ! OMEGALUL `
+      } else if (recordLowChannel[0]) {
+        return `${user}'s RealIQ is ${iq.toString()}${getEmote(iq)} Beat channel low record by ${recordChannel[2]} by ${iq - recordChannel[1]} IQ! OMEGALUL `
       } else return `${user}'s RealIQ is ${iq.toString()}${getEmote(iq)}`
     }
   })
@@ -53,6 +61,32 @@ module.exports.run = (channel, userstate, params) => {
       global.record = v
       let oldUser = global.holder
       global.holder = user
+      fs.writeFile('./data/global/myiq.json', JSON.stringify(global, null, 2), 'utf8', (err) => {
+        if (err) throw err
+      })
+      return [true, oldRecord, oldUser]
+    } return [false, null, null]
+  }
+
+  function getLowRecord (v, user, local) {
+    if (local.low_record === null || v < local.low_record) {
+      let oldRecord = local.low_record
+      local.low_record = v
+      let oldUser = local.low_holder
+      local.low_holder = user
+      fs.writeFile('./data/' + channel + '/myiq.json', JSON.stringify(local, null, 2), 'utf8', (err) => {
+        if (err) throw err
+      })
+      return [true, oldRecord, oldUser]
+    } return [false, null, null]
+  }
+
+  function getLowGlobalRecord (v, user) {
+    if (global.low_record === null || v < global.low_record) {
+      let oldRecord = global.low_record
+      global.low_record = v
+      let oldUser = global.low_holder
+      global.low_holder = user
       fs.writeFile('./data/global/myiq.json', JSON.stringify(global, null, 2), 'utf8', (err) => {
         if (err) throw err
       })

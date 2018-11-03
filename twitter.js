@@ -23,6 +23,8 @@ stream.on('error', (error) => {
   throw error
 })
 
+let alertChannels = ['#satsaa', '#l34um1']
+
 stream.on('data', (tweet) => {
   if (!tweet || tweet.in_reply_to_user_id_str != null || ('retweeted_status' in tweet)) { return } // replies are ignored as they are likely retweets
   console.log(`* Tweet from ${tweet.user.screen_name}`)
@@ -34,40 +36,39 @@ stream.on('data', (tweet) => {
     captionURL(imageUrl).then((caption) => {
       if (caption) caption = ' ⠀⠀⠀⠀⠀⠀ Image of ' + caption
 
-      noModBot.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+      noModBot.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.text.substring(0, tweet.display_text_range[1])}
       twitter.com/statuses/${tweet.id_str}
       ${caption || tweet.entities.media[0].media_url}`)
     }).catch((err) => {
       console.log(err)
 
-      noModBot.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+      noModBot.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.text.substring(0, tweet.display_text_range[1])}
       twitter.com/statuses/${tweet.id_str}
       ${tweet.entities.media[0].media_url}`)
     })
-  } else if (typeof tweet.extended_tweet.entities !== 'undefined' && typeof tweet.extended_tweet.entities.media !== 'undefined' &&
-    tweet.extended_tweet.entities.media[0].media_url) {
+  } else if ((((tweet || {}).extended_tweet || {}).entities || {}).media && tweet.extended_tweet.entities.media[0].media_url) {
     console.log(`* Media: ${tweet.extended_tweet.entities.media[0].media_url}`)
     console.log(`* Waiting for caption...`)
     let imageUrl = tweet.extended_tweet.entities.media[0].media_url
     captionURL(imageUrl).then((caption) => {
       if (caption) caption = ' ⠀⠀⠀⠀⠀⠀ Image of ' + caption
 
-      noModBot.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+      noModBot.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.extended_tweet.full_text.substring(0, tweet.extended_tweet.display_text_range[1])}
       twitter.com/statuses/${tweet.id_str}
       ${caption || tweet.extended_tweet.entities.media[0].media_url}`)
     }).catch((err) => {
       console.log(err)
 
-      noModBot.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+      noModBot.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.extended_tweet.full_text.substring(0, tweet.extended_tweet.display_text_range[1])}
       twitter.com/statuses/${tweet.id_str}
       ${tweet.extended_tweet.entities.media[0].media_url}`)
     })
   } else {
-    noModBot.msgHandler.chat('#satsaa', `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+    noModBot.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
     ${tweet.extended_tweet && tweet.extended_tweet.full_text ? tweet.extended_tweet.full_text : tweet.text}
     twitter.com/statuses/${tweet.id_str}`)
   }

@@ -2,11 +2,11 @@ const fs = require('fs')
 
 global.noModBot = require('./nomodbot.js')
 
-let twitter = require('./twitter.js')
+require('./twitter.js')
 
 function exitHandler (options, exitCode) {
   if (options.cleanup) {
-    console.log(`* [BOT] Being saved`)
+    // console.log(`* [BOT] Being saved`)
     let channels = []
     for (var key in noModBot.bot) {
       if (key.startsWith('#')) {
@@ -17,8 +17,8 @@ function exitHandler (options, exitCode) {
       fs.writeFileSync('./data/' + channel + '/channel.json', JSON.stringify(noModBot.bot[channel].channel, null, 2), 'utf8')
     })
     console.log(`* [CHANNELS] Settings saved`)
-    fs.writeFileSync('./data/global/userstate.json', JSON.stringify(noModBot.bot.global, null, 2), 'utf8')
-    console.log(`* [BOT] State saved`)
+    fs.writeFileSync('./data/global/internal.json', JSON.stringify(noModBot.bot.internal, null, 2), 'utf8')
+    console.log(`* [BOT] Internals saved`)
   }
   if (exitCode || exitCode === 0) console.log(exitCode)
   if (options.exit) process.exit()

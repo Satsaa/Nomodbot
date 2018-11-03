@@ -10,6 +10,5 @@
 	  "username": "<bot username (lower case)>",
 	  "password": "oauth:<token>"
 	},
-	"master":"<bot operator username>",
 	"channels": []
 }
