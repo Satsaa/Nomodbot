@@ -180,16 +180,16 @@ function partChannel (channels) {
     channels.forEach((channel) => {
       client.part(channel).then((data) => { // data returns parted channel
         console.log(`* [${channel}] Parted`)
-        delete bot[channel]
+        saveChannel(channel).then(() => {
+          delete bot[channel]
+        })
         removeChannel(channel)
+        resolve()
       }).catch((err) => {
         console.log(`* [${channel}] Error parting: ${err}`)
         addChannel(channel)
         reject(err)
       })
-    })
-    saveChannel(channels).then(() => {
-      resolve()
     })
   })
 }
