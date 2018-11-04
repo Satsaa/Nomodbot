@@ -1,8 +1,10 @@
 const fs = require('fs')
 
-global.noModBot = require('./nomodbot.js')
+global.noModBot = require('./twitch.js')
 
 require('./twitter.js')
+
+noModBot.bot.startTime = Date.now()
 
 function exitHandler (options, exitCode) {
   if (options.cleanup) {

@@ -22,13 +22,22 @@ module.exports.receive = (channel, userstate, message, self) => {
         const params = message.split(' ') // Split message to an array
         const commandName = params[0].toLowerCase() // Command name (first word)
 
-        if (bot[channel].commands.hasOwnProperty(commandName)) {
-          let command = bot[channel].commands[commandName]
+        if (bot[channel].commands.hasOwnProperty(commandName)) { // command
+          let command
+          if (typeof bot[channel].commands[commandName] === 'object') {
+            if (bot[channel].commands[commandName].userlvl &&
+                bot[channel].commands[commandName].userlvl === 'master') {
+              if (!bot.config.masters.includes(userstate['username'])) return // not master
+            }
+            command = bot[channel].commands[commandName].command
+          } else {
+            command = bot[channel].commands[commandName]
+          }
           cmdHandler.handle(command, channel, userstate, params)
         } else {
-          if (bot[channel].responses.hasOwnProperty(commandName)) {
+          if (bot[channel].responses.hasOwnProperty(commandName)) { // response
             let text = bot[channel].responses[commandName]
-            cmdHandler.customHandle(text, channel, userstate, params)
+            cmdHandler.responseHandle(text, channel, userstate, params)
           }
         }
       }
@@ -59,23 +68,40 @@ function updateBot (channel, userstate, message) {
 }
 
 module.exports.chat = (channels, message) => {
+  if (typeof message === 'number') {
+    message = message.toString()
+  }
+  if (!Array.isArray(channels) && typeof channels === 'object') {
+    console.log(`[ERROR] Invalid channels type: ${typeof channels} `)
+    return
+  }
   if (typeof channels === 'string') { // channels is used as an array but a single channel string is supported
     channels = [channels]
   }
   channels.forEach((channel) => {
-    if (bot[channel].channel.mod) { // mod, no speed limit, max 100 per 30 sec tho
-      parseTimes(1)
-      if (bot.internal.mod_times.length >= bot.internal.mod_limit) { // if ratelimit is full
-        queueModChat(channel, message)
-        return
+    if (typeof bot[channel] === 'undefined') { // not joined
+      if (noModBot.bot.config.join_on_message) { // Joining on msg enabled?
+        noModBot.joinChannel(channel).then((data) => {
+          main()
+        })
       }
-      client.say(channel, antiDupe(channel, message)).then(() => {
-        bot.internal.mod_times.push(Date.now())
-      }).catch((err) => {
-        console.log(`* [${channel}] Msg failed: ${err}`)
-      })
-    } else { // user needs limits
-      queueChat(channel, message)
+    } else main()
+
+    function main () { // just a block
+      if (bot[channel].channel.mod) { // mod, no speed limit, max 100 per 30 sec tho
+        parseTimes(1)
+        if (bot.internal.mod_times.length >= bot.internal.mod_limit) { // if ratelimit is full
+          queueModChat(channel, message)
+          return
+        }
+        client.say(channel, antiDupe(channel, message)).then(() => {
+          bot.internal.mod_times.push(Date.now())
+        }).catch((err) => {
+          console.log(`* [${channel}] Msg failed: ${err}`)
+        })
+      } else { // user needs limits
+        queueChat(channel, message)
+      }
     }
   })
 }

@@ -8,10 +8,12 @@ commands['join'] = require('../commands/join.js')
 commands['part'] = require('../commands/part.js')
 commands['manlyquote'] = require('../commands/manlyquote.js')
 commands['quote'] = require('../commands/quote.js')
-commands['meme'] = require('../commands/meme.js')
 commands['response'] = require('../commands/response.js')
 commands['artifact'] = require('../commands/artifact.js')
 commands['reload'] = require('../commands/reload.js')
+commands['numvote'] = require('../commands/numvote.js')
+commands['bottime'] = require('../commands/bottime.js')
+commands['commands'] = require('../commands/commands.js')
 
 for (var cmd in commands) {
   if (typeof commands[cmd].run !== 'function') {
@@ -21,13 +23,6 @@ for (var cmd in commands) {
     if (typeof commands[cmd].help !== 'function') {
       console.log(`* [ERROR] ${cmd} doesn't have an exported help function and is therefore unloaded`)
       delete commands[cmd]
-    } else {
-      if (typeof commands[cmd].refer === 'function') {
-        commands[cmd].refer(noModBot) // refer command if needed
-      }
-      if (typeof commands[cmd].init === 'function') {
-        commands[cmd].init(noModBot) // init command if needed
-      }
     }
   }
 }
@@ -46,6 +41,6 @@ module.exports.handle = (command, channel, userstate, params) => {
   }
 }
 
-module.exports.customHandle = (text, channel, userstate, params) => {
+module.exports.responseHandle = (text, channel, userstate, params) => {
   noModBot.msgHandler.chat(channel, text)
 }

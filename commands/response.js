@@ -18,28 +18,29 @@ module.exports.run = (channel, userstate, params) => {
     })
 
     function main (channel, userstate, params) {
-      if (params[2].charAt(0) !== '?' && !noModBot.bot.config.masters.includes(userstate['username'])) return 'You must be a bot operator to edit responses without \'?\' prefix!'
-      noModBot.bot[channel].responses = require('../data/' + channel + '/responses.json')
+      let local = noModBot.bot[channel].responses // reference for neat code
+
+      if (params[2] && params[2].charAt(0) !== '?' && !noModBot.bot.config.masters.includes(userstate['username'])) return 'Insufficient permissions to edit responses without \'?\' prefix!'
       if (typeof params[1] !== 'undefined') {
         if (params[1].toLowerCase() === 'add') { // add a response
           if (!params[2]) return 'You must specify a command name! (param 2)'
           if (!params[3]) return 'You must specify a response! (param 3+)'
-          noModBot.bot[channel].responses[params[2].toLowerCase()] = params.slice(3).join(' ')
-          saveResponses(channel)
+          local[params[2].toLowerCase()] = params.slice(3).join(' ')
+          saveResponses(channel, local)
           return `Response '${params[2].toLowerCase()}' added`
         } else if (params[1].toLowerCase() === 'del') { // delete a response
-          if (!params[2]) return 'You must specify a response command to delete! (param 2)'
-          if (!noModBot.bot[channel].responses.hasOwnProperty(params[2].toLowerCase())) return `Can't find "${params[2].toLowerCase()}"`
-          delete noModBot.bot[channel].responses[params[2].toLowerCase()]
-          saveResponses(channel)
+          if (!params[2]) return 'You must specify a response to delete! (param 2)'
+          if (!local.hasOwnProperty(params[2].toLowerCase())) return `Can't find "${params[2].toLowerCase()}"`
+          delete local[params[2].toLowerCase()]
+          saveResponses(channel, local)
           return `Response '${params[2].toLowerCase()}' deleted`
         }
       }
       return `Add a response: ${params[0]} add <command> <response...>. Delete a response: ${params[0]} del <command>`
     }
 
-    function saveResponses (channel) {
-      fs.writeFile('./data/' + channel + '/responses.json', JSON.stringify(noModBot.bot[channel].responses, null, 2), 'utf8', (err) => {
+    function saveResponses (channel, local) {
+      fs.writeFile('./data/' + channel + '/responses.json', JSON.stringify(local, null, 2), 'utf8', (err) => {
         if (err) throw err
       })
     }

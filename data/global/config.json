@@ -4,6 +4,7 @@
   ],
   "save": false,
   "save_interval": 300,
+  "join_on_message": false,
   "limit_period": 30,
   "user_limit": 19,
   "mod_limit": 99,

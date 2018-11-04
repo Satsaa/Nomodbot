@@ -18,21 +18,15 @@ module.exports.RandomNormal = (min = 0, max = 100, skew = 1) => {
   return Math.pow(((Math.sqrt(-2.0 * Math.log(Math.random())) * Math.cos(2.0 * Math.PI * Math.random())) / 10.0 + 0.5), skew) * (max - min) + min
 }
 
-// convert milliseconds to days hours and minutes
-module.exports.MSToDHM = (ms) => {
-  var cd = 24 * 60 * 60 * 1000
-  var ch = 60 * 60 * 1000
-  var d = Math.floor(ms / cd)
-  var h = Math.floor((ms - d * cd) / ch)
-  var m = Math.round((ms - d * cd - h * ch) / 60000)
-  var pad = (n) => { return n < 10 ? '0' + n : n }
-  if (m === 60) {
-    h++
-    m = 0
-  }
-  if (h === 24) {
-    d++
-    h = 0
-  }
-  return [d, pad(h), pad(m)]
+// convert milliseconds to [days, hours, mins, secs]
+module.exports.MSToDHMS = (ms) => {
+  var d, h, m, s
+  s = Math.floor(ms / 1000)
+  m = Math.floor(s / 60)
+  s = s % 60
+  h = Math.floor(m / 60)
+  m = m % 60
+  d = Math.floor(h / 24)
+  h = h % 24
+  return [d, h, m, s]
 }

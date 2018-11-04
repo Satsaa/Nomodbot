@@ -2,7 +2,6 @@ const fs = require('fs')
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
-    if (!noModBot.bot.config.masters.includes(userstate['username'])) resolve('You must be a bot operator to reload internal files!')
     if (typeof params[1] !== 'undefined') {
       if (params[1] === 'global') {
         if (!params[2]) resolve(null)
@@ -22,12 +21,12 @@ module.exports.run = (channel, userstate, params) => {
       }
       resolve(null)
     }
-    resolve('Reload a file: command [\'global\'] <file>')
+    resolve(`Reload a file: ${params[0]} [global] <file>`)
   })
 }
 
 module.exports.help = () => {
   return new Promise((resolve, reject) => {
-    resolve('Reload a file: command [\'global\'] <file>')
+    resolve('Reload a file: command [global] <file>')
   })
 }

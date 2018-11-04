@@ -4,51 +4,53 @@ let quotes = {}
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
+    let short = noModBot.bot[channel].quotes
+
     if (!(quotes.hasOwnProperty(channel))) {
       fs.access('./data/' + channel + '/quotes.json', fs.constants.F_OK, (err) => {
         if (err) { // create channel quote base
           fs.writeFile('./data/' + channel + '/quotes.json', '[]', (err) => {
             if (!err) {
               console.log(`* [${channel}] Created quote file`)
-              resolve(quote(channel, params))
+              resolve(quote(channel, params, short))
             } else {
               console.log(`* [${channel}] FAILED TO CREATE QUOTE FILE: ${err}`)
             }
           })
         } else { // file is present
-          resolve(quote(channel, params))
+          resolve(quote(channel, params, short))
         }
       })
-    } else resolve(quote(channel, params))
+    } else resolve(quote(channel, params, short))
 
-    function quote (channel, params) {
-      quotes[channel] = require('../data/' + channel + '/quotes.json')
-
+    function quote (channel, params, short) {
       if (typeof params[1] !== 'undefined') {
         if (params[1].toLowerCase() === 'list') { // list quotes
           return 'Unsupported'
         } else if (params[1].toLowerCase() === 'add') { // add a quote
+          if (!noModBot.bot.config.masters.includes(userstate['username'])) return 'Insufficient permissions to add quotes!'
           if (!params[2]) return 'You must specify text for the quote! (param 2+)'
-          quotes[channel][quotes[channel].length] = params.slice(2).join(' ')
-          save(channel, quotes[channel])
-          return `Added quote ${quotes[channel].length}: ${params.slice(2).join(' ')}`
+          short[short.length] = params.slice(2).join(' ')
+          save(channel, short)
+          return `Added quote ${short.length}: ${params.slice(2).join(' ')}`
         } else if (params[1].toLowerCase() === 'del') { // delete a quote
+          if (!noModBot.bot.config.masters.includes(userstate['username'])) return 'Insufficient permissions to delete quotes!'
           if (!params[2]) return 'You must specify a quote index! (param 2)'
           if (isNaN(parseInt(params[2], 10))) return 'You must enter a valid number! (param 2)'
-          if (typeof quotes[channel][params[2] - 1] === 'undefined') return 'Invalid quote index'
-          quotes[channel].splice(params[2] - 1, 1)
-          save(channel, quotes[channel])
+          if (typeof short[params[2] - 1] === 'undefined') return 'Invalid quote index'
+          short.splice(params[2] - 1, 1)
+          save(channel, short)
           return 'Deleted quote ' + (params[2])
         }
       }
       let random = 1
       let index = Math.floor(params[1] - 1)
-      if (isNaN(parseInt(index, 10)) || index > quotes[channel].length) {
-        random = util.getRandomInt(0, quotes[channel].length)
+      if (isNaN(parseInt(index, 10)) || index > short.length) {
+        random = util.getRandomInt(0, short.length)
       } else {
         random = index
       }
-      return (`${isNaN(index) ? random + 1 : ''} ${index >= quotes[channel].length || index < 0 ? `Max index: ${quotes[channel].length} ${quotes[channel][quotes[channel].length - 1]}` : quotes[channel][random]}`)
+      return (`${isNaN(index) ? random + 1 : ''} ${index >= short.length || index < 0 ? `Max index: ${short.length} ${short[short.length - 1]}` : short[random]}`)
     }
 
     function save (channel, quotes) {

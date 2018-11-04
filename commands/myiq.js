@@ -15,7 +15,7 @@ module.exports.run = (channel, userstate, params) => {
     })
 
     function main (channel, userstate, params) {
-      let local = require('../data/' + channel + '/myiq.json')
+      let short = noModBot.bot[channel].myiq // reference for neat code
 
       let user
       if (params.length === 1) {
@@ -25,9 +25,9 @@ module.exports.run = (channel, userstate, params) => {
       }
       let iq = Math.round(util.RandomNormal(-50, 1005, 3))
 
-      let recordChannel = getRecord(iq, userstate['display-name'], local)
+      let recordChannel = getRecord(iq, userstate['display-name'], channel, short)
       let recordGlobal = getGlobalRecord(iq, userstate['display-name'])
-      let recordLowChannel = getLowRecord(iq, userstate['display-name'], local)
+      let recordLowChannel = getLowRecord(iq, userstate['display-name'], channel, short)
       let recordLowGlobal = getLowGlobalRecord(iq, userstate['display-name'])
 
       if (recordGlobal[0]) {
@@ -35,20 +35,20 @@ module.exports.run = (channel, userstate, params) => {
       } else if (recordChannel[0]) {
         return `${user}'s RealIQ is ${iq.toString()}${getEmote(iq)} Beat channel record by ${recordChannel[2]} by ${iq - recordChannel[1]} IQ! PogChamp `
       } else if (recordLowGlobal[0]) {
-        return `${user}'s RealIQ is ${iq.toString()}${getEmote(iq)} Beat global low record by ${recordChannel[2]} by ${iq - recordChannel[1]} IQ! OMEGALUL `
+        return `${user}'s RealIQ is ${iq.toString()}${getEmote(iq)} Beat global low record by ${recordLowGlobal[2]} by ${iq - recordLowGlobal[1]} IQ! OMEGALUL `
       } else if (recordLowChannel[0]) {
-        return `${user}'s RealIQ is ${iq.toString()}${getEmote(iq)} Beat channel low record by ${recordChannel[2]} by ${iq - recordChannel[1]} IQ! OMEGALUL `
+        return `${user}'s RealIQ is ${iq.toString()}${getEmote(iq)} Beat channel low record by ${recordLowChannel[2]} by ${iq - recordLowChannel[1]} IQ! OMEGALUL `
       } else return `${user}'s RealIQ is ${iq.toString()}${getEmote(iq)}`
     }
   })
 
-  function getRecord (v, user, local) {
-    if (local.record === null || v > local.record) {
-      let oldRecord = local.record
-      local.record = v
-      let oldUser = local.holder
-      local.holder = user
-      fs.writeFile('./data/' + channel + '/myiq.json', JSON.stringify(local, null, 2), 'utf8', (err) => {
+  function getRecord (v, user, channel, short) {
+    if (short.record === null || v > short.record) {
+      let oldRecord = short.record
+      short.record = v
+      let oldUser = short.holder
+      short.holder = user
+      fs.writeFile('./data/' + channel + '/myiq.json', JSON.stringify(short, null, 2), 'utf8', (err) => {
         if (err) throw err
       })
       return [true, oldRecord, oldUser]
@@ -68,13 +68,13 @@ module.exports.run = (channel, userstate, params) => {
     } return [false, null, null]
   }
 
-  function getLowRecord (v, user, local) {
-    if (local.low_record === null || v < local.low_record) {
-      let oldRecord = local.low_record
-      local.low_record = v
-      let oldUser = local.low_holder
-      local.low_holder = user
-      fs.writeFile('./data/' + channel + '/myiq.json', JSON.stringify(local, null, 2), 'utf8', (err) => {
+  function getLowRecord (v, user, channel, short) {
+    if (short.low_record === null || v < short.low_record) {
+      let oldRecord = short.low_record
+      short.low_record = v
+      let oldUser = short.low_holder
+      short.low_holder = user
+      fs.writeFile('./data/' + channel + '/myiq.json', JSON.stringify(short, null, 2), 'utf8', (err) => {
         if (err) throw err
       })
       return [true, oldRecord, oldUser]
@@ -93,39 +93,38 @@ module.exports.run = (channel, userstate, params) => {
       return [true, oldRecord, oldUser]
     } return [false, null, null]
   }
+
+  function getEmote (v) {
+    if (v < 0) {
+      return ' POGGERS'
+    } else if (v < 10) {
+      return ' 🌱'
+    } else if (v === 69) {
+      return ' Kreygasm'
+    } else if (v < 69) {
+      return ' BrokeBack'
+    } else if (v < 100) {
+      return ' 4Head'
+    } else if (v < 150) {
+      return ' SeemsGood'
+    } else if (v < 240) {
+      return ' PogChamp'
+    } else if (v < 300) {
+      return ' baumiBottlepog'
+    } else if (v === 322) {
+      return ', stop throwing.'
+    } else if (v === 420) {
+      return ' VapeNation'
+    } else if (v < 420) {
+      return ' Ayy 👽'
+    } else {
+      return ' monkaS'
+    }
+  }
 }
 
 module.exports.help = () => {
   return new Promise((resolve, reject) => {
     resolve('Return real iq of a chatter: command [<recipient>]')
   })
-}
-
-// get what emote to use with iq statement. i = iq, e = emote
-function getEmote (i) {
-  if (i < 0) {
-    return ' POGGERS'
-  } else if (i < 10) {
-    return ' 🌱'
-  } else if (i === 69) {
-    return ' Kreygasm'
-  } else if (i < 69) {
-    return ' BrokeBack'
-  } else if (i < 100) {
-    return ' 4Head'
-  } else if (i < 150) {
-    return ' SeemsGood'
-  } else if (i < 240) {
-    return ' PogChamp'
-  } else if (i < 300) {
-    return ' baumiBottlepog'
-  } else if (i === 322) {
-    return ', stop throwing.'
-  } else if (i === 420) {
-    return ' VapeNation'
-  } else if (i < 420) {
-    return ' Ayy 👽'
-  } else {
-    return ' monkaS'
-  }
 }
