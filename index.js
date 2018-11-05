@@ -2,13 +2,12 @@ const fs = require('fs')
 
 global.noModBot = require('./twitch.js')
 
-require('./twitter.js')
+// require('./twitter.js')
 
 noModBot.bot.startTime = Date.now()
 
 function exitHandler (options, exitCode) {
   if (options.cleanup) {
-    // console.log(`* [BOT] Being saved`)
     let channels = []
     for (var key in noModBot.bot) {
       if (key.startsWith('#')) {
@@ -18,7 +17,7 @@ function exitHandler (options, exitCode) {
     channels.forEach((channel) => {
       fs.writeFileSync('./data/' + channel + '/channel.json', JSON.stringify(noModBot.bot[channel].channel, null, 2), 'utf8')
     })
-    console.log(`* [CHANNELS] Settings saved`)
+    console.log(`* [CHANNELS] Channel saved`)
     fs.writeFileSync('./data/global/internal.json', JSON.stringify(noModBot.bot.internal, null, 2), 'utf8')
     console.log(`* [BOT] Internals saved`)
   }

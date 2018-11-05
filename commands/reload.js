@@ -21,12 +21,12 @@ module.exports.run = (channel, userstate, params) => {
       }
       resolve(null)
     }
-    resolve(`Reload a file: ${params[0]} [global] <file>`)
+    resolve(`Reload an internal file: ${params[0]} [global] <file>`)
   })
 }
 
 module.exports.help = () => {
   return new Promise((resolve, reject) => {
-    resolve('Reload a file: command [global] <file>')
+    resolve('Reload an internal file: command [global] <file>')
   })
 }

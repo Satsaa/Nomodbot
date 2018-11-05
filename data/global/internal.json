@@ -1,13 +1,14 @@
 {
   "channels": [
-    "#satsaa",
     "#satsaa"
   ],
   "whisper_commands": {},
   "user_times": [
-    1541345141153
+    1541456979913
   ],
-  "mod_times": [],
+  "mod_times": [
+    1541453539184
+  ],
   "whisper_times_sec": [
     1540205443000,
     1540205450000,

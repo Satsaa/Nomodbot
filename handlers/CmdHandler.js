@@ -14,6 +14,7 @@ commands['reload'] = require('../commands/reload.js')
 commands['numvote'] = require('../commands/numvote.js')
 commands['bottime'] = require('../commands/bottime.js')
 commands['commands'] = require('../commands/commands.js')
+commands['save'] = require('../commands/save.js')
 
 for (var cmd in commands) {
   if (typeof commands[cmd].run !== 'function') {

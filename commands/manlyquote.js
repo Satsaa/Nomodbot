@@ -17,7 +17,7 @@ module.exports.run = (channel, userstate, params) => {
           save(channel, quotes)
           return `Added quote ${quotes.length}: ${params.slice(2).join(' ')}`
         } else if (params[1].toLowerCase() === 'del') { // delete a quote
-          if (!noModBot.bot.config.masters.includes(userstate['username'])) return 'Insufficient permissions to add quotes!'
+          if (!noModBot.bot.config.masters.includes(userstate['username'])) return 'Insufficient permissions to delete quotes!'
           if (!params[2]) return 'You must specify a quote index! (param 2)'
           if (isNaN(parseInt(params[2], 10))) return 'You must enter a valid number! (param 2)'
           if (typeof quotes[params[2] - 1] === 'undefined') return 'Invalid quote index'

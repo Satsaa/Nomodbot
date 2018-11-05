@@ -125,6 +125,6 @@ module.exports.run = (channel, userstate, params) => {
 
 module.exports.help = () => {
   return new Promise((resolve, reject) => {
-    resolve('Return real iq of a chatter: command [<recipient>]')
+    resolve('Return real IQ of a chatter: command [<recipient>]')
   })
 }

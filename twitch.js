@@ -37,6 +37,7 @@ client.on('notice', (channel, msgid, message) => {
 })
 
 client.on('timeout', (channel, username, reason, duration) => {
+  if (!bot[channel]) return
   console.log((utilM.inspect(noModBot, { showHidden: false, depth: null })))
   if (username === client.username) {
     bot[channel].channel.timeout_end = Date.now() + duration * 1000
@@ -46,16 +47,24 @@ client.on('timeout', (channel, username, reason, duration) => {
 })
 
 client.on('ban', (channel, username, reason) => {
-  if (username === client.username) {
+  if (bot[channel] && username === client.username) {
     bot[channel].channel.banned = true
   }
   console.log(`* [${channel}] ${username} banned for ${reason}`)
 })
 
 client.on('mod', (channel, username) => {
-  if (username === client.username) {
+  if (bot[channel] && username === client.username) {
     bot[channel].channel.mod = true
   }
+})
+
+client.on('join', function (channel, username, self) {
+  // console.log(`* [${channel} (join)] ${username}`)
+})
+
+client.on('part', function (channel, username, self) {
+  // console.log(`* [${channel} (part)] ${username}`)
 })
 
 client.on('connecting', (address, port) => {
@@ -64,7 +73,7 @@ client.on('connecting', (address, port) => {
 
 client.on('connected', (address, port) => {
   console.log(`* Connected`)
-  joinChannel('#satsaa')
+  joinChannel(bot.internal.channels)
 })
 
 client.on('disconnected', (reason) => {
@@ -180,7 +189,9 @@ function partChannel (channels) {
     channels.forEach((channel) => {
       client.part(channel).then((data) => { // data returns parted channel
         console.log(`* [${channel}] Parted`)
-        saveChannel(channel).then(() => {
+        fs.writeFile('./data/' + channel + '/channel.json', JSON.stringify(bot[channel].channel, null, 2), 'utf8', (err) => {
+          if (err) throw err
+          console.log(`* [${channel}] Channel saved`)
           delete bot[channel]
         })
         removeChannel(channel)
@@ -197,7 +208,7 @@ exports.partChannel = partChannel
 
 // add/remove channel on internal channels array
 function addChannel (channel) {
-  if (!(channel in bot.internal.channels)) {
+  if (!(bot.internal.channels.includes(channel))) {
     bot.internal.channels.push(channel)
   }
 }
@@ -206,21 +217,6 @@ function removeChannel (channel) {
   if (index > -1) {
     bot.internal.channels.splice(index, 1)
   }
-}
-
-function saveChannel (channels) {
-  return new Promise((resolve, reject) => {
-    if (typeof channels === 'string') { // channels is used as an array but a single channel string is supported
-      channels = [channels]
-    }
-    channels.forEach((channel) => {
-      fs.writeFile('./data/' + channel + '/channel.json', JSON.stringify(bot[channel].channel, null, 2), 'utf8', (err) => {
-        if (err) throw err
-        console.log(`* [${channel}] Settings saved`)
-        resolve(channel)
-      })
-    })
-  })
 }
 
 let saveInterval
@@ -248,3 +244,4 @@ function save () {
   })
   console.log(`* [BOT] Saved`)
 }
+exports.save = save
