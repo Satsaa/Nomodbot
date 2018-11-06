@@ -2,7 +2,7 @@ const fs = require('fs')
 
 global.noModBot = require('./twitch.js')
 
-// require('./twitter.js')
+require('./twitter.js')
 
 noModBot.bot.startTime = Date.now()
 
