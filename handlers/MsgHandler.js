@@ -12,8 +12,6 @@ module.exports.refer = (clientRef, botRef, twitchRef) => {
 module.exports.receive = (channel, userstate, message, self) => {
   switch (userstate['message-type']) {
     case 'action':
-      console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
-      break
     case 'chat':
       if (self) updateBot(channel, userstate, message)
       else {

@@ -6,6 +6,7 @@ global.noModBot = require('./twitch.js')
 
 noModBot.bot.startTime = Date.now()
 
+// No exithandling if you kill the process... for example ctrl+alt+m in vs code
 function exitHandler (options, exitCode) {
   if (options.cleanup) {
     let channels = []

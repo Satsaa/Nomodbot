@@ -16,16 +16,21 @@ commands['artifact'] = require('../commands/artifact.js')
 commands['numvote'] = require('../commands/numvote.js')
 commands['bottime'] = require('../commands/bottime.js')
 commands['commands'] = require('../commands/commands.js')
+commands['notify'] = require('../commands/notify.js')
 
-for (var cmd in commands) {
+for (let cmd in commands) {
   if (typeof commands[cmd].run !== 'function') {
     console.log(`* [ERROR] ${cmd} doesn't have an exported run function and is therefore unloaded`)
     delete commands[cmd]
-  } else {
-    if (typeof commands[cmd].help !== 'function') {
-      console.log(`* [ERROR] ${cmd} doesn't have an exported help function and is therefore unloaded`)
-      delete commands[cmd]
-    }
+  }
+  if (typeof commands[cmd].help !== 'function') {
+    console.log(`* [ERROR] ${cmd} doesn't have an exported help function and is therefore unloaded`)
+    delete commands[cmd]
+  }
+  if (typeof commands[cmd].init === 'function') {
+    setImmediate(() => { // immediate so noModBot is defined
+      commands[cmd].init() // init on start if needed
+    })
   }
 }
 

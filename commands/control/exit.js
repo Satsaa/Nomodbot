@@ -1,5 +1,5 @@
 const fs = require('fs')
-let util = require('../../util.js')
+let myUtil = require('../../myutil.js')
 let quotes = {}
 
 module.exports.run = (channel, userstate, params) => {

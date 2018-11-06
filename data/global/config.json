@@ -11,6 +11,6 @@
   "whisper_limit_sec": 2,
   "whisper_limit_min": 59,
   "whisper_limit_accounts": 40,
-  "message_delay_ms": 1100,
+  "message_delay_ms": 1200,
   "whisper_delay_ms": 334
 }

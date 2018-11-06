@@ -12,6 +12,7 @@ exports.bot = bot
 
 var opts = require('./config/TwitchClient.json')
 var client = new tmi.Client(opts)
+exports.client = client
 
 msgHandler.refer(client, bot, this)
 
@@ -131,12 +132,14 @@ function joinChannel (channels) { // Allows multichannel
               loadChannelFile(channel, 'commands', true).then(
                 loadChannelFile(channel, 'quotes', true).then(
                   loadChannelFile(channel, 'myiq', true).then(
-                    loadChannelFile(channel, 'channel', true).finally(() => {
-                      loadRoomstateFromQueue(channel).then(() => {
-                        console.log(`* [${channel}] Initial roomstate loaded`)
-                        resolve(channel)
+                    loadChannelFile(channel, 'notifys', true).then(
+                      loadChannelFile(channel, 'channel', true).finally(() => {
+                        loadRoomstateFromQueue(channel).then(() => {
+                          console.log(`* [${channel}] Initial roomstate loaded`)
+                          resolve(channel)
+                        })
                       })
-                    })
+                    )
                   )
                 )
               )

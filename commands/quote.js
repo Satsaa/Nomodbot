@@ -1,5 +1,5 @@
 const fs = require('fs')
-let util = require('../util.js')
+let myUtil = require('../myutil.js')
 let quotes = {}
 
 module.exports.run = (channel, userstate, params) => {
@@ -46,7 +46,7 @@ module.exports.run = (channel, userstate, params) => {
       let random = 1
       let index = Math.floor(params[1] - 1)
       if (isNaN(parseInt(index, 10)) || index > short.length) {
-        random = util.getRandomInt(0, short.length)
+        random = myUtil.getRandomInt(0, short.length)
       } else {
         random = index
       }

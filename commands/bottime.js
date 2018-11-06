@@ -1,8 +1,8 @@
-let util = require('../util.js')
+let myUtil = require('../myutil.js')
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
-    let botTime = util.MSToDHMS(Date.now() - noModBot.bot.startTime)
+    let botTime = myUtil.MSToDHMS(Date.now() - noModBot.bot.startTime)
     resolve(`Bot uptime: ${botTime[0]}d ${botTime[1]}h ${botTime[2]}m ${botTime[3]}s`)
   })
 }

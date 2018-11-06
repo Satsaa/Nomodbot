@@ -1,6 +1,6 @@
 const fs = require('fs')
 let quotes = require('../data/global/manlyQuotes.json')
-let util = require('../util.js')
+let myUtil = require('../myutil.js')
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
@@ -29,7 +29,7 @@ module.exports.run = (channel, userstate, params) => {
       let random = 1
       let index = Math.floor(params[1] - 1)
       if (isNaN(parseInt(index, 10)) || index > quotes.length) {
-        random = util.getRandomInt(0, quotes.length)
+        random = myUtil.getRandomInt(0, quotes.length)
       } else {
         random = index
       }

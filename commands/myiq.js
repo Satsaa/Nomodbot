@@ -1,5 +1,5 @@
 const fs = require('fs')
-let util = require('../util.js')
+let myUtil = require('../myutil.js')
 let global = require('../data/global/myiq.json')
 
 module.exports.run = (channel, userstate, params) => {
@@ -23,7 +23,7 @@ module.exports.run = (channel, userstate, params) => {
       } else {
         user = params[1]
       }
-      let iq = Math.round(util.RandomNormal(-50, 1005, 3))
+      let iq = Math.round(myUtil.RandomNormal(-50, 1005, 3))
 
       let recordChannel = getRecord(iq, userstate['display-name'], channel, short)
       let recordGlobal = getGlobalRecord(iq, userstate['display-name'])

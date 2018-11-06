@@ -30,3 +30,7 @@ module.exports.MSToDHMS = (ms) => {
   h = h % 24
   return [d, h, m, s]
 }
+
+module.exports.plural = (v, singular, plural) => {
+  return (v === 1 ? singular : plural)
+}
