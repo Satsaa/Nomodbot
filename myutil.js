@@ -32,5 +32,9 @@ module.exports.MSToDHMS = (ms) => {
 }
 
 module.exports.plural = (v, singular, plural) => {
-  return (v === 1 ? singular : plural)
+  return (v === 1 || v === '1' ? singular : plural)
+}
+
+module.exports.cap = (string, pos = 0) => {
+  return string.slice(0, pos) + string.charAt(pos).toUpperCase() + string.slice(pos + 1)
 }

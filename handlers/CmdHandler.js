@@ -17,6 +17,7 @@ commands['numvote'] = require('../commands/numvote.js')
 commands['bottime'] = require('../commands/bottime.js')
 commands['commands'] = require('../commands/commands.js')
 commands['notify'] = require('../commands/notify.js')
+commands['define'] = require('../commands/define.js')
 
 for (let cmd in commands) {
   if (typeof commands[cmd].run !== 'function') {

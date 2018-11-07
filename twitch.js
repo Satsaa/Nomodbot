@@ -39,7 +39,10 @@ client.on('notice', (channel, msgid, message) => {
 
 client.on('timeout', (channel, username, reason, duration) => {
   if (!bot[channel]) return
+  let old = noModBot.client
+  noModBot.client = 'HIDDEN'
   console.log((utilM.inspect(noModBot, { showHidden: false, depth: null })))
+  noModBot.client = old
   if (username === client.username) {
     bot[channel].channel.timeout_end = Date.now() + duration * 1000
     console.log(bot[channel].channel.timeout_end)

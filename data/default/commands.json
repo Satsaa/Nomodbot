@@ -8,6 +8,7 @@
   "?uptime": "bottime",
   "?commands": "commands",
   "?notify": "notify",
+  "?define": "define",
   "?exit": {
     "command": "exit",
     "userlvl": "master"

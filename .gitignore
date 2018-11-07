@@ -9,3 +9,4 @@ data/*
 !data/global/
 !data/default/
 data/global/myiq.json
+config/OxfordDictionaries.json
