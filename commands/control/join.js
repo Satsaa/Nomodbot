@@ -14,8 +14,8 @@ module.exports.run = (channel, userstate, params) => {
   })
 }
 
-module.exports.help = () => {
+module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve('Join one or multiple channels: command <channels...>')
+    resolve(`Join one or multiple channels: ${params[1]} <channels...>`)
   })
 }

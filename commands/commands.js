@@ -18,12 +18,12 @@ module.exports.run = (channel, userstate, params) => {
         }
       }
     }
-    resolve(`Commands: ${cmds.join(', ')}`)
+    resolve(`Commands: ${noModBot.bot[channel].channel.help}, ${cmds.join(', ')}`)
   })
 }
 
-module.exports.help = () => {
+module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve('Returns list of commands: command [master].')
+    resolve(`Returns list of commands: ${params[1]} [master].`)
   })
 }

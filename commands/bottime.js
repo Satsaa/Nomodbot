@@ -7,7 +7,7 @@ module.exports.run = (channel, userstate, params) => {
   })
 }
 
-module.exports.help = () => {
+module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
     resolve('Returns bot uptime.')
   })

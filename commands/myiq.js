@@ -123,8 +123,8 @@ module.exports.run = (channel, userstate, params) => {
   }
 }
 
-module.exports.help = () => {
+module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve('Return real IQ of a chatter: command [<recipient>]')
+    resolve(`Return the real IQ of a user: ${params[1]} [<recipient>]`)
   })
 }

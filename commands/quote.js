@@ -65,8 +65,8 @@ module.exports.run = (channel, userstate, params) => {
   })
 }
 
-module.exports.help = () => {
+module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve('Returns a channel quote: command [<index>]. Returns list of quotes: command list. Adds a quote: command add <quote...>. Deletes a quote: command del <index>')
+    resolve(`Disaplays a channel quote: ${params[1]} [<index>]. Add: ${params[1]} add <quote...>. Delete: ${params[1]} del[ete] <index>`)
   })
 }

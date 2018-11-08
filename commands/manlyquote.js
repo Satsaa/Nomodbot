@@ -48,8 +48,8 @@ module.exports.run = (channel, userstate, params) => {
   })
 }
 
-module.exports.help = () => {
+module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve('Returns a manly quote: command [<index>]. Returns list of manliness: command list. Adds a manly quote: command add <quote...>. Deletes a manly quote: command del <index>')
+    resolve(`Display a manly quote: ${params[1]} [<index>]. Add: ${params[1]} add <quote...>. Delete: ${params[1]} del <index>`)
   })
 }

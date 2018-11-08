@@ -1,20 +1,22 @@
-const utilM = require('util')
+const util = require('util')
 const myUtil = require('../myutil')
 var https = require('https')
 const app = require('../config/OxfordDictionaries.json')
+
+let lang = 'en' // later not hardcoded Kapp
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     if (!params[1]) {
       resolve('You must define a word to define (param 1)')
     } else {
-      find(params.slice(1).join(' '), (error, data) => {
+      define(params.slice(1).join(' '), lang, (error, data) => {
         if (error) return console.log(error)
         else {
           if (typeof data.results === 'undefined') {
             resolve(data)
           } else {
-            console.log(utilM.inspect(data, { showHidden: false, depth: null }))
+            console.log(util.inspect(data, { showHidden: false, depth: null }))
             let definition = data.results[0].lexicalEntries[0].entries[0].senses[0].definitions[0]
             let word = data.results[0].word
             if (definition.charAt(0) === '(') { // Capitalize char after paren
@@ -22,27 +24,27 @@ module.exports.run = (channel, userstate, params) => {
             } else { // Capitalize first char
               definition = myUtil.cap(definition)
             }
-            let pronunciation
-            let lexicalCategory
+            let pronun // pronunciation
+            let cat // noun, verb etc
             if (((((data.results[0].lexicalEntries || {})[0] || {}).pronunciations || {})[0] || {}).phoneticSpelling) {
-              pronunciation = '/' + data.results[0].lexicalEntries[0].pronunciations[0].phoneticSpelling + '/ '
-            } else pronunciation = ''
+              pronun = '/' + data.results[0].lexicalEntries[0].pronunciations[0].phoneticSpelling + '/ '
+            } else pronun = ''
 
             if (((data.results[0].lexicalEntries || {})[0] || {}).lexicalCategory) {
-              lexicalCategory = data.results[0].lexicalEntries[0].lexicalCategory // noun, verb etc
-            } else lexicalCategory = 'No lexical category?' // noun, verb etc
+              cat = data.results[0].lexicalEntries[0].lexicalCategory // noun, verb etc
+            } else cat = 'Lexical category missing?'
 
-            resolve(`[${lexicalCategory} ${pronunciation}${word}]: ${definition}${definition.endsWith('.') ? '' : '.'}`)
+            resolve(`[${cat} ${pronun}${word}]: ${definition}${definition.endsWith('.') ? '' : '.'}`)
           }
         }
       })
     }
 
-    function find (word, cb) {
+    function define (word, lang, cb) {
       var options = {
         host: 'od-api.oxforddictionaries.com',
         port: 443,
-        path: '/api/v1/entries/en/' + encodeURIComponent(word),
+        path: '/api/v1/entries/' + lang + '/' + encodeURIComponent(word),
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -51,16 +53,16 @@ module.exports.run = (channel, userstate, params) => {
         }
       }
 
-      https.get(options, function (res) {
+      https.get(options, (res) => {
         switch (res.statusCode) {
           case 200: // success!
             var data = ''
-            res.on('data', function (chunk) {
+            res.on('data', (chunk) => {
               data += chunk
-            }).on('end', function () {
+            }).on('end', () => {
               let result = JSON.parse(data)
               cb(null, result)
-            }).on('error', function (err) {
+            }).on('error', (err) => {
               cb(err)
             })
             break
@@ -94,8 +96,8 @@ module.exports.run = (channel, userstate, params) => {
   })
 }
 
-module.exports.help = () => {
+module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve('Get definition of a word or sentence from Oxford Dictionaries: command <words...>')
+    resolve(`Get definition of a word or sentence from Oxford Dictionaries: ${params[1]} <words...>`)
   })
 }

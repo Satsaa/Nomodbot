@@ -52,3 +52,9 @@ module.exports.handle = (command, channel, userstate, params) => {
 module.exports.responseHandle = (text, channel, userstate, params) => {
   noModBot.msgHandler.chat(channel, text)
 }
+
+module.exports.helpHandle = (command, channel, params) => {
+  commands[command].help(params).then((msg) => {
+    noModBot.msgHandler.chat(channel, msg)
+  })
+}

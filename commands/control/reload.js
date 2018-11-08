@@ -25,8 +25,8 @@ module.exports.run = (channel, userstate, params) => {
   })
 }
 
-module.exports.help = () => {
+module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve('Reload an internal file: command [global] <file>')
+    resolve(`Reload an internal file: ${params[1]} [global] <file>`)
   })
 }

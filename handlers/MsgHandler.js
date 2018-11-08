@@ -15,17 +15,37 @@ module.exports.receive = (channel, userstate, message, self) => {
     case 'chat':
       if (self) updateBot(channel, userstate, message)
       else {
-        console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
+        // console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
 
         const params = message.split(' ') // Split message to an array
         const commandName = params[0].toLowerCase() // Command name (first word)
 
+        let command
+        if (commandName.toLowerCase() === bot[channel].channel.help) {
+          if (!params[1]) {
+            chat(channel, 'Must define a command (param 1)')
+            const commandName = params[1].toLowerCase() // Command name (second word)
+          } else {
+            if (bot[channel].commands.hasOwnProperty(commandName)) { // command
+              if (typeof bot[channel].commands[commandName] === 'object') {
+                command = bot[channel].commands[commandName].command
+              } else {
+                command = bot[channel].commands[commandName]
+              }
+              cmdHandler.helpHandle(command, channel, params)
+            } else if (bot[channel].responses.hasOwnProperty(commandName)) { // response
+              chat(channel, `'${params[1]}' is a response command. Invoke it by typing '${params[1]}'`)
+            } else { // unknown
+              chat(channel, `'${params[1]}' doesn't seem to exist :(`)
+            }
+          }
+        }
+
         if (bot[channel].commands.hasOwnProperty(commandName)) { // command
-          let command
           if (typeof bot[channel].commands[commandName] === 'object') {
             if (bot[channel].commands[commandName].userlvl &&
                 bot[channel].commands[commandName].userlvl === 'master') {
-              if (!bot.config.masters.includes(userstate['username'])) return // not master
+              if (!bot.config.masters.includes(userstate['username'])) return // not permitted
             }
             command = bot[channel].commands[commandName].command
           } else {
@@ -65,7 +85,8 @@ function updateBot (channel, userstate, message) {
   bot[channel].channel.subscriber = userstate.subscriber
 }
 
-module.exports.chat = (channels, message) => {
+module.exports.chat = chat
+function chat (channels, message) {
   if (typeof message === 'number') {
     message = message.toString()
   }

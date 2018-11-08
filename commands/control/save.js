@@ -7,8 +7,8 @@ module.exports.run = (channel, userstate, params) => {
   })
 }
 
-module.exports.help = () => {
+module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve('Save like on exiting: command')
+    resolve('Save like on exiting')
   })
 }

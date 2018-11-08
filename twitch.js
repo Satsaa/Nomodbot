@@ -1,6 +1,6 @@
 var tmi = require('tmi.js')
 const fs = require('fs')
-const utilM = require('util')
+const util = require('util')
 
 let msgHandler = require('./handlers/MsgHandler.js')
 exports.msgHandler = msgHandler
@@ -41,7 +41,7 @@ client.on('timeout', (channel, username, reason, duration) => {
   if (!bot[channel]) return
   let old = noModBot.client
   noModBot.client = 'HIDDEN'
-  console.log((utilM.inspect(noModBot, { showHidden: false, depth: null })))
+  // console.log((util.inspect(noModBot, { showHidden: false, depth: null })))
   noModBot.client = old
   if (username === client.username) {
     bot[channel].channel.timeout_end = Date.now() + duration * 1000
@@ -118,6 +118,7 @@ function loadRoomstateFromQueue (channel) {
 }
 
 // Complexity is key
+exports.joinChannel = joinChannel
 function joinChannel (channels) { // Allows multichannel
   return new Promise((resolve, reject) => {
     if (typeof channels === 'string') { // channels is used as an array but a single channel string is supported
@@ -185,8 +186,8 @@ function joinChannel (channels) { // Allows multichannel
     }
   })
 }
-exports.joinChannel = joinChannel
 
+exports.partChannel = partChannel
 function partChannel (channels) {
   return new Promise((resolve, reject) => {
     if (typeof channels === 'string') { // channels is used as an array but a single channel string is supported
@@ -210,7 +211,6 @@ function partChannel (channels) {
     })
   })
 }
-exports.partChannel = partChannel
 
 // add/remove channel on internal channels array
 function addChannel (channel) {
@@ -232,6 +232,7 @@ if (typeof bot.config.save_interval === 'undefined' || !(bot.config.save_interva
   saveInterval = setInterval(save, bot.config.save_interval * 1000)
 } // created save interval
 
+exports.save = save
 function save () {
   let channels = []
   for (var key in bot) {
@@ -250,4 +251,3 @@ function save () {
   })
   console.log(`* [BOT] Saved`)
 }
-exports.save = save

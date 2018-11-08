@@ -29,7 +29,7 @@ module.exports.run = (channel, userstate, params) => {
           local[params[2].toLowerCase()] = params.slice(3).join(' ')
           saveResponses(channel, local)
           return `Response '${params[2].toLowerCase()}' added`
-        } else if (params[1].toLowerCase() === 'del') { // delete a response
+        } else if (params[1].toLowerCase() === 'del' || params[1].toLowerCase() === 'delete') { // delete a response
           if (!noModBot.bot.config.masters.includes(userstate['username'])) return 'Insufficient permissions to delete responses'
           if (!params[2]) return 'You must specify a response to delete! (param 2)'
           if (!local.hasOwnProperty(params[2].toLowerCase())) return `Can't find "${params[2].toLowerCase()}"`
@@ -58,8 +58,8 @@ module.exports.run = (channel, userstate, params) => {
   })
 }
 
-module.exports.help = () => {
+module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve('Add a response: command add <command> <response...>. Delete a response: command del <command>. Edit a response: command edit <command>')
+    resolve(`Add a response: ${params[1]} add <command> <response...>. Delete: ${params[1]} del <command>. Edit: ${params[1]} edit <command>`)
   })
 }

@@ -15,8 +15,10 @@ function onMessage (channel, userstate, message, self) {
     for (var i = 0; i < short[userstate.username].length; i++) {
       let notify = short[userstate.username][i]
       let time = myUtil.MSToDHMS(Date.now() - notify.time)
-      time = time[0] ? time[0] + ' days' : time[1] ? time[1] + ' hours' : time[2] ? time[2] + ' mins' : time[3] ? time[3] + ' secs' : 'something went wrong'
-      noModBot.msgHandler.chat(channel, ` ${notify.from} -> @${userstate['display-name']} ${time} ago: ${notify.msg}`)
+      let timeStr = time[0] ? 'days' : time[1] ? 'hours' : time[2] ? 'mins' : time[3] ? 'secs' : 'secs'
+      time = time[0] ? time[0] : time[1] ? time[1] : time[2] ? time[2] : time[3] ? time[3] : '0'
+      if (time === 1) timeStr = timeStr.slice(0, -1) // remove 's' if singular
+      noModBot.msgHandler.chat(channel, ` ${notify.from} -> @${userstate['display-name']} ${time} ${timeStr} ago: ${notify.msg}`)
     }
     delete short[userstate.username]
     block.splice(block.indexOf(channel), 1)
@@ -62,8 +64,8 @@ async function save (channel, notifys) {
   })
 }
 
-module.exports.help = () => {
+module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve('Notify a user when they are seen on this channel: command <user> <text...>')
+    resolve(`Notify a user when they are seen on this channel: ${params[1]} <user> <text...>`)
   })
 }

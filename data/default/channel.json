@@ -1,30 +1,8 @@
 {
+  "help": "?help",
   "timeout_end": null,
   "mod": false,
   "subscriber": false,
   "banned": false,
-  "last_msg": "",
-  "commands": {
-    "?echo": "echo",
-    "?exit": "exit",
-    "?myiq": "myiq",
-    "?join": "join",
-    "?part": "part",
-    "?manlyquote": "manlyquote",
-    "?quote": "quote",
-    "?meme": "meme",
-    "?response": "response",
-    "?artifact": "artifact"
-  },
-  "roomstate": {
-    "broadcaster-lang":null,
-    "emote-only":false,
-    "followers-only":"-1",
-    "r9k":false,
-    "rituals":false,
-    "room-id":"61365582",
-    "slow":false,
-    "subs-only":false,
-    "channel":"#satsaa"
-  }
+  "last_msg": ""
 }
