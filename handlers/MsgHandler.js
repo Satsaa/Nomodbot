@@ -86,7 +86,8 @@ function updateBot (channel, userstate, message) {
 }
 
 module.exports.chat = chat
-function chat (channels, message) {
+function chat (channels, message, allowCommand) {
+  if (!allowCommand) message = unCommandify(message)
   if (typeof message === 'number') {
     message = message.toString()
   }
@@ -241,6 +242,13 @@ function queueWhisper (channel, message) {
     if (bot.internal.whisper_times_min.length >= bot.config.whisper_limit_min) return (bot.internal.whisper_times_min[0] + 60 * 1000) - Date.now() + 50
     return 0
   }
+}
+
+function unCommandify (msg) {
+  while (msg.charAt(0) === '/' || msg.charAt(0) === '.' || msg.charAt(0) === '\\') {
+    msg = msg.substr(1)
+  }
+  return msg
 }
 
 function antiDupe (channel, message) { // remove or add 2 chars at msg end to avoid duplicate messages
