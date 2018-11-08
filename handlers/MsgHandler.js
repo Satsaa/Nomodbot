@@ -86,10 +86,16 @@ function updateBot (channel, userstate, message) {
 }
 
 module.exports.chat = chat
-function chat (channels, message, allowCommand) {
-  if (!allowCommand) message = unCommandify(message)
-  if (typeof message === 'number') {
-    message = message.toString()
+function chat (channels, msg, allowCommand) {
+  if (!allowCommand) {
+    if (!msg.startsWith('/me') && !msg.startsWith('.me') && !msg.startsWith('\\me')) { // allow /me
+      if (msg.charAt(0) === '/' || msg.charAt(0) === '.' || msg.charAt(0) === '\\') {
+        msg = '\u206D' + msg
+      }
+    }
+  }
+  if (typeof msg === 'number') {
+    msg = msg.toString()
   }
   if (!Array.isArray(channels) && typeof channels === 'object') {
     console.log(`[ERROR] Invalid channels type: ${typeof channels} `)
@@ -100,7 +106,7 @@ function chat (channels, message, allowCommand) {
   }
   channels.forEach((channel) => {
     if (typeof bot[channel] === 'undefined') { // not joined
-      if (noModBot.bot.config.join_on_message) { // Joining on msg enabled?
+      if (noModBot.bot.config.join_on_msg) { // Joining on msg enabled?
         noModBot.joinChannel(channel).then((data) => {
           main()
         })
@@ -111,16 +117,16 @@ function chat (channels, message, allowCommand) {
       if (bot[channel].channel.mod) { // mod, no speed limit, max 100 per 30 sec tho
         parseTimes(1)
         if (bot.internal.mod_times.length >= bot.internal.mod_limit) { // if ratelimit is full
-          queueModChat(channel, message)
+          queueModChat(channel, msg)
           return
         }
-        client.say(channel, antiDupe(channel, message)).then(() => {
+        client.say(channel, antiDupe(channel, msg)).then(() => {
           bot.internal.mod_times.push(Date.now())
         }).catch((err) => {
           console.log(`* [${channel}] Msg failed: ${err}`)
         })
       } else { // user needs limits
-        queueChat(channel, message)
+        queueChat(channel, msg)
       }
     }
   })
@@ -242,13 +248,6 @@ function queueWhisper (channel, message) {
     if (bot.internal.whisper_times_min.length >= bot.config.whisper_limit_min) return (bot.internal.whisper_times_min[0] + 60 * 1000) - Date.now() + 50
     return 0
   }
-}
-
-function unCommandify (msg) {
-  while (msg.charAt(0) === '/' || msg.charAt(0) === '.' || msg.charAt(0) === '\\') {
-    msg = msg.substr(1)
-  }
-  return msg
 }
 
 function antiDupe (channel, message) { // remove or add 2 chars at msg end to avoid duplicate messages
