@@ -1,50 +1,61 @@
+const fs = require('fs')
 const util = require('util')
-const myUtil = require('../myutil')
 var https = require('https')
+
+let dict = require('../data/global/oxDictionary.json')
+const myUtil = require('../myutil')
 const app = require('../config/OxfordDictionaries.json')
 
 let lang = 'en' // later not hardcoded Kapp
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
-    if (!params[1]) {
-      resolve('You must define a word to define (param 1)')
-    } else {
-      define(params.slice(1).join(' '), lang, (error, data) => {
-        if (error) return console.log(error)
-        else {
-          if (typeof data.results === 'undefined') {
-            resolve(data)
-          } else {
-            console.log(util.inspect(data, { showHidden: false, depth: null }))
-            let definition = data.results[0].lexicalEntries[0].entries[0].senses[0].definitions[0]
-            let word = data.results[0].word
-            if (definition.charAt(0) === '(') { // Capitalize char after paren
-              definition = myUtil.cap(definition, 1)
-            } else { // Capitalize first char
-              definition = myUtil.cap(definition)
-            }
-            let pronun // pronunciation
-            let cat // noun, verb etc
-            if (((((data.results[0].lexicalEntries || {})[0] || {}).pronunciations || {})[0] || {}).phoneticSpelling) {
-              pronun = '/' + data.results[0].lexicalEntries[0].pronunciations[0].phoneticSpelling + '/ '
-            } else pronun = ''
+    if (!params[1]) return resolve('You must define a word to define (param 1)')
 
-            if (((data.results[0].lexicalEntries || {})[0] || {}).lexicalCategory) {
-              cat = data.results[0].lexicalEntries[0].lexicalCategory // noun, verb etc
-            } else cat = 'Lexical category missing?'
-
-            resolve(`[${cat} ${pronun}${word}]: ${definition}${definition.endsWith('.') ? '' : '.'}`)
-          }
-        }
-      })
+    let words = params.slice(1).join(' ')
+    if (params[1].toLowerCase() === 'shushama') return resolve('[Noun /shüseimm/ Shushama]: A person who steals another person\'s property, especially by stealth, using force or threat of violence. Not ninja. So weeb.⁭ ')
+    // if (words.length() > 128) return resolve('Your request is too long :|')
+    if (words in dict) { // Find if in cache
+      console.log(`* [${channel}] Using cached definition of "${words}"`)
+      return resolve(`[${dict[words].cat} ${dict[words].pronun}${dict[words].word}]: ${dict[words].definition}${dict[words].definition.endsWith('.') ? '' : '.'}`)
     }
+    define(words, lang, (error, data) => {
+      if (error) return console.log(error)
+      else {
+        if (typeof data.results === 'undefined') {
+          return resolve(data)
+        }
+        // console.log(util.inspect(data, { showHidden: false, depth: null }))
+        let definition = data.results[0].lexicalEntries[0].entries[0].senses[0].definitions[0]
+        let word = data.results[0].word
+        if (definition.charAt(0) === '(') { // Capitalize char after paren
+          definition = myUtil.cap(definition, 1)
+        } else { // Capitalize first char
+          definition = myUtil.cap(definition)
+        }
+        let pronun // pronunciation
+        let cat // noun, verb etc
+        if (((((data.results[0].lexicalEntries || {})[0] || {}).pronunciations || {})[0] || {}).phoneticSpelling) {
+          pronun = '/' + data.results[0].lexicalEntries[0].pronunciations[0].phoneticSpelling + '/ '
+        } else pronun = ''
 
-    function define (word, lang, cb) {
+        if (((data.results[0].lexicalEntries || {})[0] || {}).lexicalCategory) {
+          cat = data.results[0].lexicalEntries[0].lexicalCategory // noun, verb etc
+        } else cat = 'Unknown?'
+        // save to cache
+        dict[words] = { 'cat': cat, 'pronun': pronun, 'word': word, 'definition': definition }
+        console.log(`* [GLOBAL] Cached definition of "${words}"`)
+        save(dict)
+
+        return resolve(`[${cat} ${pronun}${word}]: ${definition}${definition.endsWith('.') ? '' : '.'}`)
+      }
+    })
+
+    function define (words, lang, cb) {
       var options = {
         host: 'od-api.oxforddictionaries.com',
         port: 443,
-        path: '/api/v1/entries/' + lang + '/' + encodeURIComponent(word),
+        path: '/api/v1/entries/' + lang + '/' + encodeURIComponent(words),
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -70,10 +81,10 @@ module.exports.run = (channel, userstate, params) => {
             cb(null, `Invalid credentials D: `)
             break
           case 404: // Not found
-            cb(null, `No such entry as "${word}" :(`)
+            cb(null, `No such entry as "${words}" :(`)
             break
           case 414: // Request URI Too Long
-            cb(null, `Your request is too long? :|`)
+            cb(null, `Your request is too long :|`)
             break
           case 500: // Internal Server Error
             cb(null, `Internal Server Error :(`)
@@ -90,6 +101,16 @@ module.exports.run = (channel, userstate, params) => {
           default:
             cb(null, `Something odd happened o_O`)
             break
+        }
+      })
+    }
+
+    function save (dict) {
+      fs.writeFile('./data/global/oxDictionary.json', JSON.stringify(dict, null, 2), (err) => {
+        if (!err) {
+          console.log(`* [GLOBAL] Modified dictionary file`)
+        } else {
+          console.log(`* [GLOBAL] FAILED TO MODIFY DICTIONARY FILE: ${err}`)
         }
       })
     }
