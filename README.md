@@ -7,11 +7,12 @@ No permission control ✔
 Exception ✔  
 Redundant modules ✔  
 Bad coding habits ✔  
-Deceptive config folder ✔  
-10 hour setup ✔  
-List of dependencies ✖  
 NPM support ✖  
 Meaningful comments ✖  
+
+10 hour setup ✖  
+List of dependencies ✔  
+Deceptive config folder ✖  
 
 First javascript project
 
