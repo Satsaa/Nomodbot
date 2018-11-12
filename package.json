@@ -1,0 +1,29 @@
+{
+  "name": "nomodbot",
+  "version": "0.1.0",
+  "description": "twitch bot",
+  "main": "index.js",
+  "dependencies": {
+    "tmi.js": "^1.2.1",
+    "twitter": "^1.7.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Satsaa/Nomodbot.git"
+  },
+  "keywords": [
+    "twitch",
+    "irc",
+    "bot"
+  ],
+  "author": "Satsaa",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Satsaa/Nomodbot/issues"
+  },
+  "homepage": "https://github.com/Satsaa/Nomodbot#readme"
+}
