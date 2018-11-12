@@ -14,11 +14,8 @@ function onMessage (channel, userstate, message, self) {
   if (userstate.username in short) {
     for (var i = 0; i < short[userstate.username].length; i++) {
       let notify = short[userstate.username][i]
-      let time = myUtil.MSToDHMS(Date.now() - notify.time)
-      let timeStr = time[0] ? 'days' : time[1] ? 'hours' : time[2] ? 'mins' : time[3] ? 'secs' : 'secs'
-      time = time[0] ? time[0] : time[1] ? time[1] : time[2] ? time[2] : time[3] ? time[3] : '0'
-      if (time === 1) timeStr = timeStr.slice(0, -1) // remove 's' if singular
-      noModBot.msgHandler.chat(channel, ` ${notify.from} -> ${userstate['display-name']} ${time} ${timeStr} ago: ${notify.msg}`)
+
+      noModBot.msgHandler.chat(channel, ` ${notify.from} -> ${userstate['display-name']} ${myUtil.timeSince(notify.time, 1, false)} ago: ${notify.msg}`)
     }
     delete short[userstate.username]
     block.splice(block.indexOf(channel), 1)

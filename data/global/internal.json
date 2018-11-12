@@ -3,24 +3,21 @@
     "#satsaa",
     "#l34um1"
   ],
+  "user_ids": {
+    "#satsaa": "61365582",
+    "#l34um1": "21734724",
+    "#PurgeGamers": "22561231",
+    "#unixpanda": "141660667",
+    "#btsartifact": "234716491"
+  },
   "whisper_commands": {},
   "user_times": [
-    1541611430081
+    1541971616703
   ],
   "mod_times": [
-    1541609043999
+    1541985022964
   ],
-  "whisper_times_sec": [
-    1540205443000,
-    1540205450000,
-    1540205453000,
-    1540205472000
-  ],
-  "whisper_times_min": [
-    1540205443000,
-    1540205450000,
-    1540205453000,
-    1540205472000
-  ],
+  "whisper_times_sec": [],
+  "whisper_times_min": [],
   "whisper_accounts": []
 }

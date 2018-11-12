@@ -77,7 +77,9 @@ client.on('connecting', (address, port) => {
 
 client.on('connected', (address, port) => {
   console.log(`* Connected`)
-  joinChannel(bot.internal.channels)
+  joinChannel(bot.internal.channels).catch((err) => {
+    if (err) console.log('failed on \'Connected\'')
+  })
 })
 
 client.on('disconnected', (reason) => {
@@ -129,6 +131,9 @@ function joinChannel (channels) { // Allows multichannel
       client.join(channel).then((data) => { // data returns channel
         bot[channel] = {}
         console.log(`* [${channel}] Joined`)
+        getUserId(channel).catch((err) => {
+          console.log(`* [ERROR (${channel})] Failed to get user ID: ${err}`)
+        })
         fs.mkdir('./data/' + channel, {}, (err) => {
           if (err && err.code !== 'EEXIST') throw err
           loadChannelFile(channel, 'responses', true).then(
@@ -209,6 +214,39 @@ function partChannel (channels) {
         reject(err)
       })
     })
+  })
+}
+
+// gets user id from cache or gathers it from api
+exports.getUserId = getUserId
+function getUserId (loginName) {
+  return new Promise((resolve, reject) => {
+    if (loginName.length > 2) {
+      console.log(`* [${loginName}] Getting user id`)
+      if (!loginName.startsWith('#')) loginName = '#' + loginName
+      if (loginName in bot.internal.user_ids) {
+        console.log(`* [${loginName}] Cached user id: ${bot.internal.user_ids[loginName]}`)
+
+        resolve(bot.internal.user_ids[loginName])
+      } else {
+        noModBot.client.api({
+          url: 'https://api.twitch.tv/kraken/users?login=' + loginName.replace('#', ''),
+          method: 'GET',
+          headers: {
+            'Client-ID': opts.options.clientId,
+            'Accept': 'application/vnd.twitchtv.v5+json'
+          }
+        }, (err, res, data) => {
+          if (err) reject(err)
+          if ((((data || {}).users || {})[0] || {})._id) {
+            console.log(data)
+            console.log(`* [${loginName}] Got user id: ${data.users[0]._id}`)
+            bot.internal.user_ids[loginName] = data.users[0]._id
+            resolve(data.users[0]._id)
+          } else reject(new Error('Invalid request'))
+        })
+      }
+    }
   })
 }
 

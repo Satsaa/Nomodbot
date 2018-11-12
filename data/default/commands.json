@@ -5,10 +5,12 @@
   "?quote": "quote",
   "?response": "response",
   "?artifact": "artifact",
-  "?uptime": "bottime",
+  "?bottime": "bottime",
   "?commands": "commands",
   "?notify": "notify",
   "?define": "define",
+  "?uptime": "uptime",
+  "?downtime": "uptime",
   "?exit": {
     "command": "exit",
     "userlvl": "master"

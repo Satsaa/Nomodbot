@@ -10,5 +10,8 @@
 	  "username": "<bot username (lower case)>",
 	  "password": "oauth:<token>"
 	},
-	"channels": []
+	"channels": [],
+  "options": {
+    "clientId": "<optional client id>"
+  }
 }
