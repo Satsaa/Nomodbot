@@ -43,8 +43,8 @@ module.exports.run = (channel, userstate, params) => {
           let exists = local.hasOwnProperty(params[2].toLowerCase())
           local[params[2].toLowerCase()] = params.slice(3).join(' ')
           saveResponses(channel, local)
-          if (exists) return `Response '${params[2].toLowerCase()}' added`
-          return `Response '${params[2].toLowerCase()}' edited`
+          if (exists) return `Response '${params[2].toLowerCase()}' edited`
+          return `Response '${params[2].toLowerCase()}' added`
         }
       }
       return `Add a response: ${params[0]} add <command> <response...>. Delete a response: ${params[0]} del <command>. Edit a response: ${params[0]} edit <command>`

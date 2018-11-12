@@ -6,7 +6,7 @@ let minVotes = 1 // minimum votes for a single option to be counted
 let minTotalVotes = 5 // minimum total votes
 
 let waitMultiplier = 0.9 // For each vote, voteEndTime is multiplied by this
-let minWait = 2500 // Minimum ms wait duration
+let minWait = 3500 // Minimum ms wait duration
 let voteEndTime = 10000 // Ms until vote ends without new votes
 
 module.exports.run = (channel, userstate, params) => {

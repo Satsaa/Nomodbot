@@ -32,7 +32,7 @@ module.exports.run = (channel, userstate, params) => {
           if (!params[2]) return 'You must specify text for the quote! (param 2+)'
           short[short.length] = params.slice(2).join(' ')
           save(channel, short)
-          return `Added quote ${short.length}: ${params.slice(2).join(' ')}`
+          return `Added quote ${short.length}}`
         } else if (params[1].toLowerCase() === 'del') { // delete a quote
           if (!noModBot.bot.config.masters.includes(userstate['username'])) return 'Insufficient permissions to delete quotes!'
           if (!params[2]) return 'You must specify a quote index! (param 2)'
@@ -40,7 +40,7 @@ module.exports.run = (channel, userstate, params) => {
           if (typeof short[params[2] - 1] === 'undefined') return 'Invalid quote index'
           short.splice(params[2] - 1, 1)
           save(channel, short)
-          return 'Deleted quote ' + (params[2])
+          return `Deleted quote ${params[2]}: ${short.splice(params[2] - 1, 1)}`
         }
       }
       let random = 1

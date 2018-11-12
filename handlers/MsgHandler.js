@@ -10,6 +10,8 @@ module.exports.refer = (clientRef, botRef, twitchRef) => {
 }
 
 module.exports.receive = (channel, userstate, message, self) => {
+  // remove antiduplicate suffix, it would be counted as a parameter (mainly chatterino)
+  if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
   switch (userstate['message-type']) {
     case 'action':
     case 'chat':
@@ -22,9 +24,9 @@ module.exports.receive = (channel, userstate, message, self) => {
 
         let command
         if (commandName.toLowerCase() === bot[channel].channel.help) {
+          const commandName = params[1].toLowerCase() // Command name (second word)
           if (!params[1]) {
             chat(channel, 'Must define a command (param 1)')
-            const commandName = params[1].toLowerCase() // Command name (second word)
           } else {
             if (bot[channel].commands.hasOwnProperty(commandName)) { // command
               if (typeof bot[channel].commands[commandName] === 'object') {
@@ -47,10 +49,8 @@ module.exports.receive = (channel, userstate, message, self) => {
                 bot[channel].commands[commandName].userlvl === 'master') {
               if (!bot.config.masters.includes(userstate['username'])) return // not permitted
             }
-            command = bot[channel].commands[commandName].command
-          } else {
-            command = bot[channel].commands[commandName]
-          }
+            command = bot[channel].commands[commandName].command // object command type
+          } else command = bot[channel].commands[commandName] // old string only type
           cmdHandler.handle(command, channel, userstate, params)
         } else {
           if (bot[channel].responses.hasOwnProperty(commandName)) { // response
@@ -90,7 +90,7 @@ function chat (channels, msg, allowCommand) {
   if (!allowCommand) {
     if (!msg.startsWith('/me') && !msg.startsWith('.me') && !msg.startsWith('\\me')) { // allow /me
       if (msg.charAt(0) === '/' || msg.charAt(0) === '.' || msg.charAt(0) === '\\') {
-        msg = '\u206D' + msg
+        msg = ' ' + msg
       }
     }
   }
