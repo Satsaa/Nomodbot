@@ -4,24 +4,24 @@ module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     if (typeof params[1] !== 'undefined') {
       if (params[1] === 'global') {
-        if (!params[2]) resolve(null)
+        if (!params[2]) return resolve('Define a file in the global folder (param 2)')
         fs.readFile('./data/global/' + params[2] + '.json', (err, data) => {
-          if (err) resolve(`${err.name}: ${err.message}`)
+          if (err) return resolve(`${err.name}: ${err.message}`)
+          else resolve(null)
           delete nmb.bot[params[2]]
           nmb.bot[params[2]] = JSON.parse(data)
           console.log(`* [${channel}] reloaded ${params[2]}.json`)
         })
       } else {
         fs.readFile('./data/' + channel + '/' + params[1] + '.json', (err, data) => {
-          if (err) resolve(err.name)
+          if (err) return resolve(err.name)
+          else resolve(null)
           delete nmb.bot[channel][params[1]]
           nmb.bot[channel][params[1]] = JSON.parse(data)
           console.log(`* [${channel}] reloaded ${params[1]}.json`)
         })
       }
-      resolve(null)
-    }
-    resolve(`Reload an internal file: ${params[0]} [global] <file>`)
+    } else resolve(`Reload an internal file: ${params[0]} [global] <file>`)
   })
 }
 

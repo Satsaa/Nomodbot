@@ -113,7 +113,6 @@ function loadRoomstateFromQueue (channel) {
         bot[channel].roomstate[element] = roomstateQueue[channel][element]
       }
       delete roomstateQueue[channel]
-      resolve()
     }
     resolve()
   })

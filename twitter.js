@@ -8,7 +8,7 @@ var client = new Twitter(require('./config/TwitterClient.json'))
 // Artifact: 891000584836235265 | IceFrog: 17388199 | self: 917998149309992962
 // ThinkingBottle: 987819021574770688 | Miki: 2355369798 | Baumi: 2835634330
 // SparkMoba: 1042789584021729280
-// var stream = client.stream('statuses/filter', {track: 'picture'});
+
 var stream = client.stream('statuses/filter', {
   follow: '176507184,44680622,1042789584021729280,891000584836235265,17388199,917998149309992962,987819021574770688,2355369798'
 })
@@ -25,12 +25,11 @@ stream.on('error', (error) => {
 let alertChannels = ['#satsaa', '#l34um1']
 
 stream.on('data', (tweet) => {
-  if (!('twitter_caption' in nmb.bot.config)) nmb.bot.config.twitter_caption = true
   if (!tweet || tweet.in_reply_to_user_id_str != null || ('retweeted_status' in tweet)) return // replies are ignored as they are likely retweets
   console.log(`* Tweet from @${tweet.user.screen_name}: twitter.com/statuses/${tweet.id_str}`)
   if (tweet.user.screen_name === 'sparkmoba') tweet.user.screen_name = 'sporkmoba'
   // console.log(tweet)
-  if (!tweet.extended_tweet && typeof tweet.entities.media !== 'undefined' && tweet.entities.media[0].media_url) {
+  if (!tweet.extended_tweet && (tweet.entities.media || {})[0].media_url) {
     console.log(`* Media: ${tweet.entities.media[0].media_url}`)
     console.log(`* Waiting for caption...`)
     let imageUrl = tweet.entities.media[0].media_url
@@ -50,7 +49,7 @@ stream.on('data', (tweet) => {
       twitter.com/i/web/status/${tweet.id_str}/
       ${tweet.entities.media[0].media_url}`)
     })
-  } else if ((((tweet || {}).extended_tweet || {}).entities || {}).media && tweet.extended_tweet.entities.media[0].media_url) {
+  } else if (((((tweet || {}).extended_tweet || {}).entities || {}).media || {})[0].media_url) {
     console.log(`* Media: ${tweet.extended_tweet.entities.media[0].media_url}`)
     console.log(`* Waiting for caption...`)
     let imageUrl = tweet.extended_tweet.entities.media[0].media_url

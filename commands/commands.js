@@ -5,11 +5,11 @@ module.exports.run = (channel, userstate, params) => {
     if (params[1] && params[1] === 'master') {
       for (let cmd in short.commands) {
         if (typeof short.commands[cmd] === 'object') {
-          if (!short.commands[cmd].unlisted &&
-            short.commands[cmd].userlvl && short.commands[cmd].userlvl === params[1]) cmds.push(cmd)
+          if (!short.commands[cmd].unlisted && short.commands[cmd].userlvl && short.commands[cmd].userlvl === params[1]) cmds.push(cmd)
         }
       }
     } else { // any user
+      cmds.push(nmb.bot[channel].channel.help) // add help command
       for (let cmd in short.commands) {
         if (typeof short.commands[cmd] === 'object') {
           if (!short.commands[cmd].unlisted && !short.commands[cmd].userlvl) cmds.push(cmd)
@@ -18,7 +18,7 @@ module.exports.run = (channel, userstate, params) => {
         }
       }
     }
-    resolve(`Commands: ${nmb.bot[channel].channel.help}, ${cmds.join(', ')}`)
+    resolve(`Commands: ${cmds.join(', ')}`)
   })
 }
 

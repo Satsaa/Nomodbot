@@ -12,9 +12,7 @@ module.exports.run = (channel, userstate, params) => {
             console.log(`* [${channel}] FAILED TO CREATE RESPONSE FILE: ${err}`)
           }
         })
-      } else { // file is present
-        resolve(main(channel, userstate, params))
-      }
+      } else resolve(main(channel, userstate, params))
     })
 
     function main (channel, userstate, params) {

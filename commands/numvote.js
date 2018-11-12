@@ -39,7 +39,7 @@ module.exports.run = (channel, userstate, params) => {
           if (element === '0') continue // ignore 0 so it can be put in the end later
           if (votes[channel][element] === total) { // ignore vote if all votes were to a single option
             deleteVote()
-            resolve(null)
+            return resolve(null)
           }
           msg += `| ${element}: ${Math.round(votes[channel][element] / total * 100)}% `
         }

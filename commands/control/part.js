@@ -4,10 +4,10 @@ module.exports.run = (channel, userstate, params) => {
     if (params[0]) {
       params.forEach((channel) => {
         if (channel.startsWith('#')) {
-          if (channel.length < 4) resolve(`Invalid channel: '${channel}'`)
+          if (channel.length < 4) return resolve(`Invalid channel: '${channel}'`)
           else nmb.partChannel(channel)
         } else {
-          if (channel.length < 3) resolve(`Invalid channel: '${channel}'`)
+          if (channel.length < 3) return resolve(`Invalid channel: '${channel}'`)
           else nmb.partChannel('#' + channel)
         }
       })

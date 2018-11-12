@@ -18,38 +18,37 @@ module.exports.run = (channel, userstate, params) => {
     if (words in dict) { // Find if in cache
       console.log(`* [${channel}] Using cached definition of "${words}"`)
       return resolve(`[${dict[words].cat} ${dict[words].pronun}${dict[words].word}]: ${dict[words].definition}${dict[words].definition.endsWith('.') ? '' : '.'}`)
+    } else {
+      define(words, lang, (error, data) => {
+        if (error) return console.log(error)
+        else {
+          if (typeof data.results === 'undefined') return resolve(data)
+          // console.log(util.inspect(data, { showHidden: false, depth: null }))
+          let definition = data.results[0].lexicalEntries[0].entries[0].senses[0].definitions[0]
+          let word = data.results[0].word
+          if (definition.charAt(0) === '(') { // Capitalize char after paren
+            definition = myUtil.cap(definition, 1)
+          } else { // Capitalize first char
+            definition = myUtil.cap(definition)
+          }
+          let pronun // pronunciation
+          let cat // noun, verb etc
+          if (((((data.results[0].lexicalEntries || {})[0] || {}).pronunciations || {})[0] || {}).phoneticSpelling) {
+            pronun = '/' + data.results[0].lexicalEntries[0].pronunciations[0].phoneticSpelling + '/ '
+          } else pronun = ''
+
+          if (((data.results[0].lexicalEntries || {})[0] || {}).lexicalCategory) {
+            cat = data.results[0].lexicalEntries[0].lexicalCategory // noun, verb etc
+          } else cat = 'Unknown?'
+          // save to cache
+          dict[words] = { 'cat': cat, 'pronun': pronun, 'word': word, 'definition': definition }
+          console.log(`* [GLOBAL] Cached definition of "${words}"`)
+          save(dict)
+
+          resolve(`[${cat} ${pronun}${word}]: ${definition}${definition.endsWith('.') ? '' : '.'}`)
+        }
+      })
     }
-    define(words, lang, (error, data) => {
-      if (error) return console.log(error)
-      else {
-        if (typeof data.results === 'undefined') {
-          return resolve(data)
-        }
-        // console.log(util.inspect(data, { showHidden: false, depth: null }))
-        let definition = data.results[0].lexicalEntries[0].entries[0].senses[0].definitions[0]
-        let word = data.results[0].word
-        if (definition.charAt(0) === '(') { // Capitalize char after paren
-          definition = myUtil.cap(definition, 1)
-        } else { // Capitalize first char
-          definition = myUtil.cap(definition)
-        }
-        let pronun // pronunciation
-        let cat // noun, verb etc
-        if (((((data.results[0].lexicalEntries || {})[0] || {}).pronunciations || {})[0] || {}).phoneticSpelling) {
-          pronun = '/' + data.results[0].lexicalEntries[0].pronunciations[0].phoneticSpelling + '/ '
-        } else pronun = ''
-
-        if (((data.results[0].lexicalEntries || {})[0] || {}).lexicalCategory) {
-          cat = data.results[0].lexicalEntries[0].lexicalCategory // noun, verb etc
-        } else cat = 'Unknown?'
-        // save to cache
-        dict[words] = { 'cat': cat, 'pronun': pronun, 'word': word, 'definition': definition }
-        console.log(`* [GLOBAL] Cached definition of "${words}"`)
-        save(dict)
-
-        return resolve(`[${cat} ${pronun}${word}]: ${definition}${definition.endsWith('.') ? '' : '.'}`)
-      }
-    })
 
     function define (words, lang, cb) {
       var options = {
