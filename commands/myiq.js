@@ -15,7 +15,7 @@ module.exports.run = (channel, userstate, params) => {
     })
 
     function main (channel, userstate, params) {
-      let short = noModBot.bot[channel].myiq // reference for neat code
+      let short = nmb.bot[channel].myiq // reference for neat code
 
       let user
       if (params.length === 1) {

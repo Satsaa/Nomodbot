@@ -25,6 +25,7 @@ stream.on('error', (error) => {
 let alertChannels = ['#satsaa', '#l34um1']
 
 stream.on('data', (tweet) => {
+  if (!('twitter_caption' in nmb.bot.config)) nmb.bot.config.twitter_caption = true
   if (!tweet || tweet.in_reply_to_user_id_str != null || ('retweeted_status' in tweet)) return // replies are ignored as they are likely retweets
   console.log(`* Tweet from @${tweet.user.screen_name}: twitter.com/statuses/${tweet.id_str}`)
   if (tweet.user.screen_name === 'sparkmoba') tweet.user.screen_name = 'sporkmoba'
@@ -37,14 +38,14 @@ stream.on('data', (tweet) => {
       console.log(`* Caption: ${caption}`)
       if (caption) caption = ' Image of ' + caption
 
-      noModBot.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+      nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.text.substring(0, tweet.display_text_range[1])}
       twitter.com/i/web/status/${tweet.id_str}/
       ${caption || tweet.entities.media[0].media_url}`)
     }).catch((err) => {
       console.log(`* Caption failed: ${err}`)
 
-      noModBot.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+      nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.text.substring(0, tweet.display_text_range[1])}
       twitter.com/i/web/status/${tweet.id_str}/
       ${tweet.entities.media[0].media_url}`)
@@ -57,20 +58,20 @@ stream.on('data', (tweet) => {
       console.log(`* Caption: ${caption}`)
       if (caption) caption = ' Image of ' + caption
 
-      noModBot.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+      nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.extended_tweet.full_text.substring(0, tweet.extended_tweet.display_text_range[1])}
       twitter.com/i/web/status/${tweet.id_str}
       ${caption || tweet.extended_tweet.entities.media[0].media_url}`)
     }).catch((err) => {
       console.log(err)
 
-      noModBot.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+      nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.extended_tweet.full_text.substring(0, tweet.extended_tweet.display_text_range[1])}
       twitter.com/i/web/status/${tweet.id_str}/
       ${tweet.extended_tweet.entities.media[0].media_url}`)
     })
   } else {
-    noModBot.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
+    nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
     ${tweet.extended_tweet && tweet.extended_tweet.full_text ? tweet.extended_tweet.full_text : tweet.text}
     twitter.com/i/web/status/${tweet.id_str}/`)
   }

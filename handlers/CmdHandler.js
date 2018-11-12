@@ -30,7 +30,7 @@ for (let cmd in commands) {
     delete commands[cmd]
   }
   if (typeof commands[cmd].init === 'function') {
-    setImmediate(() => { // immediate so noModBot is defined
+    setImmediate(() => { // immediate so nmb is defined
       commands[cmd].init() // init on start if needed
     })
   }
@@ -44,18 +44,18 @@ module.exports.handle = (command, channel, userstate, params) => {
   } else {
     commands[command].run(channel, userstate, params).then((msg) => {
       if (msg !== null) {
-        noModBot.msgHandler.chat(channel, msg)
+        nmb.msgHandler.chat(channel, msg)
       }
     })
   }
 }
 
 module.exports.responseHandle = (text, channel, userstate, params) => {
-  noModBot.msgHandler.chat(channel, text)
+  nmb.msgHandler.chat(channel, text)
 }
 
 module.exports.helpHandle = (command, channel, params) => {
   commands[command].help(params).then((msg) => {
-    noModBot.msgHandler.chat(channel, msg)
+    nmb.msgHandler.chat(channel, msg)
   })
 }

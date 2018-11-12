@@ -11,13 +11,13 @@ module.exports.run = (channel, userstate, params) => {
         if (params[1].toLowerCase() === 'list') { // ?quote0 add1 pate2+ on homo
           return 'Unsupported'
         } else if (params[1].toLowerCase() === 'add') { // add a quote
-          if (!noModBot.bot.config.masters.includes(userstate['username'])) return 'Insufficient permissions to add quotes!'
+          if (!nmb.bot.config.masters.includes(userstate['username'])) return 'Insufficient permissions to add quotes!'
           if (!params[2]) return 'You must specify text for the quote! (param 2+)'
           quotes[quotes.length] = params.slice(2).join(' ')
           save(quotes)
           return `Added quote ${quotes.length}: ${params.slice(2).join(' ')}`
         } else if (params[1].toLowerCase() === 'del') { // delete a quote
-          if (!noModBot.bot.config.masters.includes(userstate['username'])) return 'Insufficient permissions to delete quotes!'
+          if (!nmb.bot.config.masters.includes(userstate['username'])) return 'Insufficient permissions to delete quotes!'
           if (!params[2]) return 'You must specify a quote index! (param 2)'
           if (isNaN(parseInt(params[2], 10))) return 'You must enter a valid number! (param 2)'
           if (typeof quotes[params[2] - 1] === 'undefined') return 'Invalid quote index'

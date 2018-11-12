@@ -2,7 +2,7 @@ let myUtil = require('../myutil.js')
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
-    resolve(`Bot uptime: ${myUtil.timeSince(noModBot.bot.startTime)}`)
+    resolve(`Bot uptime: ${myUtil.timeSince(nmb.bot.startTime)}`)
   })
 }
 

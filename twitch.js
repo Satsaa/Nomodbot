@@ -39,10 +39,10 @@ client.on('notice', (channel, msgid, message) => {
 
 client.on('timeout', (channel, username, reason, duration) => {
   if (!bot[channel]) return
-  let old = noModBot.client
-  noModBot.client = 'HIDDEN'
-  // console.log((util.inspect(noModBot, { showHidden: false, depth: null })))
-  noModBot.client = old
+  let old = nmb.client
+  nmb.client = 'HIDDEN'
+  // console.log((util.inspect(nmb, { showHidden: false, depth: null })))
+  nmb.client = old
   if (username === client.username) {
     bot[channel].channel.timeout_end = Date.now() + duration * 1000
     console.log(bot[channel].channel.timeout_end)
@@ -84,7 +84,7 @@ client.on('connected', (address, port) => {
 
 client.on('disconnected', (reason) => {
   console.log(`* Disconnected (${reason})`)
-  noModBot.bot.startTime = Date.now()
+  nmb.bot.startTime = Date.now()
   process.exit(0)
 })
 
@@ -229,7 +229,7 @@ function getUserId (loginName) {
 
         resolve(bot.internal.user_ids[loginName])
       } else {
-        noModBot.client.api({
+        nmb.client.api({
           url: 'https://api.twitch.tv/kraken/users?login=' + loginName.replace('#', ''),
           method: 'GET',
           headers: {

@@ -4,10 +4,10 @@ module.exports.run = (channel, userstate, params) => {
     params.forEach(channel => {
       if (channel.startsWith('#')) {
         if (channel.length < 4) resolve(`Invalid channel: '${channel}'`)
-        else noModBot.joinChannel(channel)
+        else nmb.joinChannel(channel)
       } else {
         if (channel.length < 3) resolve(`Invalid channel: '${channel}'`)
-        else noModBot.joinChannel('#' + channel)
+        else nmb.joinChannel('#' + channel)
       }
     })
     resolve(null)

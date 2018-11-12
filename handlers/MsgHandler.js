@@ -106,8 +106,8 @@ function chat (channels, msg, allowCommand) {
   }
   channels.forEach((channel) => {
     if (typeof bot[channel] === 'undefined') { // not joined
-      if (noModBot.bot.config.join_on_msg) { // Joining on msg enabled?
-        noModBot.joinChannel(channel).then((data) => {
+      if (nmb.bot.config.join_on_msg) { // Joining on msg enabled?
+        nmb.joinChannel(channel).then((data) => {
           main()
         })
       }

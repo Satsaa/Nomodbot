@@ -1,25 +1,25 @@
 const fs = require('fs')
 
-global.noModBot = require('./twitch.js')
+global.nmb = require('./twitch.js')
 
 require('./twitter.js')
 
-noModBot.bot.startTime = Date.now()
+nmb.bot.startTime = Date.now()
 
 // No exithandling if you kill the process... for example ctrl+alt+m in vs code
 function exitHandler (options, exitCode) {
   if (options.cleanup) {
     let channels = []
-    for (var key in noModBot.bot) {
+    for (var key in nmb.bot) {
       if (key.startsWith('#')) {
         channels.push(key)
       }
     }
     channels.forEach((channel) => {
-      fs.writeFileSync('./data/' + channel + '/channel.json', JSON.stringify(noModBot.bot[channel].channel, null, 2), 'utf8')
+      fs.writeFileSync('./data/' + channel + '/channel.json', JSON.stringify(nmb.bot[channel].channel, null, 2), 'utf8')
     })
     console.log(`* [CHANNELS] Channel saved`)
-    fs.writeFileSync('./data/global/internal.json', JSON.stringify(noModBot.bot.internal, null, 2), 'utf8')
+    fs.writeFileSync('./data/global/internal.json', JSON.stringify(nmb.bot.internal, null, 2), 'utf8')
     console.log(`* [BOT] Internals saved`)
   }
   if (exitCode || exitCode === 0) console.log(exitCode)

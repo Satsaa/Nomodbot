@@ -1,6 +1,6 @@
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
-    let short = noModBot.bot[channel]
+    let short = nmb.bot[channel]
     let cmds = []
     if (params[1] && params[1] === 'master') {
       for (let cmd in short.commands) {
@@ -18,7 +18,7 @@ module.exports.run = (channel, userstate, params) => {
         }
       }
     }
-    resolve(`Commands: ${noModBot.bot[channel].channel.help}, ${cmds.join(', ')}`)
+    resolve(`Commands: ${nmb.bot[channel].channel.help}, ${cmds.join(', ')}`)
   })
 }
 

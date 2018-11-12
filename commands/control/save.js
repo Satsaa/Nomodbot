@@ -2,7 +2,7 @@ const fs = require('fs')
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
-    noModBot.save()
+    nmb.save()
     resolve(null)
   })
 }

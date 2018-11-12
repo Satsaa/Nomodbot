@@ -2,7 +2,7 @@ const fs = require('fs')
 const myUtil = require('../myutil')
 
 module.exports.init = () => {
-  noModBot.client.on('message', onMessage)
+  nmb.client.on('message', onMessage)
 }
 
 let block = []
@@ -10,12 +10,12 @@ function onMessage (channel, userstate, message, self) {
   if (block.includes(channel)) {
     return
   }
-  let short = noModBot.bot[channel].notifys // reference for neat code
+  let short = nmb.bot[channel].notifys // reference for neat code
   if (userstate.username in short) {
     for (var i = 0; i < short[userstate.username].length; i++) {
       let notify = short[userstate.username][i]
 
-      noModBot.msgHandler.chat(channel, ` ${notify.from} -> ${userstate['display-name']} ${myUtil.timeSince(notify.time, 1, false)} ago: ${notify.msg}`)
+      nmb.msgHandler.chat(channel, ` ${notify.from} -> ${userstate['display-name']} ${myUtil.timeSince(notify.time, 1, false)} ago: ${notify.msg}`)
     }
     delete short[userstate.username]
     block.splice(block.indexOf(channel), 1)
@@ -25,7 +25,7 @@ function onMessage (channel, userstate, message, self) {
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
-    let short = noModBot.bot[channel].notifys // reference for neat code
+    let short = nmb.bot[channel].notifys // reference for neat code
 
     resolve(setNotify())
     save(channel, short)

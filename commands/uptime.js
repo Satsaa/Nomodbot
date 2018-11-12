@@ -7,8 +7,8 @@ module.exports.run = (channel, userstate, params) => {
     if (params[1] && params[1].length > 2) {
       channel = params[1]
     }
-    noModBot.getUserId(channel).then((id) => {
-      noModBot.client.api({
+    nmb.getUserId(channel).then((id) => {
+      nmb.client.api({
         url: `https://api.twitch.tv/kraken/streams/${id}`,
         method: 'GET',
         headers: {
@@ -20,7 +20,7 @@ module.exports.run = (channel, userstate, params) => {
         if (err) console.log(err)
         // console.log(`${util.inspect(data, { showHidden: false, depth: null })} || ${err} || `)
         if (data.stream === null) {
-          noModBot.client.api({
+          nmb.client.api({
             url: `https://api.twitch.tv/kraken/channels/${id}/videos?limit=1`, // don't want no more than 1 video
             method: 'GET',
             headers: {

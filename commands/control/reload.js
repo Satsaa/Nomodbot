@@ -7,15 +7,15 @@ module.exports.run = (channel, userstate, params) => {
         if (!params[2]) resolve(null)
         fs.readFile('./data/global/' + params[2] + '.json', (err, data) => {
           if (err) resolve(`${err.name}: ${err.message}`)
-          delete noModBot.bot[params[2]]
-          noModBot.bot[params[2]] = JSON.parse(data)
+          delete nmb.bot[params[2]]
+          nmb.bot[params[2]] = JSON.parse(data)
           console.log(`* [${channel}] reloaded ${params[2]}.json`)
         })
       } else {
         fs.readFile('./data/' + channel + '/' + params[1] + '.json', (err, data) => {
           if (err) resolve(err.name)
-          delete noModBot.bot[channel][params[1]]
-          noModBot.bot[channel][params[1]] = JSON.parse(data)
+          delete nmb.bot[channel][params[1]]
+          nmb.bot[channel][params[1]] = JSON.parse(data)
           console.log(`* [${channel}] reloaded ${params[1]}.json`)
         })
       }

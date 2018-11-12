@@ -5,13 +5,13 @@ module.exports.run = (channel, userstate, params) => {
       params.forEach((channel) => {
         if (channel.startsWith('#')) {
           if (channel.length < 4) resolve(`Invalid channel: '${channel}'`)
-          else noModBot.partChannel(channel)
+          else nmb.partChannel(channel)
         } else {
           if (channel.length < 3) resolve(`Invalid channel: '${channel}'`)
-          else noModBot.partChannel('#' + channel)
+          else nmb.partChannel('#' + channel)
         }
       })
-    } else noModBot.partChannel(channel) // part current channel if no params
+    } else nmb.partChannel(channel) // part current channel if no params
     resolve(null)
   })
 }
