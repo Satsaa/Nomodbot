@@ -1,0 +1,44 @@
+{
+  "api": {
+    "cat": "Noun",
+    "pronun": "",
+    "word": "API",
+    "definition": "A set of functions and procedures allowing the creation of applications that access the features or data of an operating system, application, or other service."
+  },
+  "garrotte": {
+    "cat": "Verb",
+    "pronun": "/ɡəˈrɒt/ ",
+    "word": "garrotte",
+    "definition": "Kill (someone) by strangulation, especially with a length of wire or cord"
+  },
+  "carrot": {
+    "cat": "Noun",
+    "pronun": "/ˈkarət/ ",
+    "word": "carrot",
+    "definition": "A tapering orange-coloured root eaten as a vegetable"
+  },
+  "espionage": {
+    "cat": "Noun",
+    "pronun": "/ˈɛspɪənɑːʒ/ ",
+    "word": "espionage",
+    "definition": "The practice of spying or of using spies, typically by governments to obtain political and military information"
+  },
+  "lol": {
+    "cat": "Interjection",
+    "pronun": "/lɒl/ ",
+    "word": "LOL",
+    "definition": "Used to draw attention to a joke or amusing statement, or to express amusement"
+  },
+  "LOL": {
+    "cat": "Interjection",
+    "pronun": "/lɒl/ ",
+    "word": "LOL",
+    "definition": "Used to draw attention to a joke or amusing statement, or to express amusement"
+  },
+  "LMAO": {
+    "cat": "Residual",
+    "pronun": "",
+    "word": "LMAO",
+    "definition": "Laughing my arse off."
+  }
+}
