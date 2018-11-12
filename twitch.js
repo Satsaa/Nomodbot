@@ -76,6 +76,7 @@ client.on('connecting', (address, port) => {
 })
 
 client.on('connected', (address, port) => {
+  nmb.bot.startTime = Date.now()
   console.log(`* Connected`)
   joinChannel(bot.internal.channels).catch((err) => {
     if (err) console.log('failed on \'Connected\'')
@@ -84,8 +85,6 @@ client.on('connected', (address, port) => {
 
 client.on('disconnected', (reason) => {
   console.log(`* Disconnected (${reason})`)
-  nmb.bot.startTime = Date.now()
-  process.exit(0)
 })
 
 client.on('reconnect', () => {
