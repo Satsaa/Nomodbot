@@ -9,10 +9,10 @@ Redundant modules ✔
 Bad coding habits ✔  
 NPM support ✖  
 Meaningful comments ✖  
+Critically vulnerable dependencies ✔  
 
 10 hour setup ✖  
 List of dependencies ✔  
-Critically vulnerable dependencies ✔  
 Deceptive config folder ✖  
 
 First javascript project
