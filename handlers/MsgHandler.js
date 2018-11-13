@@ -12,13 +12,14 @@ module.exports.refer = (clientRef, botRef, twitchRef) => {
 module.exports.receive = (channel, userstate, message, self) => {
   // remove antiduplicate suffix, it would be counted as a parameter (mainly chatterino)
   if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
+  if (bot.console_log_messages) {
+    console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
+  }
   switch (userstate['message-type']) {
     case 'action':
     case 'chat':
       if (self) updateBot(channel, userstate, message)
       else {
-        // console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
-
         const params = message.split(' ') // Split message to an array
         const commandName = params[0].toLowerCase() // Command name (first word)
 
