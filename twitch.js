@@ -2,9 +2,6 @@ var tmi = require('tmi.js')
 const fs = require('fs')
 const util = require('util')
 
-let msgHandler = require('./handlers/MsgHandler.js')
-exports.msgHandler = msgHandler
-
 var bot = {}
 bot.internal = require('./data/global/internal.json')
 bot.config = require('./data/global/config.json')
@@ -14,6 +11,8 @@ var opts = require('./config/TwitchClient.json')
 var client = new tmi.Client(opts)
 exports.client = client
 
+let msgHandler = require('./handlers/MsgHandler.js')
+exports.msgHandler = msgHandler
 msgHandler.refer(client, bot, this)
 
 client.connect()
@@ -79,7 +78,7 @@ client.on('connected', (address, port) => {
   nmb.bot.startTime = Date.now()
   console.log(`* Connected`)
   joinChannel(bot.internal.channels).catch((err) => {
-    if (err) console.log('failed on \'Connected\'')
+    if (err) console.log(`failed on 'Connected': ${err}`)
   })
 })
 
@@ -126,37 +125,37 @@ function joinChannel (channels) { // Allows multichannel
     }
     channels.forEach((channel) => {
       addChannel(channel)
-      client.join(channel).then((data) => { // data returns channel
-        bot[channel] = {}
-        console.log(`* [${channel}] Joined`)
-        getUserId(channel).catch((err) => {
-          console.log(`* [ERROR (${channel})] Failed to get user ID: ${err}`)
-        })
-        fs.mkdir('./data/' + channel, {}, (err) => {
-          if (err && err.code !== 'EEXIST') throw err
-          loadChannelFile(channel, 'responses', true).then(
-            loadChannelFile(channel, 'roomstate', true).then(
-              loadChannelFile(channel, 'commands', true).then(
-                loadChannelFile(channel, 'quotes', true).then(
-                  loadChannelFile(channel, 'myiq', true).then(
-                    loadChannelFile(channel, 'notifys', true).then(
-                      loadChannelFile(channel, 'channel', true).finally(() => {
-                        loadRoomstateFromQueue(channel).then(() => {
-                          console.log(`* [${channel}] Initial roomstate loaded`)
+      bot[channel] = {}
+      getUserId(channel).catch((err) => {
+        console.log(`* [ERROR (${channel})] Failed to get user ID: ${err}`)
+      })
+      fs.mkdir('./data/' + channel, {}, (err) => {
+        if (err && err.code !== 'EEXIST') throw err
+        loadChannelFile(channel, 'responses', true).then(
+          loadChannelFile(channel, 'roomstate', true).then(
+            loadChannelFile(channel, 'commands', true).then(
+              loadChannelFile(channel, 'quotes', true).then(
+                loadChannelFile(channel, 'myiq', true).then(
+                  loadChannelFile(channel, 'notifys', true).then(
+                    loadChannelFile(channel, 'channel', true).finally(() => {
+                      loadRoomstateFromQueue(channel).then(() => {
+                        console.log(`* [${channel}] Initial roomstate loaded`)
+                        client.join(channel).then((data) => { // data returns channel
+                          console.log(`* [${channel}] Joined`)
                           resolve(channel)
+                        }).catch((err) => {
+                          console.log(`* [${channel}] Error joining: ${err}`)
+                          removeChannel(channel)
+                          reject(err)
                         })
                       })
-                    )
+                    })
                   )
                 )
               )
             )
           )
-        })
-      }).catch((err) => {
-        console.log(`* [${channel}] Error joining: ${err}`)
-        removeChannel(channel)
-        reject(err)
+        )
       })
     })
 

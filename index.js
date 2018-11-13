@@ -16,9 +16,11 @@ function exitHandler (options, exitCode) {
       }
     }
     channels.forEach((channel) => {
-      fs.writeFileSync('./data/' + channel + '/channel.json', JSON.stringify(nmb.bot[channel].channel, null, 2), 'utf8')
+      if (typeof nmb.bot[channel].channel !== 'undefined') {
+        console.log(`* [${channel}] Channel saved`)
+        fs.writeFileSync('./data/' + channel + '/channel.json', JSON.stringify(nmb.bot[channel].channel, null, 2), 'utf8')
+      } else console.log(`* [${channel}] Channel not saved due to being undefined`)
     })
-    console.log(`* [CHANNELS] Channel saved`)
     fs.writeFileSync('./data/global/internal.json', JSON.stringify(nmb.bot.internal, null, 2), 'utf8')
     console.log(`* [BOT] Internals saved`)
   }
