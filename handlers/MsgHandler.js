@@ -12,7 +12,7 @@ module.exports.refer = (clientRef, botRef, twitchRef) => {
 module.exports.receive = (channel, userstate, message, self) => {
   // remove antiduplicate suffix, it would be counted as a parameter (mainly chatterino)
   if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
-  if (bot.console_log_messages) {
+  if (bot.config.console_log_messages) { // log messages in console
     console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
   }
   switch (userstate['message-type']) {

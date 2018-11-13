@@ -2,7 +2,7 @@
 	"masters": [
     "satsaa"
   ],
-  "console_log_messages": true,
+  "console_log_messages": false,
   "save": false,
   "save_interval": 300,
   "join_on_message": false,
