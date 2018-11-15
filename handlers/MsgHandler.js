@@ -1,42 +1,36 @@
-var cmdHandler = require('../handlers/CmdHandler.js')
-
-let twitch = {}
-let client = {}
-let bot = {}
-module.exports.refer = (clientRef, botRef, twitchRef) => {
-  client = clientRef
-  bot = botRef
-  twitch = twitchRef
-}
+var cmdHandler = require('../handlers/cmdHandler.js')
 
 module.exports.receive = (channel, userstate, message, self) => {
   // remove antiduplicate suffix, it would be counted as a parameter (mainly chatterino)
-  if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
-  if (bot.config.console_log_messages) { // log messages in console
+  if (!self && message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
+  if (nmb.bot.config.console_log_messages) { // log messages in console
     console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
   }
   switch (userstate['message-type']) {
     case 'action':
     case 'chat':
-      if (self) updateBot(channel, userstate, message)
-      else {
+      if (self) {
+        updateBot(channel, userstate, message)
+        nmb.logger.log(channel, 'chat', userstate['display-name'], nmb.client.globaluserstate['user-id'], message)
+      } else {
+        nmb.logger.log(channel, 'chat', userstate['display-name'], userstate['user-id'], message)
         const params = message.split(' ') // Split message to an array
         const commandName = params[0].toLowerCase() // Command name (first word)
 
         let command
-        if (commandName.toLowerCase() === bot[channel].channel.help) {
+        if (commandName.toLowerCase() === nmb.bot[channel].channel.help) {
           const commandName = params[1].toLowerCase() // Command name (second word)
           if (!params[1]) {
             chat(channel, 'Must define a command (param 1)')
           } else {
-            if (bot[channel].commands.hasOwnProperty(commandName)) { // command
-              if (typeof bot[channel].commands[commandName] === 'object') {
-                command = bot[channel].commands[commandName].command
+            if (nmb.bot[channel].commands.hasOwnProperty(commandName)) { // command
+              if (typeof nmb.bot[channel].commands[commandName] === 'object') {
+                command = nmb.bot[channel].commands[commandName].command
               } else {
-                command = bot[channel].commands[commandName]
+                command = nmb.bot[channel].commands[commandName]
               }
               cmdHandler.helpHandle(command, channel, params)
-            } else if (bot[channel].responses.hasOwnProperty(commandName)) { // response
+            } else if (nmb.bot[channel].responses.hasOwnProperty(commandName)) { // response
               chat(channel, `'${params[1]}' is a response command. Invoke it by typing '${params[1]}'`)
             } else { // unknown
               chat(channel, `'${params[1]}' doesn't seem to exist :(`)
@@ -44,18 +38,18 @@ module.exports.receive = (channel, userstate, message, self) => {
           }
         }
 
-        if (bot[channel].commands.hasOwnProperty(commandName)) { // command
-          if (typeof bot[channel].commands[commandName] === 'object') {
-            if (bot[channel].commands[commandName].userlvl &&
-                bot[channel].commands[commandName].userlvl === 'master') {
-              if (!bot.config.masters.includes(userstate['username'])) return // not permitted
+        if (nmb.bot[channel].commands.hasOwnProperty(commandName)) { // command
+          if (typeof nmb.bot[channel].commands[commandName] === 'object') {
+            if (nmb.bot[channel].commands[commandName].userlvl &&
+                nmb.bot[channel].commands[commandName].userlvl === 'master') {
+              if (!nmb.bot.config.masters.includes(userstate['username'])) return // not permitted
             }
-            command = bot[channel].commands[commandName].command // object command type
-          } else command = bot[channel].commands[commandName] // old string only type
+            command = nmb.bot[channel].commands[commandName].command // object command type
+          } else command = nmb.bot[channel].commands[commandName] // old string only type
           cmdHandler.handle(command, channel, userstate, params)
         } else {
-          if (bot[channel].responses.hasOwnProperty(commandName)) { // response
-            let text = bot[channel].responses[commandName]
+          if (nmb.bot[channel].responses.hasOwnProperty(commandName)) { // response
+            let text = nmb.bot[channel].responses[commandName]
             cmdHandler.responseHandle(text, channel, userstate, params)
           }
         }
@@ -63,7 +57,7 @@ module.exports.receive = (channel, userstate, message, self) => {
       break
     case 'whisper':
       if (!self) {
-        whisper(channel, message)
+        whisper(channel, message) // Totes breaking everything up
       }
       console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
       break
@@ -74,16 +68,16 @@ module.exports.receive = (channel, userstate, message, self) => {
 }
 
 function updateBot (channel, userstate, message) {
-  if (message.length) { bot[channel].channel.last_msg = message }
-  bot[channel].channel.banned = false
-  bot[channel].channel.timeout_end = null
-  if (bot[channel].channel.mod !== userstate.mod) {
-    bot[channel].channel.mod = userstate.mod // false if broadcaster
-    if (channel.endsWith(client.username)) { bot[channel].channel.mod = true } // broadcaster = mod
-    if (bot[channel].channel.mod) console.log(`* [${channel}] Moderator granted`)
+  if (message.length) nmb.bot[channel].channel.last_msg = message
+  nmb.bot[channel].channel.banned = false
+  nmb.bot[channel].channel.timeout_end = null
+  if (nmb.bot[channel].channel.mod !== userstate.mod) {
+    nmb.bot[channel].channel.mod = userstate.mod // false if broadcaster
+    if (channel.endsWith(nmb.client.username)) nmb.bot[channel].channel.mod = true // broadcaster = mod
+    if (nmb.bot[channel].channel.mod) console.log(`* [${channel}] Moderator granted`)
     else console.log(`* [${channel}] Moderator revoked`)
   }
-  bot[channel].channel.subscriber = userstate.subscriber
+  nmb.bot[channel].channel.subscriber = userstate.subscriber
 }
 
 module.exports.chat = chat
@@ -106,7 +100,7 @@ function chat (channels, msg, allowCommand) {
     channels = [channels]
   }
   channels.forEach((channel) => {
-    if (typeof bot[channel] === 'undefined') { // not joined
+    if (typeof nmb.bot[channel] === 'undefined') { // not joined
       if (nmb.bot.config.join_on_msg) { // Joining on msg enabled?
         nmb.joinChannel(channel).then((data) => {
           main()
@@ -115,14 +109,14 @@ function chat (channels, msg, allowCommand) {
     } else main()
 
     function main () { // just a block
-      if (bot[channel].channel.mod) { // mod, no speed limit, max 100 per 30 sec tho
+      if (nmb.bot[channel].channel.mod) { // mod, no speed limit, max 100 per 30 sec tho
         parseTimes(1)
-        if (bot.internal.mod_times.length >= bot.internal.mod_limit) { // if ratelimit is full
+        if (nmb.bot.internal.mod_times.length >= nmb.bot.internal.mod_limit) { // if ratelimit is full
           queueModChat(channel, msg)
           return
         }
-        client.say(channel, antiDupe(channel, msg)).then(() => {
-          bot.internal.mod_times.push(Date.now())
+        nmb.client.say(channel, antiDupe(channel, msg)).then(() => {
+          nmb.bot.internal.mod_times.push(Date.now())
         }).catch((err) => {
           console.log(`* [${channel}] Msg failed: ${err}`)
         })
@@ -134,10 +128,10 @@ function chat (channels, msg, allowCommand) {
 }
 
 function whisper (channel, message) {
-  if (bot.internal.whisper_accounts.includes(channel)) {
-    bot.internal.whisper_accounts.push(channel)
-    if (bot.internal.whisper_accounts.length >= 40) { // implement account rate limiting in the future
-      console.log(`* ${bot.internal.whisper_accounts.length} whisper accounts reached!`)
+  if (nmb.bot.internal.whisper_accounts.includes(channel)) {
+    nmb.bot.internal.whisper_accounts.push(channel)
+    if (nmb.bot.internal.whisper_accounts.length >= 40) { // implement account rate limiting in the future
+      console.log(`* ${nmb.bot.internal.whisper_accounts.length} whisper accounts reached!`)
     }
   }
   queueWhisper(channel, message)
@@ -156,8 +150,8 @@ function queueChat (channel, message) {
   if (chatQueue.length !== 1) return // return if queue is active
 
   setTimeout(() => { // send one message and init interval if needed afterwards
-    bot.internal.user_times.push(Date.now())
-    client.say(chatQueue[0][0], antiDupe(channel, chatQueue[0][1])).then(() => {
+    nmb.bot.internal.user_times.push(Date.now())
+    nmb.client.say(chatQueue[0][0], antiDupe(channel, chatQueue[0][1])).then(() => {
       chatQueue.shift()
     }).catch((err) => {
       console.log(`* [${chatQueue[0][0]}] Msg failed: ${err}`)
@@ -165,31 +159,31 @@ function queueChat (channel, message) {
       if (chatQueue.length) {
         let queueInteval = setInterval(() => { // send messages in intervals afterwards
           parseTimes()
-          if (bot.internal.user_times.length >= bot.config.user_limit) return // Rate limiting
-          bot.internal.user_times.push(Date.now())
-          client.say(chatQueue[0][0], antiDupe(channel, chatQueue[0][1])).then(() => {
+          if (nmb.bot.internal.user_times.length >= nmb.bot.config.user_limit) return // Rate limiting
+          nmb.bot.internal.user_times.push(Date.now())
+          nmb.client.say(chatQueue[0][0], antiDupe(channel, chatQueue[0][1])).then(() => {
             chatQueue.shift()
           }).catch((err) => {
             console.log(`* [${chatQueue[0][0]}] Msg failed: ${err}`)
           }).finally(() => {
             if (!chatQueue.length) clearInterval(queueInteval)
           })
-        }, bot.config.message_delay_ms)
+        }, nmb.bot.config.message_delay_ms)
       }
     })
   }, getTimeout())
 
   function getTimeout () {
     parseTimes()
-    if (bot.internal.user_times.length >= bot.config.user_limit) {
+    if (nmb.bot.internal.user_times.length >= nmb.bot.config.user_limit) {
       // (oldest_message_time + limit_period * 1000) - current time // ms until limit is not full anymore
-      return (bot.internal.user_times[0] + bot.config.limit_period * 1000) - Date.now()
+      return (nmb.bot.internal.user_times[0] + nmb.bot.config.limit_period * 1000) - Date.now()
     }
 
     // current_time - last_msg_time > message_delay ? 0 : message_delay - (current_time - last_msg_time)
-    return (Date.now() - bot.internal.user_times[bot.internal.user_times.length - 1] > bot.config.message_delay_ms)
+    return (Date.now() - nmb.bot.internal.user_times[nmb.bot.internal.user_times.length - 1] > nmb.bot.config.message_delay_ms)
       ? 0
-      : (bot.config.message_delay_ms - (Date.now() - bot.internal.user_times[bot.internal.user_times.length - 1]))
+      : (nmb.bot.config.message_delay_ms - (Date.now() - nmb.bot.internal.user_times[nmb.bot.internal.user_times.length - 1]))
   }
 }
 
@@ -201,8 +195,8 @@ function queueModChat (channel, message) {
   setTimeout(timeoutMsg, getTimeout())
 
   function timeoutMsg () {
-    client.say(modQueue[0][0], antiDupe(channel, modQueue[0][1])).then(() => {
-      bot.internal.mod_times.push(Date.now())
+    nmb.client.say(modQueue[0][0], antiDupe(channel, modQueue[0][1])).then(() => {
+      nmb.bot.internal.mod_times.push(Date.now())
       modQueue.shift()
     }).catch((err) => {
       console.log(`* [${modQueue[0][0]}] Msg failed: ${err}`)
@@ -217,7 +211,7 @@ function queueModChat (channel, message) {
   function getTimeout () {
     parseTimes(1)
     // (oldest_message_time + bot.config.limit_period * 1000) - current time // ms until limit is not full anymore
-    return (bot.internal.mod_times[0] + bot.config.limit_period * 1000) - Date.now() + 50 // + 50 so parse parsetimeout() removes the oldest time
+    return (nmb.bot.internal.mod_times[0] + nmb.bot.config.limit_period * 1000) - Date.now() + 50 // + 50 so parse parsetimeout() removes the oldest time
   }
 }
 
@@ -229,10 +223,10 @@ function queueWhisper (channel, message) {
   setTimeout(timeoutMsg, getTimeout())
 
   function timeoutMsg () {
-    client.whisper(whisperQueue[0][0], whisperQueue[0][1]).then(() => {
+    nmb.client.whisper(whisperQueue[0][0], whisperQueue[0][1]).then(() => {
       whisperQueue.shift()
-      bot.internal.whisper_times_sec.push(Date.now())
-      bot.internal.whisper_times_min.push(Date.now())
+      nmb.bot.internal.whisper_times_sec.push(Date.now())
+      nmb.bot.internal.whisper_times_min.push(Date.now())
     }).catch((err) => {
       console.log(`* [${whisperQueue[0][0]}] Whisper failed: ${err}`)
     }).finally(() => {
@@ -245,14 +239,14 @@ function queueWhisper (channel, message) {
   function getTimeout () {
     parseWhisperTimes()
     // (oldest_message_time + {1 or 60} * 1000) - current time // ms until limit is not full anymore // + 50 for parse func safety
-    if (bot.internal.whisper_times_sec.length >= bot.config.whisper_limit_sec) return (bot.internal.whisper_times_sec[0] + 1 * 1000) - Date.now() + 50
-    if (bot.internal.whisper_times_min.length >= bot.config.whisper_limit_min) return (bot.internal.whisper_times_min[0] + 60 * 1000) - Date.now() + 50
+    if (nmb.bot.internal.whisper_times_sec.length >= nmb.bot.config.whisper_limit_sec) return (nmb.bot.internal.whisper_times_sec[0] + 1 * 1000) - Date.now() + 50
+    if (nmb.bot.internal.whisper_times_min.length >= nmb.bot.config.whisper_limit_min) return (nmb.bot.internal.whisper_times_min[0] + 60 * 1000) - Date.now() + 50
     return 0
   }
 }
 
 function antiDupe (channel, message) { // remove or add 2 chars at msg end to avoid duplicate messages
-  if (bot[channel].channel.last_msg.endsWith(' \u206D')) {
+  if (nmb.bot[channel].channel.last_msg.endsWith(' \u206D')) {
     message.slice(-2)
     return message
   } else {
@@ -264,16 +258,16 @@ function antiDupe (channel, message) { // remove or add 2 chars at msg end to av
 function parseTimes (mod = 0) {
   let time = Date.now()
   if (mod) {
-    for (let i = 0; i < bot.internal.mod_times.length; i++) {
-      if (bot.internal.mod_times[i] < time - bot.config.limit_period * 1000) { // mesages are counted for limit_period seconds
-        bot.internal.mod_times.shift()
+    for (let i = 0; i < nmb.bot.internal.mod_times.length; i++) {
+      if (nmb.bot.internal.mod_times[i] < time - nmb.bot.config.limit_period * 1000) { // mesages are counted for limit_period seconds
+        nmb.bot.internal.mod_times.shift()
         i--
       } else break
     }
   } else {
-    for (let i = 0; i < bot.internal.user_times.length; i++) {
-      if (bot.internal.user_times[i] < time - bot.config.limit_period * 1000) { // mesages are counted for limit_period seconds
-        bot.internal.user_times.shift()
+    for (let i = 0; i < nmb.bot.internal.user_times.length; i++) {
+      if (nmb.bot.internal.user_times[i] < time - nmb.bot.config.limit_period * 1000) { // mesages are counted for limit_period seconds
+        nmb.bot.internal.user_times.shift()
         i--
       } else break
     }
@@ -283,15 +277,15 @@ function parseTimes (mod = 0) {
 // remove messages from time lists that exceed 1/60 sec age
 function parseWhisperTimes () {
   let time = Date.now()
-  for (let i = 0; i < bot.internal.whisper_times_min.length; i++) {
-    if (bot.internal.whisper_times_min[i] < time - 60 * 1000) { // whisper messages are counted for 60 second
-      bot.internal.whisper_times_min.shift()
+  for (let i = 0; i < nmb.bot.internal.whisper_times_min.length; i++) {
+    if (nmb.bot.internal.whisper_times_min[i] < time - 60 * 1000) { // whisper messages are counted for 60 second
+      nmb.bot.internal.whisper_times_min.shift()
       i--
     } else break
   }
-  for (let i = 0; i < bot.internal.whisper_times_sec.length; i++) {
-    if (bot.internal.whisper_times_sec[i] < time - 1 * 1000) { // whisper messages are counted for 1 second too
-      bot.internal.whisper_times_sec.shift()
+  for (let i = 0; i < nmb.bot.internal.whisper_times_sec.length; i++) {
+    if (nmb.bot.internal.whisper_times_sec[i] < time - 1 * 1000) { // whisper messages are counted for 1 second too
+      nmb.bot.internal.whisper_times_sec.shift()
       i--
     } else break
   }

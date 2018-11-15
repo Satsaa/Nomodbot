@@ -18,7 +18,7 @@ stream.on('error', (error) => {
     let status = getStatus(+error.toString().substring(20))
     console.log(`* [TWITTER ERROR] ${status.short}: ${status.long}`)
   } else {
-    console.log(`* [TWITTER ERROR] ${error}`)
+    console.log(`* [TWITTER ERROR] ${error}`, error.stack)
   }
 })
 
@@ -30,7 +30,7 @@ stream.on('data', (tweet) => {
   if (tweet.user.screen_name === 'sparkmoba') tweet.user.screen_name = 'sporkmoba'
   // console.log(tweet)
   // (!tweet.extended_tweet && typeof tweet.entities.media !== 'undefined' && tweet.entities.media[0].media_url)
-  if (!tweet.extended_tweet && ((tweet.entities || {}).media || {})[0].media_url) {
+  if (!tweet.extended_tweet && (((tweet.entities || {}).media || {})[0] || {}).media_url) {
     console.log(`* Media: ${tweet.entities.media[0].media_url}`)
     console.log(`* Waiting for caption...`)
     let imageUrl = tweet.entities.media[0].media_url
@@ -50,7 +50,7 @@ stream.on('data', (tweet) => {
       twitter.com/i/web/status/${tweet.id_str}/
       ${tweet.entities.media[0].media_url}`)
     })
-  } else if (((((tweet || {}).extended_tweet || {}).entities || {}).media || {})[0].media_url) {
+  } else if ((((((tweet || {}).extended_tweet || {}).entities || {}).media || {})[0] || {}).media_url) {
     console.log(`* Media: ${tweet.extended_tweet.entities.media[0].media_url}`)
     console.log(`* Waiting for caption...`)
     let imageUrl = tweet.extended_tweet.entities.media[0].media_url

@@ -11,13 +11,30 @@ var opts = require('./config/TwitchClient.json')
 var client = new tmi.Client(opts)
 exports.client = client
 
-let msgHandler = require('./handlers/MsgHandler.js')
+let msgHandler = require('./handlers/msgHandler.js')
 exports.msgHandler = msgHandler
-msgHandler.refer(client, bot, this)
+
+let logger = require('./handlers/logger.js')
+exports.logger = logger
 
 client.connect()
 
 client.on('message', msgHandler.receive)
+client.on('subscription', (channel, username, plan, msg, userstate) => {
+
+})
+client.on('resub', (channel, username, months, msg, userstate, plan) => {
+
+})
+client.on('subgift', (channel, username, recipient, plan, userstate) => {
+
+})
+client.on('massgift', (channel, username, giftCount, plan, senderCount, userstate) => {
+
+})
+client.on('giftpaidupgrade', (channel, username, plan, promo, total, sender, userstate) => {
+
+})
 
 client.on('notice', (channel, msgid, message) => {
   switch (msgid) {
@@ -46,7 +63,6 @@ client.on('timeout', (channel, username, reason, duration) => {
     bot[channel].channel.timeout_end = Date.now() + duration * 1000
     console.log(bot[channel].channel.timeout_end)
   }
-  console.log(`* [${channel}] ${username} timedout for ${duration} seconds (${reason})`)
 })
 
 client.on('ban', (channel, username, reason) => {
@@ -59,6 +75,12 @@ client.on('ban', (channel, username, reason) => {
 client.on('mod', (channel, username) => {
   if (bot[channel] && username === client.username) {
     bot[channel].channel.mod = true
+  }
+})
+
+client.on('unmod', function (channel, username) {
+  if (bot[channel] && username === client.username) {
+    bot[channel].channel.mod = false
   }
 })
 
@@ -132,24 +154,27 @@ function joinChannel (channels) { // Allows multichannel
       fs.mkdir('./data/' + channel, {}, (err) => {
         if (err && err.code !== 'EEXIST') throw err
         loadChannelFile(channel, 'responses', true).then(
-          loadChannelFile(channel, 'roomstate', true).then(
-            loadChannelFile(channel, 'commands', true).then(
-              loadChannelFile(channel, 'quotes', true).then(
-                loadChannelFile(channel, 'myiq', true).then(
-                  loadChannelFile(channel, 'notifys', true).then(
-                    loadChannelFile(channel, 'channel', true).finally(() => {
-                      loadRoomstateFromQueue(channel).then(() => {
-                        console.log(`* [${channel}] Initial roomstate loaded`)
-                        client.join(channel).then((data) => { // data returns channel
-                          console.log(`* [${channel}] Joined`)
-                          resolve(channel)
-                        }).catch((err) => {
-                          console.log(`* [${channel}] Error joining: ${err}`)
-                          removeChannel(channel)
-                          reject(err)
+          loadChannelFile(channel, 'log', true).then(
+            loadChannelFile(channel, 'roomstate', true).then(
+              loadChannelFile(channel, 'commands', true).then(
+                loadChannelFile(channel, 'quotes', true).then(
+                  loadChannelFile(channel, 'myiq', true).then(
+                    loadChannelFile(channel, 'notifys', true).then(
+                      loadChannelFile(channel, 'channel', true).finally(() => {
+                        loadRoomstateFromQueue(channel).then(() => {
+                          nmb.logger.startStream(channel)
+                          console.log(`* [${channel}] Initial roomstate loaded`)
+                          client.join(channel).then((data) => { // data returns channel
+                            console.log(`* [${channel}] Joined`)
+                            resolve(channel)
+                          }).catch((err) => {
+                            console.log(`* [${channel}] Error joining: ${err}`)
+                            removeChannel(channel)
+                            reject(err)
+                          })
                         })
                       })
-                    })
+                    )
                   )
                 )
               )
@@ -197,6 +222,7 @@ function partChannel (channels) {
     }
     channels.forEach((channel) => {
       client.part(channel).then((data) => { // data returns parted channel
+        nmb.logger.endStream(channel)
         console.log(`* [${channel}] Parted`)
         fs.writeFile('./data/' + channel + '/channel.json', JSON.stringify(bot[channel].channel, null, 2), 'utf8', (err) => {
           if (err) throw err
@@ -218,6 +244,7 @@ function partChannel (channels) {
 exports.getUserId = getUserId
 function getUserId (loginName) {
   return new Promise((resolve, reject) => {
+    loginName = loginName.toLowerCase()
     if (loginName.length > 2) {
       console.log(`* [${loginName}] Getting user id`)
       if (!loginName.startsWith('#')) loginName = '#' + loginName

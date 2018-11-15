@@ -6,6 +6,11 @@ require('./twitter.js')
 
 nmb.bot.startTime = Date.now()
 
+process.on('unhandledRejection', (error, p) => {
+  console.log('Unhandled Rejection: Promise', p, 'Error:', error)
+  console.log(error.stack)
+})
+
 // No exithandling if you kill the process... for example ctrl+alt+m in vs code
 function exitHandler (options, exitCode) {
   if (options.cleanup) {
@@ -16,6 +21,8 @@ function exitHandler (options, exitCode) {
       }
     }
     channels.forEach((channel) => {
+      nmb.logger.endStreamSync(channel)
+
       if (typeof nmb.bot[channel].channel !== 'undefined') {
         console.log(`* [${channel}] Channel saved`)
         fs.writeFileSync('./data/' + channel + '/channel.json', JSON.stringify(nmb.bot[channel].channel, null, 2), 'utf8')

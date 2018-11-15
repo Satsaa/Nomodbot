@@ -1,12 +1,12 @@
 
 node_modules/*
-.eslintrc.js
 config/TwitchClient.json
 config/TwitterClient.json
-object examples/*
 config/DeepAi.json
+object examples/*
 data/*
 !data/global/
 !data/default/
 data/global/myiq.json
 config/OxfordDictionaries.json
+.vscode
