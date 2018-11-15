@@ -5,18 +5,25 @@
   "user_ids": {
     "#satsaa": "61365582",
     "#l34um1": "21734724",
-    "#PurgeGamers": "22561231",
     "#unixpanda": "141660667",
-    "#btsartifact": "234716491"
+    "#btsartifact": "234716491",
+    "#sodapoppin": "26301881",
+    "#purgegamers": "22561231",
+    "#forsen": "22484632",
+    "#shroud": "37402112"
   },
   "whisper_commands": {},
   "user_times": [
-    1542131176517
+    1542225754205
   ],
   "mod_times": [
-    1542143571599
+    1542254477252
   ],
-  "whisper_times_sec": [],
-  "whisper_times_min": [],
+  "whisper_times_sec": [
+    1542225906703
+  ],
+  "whisper_times_min": [
+    1542225906703
+  ],
   "whisper_accounts": []
 }

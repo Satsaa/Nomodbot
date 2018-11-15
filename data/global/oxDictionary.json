@@ -46,5 +46,185 @@
     "pronun": "/spɔːk/ ",
     "word": "spork",
     "definition": "A spoon-shaped eating utensil with short tines at the tip."
+  },
+  "spark": {
+    "cat": "Noun",
+    "pronun": "/spɑːk/ ",
+    "word": "spark",
+    "definition": "A small fiery particle thrown off from a fire, alight in ashes, or produced by striking together two hard surfaces such as stone or metal"
+  },
+  "wiener": {
+    "cat": "Noun",
+    "pronun": "/ˈwiːnə/ ",
+    "word": "wiener",
+    "definition": "A frankfurter or similar sausage."
+  },
+  "4D": {
+    "cat": "Adjective",
+    "pronun": "",
+    "word": "4D",
+    "definition": "Four-dimensional"
+  },
+  "Four-dimensional": {
+    "cat": "Adjective",
+    "pronun": "",
+    "word": "four-dimensional",
+    "definition": "Having four dimensions, typically the three dimensions of space (length, breadth, and depth) plus time"
+  },
+  "mana": {
+    "cat": "Noun",
+    "pronun": "/ˈmɑːnə/ ",
+    "word": "mana",
+    "definition": "(In Polynesian, Melanesian, and Maori belief) an impersonal supernatural power which can be transmitted or inherited."
+  },
+  "frey": {
+    "cat": "Noun",
+    "pronun": "/freɪ/ ",
+    "word": "Frey",
+    "definition": "The god of fertility and dispenser of rain and sunshine."
+  },
+  "E": {
+    "cat": "Residual",
+    "pronun": "/iː/ ",
+    "word": "e",
+    "definition": "Euro or euros."
+  },
+  "define": {
+    "cat": "Verb",
+    "pronun": "/dɪˈfʌɪn/ ",
+    "word": "define",
+    "definition": "State or describe exactly the nature, scope, or meaning of"
+  },
+  "spook": {
+    "cat": "Noun",
+    "pronun": "/spuːk/ ",
+    "word": "spook",
+    "definition": "A ghost."
+  },
+  "yourself": {
+    "cat": "Pronoun",
+    "pronun": "/jɔːˈsɛlf/ ",
+    "word": "yourself",
+    "definition": "Used to refer to the person being addressed as the object of a verb or preposition when they are also the subject of the clause"
+  },
+  "anorexia": {
+    "cat": "Noun",
+    "pronun": "/ˌanəˈrɛksɪə/ ",
+    "word": "anorexia",
+    "definition": "Lack or loss of appetite for food (as a medical condition)."
+  },
+  "depression": {
+    "cat": "Noun",
+    "pronun": "/dɪˈprɛʃ(ə)n/ ",
+    "word": "depression",
+    "definition": "Feelings of severe despondency and dejection"
+  },
+  "girlfriend": {
+    "cat": "Noun",
+    "pronun": "/ˈɡəːlfrɛnd/ ",
+    "word": "girlfriend",
+    "definition": "A person's regular female companion with whom they have a romantic or sexual relationship"
+  },
+  "toxic": {
+    "cat": "Adjective",
+    "pronun": "/ˈtɒksɪk/ ",
+    "word": "toxic",
+    "definition": "Poisonous"
+  },
+  "DOOM": {
+    "cat": "Noun",
+    "pronun": "/duːm/ ",
+    "word": "doom",
+    "definition": "Death, destruction, or some other terrible fate"
+  },
+  "pneumonoultramicroscopicsilicovolcanoconiosis": {
+    "cat": "Noun",
+    "pronun": "/ˌnjuːmə(ʊ)nəʊˌʌltrəˌmʌɪkrə(ʊ)ˈskɒpɪkˌsɪlɪkəʊvɒlˌkeɪnəʊˌkəʊnɪˈəʊsɪs/ ",
+    "word": "pneumonoultramicroscopicsilicovolcanoconiosis",
+    "definition": "An invented long word said to mean a lung disease caused by inhaling very fine ash and sand dust."
+  },
+  "hopelessness": {
+    "cat": "Noun",
+    "pronun": "/ˈhəʊpləsnəs/ ",
+    "word": "hopelessness",
+    "definition": "A feeling or state of despair; lack of hope"
+  },
+  "antidisestablishmentarianism": {
+    "cat": "Noun",
+    "pronun": "/ˌantɪdɪsɪˌstablɪʃm(ə)nˈtɛːrɪənɪz(ə)m/ ",
+    "word": "antidisestablishmentarianism",
+    "definition": "Opposition to the disestablishment of the Church of England."
+  },
+  "pseudopseudohypoparathyroidism": {
+    "cat": "Noun",
+    "pronun": "/ˌs(j)uːdəʊˌs(j)uːdəʊˌhʌɪpə(ʊ)parəˈθʌɪrɔɪdɪzm/ ",
+    "word": "pseudopseudohypoparathyroidism",
+    "definition": "A genetic disorder in which the skeletal abnormalities of pseudohypoparathyroidism are present without the biochemical abnormalities common to hypoparathyroidism and pseudohypoparathyroidism."
+  },
+  "the end of the world": {
+    "cat": "Idiomatic",
+    "pronun": "",
+    "word": "the end of the world",
+    "definition": "The termination of life on the earth."
+  },
+  "lacuna": {
+    "cat": "Noun",
+    "pronun": "/ləˈkjuːnə/ ",
+    "word": "lacuna",
+    "definition": "An unfilled space; a gap"
+  },
+  "valve": {
+    "cat": "Noun",
+    "pronun": "/valv/ ",
+    "word": "valve",
+    "definition": "A device for controlling the passage of fluid or air through a pipe, duct, etc., especially an automatic device allowing movement in one direction only"
+  },
+  "election": {
+    "cat": "Noun",
+    "pronun": "/ɪˈlɛkʃ(ə)n/ ",
+    "word": "election",
+    "definition": "A formal and organized choice by vote of a person for a political office or other position"
+  },
+  "detection": {
+    "cat": "Noun",
+    "pronun": "/dɪˈtɛkʃ(ə)n/ ",
+    "word": "detection",
+    "definition": "The action or process of identifying the presence of something concealed"
+  },
+  "gg": {
+    "cat": "Residual",
+    "pronun": "",
+    "word": "GG",
+    "definition": "Governor General"
+  },
+  "bot": {
+    "cat": "Noun",
+    "pronun": "/bɒt/ ",
+    "word": "bot",
+    "definition": "(Chiefly in science fiction) a robot"
+  },
+  "Define": {
+    "cat": "Verb",
+    "pronun": "/dɪˈfʌɪn/ ",
+    "word": "define",
+    "definition": "State or describe exactly the nature, scope, or meaning of"
+  },
+  "troll": {
+    "cat": "Noun",
+    "pronun": "/trəʊl/ ",
+    "word": "troll",
+    "definition": "(In folklore) an ugly creature depicted as either a giant or a dwarf."
+  },
+  "no": {
+    "cat": "Determiner",
+    "pronun": "/nəʊ/ ",
+    "word": "no",
+    "definition": "Not any"
+  },
+  "rapier": {
+    "cat": "Noun",
+    "pronun": "/ˈreɪpɪə/ ",
+    "word": "rapier",
+    "definition": "A thin, light sharp-pointed sword used for thrusting."
   }
 }

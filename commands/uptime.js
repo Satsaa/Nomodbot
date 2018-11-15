@@ -36,7 +36,7 @@ module.exports.run = (channel, userstate, params) => {
             } else {
               let videoDate = new Date(data.videos[0].created_at)
               let videoEndMS = videoDate.getTime() + data.videos[0].length * 1000
-              resolve(`${data.videos[0].channel.display_name}'s last vod was recorded ${myUtil.timeSince(videoEndMS, 3)} ago`)
+              resolve(`${data.videos[0].channel.display_name}'s last vod was recorded ${myUtil.timeSince(videoEndMS, 2)} ago`)
             }
           })
         } else {

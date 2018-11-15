@@ -66,6 +66,6 @@ module.exports.run = (channel, userstate, params) => {
 module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
     resolve(`${params[1]} is counted as a vote. 
-      After ${voteEndTime} seconds (dynamic) of no votes, the votes are displayed in chat. ${minTotalVotes} votes minimum`)
+      After ${Math.round(voteEndTime / 1000)} (diminishing) seconds of no votes, the votes are displayed in chat. ${minTotalVotes} votes minimum`)
   })
 }

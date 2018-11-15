@@ -22,7 +22,7 @@ module.exports.run = (channel, userstate, params) => {
       define(words, lang, (error, data) => {
         if (error) return console.log(error)
         else {
-          if (typeof data.results === 'undefined') return resolve(data)
+          if (typeof data.results === 'undefined' || typeof data === 'undefined') return resolve('No definition returned O_o')
           // console.log(util.inspect(data, { showHidden: false, depth: null }))
           let definition = data.results[0].lexicalEntries[0].entries[0].senses[0].definitions[0]
           let word = data.results[0].word
