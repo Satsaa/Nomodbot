@@ -226,5 +226,11 @@
     "pronun": "/ˈreɪpɪə/ ",
     "word": "rapier",
     "definition": "A thin, light sharp-pointed sword used for thrusting."
+  },
+  "pet": {
+    "cat": "Noun",
+    "pronun": "/pɛt/ ",
+    "word": "pet",
+    "definition": "A domestic or tamed animal kept for companionship or pleasure"
   }
 }

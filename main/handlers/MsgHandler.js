@@ -19,10 +19,11 @@ module.exports.receive = (channel, userstate, message, self) => {
 
         let command
         if (commandName.toLowerCase() === nmb.bot[channel].channel.help) {
-          const commandName = params[1].toLowerCase() // Command name (second word)
+          let commandName // Command name (second word)
           if (!params[1]) {
             chat(channel, 'Must define a command (param 1)')
           } else {
+            commandName = params[1].toLowerCase()
             if (nmb.bot[channel].commands.hasOwnProperty(commandName)) { // command
               if (typeof nmb.bot[channel].commands[commandName] === 'object') {
                 command = nmb.bot[channel].commands[commandName].command

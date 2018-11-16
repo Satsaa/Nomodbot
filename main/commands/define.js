@@ -2,9 +2,9 @@ const fs = require('fs')
 const util = require('util')
 var https = require('https')
 
-let dict = require('../data/global/oxDictionary.json')
+let dict = require('../../data/global/oxDictionary.json')
 const myUtil = require('../myutil')
-const app = require('../config/OxfordDictionaries.json')
+const app = require('../../config/OxfordDictionaries.json')
 
 let lang = 'en' // later not hardcoded Kapp
 

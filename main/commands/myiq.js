@@ -1,6 +1,6 @@
 const fs = require('fs')
 let myUtil = require('../myutil.js')
-let global = require('../data/global/myiq.json')
+let global = require('../../data/global/myiq.json')
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
@@ -98,7 +98,7 @@ module.exports.run = (channel, userstate, params) => {
     if (v < 0) {
       return ' POGGERS'
     } else if (v < 10) {
-      return ' 🌱'
+      return ' SMOrc'
     } else if (v === 69) {
       return ' Kreygasm'
     } else if (v < 69) {
@@ -107,10 +107,13 @@ module.exports.run = (channel, userstate, params) => {
       return ' 4Head'
     } else if (v < 150) {
       return ' SeemsGood'
-    } else if (v < 240) {
+    } else if (v < 225) {
       return ' PogChamp'
     } else if (v < 300) {
-      return ' baumiBottlepog'
+      if (channel === '#l34um1') {
+        if (nmb.bot[channel].channel.subscriber) return ' baumiBottlepog'
+        else return ' 🍼+ PogChamp'
+      } else return ' NaM'
     } else if (v === 322) {
       return ', stop throwing.'
     } else if (v === 420) {

@@ -1,8 +1,8 @@
 const fs = require('fs')
 
-global.nmb = require('./main/twitch.js')
+global.nmb = require('/main/twitch.js')
 
-require('./main/twitter.js')
+require('/main/twitter.js')
 
 nmb.bot.startTime = Date.now()
 

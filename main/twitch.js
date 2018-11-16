@@ -3,11 +3,11 @@ const fs = require('fs')
 const util = require('util')
 
 var bot = {}
-bot.internal = require('./data/global/internal.json')
-bot.config = require('./data/global/config.json')
+bot.internal = require('../data/global/internal.json')
+bot.config = require('../data/global/config.json')
 exports.bot = bot
 
-var opts = require('./config/TwitchClient.json')
+var opts = require('../config/TwitchClient.json')
 var client = new tmi.Client(opts)
 exports.client = client
 
@@ -192,7 +192,7 @@ function joinChannel (channels) { // Allows multichannel
             if (copyDefault) {
               fs.copyFile('./data/default/' + fileName + '.json', fileNamePath, err => {
                 if (err) throw err
-                bot[channel][fileName] = require(fileNamePath)
+                bot[channel][fileName] = require('.' + fileNamePath)
                 console.log(`* [${channel}] ${fileName} created`)
                 resolve()
               })
@@ -204,7 +204,7 @@ function joinChannel (channels) { // Allows multichannel
               })
             }
           } else { // exists already
-            bot[channel][fileName] = require(fileNamePath)
+            bot[channel][fileName] = require('.' + fileNamePath)
             console.log(`* [${channel}] ${fileName} loaded`)
             resolve()
           }

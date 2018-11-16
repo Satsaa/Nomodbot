@@ -18,7 +18,7 @@ module.exports.run = (channel, userstate, params) => {
       if (index === null && params[2]) index = Math.floor(params[2] - 1) // specified index with username
       else if (index === null && params[1]) index = myUtil.getRandomInt(0, length - 1)
 
-      if (isNaN(index)) myUtil.getRandomInt(0, length - 1)
+      if (isNaN(index) || index === null) index = myUtil.getRandomInt(0, length - 1)
       else if (index < length * -1 - 1) index = 0
       else if (index < -1) index = length + index + 1 // negative
       else if (index === -1) index = 0

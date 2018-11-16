@@ -1,5 +1,5 @@
 const fs = require('fs')
-let quotes = require('../data/global/manlyQuotes.json')
+let quotes = require('../../data/global/manlyQuotes.json')
 let myUtil = require('../myutil.js')
 
 module.exports.run = (channel, userstate, params) => {
