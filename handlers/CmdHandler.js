@@ -1,11 +1,17 @@
 
 let commands = {}
 
+// control commands
 commands['exit'] = require('../commands/control/exit.js')
 commands['join'] = require('../commands/control/join.js')
 commands['part'] = require('../commands/control/part.js')
 commands['reload'] = require('../commands/control/reload.js')
 commands['save'] = require('../commands/control/save.js')
+
+// log "package"
+commands['myquote'] = require('../commands/log/myquote.js')
+commands['lines'] = require('../commands/log/lines.js')
+commands['lastseen'] = require('../commands/log/lastseen.js')
 
 commands['echo'] = (require('../commands/echo.js'))
 commands['myiq'] = require('../commands/myiq.js')
@@ -54,7 +60,7 @@ module.exports.responseHandle = (text, channel, userstate, params) => {
 }
 
 module.exports.helpHandle = (command, channel, params) => {
-  commands[command].help(params).then((msg) => {
+  commands[command].help(params, channel).then((msg) => {
     nmb.msgHandler.chat(channel, msg)
   })
 }

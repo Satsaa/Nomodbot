@@ -1,20 +1,36 @@
 
+/** Returns a random integer betweent min and max
+ * @param {number} min Minimum possible output
+ * @param {number} max Maximum possible output
+ */
 module.exports.getRandomInt = (min, max) => {
   min = Math.ceil(min)
   max = Math.floor(max)
   return Math.floor(Math.random() * (max - min)) + min // The maximum is exclusive and the minimum is inclusive
 }
 
+/** Returns a random property value of an object
+ * @param {object} obj Searched object
+ */
 module.exports.getRandomProperty = (obj) => {
   var keys = Object.keys(obj)
   return obj[keys[keys.length * Math.random() << 0]]
 }
+
+/** Returns a random property name of an object
+ * @param {object} obj Searched object
+ */
 module.exports.getRandomKey = (obj) => {
   var keys = Object.keys(obj)
   return keys[keys.length * Math.random() << 0]
 }
 
-module.exports.RandomNormal = (min = 0, max = 100, skew = 1) => {
+/** Returns a random normalized number between min and max
+ * @param {number} min Minimum possible output
+ * @param {number} max Maximum possible output
+ * @param {number} skew Skews the normal mean closer to min (<1) or max (>1)
+ */
+module.exports.randomNormal = (min = 0, max = 100, skew = 1) => {
   return Math.pow(((Math.sqrt(-2.0 * Math.log(Math.random())) * Math.cos(2.0 * Math.PI * Math.random())) / 10.0 + 0.5), skew) * (max - min) + min
 }
 
@@ -63,8 +79,7 @@ module.exports.timeSince = (ms, top = 4, short = true) => {
 function timeStr (t, top, short) {
   let exists = 0
   let untill = []
-  let dateStrLong = [' days', ' hours', ' minutes', ' seconds']
-  let dateStrLongSing = [' day', ' hour', ' minute', ' second']
+  let dateStrLong = [' day', ' hour', ' minute', ' second']
   let dateStrShort = ['d', 'h', 'm', 's']
 
   for (let i = 0; i < 4; i++) {
@@ -73,22 +88,38 @@ function timeStr (t, top, short) {
       if (exists < top + 1) {
         if (short) untill[i] = t[i] + dateStrShort[i] // short
         else { // long with singular/plural
-          if (t[i] === 1) untill[i] = t[i] + dateStrLongSing[i] // singular
-          else untill[i] = t[i] + dateStrLong[i] // plural
+          if (t[i] === 1) untill[i] = t[i] + dateStrLong[i] // singular
+          else untill[i] = t[i] + dateStrLong[i] + 's' // plural
         }
-      } else untill[i] = ''
+      }
     }
   }
-  return untill.join(' ')
+  let str = untill.join(' ').trim()
+  if (str === '') {
+    return short ? '0s' : '0 seconds'
+  }
+  return str
+}
+
+/** Returns time converted to YYYY-MM-DD, the only logical format
+ * @param {any} ms Time in ms
+ * @param {any} delim Char or string to put between numbers. undefined = '-'
+ */
+module.exports.dateString = (ms, delim) => {
+  let dateStr = new Date(ms).toISOString()
+  dateStr = dateStr.substring(0, dateStr.indexOf('T'))
+  if (delim) return dateStr.replace(new RegExp(delim, 'gi'), '')
+  else return dateStr
 }
 
 /** Returns inputted singular or plural based on v's value
  * @param {any} v If this is 1 or '1' returns singular
  * @param {any} singular Singular form
- * @param {any} plural Plural form
+ * @param {any} plural Plural form. If omitted uses singular + 's'
+ * @return {string}
  */
-module.exports.plural = (v, singular, plural) => {
-  return (v === 1 || v === '1' ? singular : plural)
+module.exports.plural = (v, singular, plural = undefined) => {
+  return (v === 1 || v === '1' ? singular : (plural || singular + 's'))
 }
 
 /** Capitalizes a single character at pos
@@ -97,4 +128,22 @@ module.exports.plural = (v, singular, plural) => {
  */
 module.exports.cap = (string, pos = 0) => {
   return string.slice(0, pos) + string.charAt(pos).toUpperCase() + string.slice(pos + 1)
+}
+
+/** Get ordinal of an integer (st,nd,rd,th)
+ * @param {number} i Check ordinal against this
+ */
+module.exports.addOrdinal = (i) => {
+  var j = i % 10
+  var k = i % 100
+  if (j === 1 && k !== 11) {
+    return i + 'st'
+  }
+  if (j === 2 && k !== 12) {
+    return i + 'nd'
+  }
+  if (j === 3 && k !== 13) {
+    return i + 'rd'
+  }
+  return i + 'th'
 }

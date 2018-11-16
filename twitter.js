@@ -29,7 +29,6 @@ stream.on('data', (tweet) => {
   console.log(`* Tweet from @${tweet.user.screen_name}: twitter.com/statuses/${tweet.id_str}`)
   if (tweet.user.screen_name === 'sparkmoba') tweet.user.screen_name = 'sporkmoba'
   // console.log(tweet)
-  // (!tweet.extended_tweet && typeof tweet.entities.media !== 'undefined' && tweet.entities.media[0].media_url)
   if (!tweet.extended_tweet && (((tweet.entities || {}).media || {})[0] || {}).media_url) {
     console.log(`* Media: ${tweet.entities.media[0].media_url}`)
     console.log(`* Waiting for caption...`)

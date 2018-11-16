@@ -1,8 +1,8 @@
 var cmdHandler = require('../handlers/cmdHandler.js')
 
 module.exports.receive = (channel, userstate, message, self) => {
-  // remove antiduplicate suffix, it would be counted as a parameter (mainly chatterino)
-  if (!self && message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
+  // remove antiduplicate suffix, it would be counted as a parameter (mainly from chatterino)
+  if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
   if (nmb.bot.config.console_log_messages) { // log messages in console
     console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
   }
@@ -96,6 +96,7 @@ function chat (channels, msg, allowCommand) {
     console.log(`[ERROR] Invalid channels type: ${typeof channels} `)
     return
   }
+  if (msg.length > 497) msg = msg.substring(0, 497) // getting too long?
   if (typeof channels === 'string') { // channels is used as an array but a single channel string is supported
     channels = [channels]
   }
@@ -115,7 +116,7 @@ function chat (channels, msg, allowCommand) {
           queueModChat(channel, msg)
           return
         }
-        nmb.client.say(channel, antiDupe(channel, msg)).then(() => {
+        nmb.client.say(channel, limitLength(antiDupe(channel, msg))).then(() => {
           nmb.bot.internal.mod_times.push(Date.now())
         }).catch((err) => {
           console.log(`* [${channel}] Msg failed: ${err}`)
@@ -151,7 +152,7 @@ function queueChat (channel, message) {
 
   setTimeout(() => { // send one message and init interval if needed afterwards
     nmb.bot.internal.user_times.push(Date.now())
-    nmb.client.say(chatQueue[0][0], antiDupe(channel, chatQueue[0][1])).then(() => {
+    nmb.client.say(chatQueue[0][0], limitLength(antiDupe(channel, chatQueue[0][1]))).then(() => {
       chatQueue.shift()
     }).catch((err) => {
       console.log(`* [${chatQueue[0][0]}] Msg failed: ${err}`)
@@ -161,7 +162,7 @@ function queueChat (channel, message) {
           parseTimes()
           if (nmb.bot.internal.user_times.length >= nmb.bot.config.user_limit) return // Rate limiting
           nmb.bot.internal.user_times.push(Date.now())
-          nmb.client.say(chatQueue[0][0], antiDupe(channel, chatQueue[0][1])).then(() => {
+          nmb.client.say(chatQueue[0][0], limitLength(antiDupe(channel, chatQueue[0][1]))).then(() => {
             chatQueue.shift()
           }).catch((err) => {
             console.log(`* [${chatQueue[0][0]}] Msg failed: ${err}`)
@@ -195,7 +196,7 @@ function queueModChat (channel, message) {
   setTimeout(timeoutMsg, getTimeout())
 
   function timeoutMsg () {
-    nmb.client.say(modQueue[0][0], antiDupe(channel, modQueue[0][1])).then(() => {
+    nmb.client.say(modQueue[0][0], limitLength(antiDupe(channel, modQueue[0][1]))).then(() => {
       nmb.bot.internal.mod_times.push(Date.now())
       modQueue.shift()
     }).catch((err) => {
@@ -252,6 +253,11 @@ function antiDupe (channel, message) { // remove or add 2 chars at msg end to av
   } else {
     return message + ' \u206D' // U+206D = ACTIVATE ARABIC FORM SHAPING // 0 width character
   }
+}
+
+function limitLength (msg, length = 499) {
+  if (msg.length > length) return msg.substring(0, length)
+  else return msg
 }
 
 // remove messages from time lists that exceed limit_period sec age

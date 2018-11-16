@@ -11,6 +11,10 @@
   "?define": "define",
   "?uptime": "uptime",
   "?downtime": "uptime",
+  "?myquote": "myquote",
+  "?lines": "lines",
+  "?lastseen": "lastseen",
+  "?seen": "lastseen",
   "?exit": {
     "command": "exit",
     "userlvl": "master"
