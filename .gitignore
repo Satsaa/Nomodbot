@@ -10,4 +10,4 @@ data/*
 data/global/myiq.json
 config/OxfordDictionaries.json
 .vscode
-*test.js
+*test.*

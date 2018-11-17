@@ -2,7 +2,6 @@ var cmdHandler = require('../handlers/cmdHandler.js')
 
 module.exports.receive = (channel, userstate, message, self) => {
   // remove antiduplicate suffix, it would be counted as a parameter (mainly from chatterino)
-  if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
   if (nmb.bot.config.console_log_messages) { // log messages in console
     console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
   }
@@ -11,8 +10,10 @@ module.exports.receive = (channel, userstate, message, self) => {
     case 'chat':
       if (self) {
         updateBot(channel, userstate, message)
+        if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
         nmb.logger.log(channel, 'chat', userstate['display-name'], nmb.client.globaluserstate['user-id'], message)
       } else {
+        if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
         nmb.logger.log(channel, 'chat', userstate['display-name'], userstate['user-id'], message)
         const params = message.split(' ') // Split message to an array
         const commandName = params[0].toLowerCase() // Command name (first word)
@@ -257,8 +258,10 @@ function antiDupe (channel, message) { // remove or add 2 chars at msg end to av
 }
 
 function limitLength (msg, length = 499) {
-  if (msg.length > length) return msg.substring(0, length)
-  else return msg
+  if (msg.length > length) {
+    console.log(`* Msg shortened ${msg.length}. Max length was ${length}`)
+    return msg.substring(0, length)
+  } else return msg
 }
 
 // remove messages from time lists that exceed limit_period sec age

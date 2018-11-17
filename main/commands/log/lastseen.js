@@ -13,7 +13,7 @@ module.exports.run = (channel, userstate, params) => {
       if (short[userLow][1].length < 1) { // no logs but is tracked somehow
         return resolve(`${params[1] ? params[1] : `@${userstate['display-name']} You`} ${youOrMe(self)}`)
       }
-      let seenMs = short[userLow][2][short[userLow][2].length - (self ? 2 : 1)] * 1000
+      let seenMs = nmb.logger.getTime(short, userLow, short[userLow][2].length - (self ? 1 : 0)) * 1000
 
       resolve(`${params[1] ? params[1] : `@${userstate['display-name']} You`} ${youOrMe2(self)} ${myUtil.timeSince(seenMs, 1, false)} ago`)
     } else resolve(`${params[1] ? params[1] : `@${userstate['display-name']} You`} ${youOrMe(self)}`)

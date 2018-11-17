@@ -20,7 +20,7 @@ module.exports.log = (channel, type, name, userId, message) => {
     } else {
       type = types[type]
       message = message.replace(/\n/gi, '') // remove new lines
-      message = message.replace(/ +(?= )/g, '') // replace multi spaces with a single space
+      message = message.replace(/ +(?= )/g, '') // replace multiple spaces with a single space
 
       let short = nmb.bot[channel].log
       let line = `${logDate()}:${type}:${name}:${message}\n`
@@ -48,6 +48,32 @@ module.exports.readAtOffset = (channel, offset) => {
   })
 }
 
+// These do the addition and possible math for you
+function getOffset (channel, user, index) { // channel may be an object reference or channel name
+  let short
+  if (typeof channel === 'object') short = channel[user][1]
+  else short = nmb.bot[channel].log[user][1]
+  let offset = 0
+  for (let i = 0; i < index; i++) {
+    const element = short[i]
+    offset += element
+  }
+  return offset
+}
+function getTime (channel, user, index) { // channel may be an object reference or channel name
+  let short
+  if (typeof channel === 'object') short = channel[user][2]
+  else short = nmb.bot[channel].log[user][2]
+  let time = 0
+  for (let i = 0; i < index; i++) {
+    const element = short[i]
+    time += element
+  }
+  return time // second form
+}
+module.exports.getOffset = getOffset
+module.exports.getTime = getTime
+
 // Add to json
 function track (short, name, userId, dateSec) {
   name = name.toLowerCase()
@@ -66,8 +92,16 @@ function track (short, name, userId, dateSec) {
     ]
   } else { // continue users object
     if (!short[name][0]) short[name][0] = userId
-    short[name][1].push(short['$log_offset'])
-    short[name][2].push(dateSec)
+    let offset = getOffset(short, name, short[name][1].length)
+    let time = getTime(short, name, short[name][2].length)
+
+    short[name][1].push(short['$log_offset'] - offset)
+    short[name][2].push(dateSec - time)
+
+    if (short[name][1][short[name][1].length - 1] < 0 || short[name][2][short[name][2].length - 1] < 0) {
+      console.log('||' + short[name][1][short[name][1].length - 1])
+      console.log('|||' + short[name][2][short[name][2].length - 1])
+    }
   }
 }
 
@@ -222,9 +256,9 @@ ms:type:User:msg...
   '$end_time': ms,
   'user0': [
     '1010230, // user id
-    [ // byte offsets
+    [ // byte offsets ADDITIVE
 
-    ],[ // time (ms / 1000) Second precision
+    ],[ // time (ms / 1000) Second precision ADDITIVE
 
     ]
   ],

@@ -12,6 +12,8 @@ commands['save'] = require('../commands/control/save.js')
 commands['myquote'] = require('../commands/log/myquote.js')
 commands['lines'] = require('../commands/log/lines.js')
 commands['lastseen'] = require('../commands/log/lastseen.js')
+commands['users'] = require('../commands/log/users.js')
+commands['randomquote'] = require('../commands/log/randomquote.js')
 
 commands['echo'] = (require('../commands/echo.js'))
 commands['myiq'] = require('../commands/myiq.js')

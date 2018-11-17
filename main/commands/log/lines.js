@@ -15,7 +15,8 @@ module.exports.run = (channel, userstate, params) => {
         return resolve(`${params[1] ? params[1] : `@${userstate['display-name']} You`} ${youOrMe(self)}`)
       }
       length = length - (self ? 1 : 0)
-      resolve(`${params[1] ? params[1] : `@${userstate['display-name']} You`} ${youOrMe2(self)} ${length} ${myUtil.plural(length, 'line')} here`)
+      let dateStr = myUtil.dateString(nmb.bot[channel].log.$start_time * 1000)
+      resolve(`${params[1] ? params[1] : `@${userstate['display-name']} You`} ${youOrMe2(self)} ${length} ${myUtil.plural(length, 'time')} here since ${dateStr}`)
     } else resolve(`${params[1] ? params[1] : `@${userstate['display-name']} You`} ${youOrMe(self)}`)
   })
 }
@@ -32,6 +33,6 @@ function youOrMe2 (me) {
 
 module.exports.help = (params, channel) => {
   return new Promise((resolve, reject) => {
-    resolve(`Get how many lines you have chatted: ${params[1]} [<user>]. Logging for this channel started ${myUtil.dateString(nmb.bot[channel].log.$start_time * 1000)}`)
+    resolve(`Get how many times you have chatted: ${params[1]} [<user>]. Logging for this channel started ${myUtil.dateString(nmb.bot[channel].log.$start_time * 1000)}`)
   })
 }
