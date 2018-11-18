@@ -6,7 +6,7 @@ module.exports.run = (channel, userstate, params) => {
     let user = params[1] || userstate.username
     let index = null
     if (!params[2] && !isNaN(user)) { // allow use of lonely param[1] as index
-      index = ~~user - 1
+      index = ~~user
       user = userstate.username
     }
     let userLow = user.toLowerCase()
@@ -19,14 +19,14 @@ module.exports.run = (channel, userstate, params) => {
       else if (index === null && params[1]) index = myUtil.getRandomInt(0, length - 1)
 
       if (isNaN(index) || index === null) index = myUtil.getRandomInt(0, length - 1)
-      else if (index < length * -1 - 1) index = 0
-      else if (index < -1) index = length + index + 1 // negative
-      else if (index === -1) index = 0
+      else if (index < length * -1) index = 1
+      else if (index < 0) index = length + index + 1 // negative
+      else if (index === 0) index = 1
       else if (index > length - 1) index = length - 1
 
       let logOffset = nmb.logger.getOffset(short, userLow, index)
       nmb.logger.readAtOffset(channel, logOffset).then((result) => {
-        resolve(`${myUtil.timeSince(result.ms * 1000, 1, false)} ago, ${myUtil.addOrdinal(index + 1)} message: ${result.user}: ${result.message}`)
+        resolve(`${myUtil.timeSince(result.ms * 1000, 1, false)} ago, ${myUtil.addOrdinal(index)} message: ${result.user}: ${result.message}`)
       }).catch((err) => {
         resolve(`Error: ${err}`)
       })
