@@ -224,6 +224,7 @@ function partChannel (channels) {
       client.part(channel).then((data) => { // data returns parted channel
         nmb.logger.endStream(channel)
         console.log(`* [${channel}] Parted`)
+        if (typeof bot[channel] === 'undefined' || typeof bot[channel].channel === 'undefined') return
         fs.writeFile('./data/' + channel + '/channel.json', JSON.stringify(bot[channel].channel, null, 2), 'utf8', (err) => {
           if (err) throw err
           console.log(`* [${channel}] Channel saved`)
@@ -263,7 +264,7 @@ function getUserId (loginName) {
         }, (err, res, data) => {
           if (err) reject(err)
           if ((((data || {}).users || {})[0] || {})._id) {
-            console.log(data)
+            // console.log(data)
             console.log(`* [${loginName}] Got user id: ${data.users[0]._id}`)
             bot.internal.user_ids[loginName] = data.users[0]._id
             resolve(data.users[0]._id)
