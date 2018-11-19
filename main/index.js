@@ -1,8 +1,8 @@
 const fs = require('fs')
 
-global.nmb = require('/main/twitch.js')
+global.nmb = require('./twitch.js')
 
-require('/main/twitter.js')
+require('./twitter.js')
 
 nmb.bot.startTime = Date.now()
 
@@ -26,10 +26,18 @@ function exitHandler (options, exitCode) {
       if (typeof nmb.bot[channel].channel !== 'undefined') {
         console.log(`* [${channel}] Channel saved`)
         fs.writeFileSync('./data/' + channel + '/channel.json', JSON.stringify(nmb.bot[channel].channel, null, 2), 'utf8')
-      } else console.log(`* [${channel}] Channel not saved due to being undefined`)
+      } else console.log(`* [${channel}] Channel undefined and not saved`)
     })
-    fs.writeFileSync('./data/global/internal.json', JSON.stringify(nmb.bot.internal, null, 2), 'utf8')
-    console.log(`* [BOT] Internals saved`)
+
+    if (typeof nmb.bot.log !== 'undefined') {
+      fs.writeFileSync('./data/global/internal.json', JSON.stringify(nmb.bot.internal, null, 2), 'utf8')
+      console.log(`* [BOT] Internals saved`)
+    } else console.log(`* [BOT] Internals undefined and not saved`)
+
+    if (typeof nmb.bot.log !== 'undefined') {
+      fs.writeFileSync('./data/global/log.json', JSON.stringify(nmb.bot.log, null, 2), 'utf8')
+      console.log(`* [BOT] Logs saved`)
+    } else console.log(`* [BOT] Log undefined and not saved`)
   }
   if (exitCode || exitCode === 0) console.log(exitCode)
   if (options.exit) process.exit()

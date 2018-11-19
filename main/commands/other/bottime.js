@@ -1,4 +1,4 @@
-let myUtil = require('../myutil.js')
+let myUtil = require('../../myutil.js')
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {

@@ -2,7 +2,7 @@
   "name": "nomodbot",
   "version": "0.1.0",
   "description": "twitch bot",
-  "main": "index.js",
+  "main": "main/index.js",
   "dependencies": {
     "tmi.js": "^1.2.1",
     "twitter": "^1.7.1"

@@ -1,6 +1,6 @@
 const fs = require('fs')
-let quotes = require('../../data/global/manlyQuotes.json')
-let myUtil = require('../myutil.js')
+let quotes = require('../../../data/global/manlyQuotes.json')
+let myUtil = require('../../myutil.js')
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
@@ -26,14 +26,11 @@ module.exports.run = (channel, userstate, params) => {
           return 'Deleted quote ' + (params[2])
         }
       }
-      let random = 1
-      let index = Math.floor(params[1] - 1)
-      if (isNaN(parseInt(index, 10)) || index > quotes.length) {
-        random = myUtil.getRandomInt(0, quotes.length)
-      } else {
-        random = index
-      }
-      return `${isNaN(index) ? random + 1 : ''} ${index >= quotes.length || index < 0 ? `Max index: ${quotes.length} ${quotes[quotes.length - 1]}` : quotes[random]}`
+      let index = Math.floor(params[1]) // NaN if param1 omitted and below is true
+      if (isNaN(index)) index = myUtil.getRandomInt(0, quotes.length)
+      else index = myUtil.smartIndex(index, quotes.length)
+
+      return `${index}: ${quotes[index - 1]}`
     }
 
     function save (quotes) {

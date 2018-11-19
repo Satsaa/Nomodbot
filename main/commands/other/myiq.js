@@ -1,6 +1,6 @@
 const fs = require('fs')
-let myUtil = require('../myutil.js')
-let global = require('../../data/global/myiq.json')
+let myUtil = require('../../myutil.js')
+let global = require('../../../data/global/myiq.json')
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {

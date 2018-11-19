@@ -34,6 +34,20 @@ module.exports.randomNormal = (min = 0, max = 100, skew = 1) => {
   return Math.pow(((Math.sqrt(-2.0 * Math.log(Math.random())) * Math.cos(2.0 * Math.PI * Math.random())) / 10.0 + 0.5), skew) * (max - min) + min
 }
 
+/** Allow using negative indexes to get -nth last index and limits index to 1-max
+ * @param {number} index Input index
+ * @param {number} max Maximum index
+ */
+module.exports.smartIndex = (index, max) => {
+  if (index < 0) {
+    if (index < -max) return 1
+    return max + index + 1 // 100 -1 + 1
+  }
+  if (index < 1) return 1
+  if (index > max) return max
+  return index
+}
+
 /** Converts ms to an array of time units
  * @param {number} ms Time to convert
  * @returns {array} [d, h, m, s]

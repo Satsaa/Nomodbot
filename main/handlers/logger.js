@@ -22,11 +22,10 @@ module.exports.log = (channel, type, name, userId, message) => {
       message = message.replace(/\n/gi, '') // remove new lines
       message = message.replace(/ +(?= )/g, '') // replace multiple spaces with a single space
 
-      let short = nmb.bot[channel].log
       let line = `${logDate()}:${type}:${name}:${message}\n`
-      track(short, name, userId, logDate())
+      track(channel, name, userId, logDate())
 
-      short['$log_offset'] += Buffer.byteLength(line, 'utf8')
+      nmb.bot.log[channel]['offset'] += Buffer.byteLength(line, 'utf8')
       streams[channel].write(line)
     }
   }
@@ -42,7 +41,7 @@ module.exports.readAtOffset = (channel, offset) => {
         let raw = buffer.toString('utf8')
         let parse = parseLog(raw)
         if (parse === false) reject(new Error(`Invalid log line at offset: ${offset}`))
-        else resolve(parseLog(raw))
+        else resolve(parse)
       })
     })
   })
@@ -75,19 +74,27 @@ module.exports.getOffset = getOffset
 module.exports.getTime = getTime
 
 // Add to json
-function track (short, name, userId, dateSec) {
-  name = name.toLowerCase()
-  if (short['$messages'] === 0) {
-    short['$start_time'] = dateSec
-  }
-  short['$messages']++
-  short['$end_time'] = dateSec
+function track (channel, name, userId, dateSec) {
+  let short = nmb.bot[channel].log
+  let shortG = nmb.bot.log[channel]
 
-  if (typeof short[name] === 'undefined') { // first messaged from user
-    short['$users']++
+  name = name.toLowerCase()
+  if (shortG['messages'] === 0) {
+    shortG['start_time'] = dateSec
+  }
+  shortG['messages']++
+  shortG['end_time'] = dateSec
+
+  if (!((short || {})[name])) { // first messaged from user
+    if (typeof short === 'undefined') {
+      nmb.bot[channel].log = {}
+      short = nmb.bot[channel].log
+    }
+
+    shortG['users']++
     short[name] = [ // initialize users object
       userId,
-      [short['$log_offset']], // offsets
+      [shortG['offset']], // offsets
       [dateSec] // times (ms / 1000) Second precision
     ]
   } else { // continue users object
@@ -95,8 +102,13 @@ function track (short, name, userId, dateSec) {
     let offset = getOffset(short, name, short[name][1].length)
     let time = getTime(short, name, short[name][2].length)
 
-    short[name][1].push(short['$log_offset'] - offset)
+    short[name][1].push(shortG['offset'] - offset)
     short[name][2].push(dateSec - time)
+
+    if (short[name][1][short[name][1].length - 1] === null) {
+      if (short[name][2][short[name][2].length - 1] === null) return 6 // both NULL
+      else return 4 // offset NULL
+    } else if (short[name][2][short[name][2].length - 1] === null) return 5 // time NULL
 
     if (short[name][1][short[name][1].length - 1] < 0) {
       if (short[name][2][short[name][2].length - 1] < 0) return 3 // both negative
@@ -121,23 +133,28 @@ function trackLog (channel, offset) {
           if (err) return reject(err)
           fs.close(fd, () => {})
           let startTime = Date.now()
-          let faults = [0, 0, 0] // negative orders for: offsets, times, both
+          let faults = [0, 0, 0, 0, 0, 0] // negative orders for: offsets, times, both and nulls for each
           let logs = buffer.toString('utf8')
           logs = logs.split('\n')
-          let short = nmb.bot[channel].log
+          let shortG = nmb.bot.log[channel]
           let skipped = 0
           logs.forEach(element => {
             let logObj = parseLog(element)
             if (logObj !== false) {
-              let res = track(short, logObj.user, null, ~~logObj.ms)
-              if (res) faults[res - 1]++
+              let res = track(channel, logObj.user, null, ~~logObj.ms)
+              if (res) faults[res - 1]++ // add to fault counter array
             } else skipped++
-            short['$log_offset'] += Buffer.byteLength(element, 'utf8') + 1 // +1 due to \n being removed with split
+            shortG['offset'] += Buffer.byteLength(element, 'utf8') + 1 // +1 due to \n being removed with split
           })
-          if (faults !== [0, 0, 0]) console.log(`* [${channel}] Log faults: Offsets: ${faults[0] + faults[2]} Times: ${faults[1] + faults[2]} (offset faults are bad but time faults may be just fine. A fault is considered to happen when a log has lower offset or time than its previous log)`)
+          if (faults !== [0, 0, 0, 0, 0, 0]) {
+            console.log(`* [${channel}] Log negatives: who cares`)
+            console.log(`* Offsets: ${faults[0] + faults[2]}, Times: ${faults[1] + faults[2]}`)
+            console.log(`* [${channel}] Log nulls: (nulls = fucked)`)
+            console.log(`* Offsets: ${faults[3] + faults[5]}, Times: ${faults[4] + faults[5]}`)
+          }
           console.log(`* [${channel}] Tracked ${logs.length - skipped} log lines in about ${Date.now() - startTime} ms`)
           // last line is '' with no /n but stats.size is absolute so no worries :)
-          short['$log_offset'] = stats.size
+          shortG['offset'] = stats.size
           resolve()
         })
       })
@@ -147,17 +164,19 @@ function trackLog (channel, offset) {
 
 module.exports.startStream = (channel) => {
   fs.stat(`./data/${channel}/log.txt`, (err, stats) => {
+    let short = nmb.bot[channel].log
+    let shortG = nmb.bot.log[channel]
     if (err) {
       if (err.code === 'ENOENT') {
-        nmb.bot[channel].log['$log_offset'] = 0
+        short['offset'] = 0
         stats = { 'size': 0 }
       } else throw err
     }
-    if (stats.size !== nmb.bot[channel].log['$log_offset']) {
+    if (stats.size !== shortG['offset']) {
       console.log(`* [${channel}] Offset mismatch`)
-      console.log(`Real: ${stats.size} !== ${nmb.bot[channel].log['$log_offset']} :Tracked`)
-      if (stats.size > nmb.bot[channel].log['$log_offset']) { // Json is behind logs
-        trackLog(channel, nmb.bot[channel].log['$log_offset']).then(() => {
+      console.log(`Real: ${stats.size} !== ${shortG['offset']} :Tracked`)
+      if (stats.size > shortG['offset']) { // Json is behind logs
+        trackLog(channel, shortG['offset']).then(() => {
           streams[channel] = fs.createWriteStream(`./data/${channel}/log.txt`, { flags: 'a' })
         }).catch((err) => {
           console.log(err)
@@ -166,13 +185,14 @@ module.exports.startStream = (channel) => {
         console.log(`* [${channel}] Log json ahead of log txt. Likely due to manually editing log.txt`)
         console.log(`* [${channel}] Retracking completely!`)
         delete nmb.bot[channel].log
-        nmb.bot[channel].log = {
-          '$log_offset': 0,
-          '$messages': 0,
-          '$users': 0,
-          '$start_time': null,
-          '$end_time': null
+        nmb.bot.log[channel] = {
+          'offset': 0,
+          'messages': 0,
+          'users': 0,
+          'start_time': null,
+          'end_time': null
         }
+        shortG = nmb.bot.log[channel]
         trackLog(channel, 0).then(() => {
           streams[channel] = fs.createWriteStream(`./data/${channel}/log.txt`, { flags: 'a' })
         }).catch((err) => {
@@ -183,19 +203,23 @@ module.exports.startStream = (channel) => {
   })
 }
 module.exports.endStream = (channel) => {
-  if (!channel) console.log(`* Error: Channel was false`)
+  if (!channel) console.log(`* Error: Channel was false: ${channel}`)
   if (!(channel in streams)) {
     console.log(`* [${channel}] Ignored endStream() as channel's write stream doesn't exist`)
     return
   }
   streams[channel].end()
   delete streams[channel]
-  if ((nmb.bot[channel] || {}).log) return console.log(`* [${channel}] Tried saving undefined log`)
-  fs.writeFile(`./data/${channel}/log.json`, JSON.stringify(nmb.bot[channel].log, null, '\t'), 'utf8', (err) => {
-    if (err) throw err
+  if ((nmb.bot[channel] || {}).log) {
+    fs.writeFile(`./data/${channel}/log.json`, JSON.stringify(nmb.bot[channel].log, null, '\t'), 'utf8', (err) => {
+      if (err) throw err
+      delete nmb.bot[channel].log
+      console.log(`* [${channel}] Saved log.json and ended stream`)
+    })
+  } else {
     delete nmb.bot[channel].log
-    console.log(`* [${channel}] Saved log.json and ended stream`)
-  })
+    return console.log(`* [${channel}] Tried saving undefined log`)
+  }
 }
 // primarily used on exit
 module.exports.endStreamSync = (channel) => {
@@ -205,9 +229,13 @@ module.exports.endStreamSync = (channel) => {
   }
   streams[channel].end()
   delete streams[channel]
-  fs.writeFileSync(`./data/${channel}/log.json`, JSON.stringify(nmb.bot[channel].log, null, '\t'), 'utf8')
+
+  if (typeof nmb.bot[channel].log !== 'undefined') {
+    fs.writeFileSync(`./data/${channel}/log.json`, JSON.stringify(nmb.bot[channel].log, null, '\t'), 'utf8')
+    console.log(`* [${channel}] Saved log.json and ended stream`)
+  } else console.log(`* [${channel}] Log undefined, didn't save log.json but ended stream`)
+
   delete nmb.bot[channel].log
-  console.log(`* [${channel}] Saved log.json and ended stream`)
 }
 
 // turn log string in to a log object { ms: any; type: any; user: any; message: any; }
@@ -244,8 +272,6 @@ function logDate () { // get time in ms at 1 seconds precision
 }
 
 /*
-// log_offset tracks the current offset. If the process is terminated, offset is not saved nor log.json
-// We can add the untracked lines in log.txt at next launch based on the unsaved offset
 // (ms / 1000) Second precision
 ...
 ms:type:User:msg...
@@ -255,12 +281,14 @@ ms:type:User:msg...
 
 */
 
-/* log.json
+/* global log.json contains stats for all channels
+// offset tracks the current offset. If the process is terminated, offset is not saved nor log.json
+// We can add the untracked lines in log.txt at next launch based on the unsaved offset
+
+*/
+
+/* channel log.json
 {
-  '$messages': num,
-  '$users': num,
-  '$start_time': ms,
-  '$end_time': ms,
   'user0': [
     '1010230, // user id
     [ // byte offsets ADDITIVE

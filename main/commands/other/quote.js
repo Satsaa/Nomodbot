@@ -1,5 +1,5 @@
 const fs = require('fs')
-let myUtil = require('../myutil.js')
+let myUtil = require('../../myutil.js')
 let quotes = {}
 
 module.exports.run = (channel, userstate, params) => {
@@ -43,14 +43,11 @@ module.exports.run = (channel, userstate, params) => {
           return `Deleted quote ${params[2]}: ${short.splice(params[2] - 1, 1)}`
         }
       }
-      let random = 1
-      let index = Math.floor(params[1] - 1)
-      if (isNaN(parseInt(index, 10)) || index > short.length) {
-        random = myUtil.getRandomInt(0, short.length)
-      } else {
-        random = index
-      }
-      return (`${isNaN(index) ? random + 1 : ''} ${index >= short.length || index < 0 ? `Max index: ${short.length} ${short[short.length - 1]}` : short[random]}`)
+      let index = Math.floor(params[1]) // null if omitted and below is true
+      if (isNaN(index)) index = myUtil.getRandomInt(0, short.length)
+      else index = myUtil.smartIndex(index, short.length)
+
+      return `${index}: ${short[index - 1]}`
     }
 
     function save (channel, quotes) {

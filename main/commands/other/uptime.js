@@ -1,6 +1,6 @@
 const util = require('util')
-const myUtil = require('../myutil')
-var opts = require('../../config/TwitchClient.json')
+const myUtil = require('../../myutil')
+var opts = require('../../../config/TwitchClient.json')
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {

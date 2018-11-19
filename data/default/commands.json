@@ -13,6 +13,7 @@
   "?downtime": "uptime",
   "?myquote": "myquote",
   "?lines": "lines",
+  "?totallines": "totallines",
   "?lastseen": "lastseen",
   "?seen": "lastseen",
   "?users": "users",

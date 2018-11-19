@@ -32,6 +32,6 @@ function youOrMe2 (me) {
 
 module.exports.help = (params, channel) => {
   return new Promise((resolve, reject) => {
-    resolve(`Tell when was user seen last: ${params[1]} [<user>]. Logging for this channel started ${myUtil.dateString(nmb.bot[channel].log.$start_time * 1000)}`)
+    resolve(`Tell when was user seen last: ${params[1]} [<user>]. Logging for this channel started ${myUtil.dateString(nmb.bot.log[channel].start_time * 1000)}`)
   })
 }

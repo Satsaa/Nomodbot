@@ -1,5 +1,5 @@
 const fs = require('fs')
-const myUtil = require('../myutil')
+const myUtil = require('../../myutil')
 
 module.exports.init = () => {
   nmb.client.on('message', onMessage)

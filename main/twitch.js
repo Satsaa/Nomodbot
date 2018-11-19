@@ -4,6 +4,7 @@ const util = require('util')
 
 var bot = {}
 bot.internal = require('../data/global/internal.json')
+bot.log = require('../data/global/log.json')
 bot.config = require('../data/global/config.json')
 exports.bot = bot
 
@@ -148,6 +149,15 @@ function joinChannel (channels) { // Allows multichannel
     channels.forEach((channel) => {
       addChannel(channel)
       bot[channel] = {}
+      if (typeof nmb.bot.log[channel] === 'undefined') {
+        nmb.bot.log[channel] = {
+          'offset': 0,
+          'messages': 0,
+          'users': 0,
+          'start_time': null,
+          'end_time': null
+        }
+      }
       getUserId(channel).catch((err) => {
         console.log(`* [ERROR (${channel})] Failed to get user ID: ${err}`)
       })
@@ -312,5 +322,9 @@ function save () {
   fs.writeFile('./data/global/internal.json', JSON.stringify(bot.internal, null, 2), 'utf8', (err) => {
     if (err) throw err
   })
-  console.log(`* [BOT] Saved`)
+  console.log(`* [BOT] Internals saved`)
+  fs.writeFile('./data/global/log.json', JSON.stringify(bot.internal, null, 2), 'utf8', (err) => {
+    if (err) throw err
+  })
+  console.log(`* [BOT] Logs saved`)
 }
