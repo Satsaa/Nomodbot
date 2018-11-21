@@ -33,46 +33,46 @@ stream.on('data', (tweet) => {
     console.log(`* Media: ${tweet.entities.media[0].media_url}`)
     console.log(`* Waiting for caption...`)
     let imageUrl = tweet.entities.media[0].media_url
-    captionURL(imageUrl).then((caption) => {
+    describeUrl(imageUrl).then((caption) => {
       console.log(`* Caption: ${caption}`)
       if (caption) caption = ' Image of ' + caption
 
       nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.text.substring(0, tweet.display_text_range[1])}
-      twitter.com/i/web/status/${tweet.id_str}/
+      twitter.com/i/web/status/${tweet.id_str}/ ⠀
       ${caption || tweet.entities.media[0].media_url}`)
     }).catch((err) => {
       console.log(`* Caption failed: ${err}`)
 
       nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.text.substring(0, tweet.display_text_range[1])}
-      twitter.com/i/web/status/${tweet.id_str}/
+      twitter.com/i/web/status/${tweet.id_str}/ ⠀
       ${tweet.entities.media[0].media_url}`)
     })
   } else if ((((((tweet || {}).extended_tweet || {}).entities || {}).media || {})[0] || {}).media_url) {
     console.log(`* Media: ${tweet.extended_tweet.entities.media[0].media_url}`)
     console.log(`* Waiting for caption...`)
     let imageUrl = tweet.extended_tweet.entities.media[0].media_url
-    captionURL(imageUrl).then((caption) => {
+    describeUrl(imageUrl).then((caption) => {
       console.log(`* Caption: ${caption}`)
       if (caption) caption = ' Image of ' + caption
 
       nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.extended_tweet.full_text.substring(0, tweet.extended_tweet.display_text_range[1])}
-      twitter.com/i/web/status/${tweet.id_str}
+      twitter.com/i/web/status/${tweet.id_str} ⠀
       ${caption || tweet.extended_tweet.entities.media[0].media_url}`)
     }).catch((err) => {
       console.log(err)
 
       nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.extended_tweet.full_text.substring(0, tweet.extended_tweet.display_text_range[1])}
-      twitter.com/i/web/status/${tweet.id_str}/
+      twitter.com/i/web/status/${tweet.id_str}/ ⠀
       ${tweet.extended_tweet.entities.media[0].media_url}`)
     })
   } else {
     nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
     ${tweet.extended_tweet && tweet.extended_tweet.full_text ? tweet.extended_tweet.full_text : tweet.text}
-    twitter.com/i/web/status/${tweet.id_str}/`)
+    twitter.com/i/web/status/${tweet.id_str}/ ⠀`)
   }
 })
 
@@ -177,52 +177,36 @@ function getStatus (code) {
   return { 'short': short, 'long': long }
 }
 
-// deepai api
-// Example posting an image URL:
+// Microsoft Azure cognitive/ddescription api
+// https://westeurope.api.cognitive.microsoft.com/
 
-const deepAi = require('../config/DeepAi.json')
+const azure = require('../config/CognitiveServices.json')
 var request = require('request')
 
-function captionURL (URL) {
+function describeUrl (imageUrl) {
   return new Promise((resolve, reject) => {
-    request.post({
-      url: 'https://api.deepai.org/api/neuraltalk',
+    const uriBase = `${azure.endpoint}vision/v2.0/analyze`
+    const requestParams = {
+      'visualFeatures': 'Categories,Description,Color',
+      'details': 'Celebrities,Landmarks',
+      'language': 'en'
+    }
+    const options = {
+      uri: uriBase,
+      qs: requestParams,
+      body: `{"url":"${imageUrl}"}`,
       headers: {
-        'Api-Key': deepAi['Api-Key']
-      },
-      formData: {
-        'image': URL
+        'Content-Type': 'application/json',
+        'Ocp-Apim-Subscription-Key': azure.key
       }
-    }, (err, httpResponse, body) => {
-      if (err) {
-        reject(new Error('request failed: ' + err))
-      }
-      var response = JSON.parse(body)
-      resolve(response.output)
+    }
+
+    request.post(options, (error, response, body) => {
+      if (error) return reject(new Error(error))
+      body = JSON.parse(JSON.stringify(JSON.parse(body), null, '  ')) // Objectify json string
+
+      if (((body.description.captions[0] || {}).text)) resolve(body.description.captions[0].text)
+      else resolve('failed caption')
     })
-  })
-}
-
-// Example posting a local image file:
-
-var fs = require('fs')
-// var request = require('request')
-
-function captionFile (path) {
-  request.post({
-    url: 'https://api.deepai.org/api/neuraltalk',
-    headers: {
-      'Api-Key': deepAi['Api-Key']
-    },
-    formData: {
-      'image': fs.createReadStream(path)
-    }
-  }, (err, httpResponse, body) => {
-    if (err) {
-      console.error('request failed:', err)
-      return
-    }
-    var response = JSON.parse(body)
-    console.log(response)
   })
 }

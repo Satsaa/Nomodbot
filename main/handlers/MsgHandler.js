@@ -84,15 +84,15 @@ function updateBot (channel, userstate, message) {
 
 module.exports.chat = chat
 function chat (channels, msg, allowCommand) {
+  if (typeof msg === 'number') msg = msg.toString()
+
+  msg = msg.replace(/ +(?= )/g, '') // replace multiple spaces with a single space
   if (!allowCommand) {
-    if (!msg.startsWith('/me') && !msg.startsWith('.me') && !msg.startsWith('\\me')) { // allow /me
+    if (!msg.startsWith('/me ') && !msg.startsWith('.me ') && !msg.startsWith('\\me ')) { // allow /me
       if (msg.charAt(0) === '/' || msg.charAt(0) === '.' || msg.charAt(0) === '\\') {
         msg = ' ' + msg
       }
     }
-  }
-  if (typeof msg === 'number') {
-    msg = msg.toString()
   }
   if (!Array.isArray(channels) && typeof channels === 'object') {
     console.log(`[ERROR] Invalid channels type: ${typeof channels} `)
