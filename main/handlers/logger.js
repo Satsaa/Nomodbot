@@ -146,13 +146,13 @@ function trackLog (channel, offset) {
             } else skipped++
             shortG['offset'] += Buffer.byteLength(element, 'utf8') + 1 // +1 due to \n being removed with split
           })
+          console.log(`* [${channel}] Tracked ${logs.length - skipped} log lines in about ${Date.now() - startTime} ms`)
           if (faults !== [0, 0, 0, 0, 0, 0]) {
             console.log(`* [${channel}] Log negatives: who cares`)
             console.log(`* Offsets: ${faults[0] + faults[2]}, Times: ${faults[1] + faults[2]}`)
-            console.log(`* [${channel}] Log nulls: (nulls = fucked)`)
+            console.log(`* [${channel}] Log nulls: you a fucked`)
             console.log(`* Offsets: ${faults[3] + faults[5]}, Times: ${faults[4] + faults[5]}`)
           }
-          console.log(`* [${channel}] Tracked ${logs.length - skipped} log lines in about ${Date.now() - startTime} ms`)
           // last line is '' with no /n but stats.size is absolute so no worries :)
           shortG['offset'] = stats.size
           resolve()

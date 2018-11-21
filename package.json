@@ -4,6 +4,7 @@
   "description": "twitch bot",
   "main": "main/index.js",
   "dependencies": {
+    "striptags": "^3.1.1",
     "tmi.js": "^1.2.1",
     "twitter": "^1.7.1"
   },

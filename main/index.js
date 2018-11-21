@@ -6,11 +6,6 @@ require('./twitter.js')
 
 nmb.bot.startTime = Date.now()
 
-process.on('unhandledRejection', (error, p) => {
-  console.log('Unhandled Rejection: Promise', p, 'Error:', error)
-  console.log(error.stack)
-})
-
 // No exithandling if you kill the process... for example ctrl+alt+m in vs code
 function exitHandler (options, exitCode) {
   if (options.cleanup) {

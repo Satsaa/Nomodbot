@@ -11,3 +11,4 @@ data/global/myiq.json
 config/OxfordDictionaries.json
 .vscode
 *test.*
+config/CognitiveServices.json

@@ -1,6 +1,6 @@
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
-    if (params.length !== 0) {
+    if (params.length > 1) {
       resolve(params.slice(1).join(' '))
     }
   })
