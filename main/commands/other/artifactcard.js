@@ -2,6 +2,7 @@ var request = require('request')
 var fs = require('fs')
 let mu = require('../../myutil.js')
 var striptags = require('striptags')
+var stringSim = require('string-similarity')
 
 let sets = [
   require('../../../data/global/artifact/0.json'),
@@ -40,6 +41,7 @@ module.exports.run = (channel, userstate, params) => {
     if (!params[1]) return resolve('You must define a card name (params 1+)')
     let search = params.slice(1).join(' ')
     let short, cards
+    let MatchStr = '' // For string similarity matching
 
     let card = false
     for (let ii = 0; ii < sets.length; ii++) {
@@ -53,9 +55,41 @@ module.exports.run = (channel, userstate, params) => {
       }
       if (card) break
     }
-    if (!card) return resolve(`Cannot find '${search}'`)
+    if (!card) { // no match. Perform search
+      let highest = 0; let set = 0; let index = 0
+      for (let ii = 0; ii < sets.length; ii++) {
+        short = sets[ii].card_set.card_list
+        for (let i = 0; i < short.length; i++) {
+          // Give high points if is abbreviation. Eg cm -> Crystal Maiden but not es -> Earthshaker
+          let abb = short[i].card_name.english.split(' ')
+          let abbParsed = ''
+          abb.forEach(e => {
+            abbParsed += e.charAt(0)
+          })
+          let thisSim = stringSim.compareTwoStrings(short[i].card_name.english, search)
 
-    let setStr = 'in the ' + cards.card_set.set_info.name.english.replace(' Set', '') + ' set'
+          if (abbParsed.toLowerCase() === search.toLowerCase()) {
+            if (short[i].card_type === 'Hero') thisSim += 0.30
+            thisSim += 0.60
+          }
+          if (thisSim > highest) {
+            highest = thisSim; set = ii; index = i
+          }
+        }
+      }
+      card = short[index]
+      console.log(`Score: ${highest}. Search: ${search}. Card: ${card.card_name.english}`)
+      if (highest < 0.001) return resolve(`Cannot find '${search}'`)
+
+      short = sets[set].card_set.card_list
+      cards = sets[set]
+
+      if (highest < 0.25) MatchStr = 'Weak match: '
+      else if (highest <= 0.5) MatchStr = 'Close match: '
+    }
+    let setStr = ''
+    // The game started with 2 sets (base and Call to Arms). Start telling set names when a new set is released
+    if (sets.length > 2) setStr = 'from the ' + cards.card_set.set_info.name.english.replace(' Set', '') + ' set'
     let name = card.card_name.english
     let nameStyled = mu.fontify(name, 'mathSansBold')
 
@@ -132,35 +166,35 @@ module.exports.run = (channel, userstate, params) => {
       case 'hero' :
       case 'creep':
         // nocost
-        resolve(`${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         break
 
       case 'item':
         // cost nomana nostats
-        resolve(`${nameStyled} is ${mu.addArticle(`${costStr}${s(rarity)} ${subType}${s(type)}${s(setStr)}${text ? ': ' + text : ' with no special text?'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${costStr}${s(rarity)} ${subType}${s(type)}${s(setStr)}${text ? ': ' + text : ' with no special text?'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         break
 
       case 'ability':
       case 'passive ability':
         // nostats nocolor
-        resolve(`${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(manaStr)}${s(type)}${s(setStr)}${text ? ': ' + text : ' with no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(manaStr)}${s(type)}${s(setStr)}${text ? ': ' + text : ' with no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         break
 
       case 'improvement':
       case 'spell':
         // nostats
-        resolve(`${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(setStr)}${text ? ': ' + text : ' with no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(setStr)}${text ? ': ' + text : ' with no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         break
 
       case 'stronghold':
       case 'pathing': // why not
-        resolve(`${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' with no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' with no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         // console.log(`* [${channel}] Unknown Artifact card type:${s(type)}`)
         break
 
       default:
 
-        resolve(`${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         // console.log(`* [${channel}] Unknown Artifact card type:${s(type)}`)
         break
     }
