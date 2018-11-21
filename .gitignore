@@ -12,4 +12,3 @@ config/OxfordDictionaries.json
 .vscode
 *test.*
 config/CognitiveServices.json
-data/global/log.json
