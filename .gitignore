@@ -12,3 +12,4 @@ config/OxfordDictionaries.json
 .vscode
 *test.*
 config/CognitiveServices.json
+config/steamApi.json

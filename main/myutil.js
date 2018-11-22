@@ -26,9 +26,9 @@ module.exports.getRandomKey = (obj) => {
 }
 
 /** Returns a random normalized number between min and max
- * @param {number} min Minimum possible output
- * @param {number} max Maximum possible output
- * @param {number} skew Skews the normal mean closer to min (<1) or max (>1)
+ * @param {number} min Minimum possible output. Default = 0
+ * @param {number} max Maximum possible output. Default = 100
+ * @param {number} skew Skews the normal mean closer to min (<1) or max (>1). Default = 1
  */
 module.exports.randomNormal = (min = 0, max = 100, skew = 1) => {
   return Math.pow(((Math.sqrt(-2.0 * Math.log(Math.random())) * Math.cos(2.0 * Math.PI * Math.random())) / 10.0 + 0.5), skew) * (max - min) + min
@@ -67,8 +67,8 @@ function MSToDHMS (ms) {
 
 /** Get string telling how long untill ms
  * @param {number} ms - Time to use
- * @param {number} top - How many time units to return
- * @param {boolean} short - To use short units (d or days)
+ * @param {number} top - How many time units to return. Default = 4
+ * @param {boolean} short - To use short units (d or days). Default = true
  */
 module.exports.timeUntill = (ms, top = 4, short = 1) => {
   let t = MSToDHMS(ms - Date.now()) // time
@@ -77,8 +77,8 @@ module.exports.timeUntill = (ms, top = 4, short = 1) => {
 
 /** Get string telling how long untill ms
  * @param {number} ms - Time to use
- * @param {number} top - How many time units to return
- * @param {boolean} short - To use short units (d or days)
+ * @param {number} top - How many time units to return. Default = 4
+ * @param {boolean} short - To use short units (d or days). Default = true
  */
 module.exports.timeSince = (ms, top = 4, short = true) => {
   let t = MSToDHMS(Date.now() - ms) // time
@@ -129,16 +129,16 @@ module.exports.dateString = (ms, delim) => {
 /** Returns inputted singular or plural based on v's value
  * @param {any} v If this is 1 or '1' returns singular
  * @param {any} singular Singular form
- * @param {any} plural Plural form. If omitted uses singular + 's'
+ * @param {any} plural Plural form. If omitted uses singular + 's'.
  * @return {string}
  */
-module.exports.plural = (v, singular, plural = undefined) => {
+module.exports.plural = (v, singular, plural) => {
   return (v === 1 || v === '1' ? singular : (plural || singular + 's'))
 }
 
 /** Capitalizes a single character at pos
  * @param {string} string Input string
- * @param {number} pos What char to capitalize
+ * @param {number} pos What char to capitalize. Default = 0
  */
 module.exports.cap = (string, pos = 0) => {
   return string.slice(0, pos) + string.charAt(pos).toUpperCase() + string.slice(pos + 1)
