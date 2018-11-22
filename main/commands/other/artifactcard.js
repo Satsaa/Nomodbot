@@ -1,44 +1,104 @@
-var request = require('request')
 var fs = require('fs')
+var request = require('request')
 let mu = require('../../myutil.js')
 var striptags = require('striptags')
 var stringSim = require('string-similarity')
 
 let sets = [
-  require('../../../data/global/artifact/0.json'),
-  require('../../../data/global/artifact/1.json')
 ]
 
-function update (setNum) { // doesnt work. no access for some reason
-  request.post({ uri: `https://playartifact.com/cardset/${setNum}` }, (err, res, body) => {
-    if (err) return err
-    body = JSON.parse(body)
-    console.log(body)
+for (let i = 0; i < 100; i++) { // require all existing sets
+  try {
+    sets[i] = require(`../../../data/global/artifact/${i}.json`)
+  } catch (err) {
+    break
+  }
+}
 
-    // 0 and 1 should have a populated object
-    if (typeof body.cdn_root === 'undefined') return setNum === 0 || setNum === 1 ? 0 : 1
+let expire = 0
+let updated = []
+let added = []
+function update () { // doesnt work. no access for some reason
+  return new Promise((resolve, reject) => {
+    loop(0) // start
 
-    let opts = {
-      method: 'GET',
-      uri: body.cdn_root.replace('https', 'http') + body.url.substring(1),
-      port: 80
-    }
+    function loop (setNum) {
+      request.get({ uri: `https://playartifact.com/cardset/${setNum}` }, (err, res, body) => {
+        if (err) reject(new Error(`At ${setNum}: ${err}`))
+        body = JSON.parse(body)
+        console.log(body)
 
-    request.post(opts, (err, res, body) => {
-      if (err) return err
+        if (Object.keys(body).length === 0) {
+          resolve(setNum)
+          return
+        }
 
-      fs.writeFileSync(`./data/global/artifact/${setNum}.json`, JSON.stringify(body, null, 2), (err) => {
-        if (err) return err
-        update(setNum++)
+        expire = body.expire_time * 1000
+
+        let opts = {
+          method: 'GET',
+          uri: body.cdn_root.replace('https', 'http') + body.url.substring(1),
+          port: 80
+        }
+
+        request.get(opts, (err, res, body) => { // body is plain json
+          if (err) reject(new Error(`At ${setNum}: ${err}`))
+
+          let prevLength = sets[setNum] ? Object.keys(sets[setNum].card_set.card_list).length : null
+          let stats = fs.statSync(`./data/global/artifact/${setNum}.json`)
+          let prevSize = stats.size
+
+          sets[setNum] = JSON.parse(body) // parse and save to memory
+          if (!sets[setNum]) return reject(new Error('Failed to parse correctly.'))
+
+          let keyLength = Object.keys(sets[setNum].card_set.card_list).length
+          if (prevLength !== null) { // Gather changed card amounts
+            if (prevLength !== keyLength) {
+              updated.push(sets[setNum].card_set.set_info.name.english)
+              updated[updated.length - 1] += `: ${keyLength - prevLength} cards`
+            }
+          } else { // Gather new sets!
+            added.push(sets[setNum].card_set.set_info.name.english)
+          }
+
+          fs.writeFile(`./data/global/artifact/${setNum}.json`, JSON.stringify(sets[setNum], null, '\t'), (err) => {
+            if (err) return reject(new Error(`At ${setNum}: ${err}`))
+
+            let stats = fs.statSync(`./data/global/artifact/${setNum}.json`)
+            let currentSize = stats.size
+            if (prevLength === keyLength && prevSize !== currentSize) { // Gather changed set byte size
+              updated.push(sets[setNum].card_set.set_info.name.english)
+              updated[updated.length - 1] += `: ${currentSize - prevSize} bytes`
+            }
+            loop(++setNum)
+          })
+        })
       })
-    })
+    }
   })
 }
 
-const artifact = new Date('2018-11-19T12:00:00-07:00')
+let lastTime = 0
+let name = 'mars' // declare here as it is also used to see if there is a duplicate call
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     if (!params[1]) return resolve('You must define a card name (params 1+)')
+    if (params[1].toLowerCase() === 'update') {
+      if (Date.now() > expire || nmb.bot.config.masters.includes(userstate['username'])) {
+        update().then((num) => {
+          if (!added.length) added.push('None')
+          if (!updated.length) updated.push('None')
+          resolve(`Added: ${added.join(', ')}. Updated:  ${updated.join(', ')}.`)
+        }).catch((err) => {
+          resolve(`Update failed: ${err}`)
+        }).finally(() => {
+          updated.length = 0
+          added.length = 0
+        })
+      } else resolve(`Updating is on cooldown for ${mu.timeUntill(expire, 1, false)}!`)
+      return
+    }
+
     let search = params.slice(1).join(' ')
     let short, cards
     let MatchStr = '' // For string similarity matching
@@ -85,12 +145,17 @@ module.exports.run = (channel, userstate, params) => {
       cards = sets[set]
 
       if (highest < 0.25) MatchStr = 'Weak match: '
-      else if (highest <= 0.5) MatchStr = 'Close match: '
     }
+
+    if (name === card.card_name.english && Date.now() < lastTime + 5000) {
+      return resolve(null)
+    }
+    lastTime = Date.now()
+
     let setStr = ''
     // The game started with 2 sets (base and Call to Arms). Start telling set names when a new set is released
     if (sets.length > 2) setStr = 'from the ' + cards.card_set.set_info.name.english.replace(' Set', '') + ' set'
-    let name = card.card_name.english
+    name = card.card_name.english
     let nameStyled = mu.fontify(name, 'mathSansBold')
 
     let type = card.card_type.toLowerCase()
@@ -209,6 +274,6 @@ module.exports.run = (channel, userstate, params) => {
 
 module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve(`Get info about an Artifact card: ${params[1]} <card...>`)
+    resolve(`Get info about an Artifact card: ${params[1]} <card...>. Refresh card database: ${params[1]} update`)
   })
 }

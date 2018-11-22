@@ -206,7 +206,7 @@ function describeUrl (imageUrl) {
       body = JSON.parse(JSON.stringify(JSON.parse(body), null, '  ')) // Objectify json string
 
       if (((body.description.captions[0] || {}).text)) resolve(body.description.captions[0].text)
-      else resolve('failed caption')
+      else resolve('a failed caption')
     })
   })
 }
