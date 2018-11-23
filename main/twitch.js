@@ -3,6 +3,7 @@ const fs = require('fs')
 const util = require('util')
 
 var bot = {}
+bot.startTime = Date.now()
 bot.internal = require('../data/global/internal.json')
 bot.log = require('../data/global/log.json')
 bot.config = require('../data/global/config.json')
@@ -172,10 +173,10 @@ function joinChannel (channels) { // Allows multichannel
                     loadChannelFile(channel, 'notifys', true).then(
                       loadChannelFile(channel, 'channel', true).finally(() => {
                         loadRoomstateFromQueue(channel).then(() => {
-                          nmb.logger.startStream(channel)
                           console.log(`* [${channel}] Initial roomstate loaded`)
                           client.join(channel).then((data) => { // data returns channel
                             console.log(`* [${channel}] Joined`)
+                            emitter.emit('joinChannel', channel)
                             resolve(channel)
                           }).catch((err) => {
                             console.log(`* [${channel}] Error joining: ${err}`)
@@ -232,7 +233,6 @@ function partChannel (channels) {
     }
     channels.forEach((channel) => {
       client.part(channel).then((data) => { // data returns parted channel
-        nmb.logger.endStream(channel)
         console.log(`* [${channel}] Parted`)
         if (typeof bot[channel] === 'undefined' || typeof bot[channel].channel === 'undefined') return
         fs.writeFile('./data/' + channel + '/channel.json', JSON.stringify(bot[channel].channel, null, 2), 'utf8', (err) => {
@@ -241,6 +241,7 @@ function partChannel (channels) {
           delete bot[channel]
         })
         removeChannel(channel)
+        emitter.emit('partChannel', channel)
         resolve()
       }).catch((err) => {
         console.log(`* [${channel}] Error parting: ${err}`)

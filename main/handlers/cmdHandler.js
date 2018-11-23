@@ -44,6 +44,12 @@ for (let cmd in commands) {
       commands[cmd].init() // init on start if needed
     })
   }
+  if (typeof commands[cmd].onJoin === 'function') {
+
+  }
+  if (typeof commands[cmd].onPart === 'function') {
+
+  }
 }
 
 module.exports.handle = (command, channel, userstate, params) => {
@@ -57,10 +63,6 @@ module.exports.handle = (command, channel, userstate, params) => {
       }
     })
   }
-}
-
-module.exports.responseHandle = (text, channel, userstate, params) => {
-  nmb.msgHandler.chat(channel, text)
 }
 
 module.exports.helpHandle = (command, channel, params) => {

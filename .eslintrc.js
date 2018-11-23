@@ -9,5 +9,6 @@ module.exports = {
   ],
   "globals": {
     "nmb": true,
+    "emitter": true
   }
 };

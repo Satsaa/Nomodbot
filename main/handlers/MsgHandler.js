@@ -15,6 +15,7 @@ module.exports.receive = (channel, userstate, message, self) => {
       } else {
         if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
         nmb.logger.log(channel, 'chat', userstate['display-name'], userstate['user-id'], message)
+
         const params = message.split(' ') // Split message to an array
         const commandName = params[0].toLowerCase() // Command name (first word)
 
@@ -50,10 +51,8 @@ module.exports.receive = (channel, userstate, message, self) => {
           } else command = nmb.bot[channel].commands[commandName] // old string only type
           cmdHandler.handle(command, channel, userstate, params)
         } else {
-          if (nmb.bot[channel].responses.hasOwnProperty(commandName)) { // response
-            let text = nmb.bot[channel].responses[commandName]
-            cmdHandler.responseHandle(text, channel, userstate, params)
-          }
+          // emit for things like responses
+          emitter.emit('nocommand', channel, commandName, params)
         }
       }
       break
