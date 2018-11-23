@@ -244,5 +244,11 @@
     "pronun": "/manɪˈfɛstəʊ/ ",
     "word": "manifesto",
     "definition": "A public declaration of policy and aims, especially one issued before an election by a political party or candidate"
+  },
+  "me": {
+    "cat": "Pronoun",
+    "pronun": "/miː/ ",
+    "word": "me",
+    "definition": "Used by a speaker to refer to himself or herself as the object of a verb or preposition"
   }
 }
