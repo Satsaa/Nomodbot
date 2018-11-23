@@ -8,6 +8,8 @@ module.exports.receive = (channel, userstate, message, self) => {
   switch (userstate['message-type']) {
     case 'action':
     case 'chat':
+      emitter.emit('message', channel, userstate, message, self)
+
       if (self) {
         updateBot(channel, userstate, message)
         if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
