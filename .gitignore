@@ -13,3 +13,5 @@ config/OxfordDictionaries.json
 *test.*
 config/CognitiveServices.json
 config/steamApi.json
+data/global/artifact/0.json
+data/global/artifact/1.json

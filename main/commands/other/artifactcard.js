@@ -15,7 +15,11 @@ for (let i = 0; i < 100; i++) { // require all existing sets
   }
 }
 
-if (sets.length === 0) update()
+if (sets.length === 0) {
+  update(true).catch((err) => {
+    console.log(`* [ARTIFACTCARD] Failed downloading card set data: ${err}`)
+  })
+}
 
 let lastTime = 0
 let name = 'mars' // declare here as it is also used to see if there is a duplicate call
@@ -24,15 +28,15 @@ module.exports.run = (channel, userstate, params) => {
     if (!params[1]) return resolve('You must define a card name (params 1+)')
     if (params[1].toLowerCase() === 'update') {
       if (Date.now() > expire || nmb.bot.config.masters.includes(userstate['username'])) {
-        update().then((num) => {
+        update().then((setNum) => {
           if (!added.length) added.push('None')
           if (!updated.length) updated.push('None')
           resolve(`Added: ${added.join(', ')}. Updated:  ${updated.join(', ')}.`)
         }).catch((err) => {
           resolve(`Update failed: ${err}`)
         }).finally(() => {
-          updated.length = 0
-          added.length = 0
+          added = []
+          updated = []
         })
       } else resolve(`Updating is on cooldown for ${mu.timeUntill(expire, 1, false)}!`)
       return
@@ -210,19 +214,26 @@ module.exports.run = (channel, userstate, params) => {
 }
 
 let expire = 0
-let updated = []
-let added = []
-function update () { // doesnt work. no access for some reason
+/**
+ * Retrieves the card sets from valve api
+ * @param {boolean} suppress Supresses stat errors in log
+ * @returns {number} Number of sets downloaded
+ */
+var added = []
+var updated = []
+function update (suppress = false) {
   return new Promise((resolve, reject) => {
+    console.log(`* [ARTIFACTCARD] Downloading card set data`)
     loop(0) // start
 
     function loop (setNum) {
       request.get({ uri: `https://playartifact.com/cardset/${setNum}` }, (err, res, body) => {
         if (err) reject(new Error(`At ${setNum}: ${err}`))
         body = JSON.parse(body)
-        console.log(body)
+        // console.log(body)
 
         if (Object.keys(body).length === 0) {
+          console.log(`* [ARTIFACTDECK] Downloaded ${setNum} card sets`)
           resolve(setNum)
           return
         }
@@ -243,7 +254,7 @@ function update () { // doesnt work. no access for some reason
             sets[setNum] = JSON.parse(body) // parse and save to memory
             if (!sets[setNum]) return reject(new Error('Failed to parse correctly. This command is now unstable monkaS'))
             if (err) {
-              console.log(err)
+              if (!suppress) console.log(err)
             } else { // stat() failed
               var prevSize = stats.size
               var keyLength = Object.keys(sets[setNum].card_set.card_list).length
@@ -262,7 +273,7 @@ function update () { // doesnt work. no access for some reason
 
               fs.stat(`./data/global/artifact/${setNum}.json`, (err, stats) => {
                 if (err) {
-                  console.log(err)
+                  if (!suppress) console.log(err)
                   updated.push(sets[setNum].card_set.set_info.name.english)
                   updated[updated.length - 1] += err
                 } else if (typeof keyLength !== 'undefined' || typeof prevSize !== 'undefined') {
@@ -271,6 +282,7 @@ function update () { // doesnt work. no access for some reason
                     updated[updated.length - 1] += `: ${stats.size - prevSize} bytes`
                   }
                 }
+                console.log(`* [ARTIFACTDECK] Downloaded ${sets[setNum].card_set.set_info.name.english}`)
                 loop(++setNum)
               })
             })

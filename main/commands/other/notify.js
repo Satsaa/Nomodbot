@@ -1,11 +1,9 @@
 const fs = require('fs')
 const myUtil = require('../../myutil')
 
-module.exports.init = () => {
-  nmb.client.on('message', onMessage)
-}
+emitter.on('message', onMessage)
 
-let block = []
+let block = [] // blocks triggering of notifies [channel, ...]
 function onMessage (channel, userstate, message, self) {
   if (block.includes(channel)) {
     return

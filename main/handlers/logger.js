@@ -1,5 +1,19 @@
 const fs = require('fs')
 
+emitter.on('joinChannel', (channel) => {
+  this.startStream(channel)
+})
+
+emitter.on('partChannel', (channel) => {
+  this.endStream(channel)
+})
+
+emitter.on('onExit', (channels) => {
+  channels.forEach((channel) => {
+    this.endStreamSync(channel)
+  })
+})
+
 let streams = {}
 const types = {
   'chat': 'c',

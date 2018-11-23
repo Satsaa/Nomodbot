@@ -1,5 +1,11 @@
 const fs = require('fs')
 
+emitter.on('nocommand', (channel, commandName, params) => {
+  if (nmb.bot[channel].responses.hasOwnProperty(commandName)) {
+    nmb.msgHandler.chat(channel, nmb.bot[channel].responses[commandName])
+  }
+})
+
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     fs.access('./data/' + channel + '/responses.json', fs.constants.F_OK, (err) => {
