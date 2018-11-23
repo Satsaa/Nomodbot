@@ -17,7 +17,7 @@ module.exports.run = (channel, userstate, params) => {
     function main (channel, userstate, params) {
       let short = nmb.bot[channel].myiq // reference for neat code
 
-      if (params[1].toLowerCase() === 'record' || params[1].toLowerCase() === 'records') {
+      if (params[1] && (params[1].toLowerCase() === 'record' || params[1].toLowerCase() === 'records')) {
         return resolve(`Channel records: ${short.record} by ${short.holder} and ${short.low_record} by ${short.low_holder}. Global records: ${global.record} by ${global.holder} and ${global.low_record} by ${global.low_holder}.`)
       }
 
