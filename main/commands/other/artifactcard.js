@@ -15,68 +15,7 @@ for (let i = 0; i < 100; i++) { // require all existing sets
   }
 }
 
-let expire = 0
-let updated = []
-let added = []
-function update () { // doesnt work. no access for some reason
-  return new Promise((resolve, reject) => {
-    loop(0) // start
-
-    function loop (setNum) {
-      request.get({ uri: `https://playartifact.com/cardset/${setNum}` }, (err, res, body) => {
-        if (err) reject(new Error(`At ${setNum}: ${err}`))
-        body = JSON.parse(body)
-        console.log(body)
-
-        if (Object.keys(body).length === 0) {
-          resolve(setNum)
-          return
-        }
-
-        expire = body.expire_time * 1000
-
-        let opts = {
-          method: 'GET',
-          uri: body.cdn_root.replace('https', 'http') + body.url.substring(1),
-          port: 80
-        }
-
-        request.get(opts, (err, res, body) => { // body is plain json
-          if (err) reject(new Error(`At ${setNum}: ${err}`))
-
-          let prevLength = sets[setNum] ? Object.keys(sets[setNum].card_set.card_list).length : null
-          let stats = fs.statSync(`./data/global/artifact/${setNum}.json`)
-          let prevSize = stats.size
-
-          sets[setNum] = JSON.parse(body) // parse and save to memory
-          if (!sets[setNum]) return reject(new Error('Failed to parse correctly.'))
-
-          let keyLength = Object.keys(sets[setNum].card_set.card_list).length
-          if (prevLength !== null) { // Gather changed card amounts
-            if (prevLength !== keyLength) {
-              updated.push(sets[setNum].card_set.set_info.name.english)
-              updated[updated.length - 1] += `: ${keyLength - prevLength} cards`
-            }
-          } else { // Gather new sets!
-            added.push(sets[setNum].card_set.set_info.name.english)
-          }
-
-          fs.writeFile(`./data/global/artifact/${setNum}.json`, JSON.stringify(sets[setNum], null, '\t'), (err) => {
-            if (err) return reject(new Error(`At ${setNum}: ${err}`))
-
-            let stats = fs.statSync(`./data/global/artifact/${setNum}.json`)
-            let currentSize = stats.size
-            if (prevLength === keyLength && prevSize !== currentSize) { // Gather changed set byte size
-              updated.push(sets[setNum].card_set.set_info.name.english)
-              updated[updated.length - 1] += `: ${currentSize - prevSize} bytes`
-            }
-            loop(++setNum)
-          })
-        })
-      })
-    }
-  })
-}
+if (sets.length === 0) update()
 
 let lastTime = 0
 let name = 'mars' // declare here as it is also used to see if there is a duplicate call
@@ -104,7 +43,7 @@ module.exports.run = (channel, userstate, params) => {
     let MatchStr = '' // For string similarity matching
 
     let card = false
-    for (let ii = 0; ii < sets.length; ii++) {
+    for (let ii = 0; ii < sets.length; ii++) { // find exact matches
       short = sets[ii].card_set.card_list
       for (let i = 0; i < short.length; i++) {
         if (short[i].card_name.english.toLowerCase().replace(/'/gi, '') === search.toLowerCase().replace(/'/gi, '')) {
@@ -115,7 +54,7 @@ module.exports.run = (channel, userstate, params) => {
       }
       if (card) break
     }
-    if (!card) { // no match. Perform search
+    if (!card) { // no exact match. Perform search
       let highest = 0; let set = 0; let index = 0
       for (let ii = 0; ii < sets.length; ii++) {
         short = sets[ii].card_set.card_list
@@ -137,13 +76,11 @@ module.exports.run = (channel, userstate, params) => {
           }
         }
       }
+      short = sets[set].card_set.card_list
       card = short[index]
       console.log(`Score: ${highest}. Search: ${search}. Card: ${card.card_name.english}`)
-      if (highest < 0.001) return resolve(`Cannot find '${search}'`)
-
-      short = sets[set].card_set.card_list
+      if (highest < 0.001) return resolve(`Cannot find anything for '${search}'`)
       cards = sets[set]
-
       if (highest < 0.25) MatchStr = 'Weak match: '
     }
 
@@ -176,9 +113,9 @@ module.exports.run = (channel, userstate, params) => {
     let includesStr = [] // eg cards icluded with heroes
     let references = [] // any other reference type
 
-    let oldShort = short // gather references
+    // gather references
     for (let ii = 0; ii < sets.length; ii++) {
-      short = sets[ii].card_set.card_list
+      let short = sets[ii].card_set.card_list // own instance of short is used
       for (let i = 0; i < card.references.length; i++) {
         for (let ii = 0; ii < short.length; ii++) {
           if (short[ii].card_id === card.references[i].card_id) {
@@ -188,7 +125,7 @@ module.exports.run = (channel, userstate, params) => {
           }
         }
       }
-    } short = oldShort
+    }
     if (includesStr.length) includesStr = `Signature card: ${mu.fontify(mu.commaPunctuate(includesStr), 'mathSansBold')}.`
     else includesStr = ''
 
@@ -197,7 +134,7 @@ module.exports.run = (channel, userstate, params) => {
 
       text = text.replace('Get initiative', ' 🗲 Get initiative')
 
-      let match // Insert ◳ Active 4 -> Active ◳4
+      let match // Insert ◳ like: Active 4 -> Active ◳4
       while ((match = /active \d+/gi.exec(text)) != null) {
         text = [text.slice(0, match.index + 7), ' ◳ ', text.slice(match.index + 7)].join('')
       }
@@ -210,7 +147,7 @@ module.exports.run = (channel, userstate, params) => {
 
     let illustratorStr = card.illustrator ? mu.fontify('Art ' + card.illustrator, 'mathSansItalic') : ''
 
-    let whosePassive = null // for passives we get the owner of that passive. Passives not on wiki yet
+    // let whosePassive = null // for passives we get the owner of that passive. Passives not on wiki yet
     if (type === 'passive ability') {
       // short = sets[ii].card_set.card_list
       for (let i = 0; i < short.length; i++) {
@@ -219,7 +156,7 @@ module.exports.run = (channel, userstate, params) => {
           referenceIds.push(element.card_id)
         })
         if (referenceIds.indexOf(card.card_id) !== -1) {
-          whosePassive = short[i].card_name.english
+          var whosePassive = short[i].card_name.english
           text = text.replace(whosePassive, mu.fontify(whosePassive, 'mathSansBold'))
           break
         }
@@ -236,24 +173,24 @@ module.exports.run = (channel, userstate, params) => {
 
       case 'item':
         // cost nomana nostats
-        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${costStr}${s(rarity)} ${subType}${s(type)}${s(setStr)}${text ? ': ' + text : ' with no special text?'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${costStr}${s(rarity)} ${subType}${s(type)}${s(setStr)}${text ? ': ' + text : ' and has no special text?'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         break
 
       case 'ability':
       case 'passive ability':
         // nostats nocolor
-        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(manaStr)}${s(type)}${s(setStr)}${text ? ': ' + text : ' with no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(manaStr)}${s(type)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         break
 
       case 'improvement':
       case 'spell':
         // nostats
-        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(setStr)}${text ? ': ' + text : ' with no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         break
 
-      case 'stronghold':
-      case 'pathing': // why not
-        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' with no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+      case 'stronghol1d':
+      case 'pathi1ng': // why not
+        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         // console.log(`* [${channel}] Unknown Artifact card type:${s(type)}`)
         break
 
@@ -268,6 +205,78 @@ module.exports.run = (channel, userstate, params) => {
     function s (str) {
       if (str) return ' ' + str
       else return str
+    }
+  })
+}
+
+let expire = 0
+let updated = []
+let added = []
+function update () { // doesnt work. no access for some reason
+  return new Promise((resolve, reject) => {
+    loop(0) // start
+
+    function loop (setNum) {
+      request.get({ uri: `https://playartifact.com/cardset/${setNum}` }, (err, res, body) => {
+        if (err) reject(new Error(`At ${setNum}: ${err}`))
+        body = JSON.parse(body)
+        console.log(body)
+
+        if (Object.keys(body).length === 0) {
+          resolve(setNum)
+          return
+        }
+
+        expire = body.expire_time * 1000
+
+        let opts = {
+          method: 'GET',
+          uri: body.cdn_root.replace('https', 'http') + body.url.substring(1),
+          port: 80
+        }
+
+        request.get(opts, (err, res, body) => { // body is plain json
+          if (err) return reject(new Error(`At ${setNum}: ${err}`))
+          let prevLength = sets[setNum] ? Object.keys(sets[setNum].card_set.card_list).length : null
+
+          fs.stat(`./data/global/artifact/${setNum}.json`, (err, stats) => {
+            sets[setNum] = JSON.parse(body) // parse and save to memory
+            if (!sets[setNum]) return reject(new Error('Failed to parse correctly. This command is now unstable monkaS'))
+            if (err) {
+              console.log(err)
+            } else { // stat() failed
+              var prevSize = stats.size
+              var keyLength = Object.keys(sets[setNum].card_set.card_list).length
+              if (prevLength !== null) { // Gather changed card amounts
+                if (prevLength !== keyLength) {
+                  updated.push(sets[setNum].card_set.set_info.name.english)
+                  updated[updated.length - 1] += `: ${keyLength - prevLength} cards`
+                }
+              } else { // Gather new sets!
+                added.push(sets[setNum].card_set.set_info.name.english)
+              }
+            }
+
+            fs.writeFile(`./data/global/artifact/${setNum}.json`, JSON.stringify(sets[setNum], null, '\t'), (err) => {
+              if (err) return reject(new Error(`At ${setNum}: ${err}`))
+
+              fs.stat(`./data/global/artifact/${setNum}.json`, (err, stats) => {
+                if (err) {
+                  console.log(err)
+                  updated.push(sets[setNum].card_set.set_info.name.english)
+                  updated[updated.length - 1] += err
+                } else if (typeof keyLength !== 'undefined' || typeof prevSize !== 'undefined') {
+                  if (prevLength === keyLength && prevSize !== stats.size) { // Gather changed byte size
+                    updated.push(sets[setNum].card_set.set_info.name.english)
+                    updated[updated.length - 1] += `: ${stats.size - prevSize} bytes`
+                  }
+                }
+                loop(++setNum)
+              })
+            })
+          })
+        })
+      })
     }
   })
 }
