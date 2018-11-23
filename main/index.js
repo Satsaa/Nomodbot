@@ -12,7 +12,7 @@ exports.emitter = global.emitter
 global.nmb = require('./twitch.js')
 
 // load twitter "module"
-require('./twitter.js')
+// require('./twitter.js')
 
 process.on('unhandledRejection', (reason, p) => {
   console.log('Unhandled Rejection at: Promise', p, 'reason:', reason)

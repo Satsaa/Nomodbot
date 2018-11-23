@@ -1,34 +1,29 @@
 
+const fs = require('fs').promises
+const path = require('path')
+
+var walkSync = function (dir, filelist) {
+  var path = path || require('path')
+  var fs = fs || require('fs')
+  var files = fs.readdirSync(dir)
+  filelist = filelist || []
+  files.forEach(function (file) {
+    if (fs.statSync(path.join(dir, file)).isDirectory()) {
+      filelist = walkSync(path.join(dir, file), filelist)
+    } else {
+      filelist.push(path.join(dir, file))
+    }
+  })
+  return filelist
+}
+
 let commands = {}
 
-// control commands
-commands['exit'] = require('../commands/control/exit.js')
-commands['join'] = require('../commands/control/join.js')
-commands['part'] = require('../commands/control/part.js')
-commands['reload'] = require('../commands/control/reload.js')
-commands['save'] = require('../commands/control/save.js')
-
-// log "package"
-commands['myquote'] = require('../commands/log/myquote.js')
-commands['lines'] = require('../commands/log/lines.js')
-commands['totallines'] = require('../commands/log/totallines.js')
-commands['lastseen'] = require('../commands/log/lastseen.js')
-commands['users'] = require('../commands/log/users.js')
-commands['randomquote'] = require('../commands/log/randomquote.js')
-
-// other/uncategorized
-commands['echo'] = (require('../commands/other/echo.js'))
-commands['myiq'] = require('../commands/other/myiq.js')
-commands['manlyquote'] = require('../commands/other/manlyquote.js')
-commands['quote'] = require('../commands/other/quote.js')
-commands['response'] = require('../commands/other/response.js')
-commands['artifactcard'] = require('../commands/other/artifactcard.js')
-commands['numvote'] = require('../commands/other/numvote.js')
-commands['bottime'] = require('../commands/other/bottime.js')
-commands['uptime'] = require('../commands/other/uptime.js')
-commands['commands'] = require('../commands/other/commands.js')
-commands['notify'] = require('../commands/other/notify.js')
-commands['define'] = require('../commands/other/define.js')
+walkSync('./main/commands/').forEach(path => {
+  path = path.replace(/\\/gi, '/').replace('main', '..')
+  let name = path.split('/').pop().replace('.js', '')
+  commands[name] = require(path)
+})
 
 for (let cmd in commands) {
   if (typeof commands[cmd].run !== 'function') {
