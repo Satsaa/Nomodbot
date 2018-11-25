@@ -6,6 +6,7 @@ First javascript project
 I keep fucking up my code and forgetting what I changed, so this will fix that problem, right?
 
 ###### Problems
+Need to get a dozen API keys ✔  
 Hard coded commands ✔  
 Hard coded everything ✔  
 No permission control ✔  
