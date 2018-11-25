@@ -7,17 +7,24 @@ module.exports.receive = (channel, userstate, message, self) => {
   }
   switch (userstate['message-type']) {
     case 'action':
+    // TIME:a:USER:MSG
+      if (self) nmb.logger.log(channel, 'action', userstate['display-name'], nmb.client.globaluserstate['user-id'], message)
+      else nmb.logger.log(channel, 'action', userstate['display-name'], userstate['user-id'], message)
+    // no break
     case 'chat':
       emitter.emit('message', channel, userstate, message, self)
 
       if (self) {
         updateBot(channel, userstate, message)
         if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
-        nmb.logger.log(channel, 'chat', userstate['display-name'], nmb.client.globaluserstate['user-id'], message)
+        if (userstate['message-type'] === 'chat') {
+          nmb.logger.log(channel, 'message', userstate['display-name'], nmb.client.globaluserstate['user-id'], message)
+        }
       } else {
         if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
-        nmb.logger.log(channel, 'chat', userstate['display-name'], userstate['user-id'], message)
-
+        if (userstate['message-type'] === 'chat') {
+          nmb.logger.log(channel, 'message', userstate['display-name'], userstate['user-id'], message)
+        }
         const params = message.split(' ') // Split message to an array
         const commandName = params[0].toLowerCase() // Command name (first word)
 
@@ -59,9 +66,7 @@ module.exports.receive = (channel, userstate, message, self) => {
       }
       break
     case 'whisper':
-      if (!self) {
-        whisper(channel, message) // Totes breaking everything up
-      }
+      if (!self) whisper(channel, message)
       console.log(`[${channel} (${userstate['message-type']})] ${userstate['display-name']}: ${message}`)
       break
     default:
