@@ -18,7 +18,7 @@ emitter.on('onsave', save)
 
 function save () {
   if (nmb.bot.log) {
-    fs.writeFile('./data/global/log.json', JSON.stringify(nmb.bot.internal, null, 2), 'utf8', (err) => {
+    fs.writeFile('./data/global/log.json', JSON.stringify(nmb.bot.log, null, 2), 'utf8', (err) => {
       if (err) throw err
       else console.log(`* [LOGGER] Saved`)
     })
