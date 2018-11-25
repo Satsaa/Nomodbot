@@ -1,7 +1,6 @@
 {
   "channels": [
-    "#l34um1",
-    "#spatsaa"
+    "#satsaa"
   ],
   "user_ids": {
     "#satsaa": "61365582",
@@ -16,7 +15,7 @@
   },
   "whisper_commands": {},
   "user_times": [
-    1542845287069
+    1543099512008
   ],
   "mod_times": [
     1542920378518

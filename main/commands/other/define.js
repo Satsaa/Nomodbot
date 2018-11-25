@@ -22,9 +22,12 @@ module.exports.run = (channel, userstate, params) => {
       define(words, lang, (error, data) => {
         if (error) return console.log(error)
         else {
-          if (typeof data.results === 'undefined' || typeof data === 'undefined') return resolve('No definition returned O_o')
           // console.log(util.inspect(data, { showHidden: false, depth: null }))
-          let definition = data.results[0].lexicalEntries[0].entries[0].senses[0].definitions[0]
+          if (typeof data.results === 'undefined' || typeof data === 'undefined') {
+            return resolve(data)
+          }
+          if ((((((((data.results[0].lexicalEntries || {})[0] || {}).entries || {})[0] || {}).senses || {})[0] || {}).definitions || {})[0]) var definition = data.results[0].lexicalEntries[0].entries[0].senses[0].definitions[0]
+          else definition = 'No definition.'
           let word = data.results[0].word
           if (definition.charAt(0) === '(') { // Capitalize char after paren
             definition = myUtil.cap(definition, 1)

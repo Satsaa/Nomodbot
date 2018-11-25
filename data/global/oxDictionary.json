@@ -250,5 +250,113 @@
     "pronun": "/miː/ ",
     "word": "me",
     "definition": "Used by a speaker to refer to himself or herself as the object of a verb or preposition"
+  },
+  "juju": {
+    "cat": "Noun",
+    "pronun": "/ˈdʒuːdʒuː/ ",
+    "word": "juju",
+    "definition": "A style of music popular among the Yoruba in Nigeria and characterized by the use of guitars and variable-pitch drums."
+  },
+  "meme": {
+    "cat": "Noun",
+    "pronun": "/miːm/ ",
+    "word": "meme",
+    "definition": "An element of a culture or system of behaviour passed from one individual to another by imitation or other non-genetic means."
+  },
+  "gifted": {
+    "cat": "Adjective",
+    "pronun": "/ˈɡɪftɪd/ ",
+    "word": "gifted",
+    "definition": "Having exceptional talent or natural ability"
+  },
+  "bullshit": {
+    "cat": "Noun",
+    "pronun": "/ˈbʊlʃɪt/ ",
+    "word": "bullshit",
+    "definition": "Stupid or untrue talk or writing; nonsense."
+  },
+  "bugger": {
+    "cat": "Noun",
+    "pronun": "/ˈbʌɡə/ ",
+    "word": "bugger",
+    "definition": "Used as a term of abuse, especially for a man."
+  },
+  "swear": {
+    "cat": "Verb",
+    "pronun": "/swɛː/ ",
+    "word": "swear",
+    "definition": "Make a solemn statement or promise undertaking to do something or affirming that something is the case"
+  },
+  "omen": {
+    "cat": "Noun",
+    "pronun": "/ˈəʊmən/ ",
+    "word": "omen",
+    "definition": "An event regarded as a portent of good or evil"
+  },
+  "po": {
+    "cat": "Noun",
+    "pronun": "/pəʊ/ ",
+    "word": "po",
+    "definition": "A chamber pot."
+  },
+  "life": {
+    "cat": "Noun",
+    "pronun": "/lʌɪf/ ",
+    "word": "life",
+    "definition": "The condition that distinguishes animals and plants from inorganic matter, including the capacity for growth, reproduction, functional activity, and continual change preceding death"
+  },
+  "spam": {
+    "cat": "Noun",
+    "pronun": "/spam/ ",
+    "word": "spam",
+    "definition": "Irrelevant or unsolicited messages sent over the Internet, typically to a large number of users, for the purposes of advertising, phishing, spreading malware, etc."
+  },
+  "love": {
+    "cat": "Noun",
+    "pronun": "/lʌv/ ",
+    "word": "love",
+    "definition": "An intense feeling of deep affection"
+  },
+  "rip": {
+    "cat": "Verb",
+    "pronun": "/rɪp/ ",
+    "word": "rip",
+    "definition": "Tear or pull (something) quickly or forcibly away from something or someone"
+  },
+  "receive": {
+    "cat": "Verb",
+    "pronun": "/rɪˈsiːv/ ",
+    "word": "receive",
+    "definition": "Be given, presented with, or paid (something)"
+  },
+  "capacitor": {
+    "cat": "Noun",
+    "pronun": "/kəˈpasɪtə/ ",
+    "word": "capacitor",
+    "definition": "A device used to store an electric charge, consisting of one or more pairs of conductors separated by an insulator."
+  },
+  "friend": {
+    "cat": "Noun",
+    "pronun": "/frɛnd/ ",
+    "word": "friend",
+    "definition": "A person with whom one has a bond of mutual affection, typically one exclusive of sexual or family relations"
+  },
+  "unbroken": {
+    "cat": "Adjective",
+    "pronun": "/ʌnˈbrəʊk(ə)n/ ",
+    "word": "unbroken",
+    "definition": "Not broken, fractured, or damaged"
+  },
+  "hex": {
+    "cat": "Verb",
+    "pronun": "/hɛks/ ",
+    "word": "hex",
+    "definition": "Cast a spell on; bewitch"
+  },
+  "bde": {
+    "cat": "Residual",
+    "pronun": "",
+    "word": "Bde",
+    "definition": "Brigade."
   }
 }
