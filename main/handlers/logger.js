@@ -14,15 +14,28 @@ emitter.on('onExit', (channels) => {
   })
 })
 
+emitter.on('onsave', save)
+
+function save () {
+  if (nmb.bot.log) {
+    fs.writeFile('./data/global/log.json', JSON.stringify(nmb.bot.internal, null, 2), 'utf8', (err) => {
+      if (err) throw err
+      else console.log(`* [LOGGER] Saved`)
+    })
+  } else console.log('* [LOGGER] log undefined and therefore not saved')
+}
+
 let streams = {}
 const types = {
-  'chat': 'c',
+  'message': 'c',
   'action': 'a',
   'sub': 's',
   'gift': 'g',
   'massgift': 'm',
   'timeout': 't',
-  'ban': 'b'
+  'ban': 'b',
+  'mod': 'u',
+  'unmod': 'd'
 }
 
 module.exports.log = (channel, type, name, userId, message) => {
@@ -136,7 +149,26 @@ function trackLog (channel, offset) {
   return new Promise((resolve, reject) => {
     console.log(`* [${channel}] Tracking for log lines at offset ${offset}`)
     fs.stat(`./data/${channel}/log.txt`, (err, stats) => {
-      if (err) return reject(err)
+      if (err) {
+        if (err.code === 'ENOENT') {
+          fs.writeFile(`./data/${channel}/log.txt`, '', (err) => {
+            if (err) return reject(err)
+            else {
+              nmb.bot.log[channel] = {
+                'offset': 0,
+                'messages': 0,
+                'users': 0,
+                'start_time': null,
+                'end_time': null
+              }
+              save()
+              console.log(`* [channel] Log.txt was missing: Reseted log stats`)
+              return resolve()
+            }
+          })
+        } else return reject(err)
+        return
+      }
       if (stats.size === offset) {
         console.log(`* [${channel}] No tracking was necessary`)
         return resolve()
@@ -169,6 +201,8 @@ function trackLog (channel, offset) {
           }
           // last line is '' with no /n but stats.size is absolute so no worries :)
           shortG['offset'] = stats.size
+
+          save()
           resolve()
         })
       })
@@ -284,33 +318,3 @@ function parseLog (raw) {
 function logDate () { // get time in ms at 1 seconds precision
   return Math.round(Date.now() / 1000)
 }
-
-/*
-// (ms / 1000) Second precision
-...
-ms:type:User:msg...
-ms:type:User:msg...
-ms:type:User:msg...
-ms:type:User:msg...
-
-*/
-
-/* global log.json contains stats for all channels
-// offset tracks the current offset. If the process is terminated, offset is not saved nor log.json
-// We can add the untracked lines in log.txt at next launch based on the unsaved offset
-
-*/
-
-/* channel log.json
-{
-  'user0': [
-    '1010230, // user id
-    [ // byte offsets ADDITIVE
-
-    ],[ // time (ms / 1000) Second precision ADDITIVE
-
-    ]
-  ],
-  ...
-}
-*/
