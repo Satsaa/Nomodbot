@@ -193,6 +193,18 @@ module.exports.addOrdinal = (i) => {
   }
   return i + 'th'
 }
+/**
+ * Converts bytes to a more readable format
+ * @param {number} bytes Bytes to convert
+ * @param {number} decimals Maximum outputted decimal places. Default = 0
+ */
+module.exports.formatBytes = (bytes, decimals = 0) => {
+  if (bytes === 0) return '0 Bytes'
+  if (bytes === 1) return '1 Byte'
+  var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  var i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return parseFloat((bytes / Math.pow(1024, i)).toFixed(decimals)) + ' ' + sizes[i]
+}
 
 let alpha = `abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890<>(){}[]&#%/,.:;_-+|?!'"'*=`
 let styles = {

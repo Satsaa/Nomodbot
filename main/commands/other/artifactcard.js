@@ -261,7 +261,7 @@ function update (suppress = false) {
               if (prevLength !== null) { // Gather changed card amounts
                 if (prevLength !== keyLength) {
                   updated.push(sets[setNum].card_set.set_info.name.english)
-                  updated[updated.length - 1] += `: ${keyLength - prevLength} cards`
+                  updated[updated.length - 1] += `: ${keyLength - prevLength} ${mu.plural(keyLength - prevLength, 'card')}`
                 }
               } else { // Gather new sets!
                 added.push(sets[setNum].card_set.set_info.name.english)
@@ -279,7 +279,7 @@ function update (suppress = false) {
                 } else if (typeof keyLength !== 'undefined' || typeof prevSize !== 'undefined') {
                   if (prevLength === keyLength && prevSize !== stats.size) { // Gather changed byte size
                     updated.push(sets[setNum].card_set.set_info.name.english)
-                    updated[updated.length - 1] += `: ${stats.size - prevSize} bytes`
+                    updated[updated.length - 1] += `: ${mu.formatBytes(stats.size - prevSize, 1)}`
                   }
                 }
                 console.log(`* [ARTIFACTDECK] Downloaded ${sets[setNum].card_set.set_info.name.english}`)

@@ -2,7 +2,8 @@ module.exports = {
   "extends": "standard",
   "rules": {
     "allowNamedFunctions": false,
-    "no-unused-vars": "off"
+    "no-unused-vars": "off",
+    "no-fallthrough": ["error", { "commentPattern": "no[\\s\\w]*break" }]
   },
   "plugins": [
     "only-warn"
