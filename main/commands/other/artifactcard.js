@@ -136,6 +136,8 @@ module.exports.run = (channel, userstate, params) => {
     if (text) {
       text = striptags(card.card_text.english.replace(/ {2}/gi, ' ⮮⮭ '))
 
+      text = text.replace('Play Effect: ⮮⮭ ', '')
+
       text = text.replace('Get initiative', ' 🗲 Get initiative')
 
       let match // Insert ◳ like: Active 4 -> Active ◳4
