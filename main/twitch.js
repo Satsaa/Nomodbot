@@ -70,14 +70,16 @@ client.on('ban', (channel, username, reason) => {
   console.log(`* [${channel}] ${username} banned for ${reason}`)
 })
 
-client.on('mod', (channel, username) => {
+client.on('mod', (channel, username) => { // batched
+  console.log(`* [${channel}] ${username} modded`)
   // TIME:u:USER
   if (bot[channel] && username === client.username) {
     bot[channel].channel.mod = true
   }
 })
 
-client.on('unmod', function (channel, username) {
+client.on('unmod', function (channel, username) { // batched
+  console.log(`* [${channel}] ${username} unmodded`)
   // TIME:d:USER
   if (bot[channel] && username === client.username) {
     bot[channel].channel.mod = false

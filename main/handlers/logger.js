@@ -16,13 +16,18 @@ emitter.on('onExit', (channels) => {
 
 emitter.on('onsave', save)
 
-function save () {
-  if (nmb.bot.log) {
-    fs.writeFile('./data/global/log.json', JSON.stringify(nmb.bot.log, null, 2), 'utf8', (err) => {
+function save (channel = null) {
+  if (!nmb.bot.log) console.log('* [LOGGER] log undefined and therefore not saved')
+  fs.writeFile('./data/global/log.json', JSON.stringify(nmb.bot.log, null, 2), 'utf8', (err) => {
+    if (err) throw err
+    else console.log(`* [LOGGER] Saved`)
+  })
+  if (channel) {
+    fs.writeFile(`./data/${channel}/log.json`, JSON.stringify(nmb.bot[channel].log, null, 2), 'utf8', (err) => {
       if (err) throw err
       else console.log(`* [LOGGER] Saved`)
     })
-  } else console.log('* [LOGGER] log undefined and therefore not saved')
+  }
 }
 
 let streams = {}
@@ -202,7 +207,7 @@ function trackLog (channel, offset) {
           // last line is '' with no /n but stats.size is absolute so no worries :)
           shortG['offset'] = stats.size
 
-          save()
+          save(channel)
           resolve()
         })
       })
@@ -251,7 +256,7 @@ module.exports.startStream = (channel) => {
   })
 }
 module.exports.endStream = (channel) => {
-  if (!channel) console.log(`* Error: Channel was false: ${channel}`)
+  if (!channel) console.log(`* [${channel}] Cannot endStream: channel undefined`)
   if (!(channel in streams)) {
     console.log(`* [${channel}] Ignored endStream() as channel's write stream doesn't exist`)
     return
@@ -261,7 +266,7 @@ module.exports.endStream = (channel) => {
   if ((nmb.bot[channel] || {}).log) {
     fs.writeFile(`./data/${channel}/log.json`, JSON.stringify(nmb.bot[channel].log, null, '\t'), 'utf8', (err) => {
       if (err) throw err
-      delete nmb.bot[channel].log
+      if (nmb.bot[channel]) delete nmb.bot[channel].log
       console.log(`* [${channel}] Saved log.json and ended stream`)
     })
   } else {
