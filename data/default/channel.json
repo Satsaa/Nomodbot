@@ -4,5 +4,7 @@
   "mod": false,
   "subscriber": false,
   "banned": false,
-  "last_msg": ""
+  "last_msg": "",
+  "max_length": 500,
+  "dupe_affix": " \u206D"
 }
