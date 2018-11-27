@@ -19,6 +19,8 @@ exports.msgHandler = msgHandler
 let logger = require('./handlers/logger.js')
 exports.logger = logger
 
+var checkDefaults = require('./handlers/DefaultHandler.js')
+
 client.connect()
 
 //  'message': 'c',
@@ -178,7 +180,8 @@ function joinChannel (channels) { // Allows multichannel
       fs.mkdir('./data/' + channel, {}, (err) => {
         if (err && err.code !== 'EEXIST') throw err
         loadChannelFile(channel, 'responses', true).then(
-          loadChannelFile(channel, 'log', true).then(
+          loadChannelFile(channel, 'log', true).then((copied) => {
+            if (copied) nmb.bot.log[channel].offset = 0
             loadChannelFile(channel, 'roomstate', true).then(
               loadChannelFile(channel, 'commands', true).then(
                 loadChannelFile(channel, 'quotes', true).then(
@@ -188,6 +191,7 @@ function joinChannel (channels) { // Allows multichannel
                         loadRoomstateFromQueue(channel).then(() => {
                           console.log(`* [${channel}] Initial roomstate loaded`)
                           client.join(channel).then((data) => { // data returns channel
+                            checkDefaults(channel)
                             console.log(`* [${channel}] Joined`)
                             emitter.emit('joinChannel', channel)
                             resolve(channel)
@@ -203,7 +207,7 @@ function joinChannel (channels) { // Allows multichannel
                 )
               )
             )
-          )
+          })
         )
       })
     })
@@ -218,19 +222,19 @@ function joinChannel (channels) { // Allows multichannel
                 if (err) throw err
                 bot[channel][fileName] = require('.' + fileNamePath)
                 console.log(`* [${channel}] ${fileName} created`)
-                resolve()
+                resolve(true)
               })
             } else {
               fs.writeFile(fileNamePath, '{}', (err) => {
                 if (err) throw err
                 console.log(`* [${channel}] ${fileName} created`)
-                resolve()
+                resolve(true)
               })
             }
           } else { // exists already
             bot[channel][fileName] = require('.' + fileNamePath)
             console.log(`* [${channel}] ${fileName} loaded`)
-            resolve()
+            resolve(false)
           }
         })
       })

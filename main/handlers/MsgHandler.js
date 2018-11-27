@@ -124,15 +124,38 @@ function chat (channels, msg, allowCommand) {
           queueModChat(channel, msg)
           return
         }
-        nmb.client.say(channel, limitLength(antiDupe(channel, msg))).then(() => {
-          nmb.bot.internal.mod_times.push(Date.now())
-        }).catch((err) => {
-          console.log(`* [${channel}] Msg failed: ${err}`)
-        })
+        parseSay(channel, msg)
       } else { // user needs limits
         queueChat(channel, msg)
       }
     }
+  })
+}
+
+/**
+ * Sends the message after removing things that can cause the msg to be rejected (too long, duplicate...)
+ * @param {string} channel Channel to send to
+ * @param {string} msg Message to be sent
+ */
+function parseSay (channel, msg) {
+  return new Promise((resolve, reject) => {
+    // Anti duplication so messages wont be flagged and rejected
+    if (nmb.bot[channel].channel.last_msg.endsWith(nmb.bot[channel].channel.dupe_affix)) {
+      msg.slice(-2)
+    } else msg += nmb.bot[channel].channel.dupe_affix
+
+    // Prevent lengthy messages. (Note that actual max length may wary on Twitch' side)
+    if (msg.length > nmb.bot[channel].channel.max_length) {
+      msg = msg.substring(0, nmb.bot[channel].channel.max_length)
+    }
+    // Send and handle issues or non-issues
+    nmb.client.say(channel, msg).then(() => {
+      nmb.bot.internal.mod_times.push(Date.now())
+      resolve()
+    }).catch((err) => {
+      console.log(`* [${channel}] Msg failed: ${err}`)
+      reject(err)
+    })
   })
 }
 
@@ -147,7 +170,7 @@ function whisper (channel, message) {
 }
 
 /*
-client.say and client.whisper:
+client say() and whisper() promises:
 1: There is no possible way to know if a message has been sent successfully unless we create two connections.
 These promises will always be resolved unless you are trying to send a message and you’re not connected to server.
 */
@@ -160,21 +183,17 @@ function queueChat (channel, message) {
 
   setTimeout(() => { // send one message and init interval if needed afterwards
     nmb.bot.internal.user_times.push(Date.now())
-    nmb.client.say(chatQueue[0][0], limitLength(antiDupe(channel, chatQueue[0][1]))).then(() => {
+    parseSay(chatQueue[0][0], chatQueue[0][1]).then(() => {
       chatQueue.shift()
-    }).catch((err) => {
-      console.log(`* [${chatQueue[0][0]}] Msg failed: ${err}`)
     }).finally(() => {
       if (chatQueue.length) {
         let queueInteval = setInterval(() => { // send messages in intervals afterwards
           parseTimes()
           if (nmb.bot.internal.user_times.length >= nmb.bot.config.user_limit) return // Rate limiting
           nmb.bot.internal.user_times.push(Date.now())
-          nmb.client.say(chatQueue[0][0], limitLength(antiDupe(channel, chatQueue[0][1]))).then(() => {
+          parseSay(chatQueue[0][0], chatQueue[0][1]).then(() => {
             chatQueue.shift()
-          }).catch((err) => {
-            console.log(`* [${chatQueue[0][0]}] Msg failed: ${err}`)
-          }).finally(() => {
+          }).finally(() => { // remove message from queue recardles of outcome to prevent nasty loops
             if (!chatQueue.length) clearInterval(queueInteval)
           })
         }, nmb.bot.config.message_delay_ms)
@@ -204,7 +223,7 @@ function queueModChat (channel, message) {
   setTimeout(timeoutMsg, getTimeout())
 
   function timeoutMsg () {
-    nmb.client.say(modQueue[0][0], limitLength(antiDupe(channel, modQueue[0][1]))).then(() => {
+    parseSay(modQueue[0][0], modQueue[0][1]).then(() => {
       nmb.bot.internal.mod_times.push(Date.now())
       modQueue.shift()
     }).catch((err) => {

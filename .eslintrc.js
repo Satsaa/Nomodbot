@@ -3,7 +3,8 @@ module.exports = {
   "rules": {
     "allowNamedFunctions": false,
     "no-unused-vars": "off",
-    "no-fallthrough": ["error", { "commentPattern": "no[\\s\\w]*break" }]
+    "no-fallthrough": ["error", { "commentPattern": "no[\\s\\w]*break" }],
+    "no-trailing-spaces": ["error", { "ignoreComments": true }]
   },
   "plugins": [
     "only-warn"
