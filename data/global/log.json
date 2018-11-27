@@ -1,16 +1,16 @@
 {
   "#l34um1": {
-    "offset": 7045636,
-    "messages": 344568,
-    "users": 11756,
+    "offset": 7046581,
+    "messages": 459463,
+    "users": 15725,
     "start_time": 1526504453,
-    "end_time": 1543293396
+    "end_time": 1543294827
   },
   "#satsaa": {
-    "offset": 662,
-    "messages": 15,
-    "users": 5,
-    "start_time": 1543246973,
-    "end_time": 1543293321
+    "offset": 405,
+    "messages": 58,
+    "users": 10,
+    "start_time": 1543296857,
+    "end_time": 1543298081
   }
 }
