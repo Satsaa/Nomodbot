@@ -22,7 +22,7 @@ module.exports.run = (channel, userstate, params) => {
             let logOffset = nmb.logger.getOffset(input || channel, user, index)
             nmb.logger.readAtOffset(input || channel, logOffset).then((result) => {
               let dateStr = myUtil.timeSince(result.ms * 1000, 1, false)
-              resolve(`${dateStr} ago${input ? ` in ${input.replace('#', '')}` : ''}_ ${result.user}: ${result.message}`)
+              resolve(`${dateStr} ago${input ? ` in ${input.replace('#', '')}` : ''}: ${result.user}: ${result.message}`)
             }).catch((err) => {
               resolve(`Error: ${err}`)
             })
