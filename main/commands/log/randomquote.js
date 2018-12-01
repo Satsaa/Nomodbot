@@ -15,21 +15,19 @@ module.exports.run = (channel, userstate, params) => {
       for (var user in short) {
         if (!user.startsWith('$')) {
           var ran = Math.random()
+          // console.log(`${user} trying ${(short[user][1].length / remaining * 100).toFixed(3)}%`)
           if (ran < short[user][1].length / remaining) { // check if user gets randomly selected
             let index = myUtil.getRandomInt(0, short[user][1].length)
 
             let logOffset = nmb.logger.getOffset(input || channel, user, index)
             nmb.logger.readAtOffset(input || channel, logOffset).then((result) => {
               let dateStr = myUtil.timeSince(result.ms * 1000, 1, false)
-              resolve(`${dateStr} ago${input ? ` in ${input.replace('#', '')}` : ''}:
-               ${result.user}: ${result.message}`)
+              resolve(`${dateStr} ago${input ? ` in ${input.replace('#', '')}` : ''}_ ${result.user}: ${result.message}`)
             }).catch((err) => {
               resolve(`Error: ${err}`)
             })
             return
           }
-          // console.log(`${user}` +
-          //  ` tried ${(short[user][1].length / remaining * 100).toPrecision(2)}%`)
           remaining -= short[user][1].length
         }
       } resolve(`Low chance out of bounds error`)
@@ -39,6 +37,6 @@ module.exports.run = (channel, userstate, params) => {
 
 module.exports.help = (params, channel) => {
   return new Promise((resolve, reject) => {
-    resolve(`Get a random quote from this channel: ${params[1]} ([<channel>])<- experimental. Logging for this channel started ${myUtil.dateString(nmb.bot.log[channel].start_time * 1000)}`)
+    resolve(`Get a random quote from this channel: ${params[1]} ([<channel>]) <- experimental. Logging for this channel started ${myUtil.dateString(nmb.bot.log[channel].start_time * 1000)}`)
   })
 }

@@ -71,7 +71,7 @@ client.on('ban', (channel, username, reason) => {
 })
 
 client.on('mod', (channel, username) => { // batched
-  console.log(`* [${channel}] ${username} modded`)
+  // console.log(`* [${channel}] ${username} modded`)
   // TIME:u:USER
   if (bot[channel] && username === client.username) {
     bot[channel].channel.mod = true
@@ -79,7 +79,7 @@ client.on('mod', (channel, username) => { // batched
 })
 
 client.on('unmod', function (channel, username) { // batched
-  console.log(`* [${channel}] ${username} unmodded`)
+  // console.log(`* [${channel}] ${username} unmodded`)
   // TIME:d:USER
   if (bot[channel] && username === client.username) {
     bot[channel].channel.mod = false
@@ -167,15 +167,7 @@ function joinChannel (channels) { // Allows multichannel
     channels.forEach((channel) => {
       addChannel(channel)
       bot[channel] = {}
-      if (typeof nmb.bot.log[channel] === 'undefined') {
-        nmb.bot.log[channel] = {
-          'offset': 0,
-          'messages': 0,
-          'users': 0,
-          'start_time': null,
-          'end_time': null
-        }
-      }
+
       getUserId(channel).catch((err) => {
         console.log(`* [ERROR (${channel})] Failed to get user ID: ${err}`)
       })
@@ -183,7 +175,15 @@ function joinChannel (channels) { // Allows multichannel
         if (err && err.code !== 'EEXIST') throw err
         loadChannelFile(channel, 'responses', true).then(
           loadChannelFile(channel, 'log', true).then((copied) => {
-            if (copied) nmb.bot.log[channel].offset = 0
+            if (copied) {
+              nmb.bot.log[channel] = {
+                'offset': 0,
+                'messages': 0,
+                'users': 0,
+                'start_time': null,
+                'end_time': null
+              }
+            }
             loadChannelFile(channel, 'roomstate', true).then(
               loadChannelFile(channel, 'commands', true).then(
                 loadChannelFile(channel, 'quotes', true).then(

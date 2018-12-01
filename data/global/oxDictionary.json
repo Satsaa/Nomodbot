@@ -358,5 +358,29 @@
     "pronun": "",
     "word": "Bde",
     "definition": "Brigade."
+  },
+  "clap": {
+    "cat": "Verb",
+    "pronun": "/klap/ ",
+    "word": "clap",
+    "definition": "Strike the palms of (one's hands) together repeatedly, typically in order to applaud someone or something"
+  },
+  "pyrrhic": {
+    "cat": "Adjective",
+    "pronun": "/ˈpɪrɪk/ ",
+    "word": "pyrrhic",
+    "definition": "(Of a victory) won at too great a cost to have been worthwhile for the victor."
+  },
+  "wrecked": {
+    "cat": "Adjective",
+    "pronun": "/rɛkt/ ",
+    "word": "wrecked",
+    "definition": "Having been wrecked"
+  },
+  "stock": {
+    "cat": "Noun",
+    "pronun": "/stɒk/ ",
+    "word": "stock",
+    "definition": "The goods or merchandise kept on the premises of a shop or warehouse and available for sale or distribution"
   }
 }
