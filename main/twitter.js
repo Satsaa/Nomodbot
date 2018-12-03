@@ -16,9 +16,9 @@ var stream = client.stream('statuses/filter', {
 stream.on('error', (error) => {
   if (error.toString().startsWith('Error: Status Code: ')) {
     let status = getStatus(+error.toString().substring(20))
-    console.log(`* [TWITTER ERROR] ${status.short}: ${status.long}`)
+    console.error(`* [TWITTER ERROR] ${status.short}: ${status.long}`)
   } else {
-    console.log(`* [TWITTER ERROR] ${error}`, error.stack)
+    console.error(`* [TWITTER ERROR] ${error}`, error.stack)
   }
 })
 
@@ -42,7 +42,7 @@ stream.on('data', (tweet) => {
       twitter.com/i/web/status/${tweet.id_str}/ ⠀
       ${caption || tweet.entities.media[0].media_url}`)
     }).catch((err) => {
-      console.log(`* Caption failed: ${err}`)
+      console.error(`* Caption failed: ${err}`)
 
       nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.text.substring(0, tweet.display_text_range[1])}
@@ -62,7 +62,7 @@ stream.on('data', (tweet) => {
       twitter.com/i/web/status/${tweet.id_str} ⠀
       ${caption || tweet.extended_tweet.entities.media[0].media_url}`)
     }).catch((err) => {
-      console.log(err)
+      console.error(err)
 
       nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.extended_tweet.full_text.substring(0, tweet.extended_tweet.display_text_range[1])}

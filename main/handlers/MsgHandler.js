@@ -83,7 +83,7 @@ function updateBot (channel, userstate, message) {
     nmb.bot[channel].channel.mod = userstate.mod // false if broadcaster
     if (channel.endsWith(nmb.client.username)) nmb.bot[channel].channel.mod = true // broadcaster = mod
     if (nmb.bot[channel].channel.mod) console.log(`* [${channel}] Moderator granted`)
-    else console.log(`* [${channel}] Moderator revoked`)
+    else console.error(`* [${channel}] Moderator revoked`)
   }
   nmb.bot[channel].channel.subscriber = userstate.subscriber
 }
@@ -101,7 +101,7 @@ function chat (channels, msg, allowCommand) {
     }
   }
   if (!Array.isArray(channels) && typeof channels === 'object') {
-    console.log(`[ERROR] Invalid channels type: ${typeof channels} `)
+    console.error(`[MESSAGEHANDLER] Invalid channels type: ${typeof channels} `)
     return
   }
   if (msg.length > 497) msg = msg.substring(0, 497) // getting too long?
@@ -153,7 +153,7 @@ function parseSay (channel, msg) {
       nmb.bot.internal.mod_times.push(Date.now())
       resolve()
     }).catch((err) => {
-      console.log(`* [${channel}] Msg failed: ${err}`)
+      console.error(`* [${channel}] Msg failed: ${err}`)
       reject(err)
     })
   })
@@ -163,7 +163,7 @@ function whisper (channel, message) {
   if (nmb.bot.internal.whisper_accounts.includes(channel)) {
     nmb.bot.internal.whisper_accounts.push(channel)
     if (nmb.bot.internal.whisper_accounts.length >= 40) { // implement account rate limiting in the future
-      console.log(`* ${nmb.bot.internal.whisper_accounts.length} whisper accounts reached!`)
+      console.error(`* ${nmb.bot.internal.whisper_accounts.length} whisper accounts reached!`)
     }
   }
   queueWhisper(channel, message)
@@ -227,7 +227,7 @@ function queueModChat (channel, message) {
       nmb.bot.internal.mod_times.push(Date.now())
       modQueue.shift()
     }).catch((err) => {
-      console.log(`* [${modQueue[0][0]}] Msg failed: ${err}`)
+      console.error(`* [${modQueue[0][0]}] Msg failed: ${err}`)
     }).finally(() => {
       parseTimes(1)
       if (modQueue.length) { // continue queue
@@ -256,7 +256,7 @@ function queueWhisper (channel, message) {
       nmb.bot.internal.whisper_times_sec.push(Date.now())
       nmb.bot.internal.whisper_times_min.push(Date.now())
     }).catch((err) => {
-      console.log(`* [${whisperQueue[0][0]}] Whisper failed: ${err}`)
+      console.error(`* [${whisperQueue[0][0]}] Whisper failed: ${err}`)
     }).finally(() => {
       if (whisperQueue.length) { // continue queue
         setTimeout(timeoutMsg, getTimeout())
@@ -284,7 +284,7 @@ function antiDupe (channel, message) { // remove or add 2 chars at msg end to av
 
 function limitLength (msg, length = 499) {
   if (msg.length > length) {
-    console.log(`* Msg shortened ${msg.length}. Max length was ${length}`)
+    console.error(`* Msg shortened ${msg.length}. Max length was ${length}`)
     return msg.substring(0, length)
   } else return msg
 }

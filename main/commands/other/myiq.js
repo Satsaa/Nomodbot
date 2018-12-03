@@ -6,9 +6,9 @@ module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     fs.access('./data/' + channel + '/myiq.json', fs.constants.F_OK, (err) => {
       if (err) { // not created
-      // console.log(`* [${channel}] Creating settings file`)
         fs.copyFile('./data/default/myiq.json', './data/' + channel + '/myiq.json', err => {
           if (err) throw err
+          console.log(`* [${channel}] Created myiq file`)
           resolve(main(channel, userstate, params))
         })
       } else resolve(main(channel, userstate, params))

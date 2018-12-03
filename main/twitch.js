@@ -58,7 +58,7 @@ client.on('timeout', (channel, username, reason, duration) => {
   nmb.client = old
   if (username === client.username) {
     bot[channel].channel.timeout_end = Date.now() + duration * 1000
-    console.log(bot[channel].channel.timeout_end)
+    console.error(`* [${channel}] Bot has been timeouted for ${bot[channel].channel.timeout_end} seconds`)
   }
 })
 
@@ -66,8 +66,8 @@ client.on('ban', (channel, username, reason) => {
   // TIME:b:USER:REASON
   if (bot[channel] && username === client.username) {
     bot[channel].channel.banned = true
-  }
-  console.log(`* [${channel}] ${username} banned for ${reason}`)
+    console.error(`* [${channel}] Bot banned for ${reason}`)
+  } else console.log(`* [${channel}] ${username} banned for ${reason}`)
 })
 
 client.on('mod', (channel, username) => { // batched
@@ -89,16 +89,16 @@ client.on('unmod', function (channel, username) { // batched
 client.on('notice', (channel, msgid, message) => {
   switch (msgid) {
     case 'msg_timedout':
-      console.log(`* [${channel}] ${message}`)
+      console.warn(`* [${channel}] ${message}`)
       break
     case 'msg_ratelimit':
-      console.log(`* [${channel}] ${message}`)
+      console.warn(`* [${channel}] ${message}`)
       break
     case 'msg_banned':
-      console.log(`* [${channel}] ${message}`)
+      console.warn(`* [${channel}] ${message}`)
       break
     default:
-      console.log(`* [${channel}] ${message}`)
+      console.warn(`* [${channel}] ${message}`)
       break
   }
 })
@@ -119,12 +119,12 @@ client.on('connected', (address, port) => {
   nmb.bot.startTime = Date.now()
   console.log(`* Connected`)
   joinChannel(bot.internal.channels).catch((err) => {
-    if (err) console.log(`failed on 'Connected': ${err}`)
+    if (err) console.error(`failed on 'Connected': ${err}`)
   })
 })
 
 client.on('disconnected', (reason) => {
-  console.log(`* Disconnected (${reason})`)
+  console.error(`* Disconnected (${reason})`)
 })
 
 client.on('reconnect', () => {
@@ -169,7 +169,7 @@ function joinChannel (channels) { // Allows multichannel
       bot[channel] = {}
 
       getUserId(channel).catch((err) => {
-        console.log(`* [ERROR (${channel})] Failed to get user ID: ${err}`)
+        console.error(`* [ERROR (${channel})] Failed to get user ID: ${err}`)
       })
       fs.mkdir('./data/' + channel, {}, (err) => {
         if (err && err.code !== 'EEXIST') throw err
@@ -198,7 +198,7 @@ function joinChannel (channels) { // Allows multichannel
                             emitter.emit('joinChannel', channel)
                             resolve(channel)
                           }).catch((err) => {
-                            console.log(`* [${channel}] Error joining: ${err}`)
+                            console.error(`* [${channel}] Error joining: ${err}`)
                             removeChannel(channel)
                             reject(err)
                           })
@@ -235,7 +235,7 @@ function joinChannel (channels) { // Allows multichannel
             }
           } else { // exists already
             bot[channel][fileName] = require('.' + fileNamePath)
-            console.log(`* [${channel}] ${fileName} loaded`)
+            // console.log(`* [${channel}] ${fileName} loaded`)
             resolve(false)
           }
         })
@@ -263,7 +263,7 @@ function partChannel (channels) {
         emitter.emit('partChannel', channel)
         resolve()
       }).catch((err) => {
-        console.log(`* [${channel}] Error parting: ${err}`)
+        console.error(`* [${channel}] Error parting: ${err}`)
         addChannel(channel)
         reject(err)
       })
@@ -277,10 +277,10 @@ function getUserId (loginName) {
   return new Promise((resolve, reject) => {
     loginName = loginName.toLowerCase()
     if (loginName.length > 2) {
-      console.log(`* [${loginName}] Getting user id`)
+      // console.log(`* [${loginName}] Getting user id`)
       if (!loginName.startsWith('#')) loginName = '#' + loginName
       if (loginName in bot.internal.user_ids) {
-        console.log(`* [${loginName}] Cached user id: ${bot.internal.user_ids[loginName]}`)
+        console.log(`* [${loginName}] Using cached user id: ${bot.internal.user_ids[loginName]}`)
 
         resolve(bot.internal.user_ids[loginName])
       } else {
@@ -295,8 +295,8 @@ function getUserId (loginName) {
           if (err) reject(err)
           if ((((data || {}).users || {})[0] || {})._id) {
             // console.log(data)
-            console.log(`* [${loginName}] Got user id: ${data.users[0]._id}`)
             bot.internal.user_ids[loginName] = data.users[0]._id
+            console.log(`* [${loginName}] Got and cached user id: ${data.users[0]._id}`)
             resolve(data.users[0]._id)
           } else reject(new Error('Invalid request'))
         })
@@ -320,7 +320,7 @@ function removeChannel (channel) {
 
 let saveInterval
 if (typeof bot.config.save_interval === 'undefined' || !(bot.config.save_interval === -1 || bot.config.save_interval > 0)) {
-  console.log(`* [ERROR] .\\data\\global\\config.json -> save_interval must be -1 (disabled) or positive`)
+  console.error(`* [CONFIG] .\\data\\global\\config.json -> save_interval must be -1 (disabled) or positive`)
 } else if (bot.config.save) {
   saveInterval = setInterval(save, bot.config.save_interval * 1000)
 } // created save interval

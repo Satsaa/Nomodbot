@@ -25,11 +25,11 @@ walkSync('./main/commands/').forEach(path => {
 
 for (let cmd in commands) {
   if (typeof commands[cmd].run !== 'function') {
-    console.log(`* [ERROR] ${cmd} doesn't have an exported run function and is therefore unloaded`)
+    console.error(`* [COMMANDHANDLER] ${cmd} doesn't have an exported run function and is therefore unloaded`)
     delete commands[cmd]
   }
   if (typeof commands[cmd].help !== 'function') {
-    console.log(`* [ERROR] ${cmd} doesn't have an exported help function and is therefore unloaded`)
+    console.error(`* [COMMANDHANDLER] ${cmd} doesn't have an exported help function and is therefore unloaded`)
     delete commands[cmd]
   }
   if (typeof commands[cmd].init === 'function') {
@@ -48,7 +48,7 @@ for (let cmd in commands) {
 module.exports.handle = (command, channel, userstate, params) => {
   console.log(`* [${channel}] Running ${command}`)
   if (typeof commands[command] === 'undefined') {
-    console.log(`* [ERROR] ${command} doesn't exist or ${command}.js isn't loaded`)
+    console.error(`* [COMMANDHANDLER] ${command} doesn't exist or ${command}.js isn't loaded`)
   } else {
     commands[command].run(channel, userstate, params).then((msg) => {
       if (msg !== null) {
