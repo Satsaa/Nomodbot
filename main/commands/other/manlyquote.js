@@ -38,7 +38,7 @@ module.exports.run = (channel, userstate, params) => {
         if (!err) {
           console.log(`* [GLOBAL] Modified manly file`)
         } else {
-          console.log(`* [GLOBAL] FAILED TO MODIFY MANLYQUOTE FILE: ${err}`)
+          console.error(`* [GLOBAL] FAILED TO MODIFY MANLYQUOTE FILE: ${err}`)
         }
       })
     }

@@ -53,7 +53,7 @@ async function save (channel, notifys) {
     if (!err) {
       console.log(`* [${channel}] Modified notify file`)
     } else {
-      console.log(`* [${channel}] FAILED TO MODIFY NOTIFY FILE: ${err}`)
+      console.error(`* [${channel}] FAILED TO MODIFY NOTIFY FILE: ${err}`)
     }
     block.splice(block.indexOf(channel), 1)
   })

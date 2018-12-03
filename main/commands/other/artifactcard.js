@@ -17,7 +17,7 @@ for (let i = 0; i < 100; i++) { // require all existing sets
 
 if (sets.length === 0) {
   update(true).catch((err) => {
-    console.log(`* [ARTIFACTCARD] Failed downloading card set data: ${err}`)
+    console.error(`* [ARTIFACTCARD] Failed downloading card set data: ${err}`)
   })
 }
 
@@ -197,13 +197,13 @@ module.exports.run = (channel, userstate, params) => {
       case 'stronghol1d':
       case 'pathi1ng': // why not
         resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
-        // console.log(`* [${channel}] Unknown Artifact card type:${s(type)}`)
+        // console.error(`* [${channel}] Unknown Artifact card type:${s(type)}`)
         break
 
       default:
 
         resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
-        // console.log(`* [${channel}] Unknown Artifact card type:${s(type)}`)
+        // console.error(`* [${channel}] Unknown Artifact card type:${s(type)}`)
         break
     }
     /** Just prepends a space if str is true
@@ -256,7 +256,7 @@ function update (suppress = false) {
             sets[setNum] = JSON.parse(body) // parse and save to memory
             if (!sets[setNum]) return reject(new Error('Failed to parse correctly. This command is now unstable monkaS'))
             if (err) {
-              if (!suppress) console.log(err)
+              if (!suppress) console.error(err)
             } else { // stat() failed
               var prevSize = stats.size
               var keyLength = Object.keys(sets[setNum].card_set.card_list).length
@@ -275,7 +275,7 @@ function update (suppress = false) {
 
               fs.stat(`./data/global/artifact/${setNum}.json`, (err, stats) => {
                 if (err) {
-                  if (!suppress) console.log(err)
+                  if (!suppress) console.error(err)
                   updated.push(sets[setNum].card_set.set_info.name.english)
                   updated[updated.length - 1] += err
                 } else if (typeof keyLength !== 'undefined' || typeof prevSize !== 'undefined') {

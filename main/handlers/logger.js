@@ -17,15 +17,15 @@ emitter.on('onExit', (channels) => {
 emitter.on('onsave', save)
 
 function save (channel = null) {
-  if (!nmb.bot.log) console.log('* [LOGGER] log undefined and therefore not saved')
+  if (!nmb.bot.log) console.error('* [LOGGER] log undefined and therefore not saved')
   fs.writeFile('./data/global/log.json', JSON.stringify(nmb.bot.log, null, 2), 'utf8', (err) => {
     if (err) throw err
-    else console.log(`* [LOGGER] Saved`)
+    else console.log(`* [LOGGER] Log saved`)
   })
   if (channel) {
     fs.writeFile(`./data/${channel}/log.json`, JSON.stringify(nmb.bot[channel].log, null, 2), 'utf8', (err) => {
       if (err) throw err
-      else console.log(`* [LOGGER] Saved`)
+      else console.log(`* [${channel}] Log saved`)
     })
   }
 }
@@ -45,10 +45,10 @@ const types = {
 
 module.exports.log = (channel, type, name, userId, message) => {
   if (!(type in types)) {
-    console.log(`* [${channel}] Invalid log type: ${type}`)
+    console.error(`* [${channel}] Invalid log type: ${type}`)
   } else {
     if (!(channel in streams && streams[channel])) {
-      console.log(`* [${channel}] Log msg dropped due to uninitialized write stream`)
+      console.error(`* [${channel}] Log msg dropped due to uninitialized write stream`)
     } else {
       type = types[type]
       message = message.replace(/\n/gi, '') // remove new lines
@@ -167,7 +167,7 @@ function trackLog (channel, offset) {
                 'end_time': null
               }
               save()
-              console.log(`* [channel] Log.txt was missing: Reseted log stats`)
+              console.error(`* [channel] Log.txt was missing: Reseted log stats`)
               return resolve()
             }
           })
@@ -200,16 +200,16 @@ function trackLog (channel, offset) {
           console.log(`* [${channel}] Tracked ${logs.length - skipped} log lines in about ${Date.now() - startTime} ms`)
           if (faults !== [0, 0, 0, 0, 0, 0]) { // Log errors if present
             if (faults[0] + faults[2] !== 0) {
-              console.log(`* [${channel}] Offset negatives: ${faults[0] + faults[2]}`)
+              console.error(`* [${channel}] Offset negatives: ${faults[0] + faults[2]}`)
             }
             if (faults[1] + faults[2] !== 0) {
-              console.log(`* [${channel}] Time negatives: ${faults[1] + faults[2]}`)
+              console.error(`* [${channel}] Time negatives: ${faults[1] + faults[2]}`)
             }
             if (faults[3] + faults[5] !== 0) {
-              console.log(`* [${channel}] Offset nulls: ${faults[3] + faults[5]} (consider this bad)`)
+              console.error(`* [${channel}] Offset nulls: ${faults[3] + faults[5]} (consider this bad)`)
             }
             if (faults[4] + faults[5] !== 0) {
-              console.log(`* [${channel}] Time nulls: ${faults[4] + faults[5]} (consider this bad)`)
+              console.error(`* [${channel}] Time nulls: ${faults[4] + faults[5]} (consider this bad)`)
             }
           }
           // last line is '' with no /n but stats.size is absolute so no worries :)
@@ -234,16 +234,16 @@ module.exports.startStream = (channel) => {
       } else throw err
     }
     if (stats.size !== shortG['offset']) {
-      console.log(`* [${channel}] Offset mismatch`)
-      console.log(`Real: ${stats.size} !== ${shortG['offset']} :Tracked`)
+      console.error(`* [${channel}] Offset mismatch`)
+      console.error(`Real: ${stats.size} !== ${shortG['offset']} :Tracked`)
       if (stats.size > shortG['offset']) { // Json is behind logs
         trackLog(channel, shortG['offset']).then(() => {
           streams[channel] = fs.createWriteStream(`./data/${channel}/log.txt`, { flags: 'a' })
         }).catch((err) => {
-          console.log(err)
+          console.error(err)
         })
       } else { // Json is ahead logs? Log.txt was probably cleared
-        console.log(`* [${channel}] Log json ahead of log txt. Likely due to manually editing log.txt`)
+        console.error(`* [${channel}] Log json ahead of log txt. Likely due to manually editing log.txt`)
         console.log(`* [${channel}] Retracking completely!`)
         delete nmb.bot[channel].log
         nmb.bot.log[channel] = {
@@ -257,16 +257,16 @@ module.exports.startStream = (channel) => {
         trackLog(channel, 0).then(() => {
           streams[channel] = fs.createWriteStream(`./data/${channel}/log.txt`, { flags: 'a' })
         }).catch((err) => {
-          console.log(err)
+          console.error(err)
         })
       }
     } else streams[channel] = fs.createWriteStream(`./data/${channel}/log.txt`, { flags: 'a' })
   })
 }
 module.exports.endStream = (channel) => {
-  if (!channel) console.log(`* [${channel}] Cannot endStream: channel undefined`)
+  if (!channel) console.error(`* [${channel}] Cannot endStream: channel undefined`)
   if (!(channel in streams)) {
-    console.log(`* [${channel}] Ignored endStream() as channel's write stream doesn't exist`)
+    console.error(`* [${channel}] Ignored endStream() as channel's write stream doesn't exist`)
     return
   }
   streams[channel].end()
@@ -279,13 +279,13 @@ module.exports.endStream = (channel) => {
     })
   } else {
     delete nmb.bot[channel].log
-    return console.log(`* [${channel}] Tried saving undefined log`)
+    return console.error(`* [${channel}] Tried saving undefined log`)
   }
 }
 // primarily used on exit
 module.exports.endStreamSync = (channel) => {
   if (!(channel in streams)) {
-    console.log(`* [${channel}] Ignored endStreamSync() as channel's write stream doesn't exist`)
+    console.error(`* [${channel}] Ignored endStreamSync() as channel's write stream doesn't exist`)
     return
   }
   streams[channel].end()
@@ -294,7 +294,7 @@ module.exports.endStreamSync = (channel) => {
   if (typeof nmb.bot[channel].log !== 'undefined') {
     fs.writeFileSync(`./data/${channel}/log.json`, JSON.stringify(nmb.bot[channel].log, null, '\t'), 'utf8')
     console.log(`* [${channel}] Saved log.json and ended stream`)
-  } else console.log(`* [${channel}] Log undefined, didn't save log.json but ended stream`)
+  } else console.error(`* [${channel}] Log undefined, didn't save log.json but ended stream`)
 
   delete nmb.bot[channel].log
 }

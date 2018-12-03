@@ -14,7 +14,7 @@ module.exports.run = (channel, userstate, params) => {
               console.log(`* [${channel}] Created quote file`)
               resolve(quote(channel, params, short))
             } else {
-              console.log(`* [${channel}] FAILED TO CREATE QUOTE FILE: ${err}`)
+              console.error(`* [${channel}] FAILED TO CREATE QUOTE FILE: ${err}`)
             }
           })
         } else { // file is present
@@ -55,7 +55,7 @@ module.exports.run = (channel, userstate, params) => {
         if (!err) {
           console.log(`* [${channel}] Modified quote file`)
         } else {
-          console.log(`* [${channel}] FAILED TO MODIFY QUOTE FILE: ${err}`)
+          console.error(`* [${channel}] FAILED TO MODIFY QUOTE FILE: ${err}`)
         }
       })
     }

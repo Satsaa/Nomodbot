@@ -20,7 +20,7 @@ module.exports.run = (channel, userstate, params) => {
       return resolve(`[${dict[words].cat} ${dict[words].pronun}${dict[words].word}]: ${dict[words].definition}${dict[words].definition.endsWith('.') ? '' : '.'}`)
     } else {
       define(words, lang, (error, data) => {
-        if (error) return console.log(error)
+        if (error) return console.error(error)
         else {
           // console.log(util.inspect(data, { showHidden: false, depth: null }))
           if (typeof data.results === 'undefined' || typeof data === 'undefined') {
@@ -112,7 +112,7 @@ module.exports.run = (channel, userstate, params) => {
         if (!err) {
           console.log(`* [GLOBAL] Modified dictionary file`)
         } else {
-          console.log(`* [GLOBAL] FAILED TO MODIFY DICTIONARY FILE: ${err}`)
+          console.error(`* [GLOBAL] FAILED TO MODIFY DICTIONARY FILE: ${err}`)
         }
       })
     }

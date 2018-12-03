@@ -17,7 +17,7 @@ module.exports.run = (channel, userstate, params) => {
           'Accept': 'application/vnd.twitchtv.v5+json'
         }
       }, (err, res, data) => {
-        if (err) console.log(err)
+        if (err) console.error(err)
         // console.log(`${util.inspect(data, { showHidden: false, depth: null })} || ${err} || `)
         if (data.stream === null) {
           nmb.client.api({
@@ -29,7 +29,7 @@ module.exports.run = (channel, userstate, params) => {
               'Accept': 'application/vnd.twitchtv.v5+json'
             }
           }, (err, res, data) => {
-            if (err) console.log(err)
+            if (err) console.error(err)
             // console.log(`${util.inspect(data, { showHidden: false, depth: null })} || ${err} || `)
             if (data._total === 0) {
               resolve(`${params[1] || channel.replace('#', '')} is not live. Last stream time unknown`)
@@ -47,7 +47,7 @@ module.exports.run = (channel, userstate, params) => {
         }
       })
     }).catch((err) => {
-      console.log(`[ERROR (${channel})] Error getting uptime: ${err}`)
+      console.error(`[ERROR (${channel})] Error getting uptime: ${err}`)
       resolve(`${err}`)
     })
   })

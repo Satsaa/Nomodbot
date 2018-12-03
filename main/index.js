@@ -15,7 +15,7 @@ global.nmb = require('./twitch.js')
 require('./twitter.js')
 
 process.on('unhandledRejection', (reason, p) => {
-  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason)
+  console.error('Unhandled Rejection at: Promise', p, 'reason:', reason)
   // application specific logging, throwing an error, or other logic here
 })
 
@@ -32,20 +32,20 @@ function exitHandler (options, exitCode) {
     if (typeof nmb.bot[channel].channel !== 'undefined') {
       console.log(`* [${channel}] Channel saved`)
       fs.writeFileSync('./data/' + channel + '/channel.json', JSON.stringify(nmb.bot[channel].channel, null, 2), 'utf8')
-    } else console.log(`* [${channel}] Channel undefined and not saved`)
+    } else console.error(`* [${channel}] Channel undefined and not saved`)
   })
 
   if (typeof nmb.bot.internal !== 'undefined') {
     fs.writeFileSync('./data/global/internal.json', JSON.stringify(nmb.bot.internal, null, 2), 'utf8')
     console.log(`* [BOT] Internals saved`)
-  } else console.log(`* [BOT] Internals undefined and not saved`)
+  } else console.error(`* [BOT] Internals undefined and not saved`)
 
   if (typeof nmb.bot.log !== 'undefined') {
     fs.writeFileSync('./data/global/log.json', JSON.stringify(nmb.bot.log, null, 2), 'utf8')
     console.log(`* [BOT] Logs saved`)
-  } else console.log(`* [BOT] Log undefined and not saved`)
+  } else console.error(`* [BOT] Log undefined and not saved`)
 
-  if (exitCode || exitCode === 0) console.log(exitCode)
+  if (exitCode || exitCode === 0) console.error(exitCode)
   if (options.exit) process.exit()
 }
 
