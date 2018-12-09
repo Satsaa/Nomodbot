@@ -191,7 +191,7 @@ function joinChannel (channels) { // Allows multichannel
                     loadChannelFile(channel, 'notifys', true).then(
                       loadChannelFile(channel, 'channel', true).finally(() => {
                         loadRoomstateFromQueue(channel).then(() => {
-                          console.log(`* [${channel}] Initial roomstate loaded`)
+                          console.log(`* [${channel}] Loaded`)
                           client.join(channel).then((data) => { // data returns channel
                             checkDefaults(channel)
                             console.log(`* [${channel}] Joined`)
@@ -280,7 +280,7 @@ function getUserId (loginName) {
       // console.log(`* [${loginName}] Getting user id`)
       if (!loginName.startsWith('#')) loginName = '#' + loginName
       if (loginName in bot.internal.user_ids) {
-        console.log(`* [${loginName}] Using cached user id: ${bot.internal.user_ids[loginName]}`)
+        // console.log(`* [${loginName}] Using cached user id: ${bot.internal.user_ids[loginName]}`)
 
         resolve(bot.internal.user_ids[loginName])
       } else {
@@ -296,7 +296,7 @@ function getUserId (loginName) {
           if ((((data || {}).users || {})[0] || {})._id) {
             // console.log(data)
             bot.internal.user_ids[loginName] = data.users[0]._id
-            console.log(`* [${loginName}] Got and cached user id: ${data.users[0]._id}`)
+            console.log(`* [${loginName}] Cached user id: ${data.users[0]._id}`)
             resolve(data.users[0]._id)
           } else reject(new Error('Invalid request'))
         })

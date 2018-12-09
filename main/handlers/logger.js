@@ -23,7 +23,7 @@ function save (channel = null) {
     else console.log(`* [LOGGER] Log saved`)
   })
   if (channel) {
-    fs.writeFile(`./data/${channel}/log.json`, JSON.stringify(nmb.bot[channel].log, null, 2), 'utf8', (err) => {
+    fs.writeFile(`./data/${channel}/log.json`, JSON.stringify(nmb.bot[channel].log, null, '\t'), 'utf8', (err) => {
       if (err) throw err
       else console.log(`* [${channel}] Log saved`)
     })
