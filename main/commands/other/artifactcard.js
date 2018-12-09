@@ -280,6 +280,9 @@ function update (suppress = false) {
                   updated[updated.length - 1] += err
                 } else if (typeof keyLength !== 'undefined' || typeof prevSize !== 'undefined') {
                   if (prevLength === keyLength && prevSize !== stats.size) { // Gather changed byte size
+                    if (isNaN(prevSize)) {
+                      console.trace('Nanned')
+                    }
                     updated.push(sets[setNum].card_set.set_info.name.english)
                     updated[updated.length - 1] += `: ${mu.formatBytes(stats.size - prevSize, 1)}`
                   }

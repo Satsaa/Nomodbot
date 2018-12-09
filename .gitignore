@@ -1,17 +1,21 @@
 
 node_modules/*
+
 config/TwitchClient.json
 config/TwitterClient.json
 config/DeepAi.json
-object examples/*
+config/OxfordDictionaries.json
+config/CognitiveServices.json
+config/steamApi.json
+
 data/*
 !data/global/
 !data/default/
 data/global/myiq.json
-config/OxfordDictionaries.json
+data/global/artifact/*
+
+misc/object examples/*
+misc/Twitch-Chat-Downloader-master/*
+
 .vscode
 *test.*
-config/CognitiveServices.json
-config/steamApi.json
-data/global/artifact/0.json
-data/global/artifact/1.json
