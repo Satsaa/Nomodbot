@@ -16,11 +16,13 @@ module.exports.receive = (channel, userstate, message, self) => {
 
       if (self) {
         updateBot(channel, userstate, message)
+        // Remove 2 chars used on chatterino and this bot (default) since they cause issues with parameters
         if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
         if (userstate['message-type'] === 'chat') {
           nmb.logger.log(channel, 'message', userstate['display-name'], nmb.client.globaluserstate['user-id'], message)
         }
       } else {
+        // Remove 2 chars used on chatterino and this bot (default) since they cause issues with parameters
         if (message.endsWith(' \u206D')) message = message.substring(0, message.length - 2)
         if (userstate['message-type'] === 'chat') {
           nmb.logger.log(channel, 'message', userstate['display-name'], userstate['user-id'], message)
@@ -104,7 +106,6 @@ function chat (channels, msg, allowCommand) {
     console.error(`[MESSAGEHANDLER] Invalid channels type: ${typeof channels} `)
     return
   }
-  if (msg.length > 497) msg = msg.substring(0, 497) // getting too long?
   if (typeof channels === 'string') { // channels is used as an array but a single channel string is supported
     channels = [channels]
   }
@@ -139,15 +140,27 @@ function chat (channels, msg, allowCommand) {
  */
 function parseSay (channel, msg) {
   return new Promise((resolve, reject) => {
-    // Anti duplication so messages wont be flagged and rejected
-    if (nmb.bot[channel].channel.last_msg.endsWith(nmb.bot[channel].channel.dupe_affix)) {
-      msg.slice(-2)
-    } else msg += nmb.bot[channel].channel.dupe_affix
-
-    // Prevent lengthy messages. (Note that actual max length may wary on Twitch' side)
-    if (msg.length > nmb.bot[channel].channel.max_length) {
-      msg = msg.substring(0, nmb.bot[channel].channel.max_length)
+    let short = nmb.bot[channel].channel
+    // Prevent lengthy messages. (Note that actual max length may vary on Twitch' side)
+    if (msg.length > short.max_length) {
+      msg = msg.substring(0, short.max_length)
+      msg = msg.slice(0, -3) + '...' // add ... to the end to make it clearer that msg was cut
+      var dotted = true
     }
+
+    // Anti duplication so messages wont be rejected as duplicates
+    if (!short.last_msg.endsWith(short.dupe_affix)) {
+      if (msg.length + short.dupe_affix.length > short.max_length) {
+        if (dotted) {
+          msg = msg.substr(0, msg.length - 3 - short.dupe_affix.length) + msg.substr(msg.length - 3)
+        } else {
+          msg = msg.substring(0, short.max_length - short.dupe_affix.length)
+          msg = msg.slice(0, -3) + '...' // add ... to the end to make it clearer that msg was cut
+        }
+      }
+      msg += short.dupe_affix
+    }
+
     // Send and handle issues or non-issues
     nmb.client.say(channel, msg).then(() => {
       nmb.bot.internal.mod_times.push(Date.now())
