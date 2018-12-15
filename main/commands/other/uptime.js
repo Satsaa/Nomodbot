@@ -36,7 +36,7 @@ module.exports.run = (channel, userstate, params) => {
             } else {
               let videoDate = new Date(data.videos[0].created_at)
               let videoEndMS = videoDate.getTime() + data.videos[0].length * 1000
-              resolve(`${data.videos[0].channel.display_name}'s went live ${myUtil.timeSince(videoDate.getTime(), 2)} ago and that stream ended ${myUtil.timeSince(videoEndMS, 2)} ago`)
+              resolve(`${data.videos[0].channel.display_name}'s channel went live ${myUtil.timeSince(videoDate.getTime(), 2)} ago and that stream ended ${myUtil.timeSince(videoEndMS, 2)} ago`)
             }
           })
         } else {
@@ -55,7 +55,7 @@ module.exports.run = (channel, userstate, params) => {
 
 module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve(`Display how long a channel has been live or offline: ${params[1]} [<channel>]. Offline times are based on last vod`)
+    resolve(`Display how long a channel has been live or offline: ${params[1]} [<channel>]. Offline times are based on last recorded vod`)
   })
 }
 // curl -H 'Accept: application/vnd.twitchtv.v5+json' \
