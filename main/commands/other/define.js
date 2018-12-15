@@ -4,7 +4,7 @@ var https = require('https')
 
 let dict = require('../../../data/global/oxDictionary.json')
 const myUtil = require('../../myutil')
-const app = require('../../../config/OxfordDictionaries.json')
+const app = require('../../../keyConfig/OxfordDictionaries.json')
 
 let lang = 'en' // later not hardcoded Kapp
 

@@ -1,7 +1,7 @@
 
 var Twitter = require('twitter')
 
-var client = new Twitter(require('../config/TwitterClient.json'))
+var client = new Twitter(require('../keyConfig/TwitterClient.json'))
 
 // STANDARD STREAMING PARAMETERS -> https://developer.twitter.com/en/docs/tweets/filter-realtime/guides/basic-stream-parameters
 // Trump: 25073877 | 3minbot: 2899773086 | Dota2: 176507184 | wykrhm: 44680622
@@ -180,7 +180,7 @@ function getStatus (code) {
 // Microsoft Azure cognitive/ddescription api
 // https://westeurope.api.cognitive.microsoft.com/
 
-const azure = require('../config/CognitiveServices.json')
+const azure = require('../keyConfig/CognitiveServices.json')
 var request = require('request')
 
 function describeUrl (imageUrl) {

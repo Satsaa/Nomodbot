@@ -1,6 +1,6 @@
 const util = require('util')
 const myUtil = require('../../myutil')
-var opts = require('../../../config/TwitchClient.json')
+var opts = require('../../../keyConfig/TwitchClient.json')
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
@@ -32,11 +32,12 @@ module.exports.run = (channel, userstate, params) => {
             if (err) console.error(err)
             // console.log(`${util.inspect(data, { showHidden: false, depth: null })} || ${err} || `)
             if (data._total === 0) {
-              resolve(`${params[1] || channel.replace('#', '')} is not live. Last stream time unknown`)
+              resolve(`${params[1] || channel.replace('#', '')} is not currently live. Last stream time unknown`)
             } else {
               let videoDate = new Date(data.videos[0].created_at)
               let videoEndMS = videoDate.getTime() + data.videos[0].length * 1000
-              resolve(`${data.videos[0].channel.display_name}'s channel went live ${myUtil.timeSince(videoDate.getTime(), 2)} ago and that stream ended ${myUtil.timeSince(videoEndMS, 2)} ago`)
+              let durationStr = myUtil.durationStr(myUtil.MSToDHMS(12050 * 1000), 2, true)
+              resolve(`${data.videos[0].channel.display_name} went live ${myUtil.timeSince(videoDate.getTime(), 2)} ago. That stream ended ${myUtil.timeSince(videoEndMS, 2)} ago and lasted for ${durationStr}`)
             }
           })
         } else {

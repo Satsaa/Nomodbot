@@ -9,7 +9,7 @@ bot.log = require('../data/global/log.json')
 bot.config = require('../data/global/config.json')
 exports.bot = bot
 
-var opts = require('../config/TwitchClient.json')
+var opts = require('../keyConfig/TwitchClient.json')
 var client = new tmi.Client(opts)
 exports.client = client
 
