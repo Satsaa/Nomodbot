@@ -1,4 +1,4 @@
-var tmi = require('tmi.js')
+var tmi = require('./tmi.js')
 const fs = require('fs')
 const util = require('util')
 
