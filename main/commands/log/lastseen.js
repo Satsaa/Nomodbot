@@ -4,19 +4,21 @@ module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     let short = nmb.bot[channel].log
 
-    let self = !params[1]
-    if (params[1] && params[1].toLowerCase() === userstate.username) self = true
+    if (params[1]) {
+      if (params[1].toLowerCase() === userstate.username) var self = true
+      else self = false
+    } else self = true
 
     let userLow = params[1] || userstate['display-name']
     userLow = userLow.toLowerCase()
     if (userLow in short) { // check if logs exist of this user
       if (short[userLow][1].length < 1) { // no logs but is tracked somehow
-        return resolve(`${params[1] ? params[1] : `@${userstate['display-name']} You`} ${youOrMe(self)}`)
+        return resolve(`${self ? `@${userstate['display-name']} You` : params[1]} ${youOrMe(self)}`)
       }
       let seenMs = nmb.logger.getTime(short, userLow, short[userLow][2].length - (self ? 1 : 0)) * 1000
 
-      resolve(`${params[1] ? params[1] : `@${userstate['display-name']} You`} ${youOrMe2(self)} ${myUtil.timeSince(seenMs, 1, false)} ago`)
-    } else resolve(`${params[1] ? params[1] : `@${userstate['display-name']} You`} ${youOrMe(self)}`)
+      resolve(`${self ? `@${userstate['display-name']} You` : params[1]} ${youOrMe2(self)} ${myUtil.timeSince(seenMs, 1, false)} ago`)
+    } else resolve(`${self ? `@${userstate['display-name']} You` : params[1]} ${youOrMe(self)}`)
   })
 }
 
