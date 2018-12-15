@@ -14,7 +14,6 @@ module.exports.run = (channel, userstate, params) => {
 
     let words = params.slice(1).join(' ')
     if (params[1].toLowerCase() === 'shushama') return resolve('[Noun /shüseimm/ Shushama]: A person who steals another person\'s property, especially by stealth, using force or threat of violence. Not ninja. So weeb.⁭ ')
-    // if (words.length() > 128) return resolve('Your request is too long :|')
     if (words in dict) { // Find if in cache
       console.log(`* [${channel}] Using cached definition of "${words}"`)
       return resolve(`[${dict[words].cat} ${dict[words].pronun}${dict[words].word}]: ${dict[words].definition}${dict[words].definition.endsWith('.') ? '' : '.'}`)

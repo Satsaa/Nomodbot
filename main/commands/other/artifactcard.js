@@ -300,6 +300,6 @@ function update (suppress = false) {
 
 module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve(`Get info about an Artifact card: ${params[1]} <card...>. Refresh card database: ${params[1]} update`)
+    resolve(`Get info about an Artifact card: ${params[1]} <card...>. Refresh card database: ${params[1]} update. Note: Boldened words are referenced cards and are valid cards.`)
   })
 }
