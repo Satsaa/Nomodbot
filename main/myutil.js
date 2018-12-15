@@ -126,6 +126,17 @@ module.exports.dateString = (ms, delim) => {
   else return dateStr
 }
 
+/** Insert to a string at pos
+ * @param {any} str String to insert into
+ * @param {any} index Where to insert
+ * @param {any} insert What to insert
+ * @return {string}
+ */
+module.exports.insert = insert
+function insert (str, index, insert) {
+  return str.substr(0, index) + insert + str.substr(index)
+}
+
 /** Returns inputted singular or plural based on v's value
  * @param {any} v If this is 1 or '1' returns singular
  * @param {any} singular Singular form
@@ -142,6 +153,15 @@ module.exports.plural = (v, singular, plural) => {
  */
 module.exports.cap = (string, pos = 0) => {
   return string.slice(0, pos) + string.charAt(pos).toUpperCase() + string.slice(pos + 1)
+}
+
+/** Adds '.' at the end of your string if it doesnt already have it (ignores trailing whitespace)
+ * @param {string} string Input string
+ */
+module.exports.endPunctuate = (string) => {
+  let pos = string.search(/\s*$/) // Start index of whitespace
+  if (string.charAt(pos - 1) === '.') return string
+  else return insert(string, pos, '.')
 }
 
 /** Add proper punctuation between words (Peter, Jones and Malfoy)

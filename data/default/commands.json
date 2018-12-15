@@ -18,6 +18,8 @@
   "?seen": "lastseen",
   "?users": "users",
   "?randomquote": "randomquote",
+  "?urban": "urban",
+  "?wiki": "wiki",
   "?exit": {
     "command": "exit",
     "userlvl": "master"
