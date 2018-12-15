@@ -1,12 +1,12 @@
 
 node_modules/*
 
-config/TwitchClient.json
-config/TwitterClient.json
-config/DeepAi.json
-config/OxfordDictionaries.json
-config/CognitiveServices.json
-config/steamApi.json
+keyConfig/TwitchClient.json
+keyConfig/TwitterClient.json
+keyConfig/DeepAi.json
+keyConfig/OxfordDictionaries.json
+keyConfig/CognitiveServices.json
+keyConfig/steamApi.json
 
 data/*
 !data/global/
