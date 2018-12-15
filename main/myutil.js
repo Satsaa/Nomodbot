@@ -72,7 +72,7 @@ function MSToDHMS (ms) {
  */
 module.exports.timeUntill = (ms, top = 4, short = 1) => {
   let t = MSToDHMS(ms - Date.now()) // time
-  return timeStr(t, top, short)
+  return durationStr(t, top, short)
 }
 
 /** Get string telling how long untill ms
@@ -82,7 +82,7 @@ module.exports.timeUntill = (ms, top = 4, short = 1) => {
  */
 module.exports.timeSince = (ms, top = 4, short = true) => {
   let t = MSToDHMS(Date.now() - ms) // time
-  return timeStr(t, top, short)
+  return durationStr(t, top, short)
 }
 
 /** Get string telling how long is ms
@@ -90,7 +90,8 @@ module.exports.timeSince = (ms, top = 4, short = true) => {
  * @param {number} top How many time units to return
  * @param {boolean} short Use short units (d or days)
  */
-function timeStr (t, top, short) {
+module.exports.durationStr = durationStr
+function durationStr (t, top, short) {
   let exists = 0
   let untill = []
   let dateStrLong = [' day', ' hour', ' minute', ' second']
