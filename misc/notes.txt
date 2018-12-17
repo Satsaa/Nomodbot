@@ -1,0 +1,10 @@
+Rank is based on messages sent or points when points are implemented
+?rank [user] -> view rank of user or self
+?rank top -> view top ranks
+
+Log control command
+?log reset [channel] -> reset channels log.json and log.txt completely.
+?log confirm -> confirm above command
+?log reparse [channel] -> repopulate log.json
+?log clear [time ms or str] -> clear a portion of this channels messages that are not older than inputted time
+?log clear channel [time ms or str] -> 2 param version of above for specifying a channel

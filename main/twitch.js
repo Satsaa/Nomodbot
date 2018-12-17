@@ -19,7 +19,7 @@ exports.msgHandler = msgHandler
 let logger = require('./handlers/logger.js')
 exports.logger = logger
 
-var checkDefaults = require('./handlers/DefaultHandler.js')
+var checkDefaults = require('./handlers/defaultHandler.js')
 
 client.connect()
 

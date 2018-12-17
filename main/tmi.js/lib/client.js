@@ -941,7 +941,7 @@ client.prototype.connect = function connect() {
         this._openConnection();
         this.once("_promiseConnect", (err) => {
             if (!err) { resolve([this.server, ~~this.port]); }
-            else { reject(err); }
+            //else { reject(err); } // causes errors for me so i disabled it
         });
     });
 };
