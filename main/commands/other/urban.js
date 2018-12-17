@@ -6,6 +6,7 @@ let boldenLinks = true
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
+    let short = nmb.bot[channel].channel
     if (params[1]) { // requested definition
       let terms = params.slice(1).join(' ')
       define(terms, (error, res) => {
@@ -26,7 +27,7 @@ module.exports.run = (channel, userstate, params) => {
           let dateStr = myUtil.dateString(Date.parse(def.written_on))
 
           let full = `[${myUtil.fontify(word, 'mathSansBold')}] ${definition} 𝗘𝘅𝗮𝗺𝗽𝗹𝗲: ${example} ⮝${good} ⮟${bad} ${link} ${dateStr}`
-          resolve(full.length > nmb.bot[channel].channel.max_length ? shorten(def, definition, example, nmb.bot[channel].channel.max_length - 1) : full)
+          resolve(full.length > short.max_length - short.dupe_affix.length + 1 ? shorten(def, definition, example, short.max_length - short.dupe_affix.length + 1) : full)
         }
       })
     } else { // random definition
@@ -48,7 +49,7 @@ module.exports.run = (channel, userstate, params) => {
           let dateStr = myUtil.dateString(Date.parse(def.written_on))
 
           let full = `[${myUtil.fontify(word, 'mathSansBold')}] ${definition} 𝗘𝘅𝗮𝗺𝗽𝗹𝗲: ${example} ⮝${good} ⮟${bad} ${link} ${dateStr}`
-          resolve(full.length > nmb.bot[channel].channel.max_length ? shorten(def, definition, example, nmb.bot[channel].channel.max_length) : full)
+          resolve(full.length > short.max_length - short.dupe_affix.length + 1 ? shorten(def, definition, example, short.max_length - short.dupe_affix.length + 1) : full)
         }
       })
     }
@@ -148,6 +149,6 @@ module.exports.run = (channel, userstate, params) => {
 
 module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve(`Get the Urban Dictionary definition of a word: ${params[1]} <words...>. Note: Boldened words are other Urban Dictionary words.`)
+    resolve(`Get the Urban Dictionary definition of a word: ${params[1]} <words...>. Note: Boldened words are other Urban Dictionary words`)
   })
 }

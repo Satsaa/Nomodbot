@@ -16,8 +16,9 @@ module.exports.run = (channel, userstate, params) => {
           for (var key in res.query.pages) {
             let msg = `[${res.query.pages[key].title}] ${res.query.pages[key].extract} ` // summary portion
             let link = `wikipedia.org/wiki/${res.query.pages[key].title.replace(' ', '_')}` // link only
-            if (msg.length + link.length > nmb.bot[channel].channel.max_length - 3) { // too long
-              msg = msg.substring(0, nmb.bot[channel].channel.max_length - 3 - link.length - 4) + '...' // cut
+            let short = nmb.bot[channel].channel // pointer to channel settings
+            if (msg.length + link.length > short.max_length - short.dupe_affix.length - 1) { // too long
+              msg = msg.substring(0, short.max_length - short.dupe_affix.length - 1 - link.length - 3) + '...' // cut
             }
             resolve(`${msg} ${link}`)
             break

@@ -1,4 +1,4 @@
-var cmdHandler = require('../handlers/cmdHandler.js')
+var cmdHandler = require('./cmdHandler.js')
 
 module.exports.receive = (channel, userstate, message, self) => {
   // remove antiduplicate suffix, it would be counted as a parameter (mainly from chatterino)

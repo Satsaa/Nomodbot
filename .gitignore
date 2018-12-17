@@ -19,3 +19,4 @@ misc/Twitch-Chat-Downloader-master/*
 
 .vscode
 *test.*
+main/tmi.js/lib/old client.js
