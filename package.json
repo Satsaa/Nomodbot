@@ -4,7 +4,7 @@
   "description": "twitch bot",
   "main": "main/index.js",
   "dependencies": {
-    "string-similarity": "^2.0.0",
+    "fuse.js": "^3.3.0",
     "striptags": "^3.1.1",
     "twitter": "^1.7.1"
   },
