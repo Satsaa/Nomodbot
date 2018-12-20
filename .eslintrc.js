@@ -4,7 +4,8 @@ module.exports = {
     "allowNamedFunctions": false,
     "no-unused-vars": "off",
     "no-fallthrough": ["error", { "commentPattern": "no[\\s\\w]*break" }],
-    "no-trailing-spaces": ["error", { "ignoreComments": true }]
+    "no-trailing-spaces": ["error", { "ignoreComments": true }],
+    "no-inner-declarations": "off"
   },
   "plugins": [
     "only-warn"
