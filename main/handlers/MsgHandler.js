@@ -222,9 +222,7 @@ function queueChat (channel, message) {
     }
 
     // current_time - last_msg_time > message_delay ? 0 : message_delay - (current_time - last_msg_time)
-    return (Date.now() - nmb.bot.internal.user_times[nmb.bot.internal.user_times.length - 1] > nmb.bot.config.message_delay_ms)
-      ? 0
-      : (nmb.bot.config.message_delay_ms - (Date.now() - nmb.bot.internal.user_times[nmb.bot.internal.user_times.length - 1]))
+    return (Date.now() - nmb.bot.internal.user_times[nmb.bot.internal.user_times.length - 1] > nmb.bot.config.message_delay_ms) ? 0 : (nmb.bot.config.message_delay_ms - (Date.now() - nmb.bot.internal.user_times[nmb.bot.internal.user_times.length - 1]))
   }
 }
 

@@ -68,19 +68,19 @@ module.exports.run = (channel, userstate, params) => {
     if (maxLength >= length - definition.length - example.length - '𝗘𝘅𝗮𝗺𝗽𝗹𝗲: '.length) {
       if (maxLength >= length - example.length) {
         // possible to shorten by only cutting the example
-        console.log('Removed example')
+        // console.log('Removed example')
         return `[${myUtil.fontify(word, 'mathSansBold')}] ${definition} ⮝${good} ⮟${bad} ${link} ${dateStr}`
       // } else if (maxLength >= length - definition.length) {
       //  // possible to shorten by only cutting the definition
-      //  console.log('possible to shorten by only cutting the definition')
+      //  // console.log('possible to shorten by only cutting the definition')
       //  return `[${myUtil.fontify(word, 'mathSansBold')}] ${definition.substring(0, definition.length - (length - maxLength))} 𝗘𝘅𝗮𝗺𝗽𝗹𝗲: ${example} ⮝${good} ⮟${bad} ${link} ${dateStr}`
       } else { // cut definition and remove example
-        console.log('Cutted definition and removed example')
+        // console.log('Cutted definition and removed example')
 
         return `[${myUtil.fontify(word, 'mathSansBold')}] ${definition.substring(0, definition.length - (length - maxLength - example.length - '𝗘𝘅𝗮𝗺𝗽𝗹𝗲: '.length)).slice(0, -3) + '...'} ⮝${good} ⮟${bad} ${link} ${dateStr}`
       }
     } else {
-      console.log('impossible')
+      // console.log('impossible')
       return full.substring(0, maxLength).slice(0, -3) + '...' // impossible to nicely shorten
     }
   }
