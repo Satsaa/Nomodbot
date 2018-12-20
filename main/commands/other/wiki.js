@@ -12,10 +12,10 @@ module.exports.run = (channel, userstate, params) => {
           console.error(error)
           resolve()
         } else {
-          console.log(res)
+          // console.log(res)
           for (var key in res.query.pages) {
             let msg = `[${res.query.pages[key].title}] ${res.query.pages[key].extract} ` // summary portion
-            let link = `wikipedia.org/wiki/${res.query.pages[key].title.replace(' ', '_')}` // link only
+            let link = `wikipedia.org/wiki/${res.query.pages[key].title.replace(/ /g, '_')}` // link only
             let short = nmb.bot[channel].channel // pointer to channel settings
             if (msg.length + link.length > short.max_length - short.dupe_affix.length - 1) { // too long
               msg = msg.substring(0, short.max_length - short.dupe_affix.length - 1 - link.length - 3) + '...' // cut

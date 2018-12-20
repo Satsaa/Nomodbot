@@ -1108,7 +1108,6 @@ client.prototype._sendMessage = function _sendMessage(delay, channel, message, f
             //        this._sendMessage(delay, channel, msg[1], () => {});
             //    }, 350);
             //}
-            console.log(message.length)
 
             this.ws.send(`PRIVMSG ${_.channel(channel)} :${message}`);
 
