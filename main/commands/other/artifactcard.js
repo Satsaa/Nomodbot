@@ -2,17 +2,69 @@ var fs = require('fs')
 var request = require('request')
 let mu = require('../../myutil.js')
 var striptags = require('striptags')
-var stringSim = require('string-similarity')
 
-let sets = [
-]
+var ignorePeriod = 15000 // ms untill you can call a recent card again
+var ignoreMemorized = 5 // how many previous calls to remember
 
+let sets = []
 for (let i = 0; i < 100; i++) { // require all existing sets
   try {
     sets[i] = require(`../../../data/global/artifact/${i}.json`)
   } catch (err) {
+    var [nameList, idList, abbrevList] = createLists(sets)
+    initSearcher(nameList)
     break
   }
+}
+
+var fuse, Fuse
+
+function initSearcher (searchList) {
+  Fuse = require('fuse.js')
+  fuse = new Fuse(searchList, {
+    includeScore: true
+  })
+}
+
+function createLists (sets) {
+  let nameList = []
+  let idList = []
+  let abbrevList = []
+
+  let heroAbbrevList = [] // helper
+  for (let ii = 0; ii < sets.length; ii++) {
+    let set = sets[ii].card_set.card_list
+    for (let i = 0; i < set.length; i++) {
+      idList.push({
+        set_id: ii,
+        card_id: i
+      })
+      nameList.push(set[i].card_name.english.toLowerCase())
+      // Populate abbreviation list. Hero cards are prioritized
+      let abb = set[i].card_name.english.split(' ')
+      let abbParsed = ''
+      abb.forEach(e => {
+        abbParsed += e.charAt(0)
+      })
+      abbrevList.push(abbParsed.toLowerCase())
+      if (set[i].card_type === 'Hero') {
+        if (heroAbbrevList.indexOf(abbParsed) === -1) { // remove other entries because they are of non-heroes
+          for (let index = 0; index < abbrevList.length - 1; index++) { // latest index not in range
+            if (abbParsed === abbrevList[index]) { // exists in array
+              abbrevList[index] = '' // "remove" entry from array
+            }
+          }
+        }
+        heroAbbrevList.push(abbParsed) // list that this abbreviation is of a hero
+      } else {
+        if (heroAbbrevList.indexOf(abbParsed) !== -1) {
+          abbrevList[abbrevList.length - 1] = ''
+        }
+      }
+    }
+  }
+  // console.log(abbrevList)
+  return [nameList, idList, abbrevList]
 }
 
 if (sets.length === 0) {
@@ -21,8 +73,10 @@ if (sets.length === 0) {
   })
 }
 
-let lastTime = 0
-let name = 'mars' // declare here as it is also used to see if there is a duplicate call
+let lastTime = [0]
+let name = ['icefrog'] // declare here as it is also used to see if there is a duplicate call
+lastTime.length = ignoreMemorized
+name.length = ignoreMemorized
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     if (!params[1]) return resolve('You must define a card name (params 1+)')
@@ -35,6 +89,8 @@ module.exports.run = (channel, userstate, params) => {
         }).catch((err) => {
           resolve(`Update failed: ${err}`)
         }).finally(() => {
+          [nameList, idList, abbrevList] = createLists(sets)
+          initSearcher(nameList)
           added = []
           updated = []
         })
@@ -43,61 +99,33 @@ module.exports.run = (channel, userstate, params) => {
     }
 
     let search = params.slice(1).join(' ')
-    let short, cards
-    let MatchStr = '' // For string similarity matching
 
-    let card = false
-    for (let ii = 0; ii < sets.length; ii++) { // find exact matches
-      short = sets[ii].card_set.card_list
-      for (let i = 0; i < short.length; i++) {
-        if (short[i].card_name.english.toLowerCase().replace(/'/gi, '') === search.toLowerCase().replace(/'/gi, '')) {
-          card = short[i]
-          cards = sets[ii]
-          break
-        }
-      }
-      if (card) break
-    }
-    if (!card) { // no exact match. Perform search
-      let highest = 0; let set = 0; let index = 0
-      for (let ii = 0; ii < sets.length; ii++) {
-        short = sets[ii].card_set.card_list
-        for (let i = 0; i < short.length; i++) {
-          // Give high points if is abbreviation. Eg cm -> Crystal Maiden but not es -> Earthshaker
-          let abb = short[i].card_name.english.split(' ')
-          let abbParsed = ''
-          abb.forEach(e => {
-            abbParsed += e.charAt(0)
-          })
-          let thisSim = stringSim.compareTwoStrings(short[i].card_name.english, search)
-
-          if (abbParsed.toLowerCase() === search.toLowerCase()) {
-            if (short[i].card_type === 'Hero') thisSim += 0.30
-            thisSim += 0.60
-          }
-          if (thisSim > highest) {
-            highest = thisSim; set = ii; index = i
-          }
-        }
-      }
-      short = sets[set].card_set.card_list
-      card = short[index]
-      console.log(`Score: ${highest}. Search: ${search}. Card: ${card.card_name.english}`)
-      if (highest < 0.001) return resolve(`Cannot find anything for '${search}'`)
-      cards = sets[set]
-      if (highest < 0.25) MatchStr = 'Weak match: '
+    let abbrevIndex = abbrevList.lastIndexOf(search.toLowerCase())
+    if (abbrevIndex !== -1) { // Check if valid abbreviation
+      var card = sets[idList[abbrevIndex].set_id].card_set.card_list[idList[abbrevIndex].card_id]
+      var cards = sets[idList[abbrevIndex].set_id]
+    } else { // Otherwise search in all cards
+      let result = fuse.search(search)
+      if (result.length === 0) return resolve(`@${userstate['username']} Couldn't find '${search}' :(`)
+      card = sets[idList[result[0].item].set_id].card_set.card_list[idList[result[0].item].card_id]
+      cards = sets[idList[result[0].item].set_id]
     }
 
-    if (name === card.card_name.english && Date.now() < lastTime + 5000) {
-      return resolve(null)
+    let lastIndex = name.indexOf(card.card_name.english)
+    if (lastIndex !== -1 && Date.now() < lastTime[lastIndex] + ignorePeriod) { // ignore repetive requests
+      if (!nmb.bot.config.masters.includes(userstate['username'])) { return resolve(null) } // not for masta
     }
-    lastTime = Date.now()
+    lastTime.unshift(Date.now())
+    lastTime.pop()
 
-    let setStr = ''
+    name.unshift(card.card_name.english)
+    name.pop()
+
+    let nameStyled = mu.fontify(name[0], 'mathSansBold')
+
     // The game started with 2 sets (base and Call to Arms). Start telling set names when a new set is released
+    let setStr = ''
     if (sets.length > 2) setStr = 'from the ' + cards.card_set.set_info.name.english.replace(' Set', '') + ' set'
-    name = card.card_name.english
-    let nameStyled = mu.fontify(name, 'mathSansBold')
 
     let type = card.card_type.toLowerCase()
     let subType = card.sub_type ? card.sub_type.toLowerCase() : '' // Accessory Deed etc.....
@@ -124,7 +152,7 @@ module.exports.run = (channel, userstate, params) => {
         for (let ii = 0; ii < short.length; ii++) {
           if (short[ii].card_id === card.references[i].card_id) {
             if (card.references[i].ref_type === 'includes') includesStr.push(short[ii].card_name.english)
-            else if (short[ii].card_name.english !== name) references.push(short[ii].card_name.english)
+            else if (short[ii].card_name.english !== name[0]) references.push(short[ii].card_name.english)
             break
           }
         }
@@ -155,54 +183,53 @@ module.exports.run = (channel, userstate, params) => {
 
     // let whosePassive = null // for passives we get the owner of that passive. Passives not on wiki yet
     if (type === 'passive ability') {
-      // short = sets[ii].card_set.card_list
-      for (let i = 0; i < short.length; i++) {
+      for (let i = 0; i < cards.length; i++) {
         let referenceIds = []
-        short[i].references.forEach(element => {
+        cards[i].references.forEach(element => {
           referenceIds.push(element.card_id)
         })
         if (referenceIds.indexOf(card.card_id) !== -1) {
-          var whosePassive = short[i].card_name.english
+          var whosePassive = cards[i].card_name.english
           text = text.replace(whosePassive, mu.fontify(whosePassive, 'mathSansBold'))
           break
         }
       }
     }
-    let link = `artifact.gamepedia.com/${(whosePassive || name).replace(/ /gi, '_').replace(/'/g, '%27')}`
+    let link = `artifact.gamepedia.com/${(whosePassive || name[0]).replace(/ /gi, '_').replace(/'/g, '%27')}`
 
     switch (type) {
       case 'hero' :
       case 'creep':
         // nocost
-        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         break
 
       case 'item':
         // cost nomana nostats
-        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${costStr}${s(rarity)} ${subType}${s(type)}${s(setStr)}${text ? ': ' + text : ' and has no special text?'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${nameStyled} is ${mu.addArticle(`${costStr}${s(rarity)} ${subType}${s(type)}${s(setStr)}${text ? ': ' + text : ' and has no special text?'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         break
 
       case 'ability':
       case 'passive ability':
         // nostats nocolor
-        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(manaStr)}${s(type)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(manaStr)}${s(type)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         break
 
       case 'improvement':
       case 'spell':
         // nostats
-        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         break
 
       case 'stronghol1d':
       case 'pathi1ng': // why not
-        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         // console.error(`* [${channel}] Unknown Artifact card type:${s(type)}`)
         break
 
       default:
 
-        resolve(`${MatchStr}${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
+        resolve(`${nameStyled} is ${mu.addArticle(`${s(rarity)}${s(color)}${s(manaStr)}${s(type)}${s(statsStr)}${s(setStr)}${text ? ': ' + text : ' and has no special text.'}${s(includesStr)}${s(illustratorStr)}${s(link)}`)}`)
         // console.error(`* [${channel}] Unknown Artifact card type:${s(type)}`)
         break
     }
