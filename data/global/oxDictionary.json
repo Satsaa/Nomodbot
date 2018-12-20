@@ -382,5 +382,11 @@
     "pronun": "/stɒk/ ",
     "word": "stock",
     "definition": "The goods or merchandise kept on the premises of a shop or warehouse and available for sale or distribution"
+  },
+  "yes": {
+    "cat": "Interjection",
+    "pronun": "/jɛs/ ",
+    "word": "yes",
+    "definition": "Used to give an affirmative response"
   }
 }
