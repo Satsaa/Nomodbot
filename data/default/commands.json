@@ -15,6 +15,7 @@
   "?lines": "lines",
   "?totallines": "totallines",
   "?lastseen": "lastseen",
+  "?firstseen": "firstseen",
   "?seen": "lastseen",
   "?users": "users",
   "?randomquote": "randomquote",
