@@ -36,7 +36,7 @@ module.exports.run = (channel, userstate, params) => {
             } else {
               let videoDate = new Date(data.videos[0].created_at)
               let videoEndMS = videoDate.getTime() + data.videos[0].length * 1000
-              let durationStr = myUtil.durationStr(myUtil.MSToDHMS(12050 * 1000), 2, true)
+              let durationStr = myUtil.durationStr(data.videos[0].length * 1000, 2, true)
               resolve(`${data.videos[0].channel.display_name} went live ${myUtil.timeSince(videoDate.getTime(), 2)} ago. That stream ended ${myUtil.timeSince(videoEndMS, 2)} ago and lasted for ${durationStr}`)
             }
           })

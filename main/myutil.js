@@ -86,16 +86,19 @@ module.exports.timeSince = (ms, top = 4, short = true) => {
 }
 
 /** Get string telling how long is ms
- * @param {array} t Time array [days,hours,minutes,seconds]
+ * @param {number|array} t Time (ms) OR time array [days,hours,minutes,seconds]
  * @param {number} top How many time units to return
  * @param {boolean} short Use short units (d or days)
  */
-module.exports.durationStr = durationStr
 function durationStr (t, top, short) {
   let exists = 0
   let untill = []
   let dateStrLong = [' day', ' hour', ' minute', ' second']
   let dateStrShort = ['d', 'h', 'm', 's']
+
+  if (typeof t === 'number') {
+    t = MSToDHMS(t) // make to an array
+  }
 
   for (let i = 0; i < 4; i++) {
     if (t[i]) {
@@ -115,10 +118,11 @@ function durationStr (t, top, short) {
   }
   return str
 }
+module.exports.durationStr = durationStr
 
 /** Returns time converted to YYYY-MM-DD, the only logical format
- * @param {any} ms Time in ms
- * @param {any} delim Char or string to put between numbers. undefined = '-'
+ * @param {number} ms Time in ms
+ * @param {string} delim Char or string to put between numbers. undefined = '-'
  */
 module.exports.dateString = (ms, delim) => {
   let dateStr = new Date(ms).toISOString()
@@ -128,20 +132,20 @@ module.exports.dateString = (ms, delim) => {
 }
 
 /** Insert to a string at pos
- * @param {any} str String to insert into
- * @param {any} index Where to insert
- * @param {any} insert What to insert
+ * @param {string} str String to insert into
+ * @param {number} index Where to insert
+ * @param {string} insert What to insert
  * @return {string}
  */
-module.exports.insert = insert
 function insert (str, index, insert) {
   return str.substr(0, index) + insert + str.substr(index)
 }
+module.exports.insert = insert
 
 /** Returns inputted singular or plural based on v's value
  * @param {any} v If this is 1 or '1' returns singular
- * @param {any} singular Singular form
- * @param {any} plural Plural form. If omitted uses singular + 's'.
+ * @param {string} singular Singular form
+ * @param {string} plural Plural form. If omitted uses singular + 's'.
  * @return {string}
  */
 module.exports.plural = (v, singular, plural) => {
