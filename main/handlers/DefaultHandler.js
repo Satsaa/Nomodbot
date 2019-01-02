@@ -24,8 +24,20 @@ walkSync('./data/default/').forEach(path => {
 
 /**
  * Make sure all necessary parameters are present in config files and sets a default value if needed
+ * Values are just copied from the default folder and merged to the channel specific objects
  */
-module.exports = (channel) => {
+module.exports = (channel, reload = null) => {
+  if (reload) {
+    defaults[reload] = JSON.parse(fs.readFileSync('./data/default/' + reload + '.json'))
+    if (typeof defaults[reload] === 'object') {
+      for (let setting in defaults[reload]) {
+        if (typeof nmb.bot[channel][reload][setting] === 'undefined') {
+          nmb.bot[channel][reload][setting] = defaults[reload][setting]
+        }
+      }
+    }
+    return
+  }
   for (let config in defaults) {
     if (typeof defaults[config] === 'object') {
       for (let setting in defaults[config]) {
