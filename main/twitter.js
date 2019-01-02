@@ -24,7 +24,7 @@ stream.on('error', (error) => {
 
 let alertChannels = ['#satsaa', '#l34um1']
 
-stream.on('data', (tweet) => {
+stream.on('data', (tweet) => { // just formatting and sending the message
   if (!tweet || tweet.in_reply_to_user_id_str != null || ('retweeted_status' in tweet)) return // replies are ignored as they are likely retweets
   console.log(`* Tweet from @${tweet.user.screen_name}: twitter.com/statuses/${tweet.id_str}`)
   if (tweet.user.screen_name === 'sparkmoba') tweet.user.screen_name = 'sporkmoba'
@@ -42,7 +42,7 @@ stream.on('data', (tweet) => {
       twitter.com/i/web/status/${tweet.id_str}/ ⠀
       ${caption || tweet.entities.media[0].media_url}`)
     }).catch((err) => {
-      console.error(`* Caption failed: ${err}`)
+      console.error(`* [TWITTER] Caption failed: ${err}`)
 
       nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.text.substring(0, tweet.display_text_range[1])}
@@ -62,7 +62,7 @@ stream.on('data', (tweet) => {
       twitter.com/i/web/status/${tweet.id_str} ⠀
       ${caption || tweet.extended_tweet.entities.media[0].media_url}`)
     }).catch((err) => {
-      console.error(err)
+      console.error(`* [TWITTER] Caption failed: ${err}`)
 
       nmb.msgHandler.chat(alertChannels, `New tweet from @${tweet.user.screen_name} ${getEmote(tweet.user.id_str)} 
       ${tweet.extended_tweet.full_text.substring(0, tweet.extended_tweet.display_text_range[1])}
@@ -75,6 +75,43 @@ stream.on('data', (tweet) => {
     twitter.com/i/web/status/${tweet.id_str}/ ⠀`)
   }
 })
+
+// Microsoft Azure cognitive/ddescription api
+// https://westeurope.api.cognitive.microsoft.com/
+
+const azure = require('../keyConfig/CognitiveServices.json')
+var request = require('request')
+
+function describeUrl (imageUrl) {
+  return new Promise((resolve, reject) => {
+    if (!azure.key) return reject(new Error('No api key')) // no known key
+    const uriBase = `${azure.endpoint}vision/v2.0/analyze`
+    const requestParams = {
+      'visualFeatures': 'Categories,Description,Color',
+      'details': 'Celebrities,Landmarks',
+      'language': 'en'
+    }
+    const options = {
+      uri: uriBase,
+      qs: requestParams,
+      body: `{"url":"${imageUrl}"}`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Ocp-Apim-Subscription-Key': azure.key
+      }
+    }
+
+    request.post(options, (error, response, body) => {
+      if (error) return reject(new Error(error))
+      body = JSON.parse(JSON.stringify(JSON.parse(body), null, '  ')) // Objectify json string
+
+      if (typeof body.description !== 'undefined' && ((body.description.captions[0] || {}).text)) resolve(body.description.captions[0].text)
+      else reject(new Error('No caption returned'))
+    })
+  })
+}
+
+// strings for specific tweeters
 
 function getEmote (id) {
   switch (parseInt(id, 10)) {
@@ -104,6 +141,8 @@ function getEmote (id) {
       return '🐦'
   }
 }
+
+// Explanation for status codes
 
 function getStatus (code) {
   let short = 'OK'
@@ -175,38 +214,4 @@ function getStatus (code) {
       break
   }
   return { 'short': short, 'long': long }
-}
-
-// Microsoft Azure cognitive/ddescription api
-// https://westeurope.api.cognitive.microsoft.com/
-
-const azure = require('../keyConfig/CognitiveServices.json')
-var request = require('request')
-
-function describeUrl (imageUrl) {
-  return new Promise((resolve, reject) => {
-    const uriBase = `${azure.endpoint}vision/v2.0/analyze`
-    const requestParams = {
-      'visualFeatures': 'Categories,Description,Color',
-      'details': 'Celebrities,Landmarks',
-      'language': 'en'
-    }
-    const options = {
-      uri: uriBase,
-      qs: requestParams,
-      body: `{"url":"${imageUrl}"}`,
-      headers: {
-        'Content-Type': 'application/json',
-        'Ocp-Apim-Subscription-Key': azure.key
-      }
-    }
-
-    request.post(options, (error, response, body) => {
-      if (error) return reject(new Error(error))
-      body = JSON.parse(JSON.stringify(JSON.parse(body), null, '  ')) // Objectify json string
-
-      if (((body.description.captions[0] || {}).text)) resolve(body.description.captions[0].text)
-      else resolve('a failed caption')
-    })
-  })
 }
