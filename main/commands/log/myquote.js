@@ -16,11 +16,11 @@ module.exports.run = (channel, userstate, params) => {
       if (userstate.username === userLow) length -= 2 // if getting own quotes, ignore command calling message
       if (length < 1) return resolve(`${user} has no logs yet :( `) // no logs but is tracked somehow
 
-      if (index === null && params[2]) index = Math.floor(params[2] - 1) // specified index and username
+      if (index === null && params[2]) index = Math.floor(params[2]) // specified index and username
       else if (index === null && params[1]) index = myUtil.getRandomInt(0, length - 1)
 
       if (isNaN(index) || index === null) index = myUtil.getRandomInt(0, length - 1)
-      else index = myUtil.smartIndex(index, length + 1)
+      else index = myUtil.smartIndex(index, length)
 
       let logOffset = nmb.logger.getOffset(short, userLow, index)
       nmb.logger.readAtOffset(channel, logOffset).then((result) => {

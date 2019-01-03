@@ -16,7 +16,7 @@ module.exports.run = (channel, userstate, params) => {
         return resolve(`${self ? `@${userstate['display-name']} You` : params[1]} ${youOrMe(self)}`)
       }
       let seenMs = nmb.logger.getTime(short, userLow, 1) * 1000
-      resolve(`${self ? `@${userstate['display-name']} You` : params[1]} ${youOrMe2(self)} on ${myUtil.dateString(seenMs)} ${nearTrackStart(seenMs, channel)}`)
+      resolve(`${self ? `@${userstate['display-name']} You` : params[1]} ${youOrMe2(self)} on ${myUtil.dateString(seenMs)}${nearTrackStart(seenMs, channel)}`)
     } else resolve(`${self ? `@${userstate['display-name']} You` : params[1]} ${youOrMe(self)}`)
   })
 }

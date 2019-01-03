@@ -6,6 +6,7 @@ let boldenLinks = true
 
 module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
+    if (userstate.username === 'miilkshakke') return resolve(null)
     let short = nmb.bot[channel].channel
     if (params[1]) { // requested definition
       let terms = params.slice(1).join(' ')
@@ -27,7 +28,7 @@ module.exports.run = (channel, userstate, params) => {
           let dateStr = myUtil.dateString(Date.parse(def.written_on))
 
           let full = `[${myUtil.fontify(word, 'mathSansBold')}] ${definition} 𝗘𝘅𝗮𝗺𝗽𝗹𝗲: ${example} ⮝${good} ⮟${bad} ${link} ${dateStr}`
-          resolve(full.length > short.max_length - short.dupe_affix.length + 1 ? shorten(def, definition, example, short.max_length - short.dupe_affix.length + 1) : full)
+          resolve(full.length > short.max_length * 0.33 - short.dupe_affix.length + 1 ? shorten(def, definition, example, short.max_length * 0.33 - short.dupe_affix.length + 1) : full)
         }
       })
     } else { // random definition
@@ -49,7 +50,7 @@ module.exports.run = (channel, userstate, params) => {
           let dateStr = myUtil.dateString(Date.parse(def.written_on))
 
           let full = `[${myUtil.fontify(word, 'mathSansBold')}] ${definition} 𝗘𝘅𝗮𝗺𝗽𝗹𝗲: ${example} ⮝${good} ⮟${bad} ${link} ${dateStr}`
-          resolve(full.length > short.max_length - short.dupe_affix.length + 1 ? shorten(def, definition, example, short.max_length - short.dupe_affix.length + 1) : full)
+          resolve(full.length > short.max_length * 0.33 - short.dupe_affix.length + 1 ? shorten(def, definition, example, short.max_length * 0.33 - short.dupe_affix.length + 1) : full)
         }
       })
     }
