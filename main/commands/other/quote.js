@@ -44,10 +44,10 @@ module.exports.run = (channel, userstate, params) => {
         }
       }
       let index = Math.floor(params[1]) // null if omitted and below is true
-      if (isNaN(index)) index = myUtil.getRandomInt(0 + 1, short.length)
+      if (isNaN(index)) index = myUtil.getRandomInt(0, short.length) + 1
       else index = myUtil.smartIndex(index, short.length)
 
-      return `${index + 1}: ${short[index]}`
+      return `${index}: ${short[index - 1]}`
     }
 
     function save (channel, quotes) {
