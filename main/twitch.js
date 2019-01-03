@@ -20,6 +20,7 @@ let logger = require('./handlers/logger.js')
 exports.logger = logger
 
 var checkDefaults = require('./handlers/defaultHandler.js')
+exports.checkDefaults = checkDefaults
 
 client.connect()
 
@@ -98,7 +99,7 @@ client.on('notice', (channel, msgid, message) => {
       console.warn(`* [${channel}] ${message}`)
       break
     default:
-      console.warn(`* [${channel}] ${message}`)
+      console.warn(`* [${channel}] ${msgid}: ${message}`)
       break
   }
 })
@@ -185,25 +186,27 @@ function joinChannel (channels) { // Allows multichannel
               }
             }
             loadChannelFile(channel, 'roomstate', true).then(
-              loadChannelFile(channel, 'commands', true).then(
-                loadChannelFile(channel, 'quotes', true).then(
-                  loadChannelFile(channel, 'myiq', true).then(
-                    loadChannelFile(channel, 'notifys', true).then(
-                      loadChannelFile(channel, 'channel', true).finally(() => {
-                        loadRoomstateFromQueue(channel).then(() => {
-                          console.log(`* [${channel}] Loaded`)
-                          client.join(channel).then((data) => { // data returns channel
-                            checkDefaults(channel)
-                            console.log(`* [${channel}] Joined`)
-                            emitter.emit('joinChannel', channel)
-                            resolve(channel)
-                          }).catch((err) => {
-                            console.error(`* [${channel}] Error joining: ${err}`)
-                            removeChannel(channel)
-                            reject(err)
+              loadChannelFile(channel, 'commands', false).then(
+                loadChannelFile(channel, 'commandData', false).then(
+                  loadChannelFile(channel, 'quotes', true).then(
+                    loadChannelFile(channel, 'myiq', true).then(
+                      loadChannelFile(channel, 'notifys', true).then(
+                        loadChannelFile(channel, 'channel', true).finally(() => {
+                          loadRoomstateFromQueue(channel).then(() => {
+                            console.log(`* [${channel}] Loaded`)
+                            client.join(channel).then((data) => { // data returns channel
+                              checkDefaults(channel)
+                              console.log(`* [${channel}] Joined`)
+                              emitter.emit('joinChannel', channel)
+                              resolve(channel)
+                            }).catch((err) => {
+                              console.error(`* [${channel}] Error joining: ${err}`)
+                              removeChannel(channel)
+                              reject(err)
+                            })
                           })
                         })
-                      })
+                      )
                     )
                   )
                 )
@@ -229,6 +232,7 @@ function joinChannel (channels) { // Allows multichannel
             } else {
               fs.writeFile(fileNamePath, '{}', (err) => {
                 if (err) throw err
+                bot[channel][fileName] = {}
                 console.log(`* [${channel}] ${fileName} created`)
                 resolve(true)
               })
