@@ -54,10 +54,6 @@ module.exports.receive = (channel, userstate, message, self) => {
 
         if (nmb.bot[channel].commands.hasOwnProperty(commandName)) { // command
           if (typeof nmb.bot[channel].commands[commandName] === 'object') {
-            if (nmb.bot[channel].commands[commandName].userlvl &&
-                nmb.bot[channel].commands[commandName].userlvl === 'master') {
-              if (!nmb.bot.config.masters.includes(userstate['username'])) return // not permitted
-            }
             command = nmb.bot[channel].commands[commandName].command // object command type
           } else command = nmb.bot[channel].commands[commandName] // old string only type
           cmdHandler.handle(command, channel, userstate, params)
@@ -284,22 +280,6 @@ function queueWhisper (channel, message) {
   }
 }
 
-function antiDupe (channel, message) { // remove or add 2 chars at msg end to avoid duplicate messages
-  if (nmb.bot[channel].channel.last_msg.endsWith(' \u206D')) {
-    message.slice(-2)
-    return message
-  } else {
-    return message + ' \u206D' // U+206D = ACTIVATE ARABIC FORM SHAPING // 0 width character
-  }
-}
-
-function limitLength (msg, length = 499) {
-  if (msg.length > length) {
-    console.error(`* Msg shortened ${msg.length}. Max length was ${length}`)
-    return msg.substring(0, length)
-  } else return msg
-}
-
 // remove messages from time lists that exceed limit_period sec age
 function parseTimes (mod = 0) {
   let time = Date.now()
@@ -324,7 +304,7 @@ function parseTimes (mod = 0) {
 function parseWhisperTimes () {
   let time = Date.now()
   for (let i = 0; i < nmb.bot.internal.whisper_times_min.length; i++) {
-    if (nmb.bot.internal.whisper_times_min[i] < time - 60 * 1000) { // whisper messages are counted for 60 second
+    if (nmb.bot.internal.whisper_times_min[i] < time - 60 * 1000) { // whisper messages are counted for 60 seconds
       nmb.bot.internal.whisper_times_min.shift()
       i--
     } else break
