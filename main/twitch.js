@@ -5,7 +5,8 @@ const util = require('util')
 var bot = {}
 bot.startTime = Date.now()
 bot.internal = require('../data/global/internal.json')
-bot.log = require('../data/global/log.json')
+
+bot.log = requireCreate('./data/global/log.json')
 bot.config = require('../data/global/config.json')
 exports.bot = bot
 
@@ -23,6 +24,14 @@ var checkDefaults = require('./handlers/defaultHandler.js')
 exports.checkDefaults = checkDefaults
 
 client.connect()
+
+function requireCreate (path, data = '{}') {
+  path = require('path').resolve(path)
+  if (!fs.existsSync(path)) {
+    fs.writeFileSync(path, data)
+  }
+  return require(path)
+}
 
 //  'message': 'c',
 //  'action': 'a',
@@ -175,8 +184,8 @@ function joinChannel (channels) { // Allows multichannel
       fs.mkdir('./data/' + channel, {}, (err) => {
         if (err && err.code !== 'EEXIST') throw err
         loadChannelFile(channel, 'responses', true).then(
-          loadChannelFile(channel, 'log', true).then((copied) => {
-            if (copied) {
+          loadChannelFile(channel, 'log', true).then(() => {
+            if (!nmb.bot.log[channel]) {
               nmb.bot.log[channel] = {
                 'offset': 0,
                 'messages': 0,
