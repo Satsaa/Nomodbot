@@ -153,6 +153,9 @@ function track (channel, name, userId, dateSec) {
 function trackLog (channel, offset) {
   return new Promise((resolve, reject) => {
     console.log(`* [${channel}] Tracking for log lines at offset ${offset}`)
+    if (offset === 0) { // reset channel log.json when retracking completely
+      nmb.bot[channel].log = {}
+    }
     fs.stat(`./data/${channel}/log.txt`, (err, stats) => {
       if (err) {
         if (err.code === 'ENOENT') {
