@@ -18,9 +18,12 @@
   "?firstseen": "firstseen",
   "?seen": "lastseen",
   "?users": "users",
+  "?count": "count",
   "?randomquote": "randomquote",
   "?urban": "urban",
   "?wiki": "wiki",
+  "?streamtime": "streamtime",
+  "?streamtimes": "streamtime",
   "?exit": {
     "command": "exit",
     "userlvl": "master"

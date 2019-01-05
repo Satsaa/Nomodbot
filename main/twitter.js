@@ -27,7 +27,6 @@ let alertChannels = ['#satsaa', '#l34um1']
 stream.on('data', (tweet) => { // just formatting and sending the message
   if (!tweet || tweet.in_reply_to_user_id_str != null || ('retweeted_status' in tweet)) return // replies are ignored as they are likely retweets
   console.log(`* Tweet from @${tweet.user.screen_name}: twitter.com/statuses/${tweet.id_str}`)
-  if (tweet.user.screen_name === 'sparkmoba') tweet.user.screen_name = 'sporkmoba'
   // console.log(tweet)
   if (!tweet.extended_tweet && (((tweet.entities || {}).media || {})[0] || {}).media_url) {
     console.log(`* Media: ${tweet.entities.media[0].media_url}`)
@@ -84,7 +83,10 @@ var request = require('request')
 
 function describeUrl (imageUrl) {
   return new Promise((resolve, reject) => {
-    if (!azure.key) return reject(new Error('No api key')) // no known key
+    if (!azure.key) {
+      reject(new Error('No api key')) // no known key
+      return
+    }
     const uriBase = `${azure.endpoint}vision/v2.0/analyze`
     const requestParams = {
       'visualFeatures': 'Categories,Description,Color',
