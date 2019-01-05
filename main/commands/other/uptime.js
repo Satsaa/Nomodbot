@@ -1,4 +1,3 @@
-const util = require('util')
 const myUtil = require('../../myutil')
 var opts = require('../../../keyConfig/TwitchClient.json')
 
@@ -18,10 +17,9 @@ module.exports.run = (channel, userstate, params) => {
         }
       }, (err, res, data) => {
         if (err) console.error(err)
-        // console.log(`${util.inspect(data, { showHidden: false, depth: null })} || ${err} || `)
         if (data.stream === null) {
           nmb.client.api({
-            url: `https://api.twitch.tv/kraken/channels/${id}/videos?limit=1`, // don't want no more than 1 video
+            url: `https://api.twitch.tv/kraken/channels/${id}/videos?limit=30&broadcast_type=archive`, // Multiple videos for average time
             method: 'GET',
             headers: {
               // 'Authorization': opts.identity.password.replace('oauth:', ''),
@@ -29,15 +27,38 @@ module.exports.run = (channel, userstate, params) => {
               'Accept': 'application/vnd.twitchtv.v5+json'
             }
           }, (err, res, data) => {
-            if (err) console.error(err)
-            // console.log(`${util.inspect(data, { showHidden: false, depth: null })} || ${err} || `)
+            if (err) {
+              console.error(err)
+              return resolve(`Error occurred: ${err.code}`)
+            }
+            console.log(data)
             if (data._total === 0) {
               resolve(`${params[1] || channel.replace('#', '')} is not currently live. Last stream time unknown`)
             } else {
+              // Calculate average stats
+              let clockAngles = []
+              let totalDuration = 0
+              let counted = 0
+              data.videos.forEach(video => {
+                if (counted < 30) {
+                  let date = new Date(video.created_at)
+                  clockAngles.push(date.getUTCHours() * 15 + date.getUTCMinutes() * (15 / 60))
+                  totalDuration += video.length * 1000
+                  counted++
+                }
+              })
+
+              let averageAngle = meanAngleDeg(clockAngles)
+              if (averageAngle < 0) averageAngle = averageAngle + 360
+              let hours = Math.floor(averageAngle / 15)
+              let minutes = Math.round((averageAngle / 15 - hours) * 60)
+
+              // Previous stream stats
               let videoDate = new Date(data.videos[0].created_at)
               let videoEndMS = videoDate.getTime() + data.videos[0].length * 1000
               let durationStr = myUtil.durationStr(data.videos[0].length * 1000, 2, true)
-              resolve(`${data.videos[0].channel.display_name} went live ${myUtil.timeSince(videoDate.getTime(), 2)} ago. That stream ended ${myUtil.timeSince(videoEndMS, 2)} ago and lasted for ${durationStr}`)
+
+              resolve(`${data.videos[0].channel.display_name} went offline ${myUtil.timeSince(videoEndMS, 2)} ago. Stream started ${myUtil.timeSince(videoDate.getTime(), 2, 1)} ago and lasted for ${durationStr}. Average stream time: ${hours}:${minutes} UTC (last ${counted} streams)`)
             }
           })
         } else {
@@ -59,6 +80,20 @@ module.exports.help = (params) => {
     resolve(`Display how long a channel has been live or offline: ${params[1]} [<channel>]. Offline times are based on last recorded vod`)
   })
 }
-// curl -H 'Accept: application/vnd.twitchtv.v5+json' \
-// -H 'Client-ID: uo6dggojyb8d6soh92zknwmi5ej1q2' \
-// -X GET 'https://api.twitch.tv/kraken/channels/44322889/videos'
+
+function sum (a) {
+  var s = 0
+  for (var i = 0; i < a.length; i++) s += a[i]
+  return s
+}
+
+function degToRad (a) {
+  return Math.PI / 180 * a
+}
+
+function meanAngleDeg (a) {
+  return 180 / Math.PI * Math.atan2(
+    sum(a.map(degToRad).map(Math.sin)) / a.length,
+    sum(a.map(degToRad).map(Math.cos)) / a.length
+  )
+}
