@@ -3,7 +3,7 @@ module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     let short = nmb.bot[channel]
     if (typeof short.giveaway === 'undefined') return resolve('error :(')
-    if (!params[1]) return resolve(`Start or end a giveaway: ${params[0]} <start|end>. Edit preferences: ${params[0]} set <subonly|subpower> <value. Default power is 1`)
+    if (!params[1]) return resolve(`Start or end a giveaway: ${params[0]} <start|continue|end>. Edit preferences: ${params[0]} set <subonly|subpower> <value. Default power is 1`)
     switch (params[1].toLowerCase()) {
       case 'start':
       case 'begin':
@@ -20,6 +20,13 @@ module.exports.run = (channel, userstate, params) => {
           else resolve(`Giveaway started! Type ${joinCom} to join!`)
         }
         save(channel)
+        break
+      case 'continue':
+      case 'reopen':
+        joinCom = getCommand(short.commands, 'giveawayjoin')
+        short.giveaway.active = true
+        if (joinCom === null) resolve(`Giveaway continued. JOIN COMMAND IS NOT SET, NOBODY CAN JOIN :o `)
+        else resolve(`Giveaway continued. Type ${joinCom} to join!`)
         break
       case 'end':
       case 'stop':
@@ -59,7 +66,7 @@ module.exports.run = (channel, userstate, params) => {
         break
 
       default:
-        resolve(`Start or end a giveaway: ${params[0]} <start|end>. Edit preferences: ${params[0]} set <subonly|subpower> <value. Default power is 1`)
+        resolve(`Start or end a giveaway: ${params[0]} <start|continue|end>. Edit preferences: ${params[0]} set <subonly|subpower> <value. Default power is 1`)
         break
     }
   })
@@ -100,7 +107,7 @@ function getCommand (commands, value) {
 
 module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve(`Start or end a giveaway: ${params[1]} <start|end>. Pick a winner: ${params[1]} pick. Edit preferences: ${params[1]} set <subonly|subpower> [<value>]. Default power is 1`)
+    resolve(`Start, continue or end a giveaway: ${params[1]} <start|continue|end>. Pick a winner: ${params[1]} pick. Edit preferences: ${params[1]} set <subonly|subpower> [<value>]. Default power is 1`)
   })
 }
 
