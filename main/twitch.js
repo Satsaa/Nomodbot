@@ -200,21 +200,23 @@ function joinChannel (channels) { // Allows multichannel
                   loadChannelFile(channel, 'quotes', true).then(
                     loadChannelFile(channel, 'myiq', true).then(
                       loadChannelFile(channel, 'notifys', true).then(
-                        loadChannelFile(channel, 'channel', true).finally(() => {
-                          loadRoomstateFromQueue(channel).then(() => {
-                            console.log(`* [${channel}] Loaded`)
-                            client.join(channel).then((data) => { // data returns channel
-                              checkDefaults(channel)
-                              console.log(`* [${channel}] Joined`)
-                              emitter.emit('joinChannel', channel)
-                              resolve(channel)
-                            }).catch((err) => {
-                              console.error(`* [${channel}] Error joining: ${err}`)
-                              removeChannel(channel)
-                              reject(err)
+                        loadChannelFile(channel, 'giveaway', true).then(
+                          loadChannelFile(channel, 'channel', true).finally(() => {
+                            loadRoomstateFromQueue(channel).then(() => {
+                              console.log(`* [${channel}] Loaded`)
+                              client.join(channel).then((data) => { // data returns channel
+                                checkDefaults(channel)
+                                console.log(`* [${channel}] Joined`)
+                                emitter.emit('joinChannel', channel)
+                                resolve(channel)
+                              }).catch((err) => {
+                                console.error(`* [${channel}] Error joining: ${err}`)
+                                removeChannel(channel)
+                                reject(err)
+                              })
                             })
                           })
-                        })
+                        )
                       )
                     )
                   )

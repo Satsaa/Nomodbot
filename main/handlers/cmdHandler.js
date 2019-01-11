@@ -54,23 +54,26 @@ module.exports.handle = (command, channel, userstate, params) => {
     let settings = nmb.bot[channel].commands[params[0]] // refer to command in commands(.json)
     if (!nmb.bot[channel].commandData[params[0]]) nmb.bot[channel].commandData[params[0]] = {}
     let data = nmb.bot[channel].commandData[params[0]]
-    if (settings.userlvl) {
-      switch (settings.userlvl) {
-        case 'master':
-          if (!nmb.bot.config.masters.includes(userstate['username'])) return
-          break
+    if (settings && settings.userlvl) {
+      if (!userstate.badges) return
+      if (!nmb.bot.config.masters.includes(userstate['username'])) { // Skip is user is master
+        switch (settings.userlvl) {
+          case 'master':
+            if (!nmb.bot.config.masters.includes(userstate['username'])) return
+            break
 
-        case 'moderator':
-        case 'mod': // also includes broadcaster as a moderator
-          if (!userstate.badges.hasOwnProperty(settings.userlvl) && !userstate.badges.hasOwnProperty('broadcaster')) return
-          break
+          case 'moderator':
+          case 'mod': // also includes broadcaster as a moderator
+            if (!userstate.badges.hasOwnProperty(settings.userlvl) && !userstate.badges.hasOwnProperty('broadcaster')) return
+            break
 
-        default:
-          if (!userstate.badges.hasOwnProperty(settings.userlvl)) return
-          break
+          default:
+            if (!userstate.badges.hasOwnProperty(settings.userlvl)) return
+            break
+        }
       }
     }
-    if (settings.cooldown) {
+    if (settings && settings.cooldown) {
       initData(data, 'times', [])
       parseTimes(data.times, settings.cooldown)
       if (data.times.length >= (settings.usespercooldown ? settings.usespercooldown : 1)) {
@@ -79,7 +82,7 @@ module.exports.handle = (command, channel, userstate, params) => {
     }
 
     let user = userstate.username
-    if (settings.usercooldown) {
+    if (settings && settings.usercooldown) {
       initData(data, 'usertimes', {})
       if (!data.usertimes.hasOwnProperty(user)) data.usertimes[user] = []
       parseTimes(data.usertimes[user], settings.usercooldown)
@@ -88,8 +91,8 @@ module.exports.handle = (command, channel, userstate, params) => {
       }
     }
 
-    if (settings.cooldown) data.times.push(Date.now())
-    if (settings.usercooldown) data.usertimes[user].push(Date.now())
+    if (settings && settings.cooldown) data.times.push(Date.now())
+    if (settings && settings.usercooldown) data.usertimes[user].push(Date.now())
 
     console.log(`* [${channel}] Running ${command}`)
     commands[command].run(channel, userstate, params).then((msg) => {

@@ -2,8 +2,8 @@ let votes = []
 let timeouts = []
 let voteWaits = []
 
-let minVotes = 1 // minimum votes for a single option to be counted
-let minTotalVotes = 5 // minimum total votes
+let minVotes = 3 // minimum votes for a single option to be counted
+let minTotalVotes = 10 // minimum total votes
 
 let waitMultiplier = 0.9 // For each vote, voteEndTime is multiplied by this
 let minWait = 3500 // Minimum ms wait duration

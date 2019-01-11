@@ -24,23 +24,29 @@
   "?wiki": "wiki",
   "?streamtime": "streamtime",
   "?streamtimes": "streamtime",
+  "?artifact": "artifactcard",
+  "?giveaway": {
+    "command": "giveaway",
+    "userlvl": "moderator"
+  },
+  "?join": "giveawayjoin",
   "?exit": {
     "command": "exit",
     "userlvl": "master"
   },
-  "?join": {
+  "$join": {
     "command": "join",
     "userlvl": "master"
   },
-  "?part": {
+  "$part": {
     "command": "part",
     "userlvl": "master"
   },
-  "?reload": {
+  "$reload": {
     "command": "reload",
     "userlvl": "master"
   },
-  "?save": {
+  "$save": {
     "command": "save",
     "userlvl": "master"
   },
