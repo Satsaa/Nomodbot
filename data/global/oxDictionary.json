@@ -388,5 +388,323 @@
     "pronun": "/jɛs/ ",
     "word": "yes",
     "definition": "Used to give an affirmative response"
+  },
+  "you": {
+    "cat": "Pronoun",
+    "pronun": "/juː/ ",
+    "word": "you",
+    "definition": "Used to refer to the person or people that the speaker is addressing"
+  },
+  "gradient": {
+    "cat": "Noun",
+    "pronun": "/ˈɡreɪdɪənt/ ",
+    "word": "gradient",
+    "definition": "An inclined part of a road or railway; a slope"
+  },
+  "trash": {
+    "cat": "Noun",
+    "pronun": "/traʃ/ ",
+    "word": "trash",
+    "definition": "Waste material; refuse"
+  },
+  "ass": {
+    "cat": "Noun",
+    "pronun": "/as/ ",
+    "word": "ass",
+    "definition": "An animal of the horse family, which is typically smaller than a horse and has longer ears and a braying call."
+  },
+  "arse": {
+    "cat": "Noun",
+    "pronun": "/ɑːs/ ",
+    "word": "arse",
+    "definition": "A person's buttocks or anus."
+  },
+  "abomination": {
+    "cat": "Noun",
+    "pronun": "/əbɒmɪˈneɪʃ(ə)n/ ",
+    "word": "abomination",
+    "definition": "A thing that causes disgust or loathing"
+  },
+  "definition": {
+    "cat": "Noun",
+    "pronun": "/dɛfɪˈnɪʃ(ə)n/ ",
+    "word": "definition",
+    "definition": "A statement of the exact meaning of a word, especially in a dictionary"
+  },
+  "butt": {
+    "cat": "Verb",
+    "pronun": "/bʌt/ ",
+    "word": "butt",
+    "definition": "(Of a person or animal) hit (someone or something) with the head or horns"
+  },
+  "cancer": {
+    "cat": "Noun",
+    "pronun": "/ˈkansə/ ",
+    "word": "cancer",
+    "definition": "A disease caused by an uncontrolled division of abnormal cells in a part of the body"
+  },
+  "LoL": {
+    "cat": "Interjection",
+    "pronun": "/lɒl/ ",
+    "word": "LOL",
+    "definition": "Used to draw attention to a joke or amusing statement, or to express amusement"
+  },
+  "magic": {
+    "cat": "Noun",
+    "pronun": "/ˈmadʒɪk/ ",
+    "word": "magic",
+    "definition": "The power of apparently influencing events by using mysterious or supernatural forces"
+  },
+  "black": {
+    "cat": "Adjective",
+    "pronun": "/blak/ ",
+    "word": "black",
+    "definition": "Of the very darkest colour owing to the absence of or complete absorption of light; the opposite of white"
+  },
+  "technology": {
+    "cat": "Noun",
+    "pronun": "/tɛkˈnɒlədʒi/ ",
+    "word": "technology",
+    "definition": "The application of scientific knowledge for practical purposes, especially in industry"
+  },
+  "disappointment": {
+    "cat": "Noun",
+    "pronun": "/dɪsəˈpɔɪntm(ə)nt/ ",
+    "word": "disappointment",
+    "definition": "Sadness or displeasure caused by the non-fulfilment of one's hopes or expectations"
+  },
+  "happiness": {
+    "cat": "Noun",
+    "pronun": "/ˈhapɪnəs/ ",
+    "word": "happiness",
+    "definition": "The state of being happy"
+  },
+  "one": {
+    "cat": "Numeral",
+    "pronun": "/wʌn/ ",
+    "word": "one",
+    "definition": "The lowest cardinal number; half of two; 1"
+  },
+  "rambling": {
+    "cat": "Adjective",
+    "pronun": "/ˈramblɪŋ/ ",
+    "word": "rambling",
+    "definition": "(Of writing or speech) lengthy and confused or inconsequential"
+  },
+  "stop": {
+    "cat": "Verb",
+    "pronun": "/stɒp/ ",
+    "word": "stop",
+    "definition": "(Of an event, action, or process) come to an end; cease to happen"
+  },
+  "op": {
+    "cat": "Noun",
+    "pronun": "/ɒp/ ",
+    "word": "op",
+    "definition": "A surgical operation"
+  },
+  "friend zone": {
+    "cat": "Noun",
+    "pronun": "",
+    "word": "friend zone",
+    "definition": "A situation in which a friendship exists between two people, one of whom has an unreciprocated romantic or sexual interest in the other"
+  },
+  "mozzarella": {
+    "cat": "Noun",
+    "pronun": "/ˌmɒtsəˈrɛlə/ ",
+    "word": "mozzarella",
+    "definition": "A firm white Italian cheese made from buffalo or cow's milk, used especially in pizzas and salads."
+  },
+  "auto": {
+    "cat": "Noun",
+    "pronun": "/ˈɔːtəʊ/ ",
+    "word": "auto",
+    "definition": "A car"
+  },
+  "chess": {
+    "cat": "Noun",
+    "pronun": "/tʃɛs/ ",
+    "word": "chess",
+    "definition": "A board game of strategic skill for two players, played on a chequered board on which each playing piece is moved according to precise rules. The object is to put the opponent's king under a direct attack from which escape is impossible (checkmate)."
+  },
+  "gay": {
+    "cat": "Adjective",
+    "pronun": "/ɡeɪ/ ",
+    "word": "gay",
+    "definition": "(Of a person) homosexual (used especially of a man)"
+  },
+  "frankfurter": {
+    "cat": "Noun",
+    "pronun": "/ˈfraŋkfəːtə/ ",
+    "word": "frankfurter",
+    "definition": "A seasoned smoked sausage made of beef and pork."
+  },
+  "disaster": {
+    "cat": "Noun",
+    "pronun": "/dɪˈzɑːstə/ ",
+    "word": "disaster",
+    "definition": "A sudden accident or a natural catastrophe that causes great damage or loss of life"
+  },
+  "zeus": {
+    "cat": "Noun",
+    "pronun": "/zjuːs/ ",
+    "word": "Zeus",
+    "definition": "The supreme god, the son of Cronus (whom he dethroned) and Rhea, and husband of Hera. Zeus was the protector and ruler of humankind, the dispenser of good and evil, and the god of weather and atmospheric phenomena (such as rain and thunder)."
+  },
+  "spectre": {
+    "cat": "Noun",
+    "pronun": "/ˈspɛktə/ ",
+    "word": "spectre",
+    "definition": "A ghost"
+  },
+  "cringe": {
+    "cat": "Verb",
+    "pronun": "/krɪn(d)ʒ/ ",
+    "word": "cringe",
+    "definition": "Bend one's head and body in fear or apprehension or in a servile manner"
+  },
+  "pudge": {
+    "cat": "Noun",
+    "pronun": "/pʌdʒ/ ",
+    "word": "pudge",
+    "definition": "Fat on a person's body"
+  },
+  "but": {
+    "cat": "Conjunction",
+    "pronun": "/bət/ ",
+    "word": "but",
+    "definition": "Used to introduce a phrase or clause contrasting with what has already been mentioned"
+  },
+  "blizzard": {
+    "cat": "Noun",
+    "pronun": "/ˈblɪzəd/ ",
+    "word": "blizzard",
+    "definition": "A severe snowstorm with high winds."
+  },
+  "riot": {
+    "cat": "Noun",
+    "pronun": "/ˈrʌɪət/ ",
+    "word": "riot",
+    "definition": "A violent disturbance of the peace by a crowd"
+  },
+  "sudoku": {
+    "cat": "Noun",
+    "pronun": "/suːˈdəʊkuː/ ",
+    "word": "sudoku",
+    "definition": "A puzzle in which players insert the numbers one to nine into a grid consisting of nine squares subdivided into a further nine smaller squares in such a way that every number appears once in each horizontal line, vertical line, and square."
+  },
+  "dracula": {
+    "cat": "Noun",
+    "pronun": "/ˈdrakjʊlə/ ",
+    "word": "Dracula",
+    "definition": "The Transylvanian vampire in Bram Stoker's novel Dracula (1897)."
+  },
+  "clear": {
+    "cat": "Adjective",
+    "pronun": "/klɪə/ ",
+    "word": "clear",
+    "definition": "Easy to perceive, understand, or interpret"
+  },
+  "anime": {
+    "cat": "Noun",
+    "pronun": "/ˈanɪmeɪ/ ",
+    "word": "anime",
+    "definition": "A style of Japanese film and television animation, typically aimed at adults as well as children."
+  },
+  "fun": {
+    "cat": "Noun",
+    "pronun": "/fʌn/ ",
+    "word": "fun",
+    "definition": "Enjoyment, amusement, or light-hearted pleasure"
+  },
+  "LIFE": {
+    "cat": "Noun",
+    "pronun": "/lʌɪf/ ",
+    "word": "life",
+    "definition": "The condition that distinguishes animals and plants from inorganic matter, including the capacity for growth, reproduction, functional activity, and continual change preceding death"
+  },
+  "happy": {
+    "cat": "Adjective",
+    "pronun": "/ˈhapi/ ",
+    "word": "happy",
+    "definition": "Feeling or showing pleasure or contentment"
+  },
+  "four": {
+    "cat": "Numeral",
+    "pronun": "/fɔː/ ",
+    "word": "four",
+    "definition": "Equivalent to the product of two and two; one more than three, or six less than ten; 4"
+  },
+  "eugenics": {
+    "cat": "Noun",
+    "pronun": "/juːˈdʒɛnɪks/ ",
+    "word": "eugenics",
+    "definition": "The science of improving a population by controlled breeding to increase the occurrence of desirable heritable characteristics."
+  },
+  "fortnight": {
+    "cat": "Noun",
+    "pronun": "/ˈfɔːtnʌɪt/ ",
+    "word": "fortnight",
+    "definition": "A period of two weeks."
+  },
+  "idiot": {
+    "cat": "Noun",
+    "pronun": "/ˈɪdɪət/ ",
+    "word": "idiot",
+    "definition": "A stupid person."
+  },
+  "stupid": {
+    "cat": "Adjective",
+    "pronun": "/ˈstjuːpɪd/ ",
+    "word": "stupid",
+    "definition": "Having or showing a great lack of intelligence or common sense"
+  },
+  "homie": {
+    "cat": "Noun",
+    "pronun": "/ˈhəʊmi/ ",
+    "word": "homie",
+    "definition": "An acquaintance from one's town or neighbourhood, or a member of one's peer group or gang."
+  },
+  "rat": {
+    "cat": "Noun",
+    "pronun": "/rat/ ",
+    "word": "rat",
+    "definition": "A rodent that resembles a large mouse, typically having a pointed snout and a long tail. Some kinds have become cosmopolitan and are sometimes responsible for transmitting diseases."
+  },
+  "ninja": {
+    "cat": "Noun",
+    "pronun": "/ˈnɪndʒə/ ",
+    "word": "ninja",
+    "definition": "A person skilled in the Japanese art of ninjutsu."
+  },
+  "goodbye": {
+    "cat": "Interjection",
+    "pronun": "/ɡʊdˈbʌɪ/ ",
+    "word": "goodbye",
+    "definition": "Used to express good wishes when parting or at the end of a conversation."
+  },
+  "sadness": {
+    "cat": "Noun",
+    "pronun": "/ˈsadnəs/ ",
+    "word": "sadness",
+    "definition": "The condition or quality of being sad"
+  },
+  "end": {
+    "cat": "Noun",
+    "pronun": "/ɛnd/ ",
+    "word": "end",
+    "definition": "A final part of something, especially a period of time, an activity, or a story"
+  },
+  "ignore": {
+    "cat": "Verb",
+    "pronun": "/ɪɡˈnɔː/ ",
+    "word": "ignore",
+    "definition": "Refuse to take notice of or acknowledge; disregard intentionally"
+  },
+  "join": {
+    "cat": "Verb",
+    "pronun": "/dʒɔɪn/ ",
+    "word": "join",
+    "definition": "Link; connect"
   }
 }
