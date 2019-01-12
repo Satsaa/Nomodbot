@@ -1,6 +1,7 @@
 {
 	"active": false,
-	"voters": {},
 	"subPower": 1,
-	"subOnly": false
+	"subOnly": false,
+	"winners": [],
+	"voters": {}
 }

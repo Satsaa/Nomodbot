@@ -706,5 +706,383 @@
     "pronun": "/dʒɔɪn/ ",
     "word": "join",
     "definition": "Link; connect"
+  },
+  "enchantress": {
+    "cat": "Noun",
+    "pronun": "/ɪnˈtʃɑːntrəs/ ",
+    "word": "enchantress",
+    "definition": "A woman who uses magic to put someone or something under a spell."
+  },
+  "druid": {
+    "cat": "Noun",
+    "pronun": "/ˈdruːɪd/ ",
+    "word": "Druid",
+    "definition": "A priest, magician, or soothsayer in the ancient Celtic religion."
+  },
+  "german": {
+    "cat": "Adjective",
+    "pronun": "/ˈdʒəːmən/ ",
+    "word": "german",
+    "definition": "Germane."
+  },
+  "mathematics": {
+    "cat": "Noun",
+    "pronun": "/maθ(ə)ˈmatɪks/ ",
+    "word": "mathematics",
+    "definition": "The abstract science of number, quantity, and space, either as abstract concepts (pure mathematics), or as applied to other disciplines such as physics and engineering (applied mathematics)"
+  },
+  "undead": {
+    "cat": "Adjective",
+    "pronun": "/ʌnˈdɛd/ ",
+    "word": "undead",
+    "definition": "(Of a fictional being, especially a vampire) technically dead but still animate"
+  },
+  "Bayes' theorem": {
+    "cat": "Noun",
+    "pronun": "/ˈbeɪz θɪərəm/ ",
+    "word": "Bayes' theorem",
+    "definition": "A theorem describing how the conditional probability of each of a set of possible causes for a given observed outcome can be computed from knowledge of the probability of each cause and the conditional probability of the outcome of each cause."
+  },
+  "Riemann Zeta Function": {
+    "cat": "Noun",
+    "pronun": "",
+    "word": "Riemann zeta function",
+    "definition": "An analytic function ζ of the complex variable z equal to 1−z + 2−z + 3−z + … when the real part of z is greater than 1. Also written Riemann ζ function."
+  },
+  "nihilism": {
+    "cat": "Noun",
+    "pronun": "/ˈnʌɪ(h)ɪlɪz(ə)m/ ",
+    "word": "nihilism",
+    "definition": "The rejection of all religious and moral principles, in the belief that life is meaningless."
+  },
+  "god": {
+    "cat": "Noun",
+    "pronun": "/ɡɒd/ ",
+    "word": "God",
+    "definition": "(In Christianity and other monotheistic religions) the creator and ruler of the universe and source of all moral authority; the supreme being."
+  },
+  "allah": {
+    "cat": "Noun",
+    "pronun": "/ˈalə/ ",
+    "word": "Allah",
+    "definition": "The name of God among Muslims (and Arab Christians)."
+  },
+  "deep throat": {
+    "cat": "Noun",
+    "pronun": "",
+    "word": "deep throat",
+    "definition": "A person who anonymously supplies information about covert or illegal action in the organization where they work."
+  },
+  "Spanish": {
+    "cat": "Adjective",
+    "pronun": "/ˈspanɪʃ/ ",
+    "word": "Spanish",
+    "definition": "Relating to Spain, its people, or its language."
+  },
+  "hentai": {
+    "cat": "Noun",
+    "pronun": "/hɛnˈtʌɪ/ ",
+    "word": "hentai",
+    "definition": "A subgenre of the Japanese genres of manga and anime, characterized by overtly sexualized characters and sexually explicit images and plots."
+  },
+  "fuck": {
+    "cat": "Verb",
+    "pronun": "/fʌk/ ",
+    "word": "fuck",
+    "definition": "Have sexual intercourse with (someone)."
+  },
+  "lexicon": {
+    "cat": "Noun",
+    "pronun": "/ˈlɛksɪk(ə)n/ ",
+    "word": "lexicon",
+    "definition": "The vocabulary of a person, language, or branch of knowledge"
+  },
+  "wife": {
+    "cat": "Noun",
+    "pronun": "/wʌɪf/ ",
+    "word": "wife",
+    "definition": "A married woman considered in relation to her spouse."
+  },
+  "cunt": {
+    "cat": "Noun",
+    "pronun": "/kʌnt/ ",
+    "word": "cunt",
+    "definition": "A woman's genitals."
+  },
+  "yahweh": {
+    "cat": "Noun",
+    "pronun": "/ˈjɑːweɪ/ ",
+    "word": "Yahweh",
+    "definition": "A form of the Hebrew name of God used in the Bible. The name came to be regarded by Jews (c.300 BC) as too sacred to be spoken, and the vowel sounds are uncertain."
+  },
+  "supercalifragilisticexpialidocious": {
+    "cat": "Adjective",
+    "pronun": "/ˌsuːpəkalɪfradʒɪlɪstɪkˌɛkspɪalɪˈdəʊʃəs/ ",
+    "word": "supercalifragilisticexpialidocious",
+    "definition": "Extraordinarily good; wonderful"
+  },
+  "job": {
+    "cat": "Noun",
+    "pronun": "/dʒɒb/ ",
+    "word": "job",
+    "definition": "A paid position of regular employment"
+  },
+  "mother": {
+    "cat": "Noun",
+    "pronun": "/ˈmʌðə/ ",
+    "word": "mother",
+    "definition": "A woman in relation to her child or children"
+  },
+  "twitch": {
+    "cat": "Verb",
+    "pronun": "/twɪtʃ/ ",
+    "word": "twitch",
+    "definition": "Give or cause to give a short, sudden jerking or convulsive movement"
+  },
+  "file": {
+    "cat": "Noun",
+    "pronun": "/fʌɪl/ ",
+    "word": "file",
+    "definition": "A folder or box for holding loose papers together and in order for easy reference"
+  },
+  "marina": {
+    "cat": "Noun",
+    "pronun": "/məˈriːnə/ ",
+    "word": "marina",
+    "definition": "A specially designed harbour with moorings for pleasure yachts and small boats."
+  },
+  "naga": {
+    "cat": "Noun",
+    "pronun": "/ˈnɑːɡə/ ",
+    "word": "naga",
+    "definition": "A member of a group of peoples living in or near the Naga Hills of Burma (Myanmar) and north-eastern India."
+  },
+  "pearl": {
+    "cat": "Noun",
+    "pronun": "/pəːl/ ",
+    "word": "pearl",
+    "definition": "A hard, lustrous spherical mass, typically white or bluish-grey, formed within the shell of a pearl oyster or other bivalve mollusc and highly prized as a gem"
+  },
+  "rejoice": {
+    "cat": "Verb",
+    "pronun": "/rɪˈdʒɔɪs/ ",
+    "word": "rejoice",
+    "definition": "Feel or show great joy or delight"
+  },
+  "hymen": {
+    "cat": "Noun",
+    "pronun": "/ˈhʌɪmən/ ",
+    "word": "hymen",
+    "definition": "A membrane which partially closes the opening of the vagina and whose presence is traditionally taken to be a mark of virginity."
+  },
+  "pearl harbour": {
+    "cat": "Noun",
+    "pronun": "/ˌpəːl ˈhɑːbə/ ",
+    "word": "Pearl Harbour",
+    "definition": "A sudden attack, especially one mounted without warning and bringing disaster; an unexpected and disastrous setback."
+  },
+  "reason": {
+    "cat": "Noun",
+    "pronun": "/ˈriːz(ə)n/ ",
+    "word": "reason",
+    "definition": "A cause, explanation, or justification for an action or event"
+  },
+  "aardvark": {
+    "cat": "Noun",
+    "pronun": "/ˈɑːdvɑːk/ ",
+    "word": "aardvark",
+    "definition": "A nocturnal badger-sized burrowing mammal of Africa, with long ears, a tubular snout, and a long extensible tongue, feeding on ants and termites."
+  },
+  "live": {
+    "cat": "Verb",
+    "pronun": "/lɪv/ ",
+    "word": "live",
+    "definition": "Remain alive"
+  },
+  "alive": {
+    "cat": "Adjective",
+    "pronun": "/əˈlʌɪv/ ",
+    "word": "alive",
+    "definition": "(Of a person, animal, or plant) living, not dead"
+  },
+  "omniscient": {
+    "cat": "Adjective",
+    "pronun": "/ɒmˈnɪsɪənt/ ",
+    "word": "omniscient",
+    "definition": "Knowing everything"
+  },
+  "omniscience": {
+    "cat": "Noun",
+    "pronun": "/ɒmˈnɪsɪəns/ ",
+    "word": "omniscience",
+    "definition": "The state of knowing everything"
+  },
+  "living": {
+    "cat": "Noun",
+    "pronun": "/ˈlɪvɪŋ/ ",
+    "word": "living",
+    "definition": "An income sufficient to live on or the means of earning it"
+  },
+  "war": {
+    "cat": "Noun",
+    "pronun": "/wɔː/ ",
+    "word": "war",
+    "definition": "A state of armed conflict between different countries or different groups within a country"
+  },
+  "dog": {
+    "cat": "Noun",
+    "pronun": "/dɒɡ/ ",
+    "word": "dog",
+    "definition": "A domesticated carnivorous mammal that typically has a long snout, an acute sense of smell, non-retractable claws, and a barking, howling, or whining voice."
+  },
+  "ai": {
+    "cat": "Noun",
+    "pronun": "/ˈɑːi/ ",
+    "word": "ai",
+    "definition": "The three-toed sloth."
+  },
+  "witch doctor": {
+    "cat": "Noun",
+    "pronun": "",
+    "word": "witch doctor",
+    "definition": "(Among tribal peoples) a magician credited with powers of healing, divination, and protection against the magic of others."
+  },
+  "Pneumonoultramicroscopicsilicovolcanoconiosis": {
+    "cat": "Noun",
+    "pronun": "/ˌnjuːmə(ʊ)nəʊˌʌltrəˌmʌɪkrə(ʊ)ˈskɒpɪkˌsɪlɪkəʊvɒlˌkeɪnəʊˌkəʊnɪˈəʊsɪs/ ",
+    "word": "pneumonoultramicroscopicsilicovolcanoconiosis",
+    "definition": "An invented long word said to mean a lung disease caused by inhaling very fine ash and sand dust."
+  },
+  "malay": {
+    "cat": "Noun",
+    "pronun": "/məˈleɪ/ ",
+    "word": "Malay",
+    "definition": "A member of a people inhabiting Malaysia and Indonesia."
+  },
+  "Awareness": {
+    "cat": "Noun",
+    "pronun": "/əˈwɛːnəs/ ",
+    "word": "awareness",
+    "definition": "Knowledge or perception of a situation or fact"
+  },
+  "malaysia": {
+    "cat": "Noun",
+    "pronun": "/məˈleɪzɪə/ ",
+    "word": "Malaysia",
+    "definition": "A country in SE Asia; population 30,300,000 (estimated 2015); capital, Kuala Lumpur; languages, Malay (official), English, Tamil, Chinese dialects."
+  },
+  "count": {
+    "cat": "Verb",
+    "pronun": "/kaʊnt/ ",
+    "word": "count",
+    "definition": "Determine the total number of (a collection of items)"
+  },
+  "Antidisestablishmentarianism": {
+    "cat": "Noun",
+    "pronun": "/ˌantɪdɪsɪˌstablɪʃm(ə)nˈtɛːrɪənɪz(ə)m/ ",
+    "word": "antidisestablishmentarianism",
+    "definition": "Opposition to the disestablishment of the Church of England."
+  },
+  "intelligence": {
+    "cat": "Noun",
+    "pronun": "/ɪnˈtɛlɪdʒ(ə)ns/ ",
+    "word": "intelligence",
+    "definition": "The ability to acquire and apply knowledge and skills"
+  },
+  "H2O": {
+    "cat": "Noun",
+    "pronun": "",
+    "word": "H2O",
+    "definition": "Water (the chemical symbol, as used in non-scientific contexts)"
+  },
+  "game": {
+    "cat": "Noun",
+    "pronun": "/ɡeɪm/ ",
+    "word": "game",
+    "definition": "An activity that one engages in for amusement or fun"
+  },
+  "cowpuncher": {
+    "cat": "Noun",
+    "pronun": "/ˈkaʊpʌntʃə/ ",
+    "word": "cowpuncher",
+    "definition": "A cowboy."
+  },
+  "dankness": {
+    "cat": "Noun",
+    "pronun": "/ˈdaŋknəs/ ",
+    "word": "dankness",
+    "definition": "No definition."
+  },
+  "forgot": {
+    "cat": "Other",
+    "pronun": "/fəˈɡɒt/ ",
+    "word": "forgot",
+    "definition": "No definition."
+  },
+  "puzzle": {
+    "cat": "Verb",
+    "pronun": "/ˈpʌz(ə)l/ ",
+    "word": "puzzle",
+    "definition": "Cause (someone) to feel confused because they cannot understand something"
+  },
+  "PSEUDOPSEUDOHYPOPARATHYROIDISM": {
+    "cat": "Noun",
+    "pronun": "/ˌs(j)uːdəʊˌs(j)uːdəʊˌhʌɪpə(ʊ)parəˈθʌɪrɔɪdɪzm/ ",
+    "word": "pseudopseudohypoparathyroidism",
+    "definition": "A genetic disorder in which the skeletal abnormalities of pseudohypoparathyroidism are present without the biochemical abnormalities common to hypoparathyroidism and pseudohypoparathyroidism."
+  },
+  "bird": {
+    "cat": "Noun",
+    "pronun": "/bəːd/ ",
+    "word": "bird",
+    "definition": "A warm-blooded egg-laying vertebrate animal distinguished by the possession of feathers, wings, a beak, and typically by being able to fly."
+  },
+  "MPD": {
+    "cat": "Noun",
+    "pronun": "",
+    "word": "MPD",
+    "definition": "No definition."
+  },
+  "titan": {
+    "cat": "Noun",
+    "pronun": "/ˈtʌɪt(ə)n/ ",
+    "word": "Titan",
+    "definition": "Any of the older gods who preceded the Olympians and were the children of Uranus (Heaven) and Gaia (Earth). Led by Cronus, they overthrew Uranus; Cronus' son, Zeus, then rebelled against his father and eventually defeated the Titans."
+  },
+  "subscription": {
+    "cat": "Noun",
+    "pronun": "/səbˈskrɪpʃ(ə)n/ ",
+    "word": "subscription",
+    "definition": "An arrangement to receive something, typically a publication, regularly by paying in advance"
+  },
+  "monarchy": {
+    "cat": "Noun",
+    "pronun": "/ˈmɒnəki/ ",
+    "word": "monarchy",
+    "definition": "A form of government with a monarch at the head."
+  },
+  "sultan": {
+    "cat": "Noun",
+    "pronun": "/ˈsʌlt(ə)n/ ",
+    "word": "sultan",
+    "definition": "A Muslim sovereign."
+  },
+  "bey": {
+    "cat": "Noun",
+    "pronun": "/beɪ/ ",
+    "word": "bey",
+    "definition": "The governor of a district or province in the Ottoman Empire."
+  },
+  "vizier": {
+    "cat": "Noun",
+    "pronun": "/ˈvɪzɪə/ ",
+    "word": "vizier",
+    "definition": "A high official in some Muslim countries, especially in Turkey under Ottoman rule."
+  },
+  "candy": {
+    "cat": "Noun",
+    "pronun": "/ˈkandi/ ",
+    "word": "candy",
+    "definition": "Sweets; confectionery"
   }
 }
