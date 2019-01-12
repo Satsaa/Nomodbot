@@ -24,13 +24,12 @@
   "?wiki": "wiki",
   "?streamtime": "streamtime",
   "?streamtimes": "streamtime",
-  "?artifact": "artifactcard",
   "?giveaway": {
     "command": "giveaway",
     "userlvl": "moderator"
   },
   "?join": "giveawayjoin",
-  "?exit": {
+  "$exit": {
     "command": "exit",
     "userlvl": "master"
   },

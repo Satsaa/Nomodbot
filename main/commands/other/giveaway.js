@@ -3,12 +3,13 @@ module.exports.run = (channel, userstate, params) => {
   return new Promise((resolve, reject) => {
     let short = nmb.bot[channel]
     if (typeof short.giveaway === 'undefined') return resolve('error :(')
-    if (!params[1]) return resolve(`Start or end a giveaway: ${params[0]} <start|continue|end>. Edit preferences: ${params[0]} set <subonly|subpower> <value. Default power is 1`)
+    if (!params[1]) return resolve(`Start, continue or end a giveaway: ${params[0]} <start|continue|end>. Pick a winner: ${params[0]} pick [<count>]. Show winners of current giveaway: ${params[0]} winners. Edit preferences: ${params[0]} set <subonly|subpower> [<value>]. Default power is 1`)
     switch (params[1].toLowerCase()) {
       case 'start':
       case 'begin':
       case 'open':
         short.giveaway.active = true
+        short.giveaway.winners = []
         short.giveaway.voters = {}
         let joinCom = getCommand(short.commands, 'giveawayjoin')
 
@@ -32,16 +33,29 @@ module.exports.run = (channel, userstate, params) => {
       case 'stop':
       case 'close':
         short.giveaway.active = false
-        resolve(`Giveaway ended! @${userstate['display-name']} Announce a new winner: ${params[0]} pick`)
+        resolve(`Giveaway ended! @${userstate['display-name']} Announce a new winner: ${params[0]} pick [<count>]`)
         save(channel)
+        break
+      case 'rig':
+        resolve(`@${userstate['display-name']} You won the giveaway!`)
         break
       case 'pick':
       case 'winner':
-        if (Object.keys(short.giveaway.voters).length !== 0) resolve(`@${getWinner(short.giveaway)} You won the giveaway!`)
-        else resolve(`No participants on record. Try "${params[0]} start" to open a giveaway`)
+        if (Object.keys(short.giveaway.voters).length !== 0) {
+          let count = params[2]
+          let winner = getWinner(short.giveaway)
+          short.giveaway.winners.push(winner)
+          resolve(`@${winner} You won the giveaway!`)
+        } else resolve(`No participants on record. Try "${params[0]} start" to open a giveaway`)
         save(channel)
         break
 
+      case 'last':
+      case 'previous':
+      case 'winners':
+        if (short.giveaway.winners.length) resolve(`Winners of ${short.giveaway.active ? 'current' : 'previous'} giveaway: ${short.giveaway.winners.join(', ')}`)
+        else resolve(`No winners chosen yet. "${params[0]} pick" to pick one`)
+        break
       case 'set':
       case 'edit':
       case 'modify':
@@ -66,7 +80,7 @@ module.exports.run = (channel, userstate, params) => {
         break
 
       default:
-        resolve(`Start or end a giveaway: ${params[0]} <start|continue|end>. Edit preferences: ${params[0]} set <subonly|subpower> <value. Default power is 1`)
+        resolve(`Start, continue or end a giveaway: ${params[0]} <start|continue|end>. Pick a winner: ${params[0]} pick [<count>]. Show winners of current giveaway: ${params[0]} winners. Edit preferences: ${params[0]} set <subonly|subpower> [<value>]. Default power is 1`)
         break
     }
   })
@@ -107,7 +121,7 @@ function getCommand (commands, value) {
 
 module.exports.help = (params) => {
   return new Promise((resolve, reject) => {
-    resolve(`Start, continue or end a giveaway: ${params[1]} <start|continue|end>. Pick a winner: ${params[1]} pick. Edit preferences: ${params[1]} set <subonly|subpower> [<value>]. Default power is 1`)
+    resolve(`Start, continue or end a giveaway: ${params[1]} <start|continue|end>. Pick a winner: ${params[1]} pick [<count>]. Show winners of current giveaway: ${params[1]} winners. Edit preferences: ${params[1]} set <subonly|subpower> [<value>]. Default power is 1`)
   })
 }
 

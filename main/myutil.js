@@ -170,9 +170,11 @@ module.exports.endPunctuate = (string) => {
 }
 
 /** Add proper punctuation between words (Peter, Jones and Malfoy)
- * @param {array} words to punctuate between
+ * @param {array} words Words to punctuate between
+ * @param {string} nonLast String between all but not the last words
+ * @param {string} last String between 2 last words
  */
-module.exports.commaPunctuate = (words) => {
+module.exports.commaPunctuate = (words, nonLast = ', ', last = 'and') => {
   if (words.length === 1) return words[0]
   if (!words.length) return null
   for (let i = 0; i < words.length; i++) {
@@ -184,8 +186,8 @@ module.exports.commaPunctuate = (words) => {
   let str = ''
   for (let i = 0; i < words.length; i++) {
     if (i === words.length - 1) str += words[i]
-    else if (i === words.length - 2) str += words[i] + ' and '
-    else str += words[i] + ', '
+    else if (i === words.length - 2) str += `${words[i]} ${last} `
+    else str += words[i] + nonLast
   }
   return str
 }
