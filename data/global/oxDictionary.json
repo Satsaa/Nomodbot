@@ -1084,5 +1084,23 @@
     "pronun": "/ˈkandi/ ",
     "word": "candy",
     "definition": "Sweets; confectionery"
+  },
+  "h2o": {
+    "cat": "Noun",
+    "pronun": "",
+    "word": "H2O",
+    "definition": "Water (the chemical symbol, as used in non-scientific contexts)"
+  },
+  "cat": {
+    "cat": "Noun",
+    "pronun": "/kat/ ",
+    "word": "cat",
+    "definition": "A small domesticated carnivorous mammal with soft fur, a short snout, and retractable claws. It is widely kept as a pet or for catching mice, and many breeds have been developed."
+  },
+  "oof": {
+    "cat": "Interjection",
+    "pronun": "/uːf/ ",
+    "word": "oof",
+    "definition": "Expressing alarm, annoyance, or relief."
   }
 }

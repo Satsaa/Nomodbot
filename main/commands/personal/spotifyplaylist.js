@@ -24,12 +24,11 @@ module.exports.run = (channel, userstate, params) => {
             data += chunk
           }).on('end', () => {
             let result = JSON.parse(data)
-            console.log(result)
             let track = result.tracks.items[0].track
             let title = track.name
             let artists = mu.commaPunctuate(track.artists.map(i => i.name))
             let url = track.external_urls.spotify.replace('https://', '')
-            resolve(`"${title}" by ${artists}. ${url}`)
+            resolve(`"${title}" by ${artists}`)
           }).on('error', (err) => {
             console.log(err)
           })
