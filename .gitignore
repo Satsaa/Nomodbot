@@ -1,23 +1,2 @@
 
-node_modules/*
-
-keyConfig/TwitchClient.json
-keyConfig/TwitterClient.json
-keyConfig/DeepAi.json
-keyConfig/OxfordDictionaries.json
-keyConfig/CognitiveServices.json
-keyConfig/steamApi.json
-
-data/*
-!data/global/
-!data/default/
-data/global/myiq.json
-data/global/artifact/*
-
-misc/object examples/*
-misc/Twitch-Chat-Downloader-master/*
-
-.vscode
-*test.*
-main/tmi.js/lib/old client.js
-keyConfig/Spotify.json
+node_modules
