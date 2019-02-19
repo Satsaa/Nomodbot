@@ -2,7 +2,7 @@
 const WebSocket = require('ws')
 
 /**
- * A client for interacting with Twitch API
+ * A client for interacting with Twitch IRC
  */
 module.exports = class TwitchClient {
   /**
@@ -16,7 +16,7 @@ module.exports = class TwitchClient {
     this.server = options.server || 'irc-ws.chat.twitch.tv'
     this.port = options.port || 80
     this.secure = options.secure || false
-    this.channels = []
+    this.channels = {}
   }
 
   connect () {
@@ -24,10 +24,10 @@ module.exports = class TwitchClient {
     this.ws = new WebSocket(`${this.secure ? 'wss' : 'ws'}://${this.server}:${this.port}/`, 'irc')
     this.ws.addEventListener('open', () => {
       console.log('opened')
-      this.ws.send('PASS oauth:REDACTED')
+      this.ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership') // Before login so globaluserstate is received
+      this.ws.send('PASS oauth:STILL REDACTED')
       this.ws.send('NICK nomodbot')
-      this.ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership')
-      this.ws.send('JOIN #satsaa')
+      this.join('satsaa')
     })
     this.ws.addEventListener('message', (data) => {
       if (data.data.startsWith('PING')) {
@@ -46,28 +46,39 @@ module.exports = class TwitchClient {
 
   join (channel) {
     this.ws.send(`JOIN #${channel}`)
+    if (!this.channels[channel]) {
+      this.channels[channel] = (new Channel(this, channel))
+    }
+    this.channels[channel].active = true
   }
 
   part (channel) {
     this.ws.send(`PART #${channel}`)
+    if (this.channels[channel]) this.channels[channel].active = false
+  }
+
+  send (channel, msg) {
+    this.ws.send(`PRIVMSG #${channel} ${msg}`)
   }
 }
 
-class channel {
+/**
+ * Stores useful methods and channel specific data
+ */
+class Channel {
+  /**
+   * Channel instance
+   * @param {any} client Twitch client instance
+   * @param {string} channel Channel name
+   */
   constructor (client, channel) {
     this.client = client
-    this.name = channel
+    this.channel = channel
+    this.data = {}
+    this.active = true
   }
 
-  join () {
-    this.client.ws.send(`JOIN #${this.name}`)
-  }
-
-  part () {
-    this.client.ws.send(`PART #${this.name}`)
-  }
-
-  send (msg) {
-    this.client.ws.send(`PRIVMSG #${this.name} ${msg}`)
-  }
+  join () { return this.client.join(this.channel) }
+  part () { return this.client.part(this.channel) }
+  send (msg) { return this.client.send(this.channel, msg) }
 }
