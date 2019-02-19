@@ -67,7 +67,13 @@ module.exports = class RateLimiter {
     }
   }
 
+  /**
+   * Calculate how many times add() can be used without exceeding ratelimits  
+   * Calls next() so a bit of overhead
+   * @returns {number} Entries until full
+   */
   remaining () {
+    this.next() // Must be called to refresh times
     return this.limit - this.times.length
   }
 }
