@@ -25,7 +25,7 @@ module.exports = class TwitchClient {
     this.ws.addEventListener('open', () => {
       console.log('opened')
       this.ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership') // Before login so globaluserstate is received
-      this.ws.send('PASS oauth:STILL REDACTED')
+      this.ws.send('PASS oauth:Nope')
       this.ws.send('NICK nomodbot')
       this.join('satsaa')
     })

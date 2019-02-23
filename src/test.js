@@ -2,9 +2,10 @@
 const Client = require('./lib/Client')
 var client = new Client()
 global.client = client
-client.connect()
+// client.connect()
 
-global.parser = require('./lib/parser')
+global.rl = require('./lib/rateLimiter')
+global.rl = new rl.Queue()
 
 setTimeout(() => {
 }, 10000000)
