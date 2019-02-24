@@ -7,8 +7,7 @@ module.exports = {
   Queue: class RateLimiter {
     /**
      * Construct a new RateLimiter  
-     * This variant has no timers nor queuing
-     * 
+     * This variant is queue centric
      * @param {Object} options
      * @param {number} options.duration Max age of an entry
      * @param {number} options.limit Max entries within duration
@@ -31,7 +30,7 @@ module.exports = {
      * Queue execution of a function with optional arguments
      * This entry will be placed last on the queue
      * @param {Function} cb Callback function
-     * @param {...any=} args Arguments for the callback function
+     * @param {any=} args Arguments for the callback function
      */
     queue (cb, ...args) {
       if (this.queueSize !== null && this._callbacks.length + 1 > this.queueSize) {
@@ -47,7 +46,7 @@ module.exports = {
      * Queue execution of a function with optional arguments  
      * This entry will be placed FIRST on the queue
      * @param {Function} cb Callback function
-     * @param {...any=} args Arguments for the callback function
+     * @param {any=} args Arguments for the callback function
      */
     queueFirst (cb, ...args) {
       if (this.queueSize !== null && this._callbacks.length + 1 > this.queueSize) {

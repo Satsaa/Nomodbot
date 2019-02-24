@@ -2,17 +2,21 @@
 const WebSocket = require('ws')
 
 /**
- * A client for interacting with Twitch IRC
+ * A client for interacting with Twitch servers
  */
 module.exports = class TwitchClient {
   /**
-   * Client for Twitch
+   * Twitch client
    * @param {Object} options
+   * @param {string} options.username Twitch username (lowcase)
+   * @param {string} options.password Password? Oauth token: "oauth:<token>"
    * @param {string} options.server Server url. E.G. "irc-ws.chat.twitch.tv"
    * @param {number} options.port Port of the server
    * @param {boolean} options.secure Use SSL
    */
-  constructor (options = {}) {
+  constructor (options) {
+    this.username = options.username || console.error('No username!')
+    this.password = options.password || console.error('No password!')
     this.server = options.server || 'irc-ws.chat.twitch.tv'
     this.port = options.port || 80
     this.secure = options.secure || false
@@ -25,8 +29,8 @@ module.exports = class TwitchClient {
     this.ws.addEventListener('open', () => {
       console.log('opened')
       this.ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership') // Before login so globaluserstate is received
-      this.ws.send('PASS oauth:Nope')
-      this.ws.send('NICK nomodbot')
+      this.ws.send(`PASS ${this.password}`)
+      this.ws.send(`NICK ${this.username}`)
       this.join('satsaa')
     })
     this.ws.addEventListener('message', (data) => {

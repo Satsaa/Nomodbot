@@ -21,13 +21,14 @@
 
 /**
  * Parse ircV3 tagged messages  
- * Tries its hardest to give a result... even if the message is probably malformed
+ * Tries its hardest to give a result... even if the message might be malformed
+ * @param {string} msg Message to parse
  */
 module.exports = (msg) => {
   msg = msg.trimStart()
   if (msg.length === 0) return null
 
-  let parse = {
+  let result = {
     tags: {},
     nick: null,
     user: null,
@@ -61,7 +62,7 @@ module.exports = (msg) => {
       if (val.indexOf('\\') !== -1) val = val.replace(/\\:/g, ';').replace(/\\s/g, ' ').replace(/\\\\/g, '\\').replace(/\\r/g, '\r').replace(/\\n/g, '\n')
 
       if (val === '' && msg.charAt(lessMinVal - 1) !== '=') val = true
-      parse.tags[msg.slice(i, minVal)] = val
+      result.tags[msg.slice(i, minVal)] = val
       i = lessMinVal + 1
     }
   }
@@ -71,11 +72,11 @@ module.exports = (msg) => {
 
   // Prefix and its user and nick | nick!user@example.com
   if (msg.charAt(i) === ':') {
-    parse.prefix = msg.slice(i + 1, nextSpace)
-    let prefixNextExclam = parse.prefix.indexOf('!')
-    if (prefixNextExclam !== -1) parse.nick = parse.prefix.slice(0, prefixNextExclam)
-    let prefixNextAt = parse.prefix.indexOf('@')
-    if (prefixNextAt !== -1) parse.user = parse.prefix.slice(prefixNextExclam === -1 ? 0 : prefixNextExclam + 1, prefixNextAt)
+    result.prefix = msg.slice(i + 1, nextSpace)
+    let prefixNextExclam = result.prefix.indexOf('!')
+    if (prefixNextExclam !== -1) result.nick = result.prefix.slice(0, prefixNextExclam)
+    let prefixNextAt = result.prefix.indexOf('@')
+    if (prefixNextAt !== -1) result.user = result.prefix.slice(prefixNextExclam === -1 ? 0 : prefixNextExclam + 1, prefixNextAt)
     i = nextSpace
   }
 
@@ -83,7 +84,7 @@ module.exports = (msg) => {
   if (nextSpace === -1) nextSpace = msg.length
 
   // Command
-  if (i < nextSpace) parse.cmd = msg.slice(i === 0 ? 0 : i + 1, nextSpace)
+  if (i < nextSpace) result.cmd = msg.slice(i === 0 ? 0 : i + 1, nextSpace)
 
   i = nextSpace + 1
   let nextColon = msg.indexOf(':', i)
@@ -93,11 +94,11 @@ module.exports = (msg) => {
   while (i < nextColon) {
     nextSpace = msg.indexOf(' ', i)
     if (nextSpace === -1) nextSpace = msg.length
-    parse.params.push(msg.slice(i, nextSpace))
+    result.params.push(msg.slice(i, nextSpace))
     i = nextSpace + 1
   }
   // Possible multi word parameter ':this is a chat message'
-  if (nextColon !== msg.length) parse.params.push(msg.slice(i + 1, msg.length))
+  if (nextColon !== msg.length) result.params.push(msg.slice(i + 1, msg.length))
 
-  return parse
+  return result
 }
