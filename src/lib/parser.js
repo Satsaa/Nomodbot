@@ -23,19 +23,28 @@
  * Parse ircV3 tagged messages  
  * Tries its hardest to give a result... even if `msg` is malformed
  * @param {string} msg Message to parse
+ * @returns {{cmd:string|null, nick:string|null, params:string[], prefix:string|null, tags:{[x:string]:string|true}, user:string|null}}
  */
 module.exports = (msg) => {
   msg = msg.trimStart()
   if (msg.length === 0) return null
 
+  // interface ircMessage {
+  //  cmd: string | null;
+  //  nick: string | null;
+  //  params: string[];
+  //  prefix: string | null;
+  //  tags: { [x: string]: string|true };
+  //  user: string | null;
+  // }
+
   let result = {
-    /** @type {Object.<string, string|true>} */
-    tags: {},
-    nick: null,
-    user: null,
-    prefix: null,
     cmd: null,
-    params: []
+    nick: null,
+    params: [],
+    prefix: null,
+    tags: {},
+    user: null
   }
 
   let i = 0

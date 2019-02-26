@@ -26,9 +26,9 @@ module.exports = {
     }
 
     /**
-     * Queue execution of `cb` with optional `args`  
+     * Queue calling of `cb` with optional `args`  
      * This entry will be placed last on the queue
-     * @param {Function} cb Callback function
+     * @param {(...args)} cb Callback function
      * @param {any=} args Function arguments for `cb`
      */
     queue (cb, ...args) {
@@ -41,9 +41,9 @@ module.exports = {
     }
 
     /**
-     * Queue execution of `cb` with optional `args`  
+     * Queue calling of `cb` with optional `args`  
      * This entry will be placed FIRST on the queue
-     * @param {Function} cb Callback function
+     * @param {(...args)} cb Callback function
      * @param {any=} args Function arguments for `cb`
      */
     queueFirst (cb, ...args) {
