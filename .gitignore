@@ -21,3 +21,6 @@ misc/Twitch-Chat-Downloader-master/*
 *test.*
 main/tmi.js/lib/old client.js
 keyConfig/Spotify.json
+
+tempCodeRunnerFile.js
+src/cfg/keys.json
