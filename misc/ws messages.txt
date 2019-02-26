@@ -1,0 +1,43 @@
+
+(@variables )?:(user!user@user)?url code? you? cmd? #channel? :message?
+
+:tmi.twitch.tv 001 nomodbot :Welcome, GLHF!
+:tmi.twitch.tv 002 nomodbot :Your host is tmi.twitch.tv
+:tmi.twitch.tv 003 nomodbot :This server is rather new
+:tmi.twitch.tv 004 nomodbot :-
+:tmi.twitch.tv 375 nomodbot :-
+:tmi.twitch.tv 372 nomodbot :You are in a maze of twisty passages, all alike.
+:tmi.twitch.tv 376 nomodbot :>
+
+@badges=;color=#008000;display-name=NoModBot;emote-sets=0;user-id=266132990;user-type= :tmi.twitch.tv GLOBALUSERSTATE
+
+@broadcaster-lang=;emote-only=0;followers-only=-1;r9k=0;rituals=0;room-id=61365582;slow=0;subs-only=0 :tmi.twitch.tv ROOMSTATE #satsaa
+@room-id=61365582;slow=1 :tmi.twitch.tv ROOMSTATE #satsaa
+@room-id=61365582;slow=0 :tmi.twitch.tv ROOMSTATE #satsaa
+
+@badges=moderator/1;color=#008000;display-name=NoModBot;emote-sets=0;mod=1;subscriber=0;user-type=mod :tmi.twitch.tv USERSTATE #satsaa
+
+:nightbot!nightbot@nightbot.tmi.twitch.tv JOIN #satsaa
+
+:nomodbot!nomodbot@nomodbot.tmi.twitch.tv PART #satsaa
+
+@msg-id=host_on :tmi.twitch.tv NOTICE #satsaa :Now hosting InfiniteGachi.
+@msg-id=msg_duplicate :tmi.twitch.tv NOTICE #satsaa :Your message {...}
+
+:tmi.twitch.tv CAP * ACK :twitch.tv/tags twitch.tv/commands twitch.tv/membership
+
+:nomodbot.tmi.twitch.tv 353 nomodbot = #satsaa :nomodbot
+:nomodbot.tmi.twitch.tv 366 nomodbot #satsaa :End of /NAMES list
+
+@{...} :satsaa!satsaa@satsaa.tmi.twitch.tv PRIVMSG #satsaa :test
+@{...} :satsaa!satsaa@satsaa.tmi.twitch.tv PRIVMSG #satsaa :ACTION :)
+
+:nomodbot.tmi.twitch.tv 353 nomodbot = #siractionslacks :lucianotv cabbobo {...}
+:nomodbot.tmi.twitch.tv 353 nomodbot = #siractionslacks :teass_ carnadan {...}
+:nomodbot.tmi.twitch.tv 353 nomodbot = #siractionslacks :nomodbot
+:nomodbot.tmi.twitch.tv 366 nomodbot #siractionslacks :End of /NAMES list
+
+@ban-duration=23;room-id=61365582;target-user-id=147764434;tmi-sent-ts=1550286954898 :tmi.twitch.tv CLEARCHAT #satsaa :123asd
+@room-id=61365582;target-user-id=147764434;tmi-sent-ts=1550290619587 :tmi.twitch.tv CLEARCHAT #satsaa :123asd
+
+:tmi.twitch.tv 421 nomodbot REJOIN :Unknown command

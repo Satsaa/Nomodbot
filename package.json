@@ -1,39 +1,32 @@
 {
   "name": "nomodbot",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "twitch bot",
-  "main": "main/index.js",
-  "dependencies": {
-    "fuse.js": "^3.3.0",
-    "spotify-web-api-node": "^4.0.0",
-    "striptags": "^3.1.1",
-    "twitter": "^1.7.1"
-  },
-  "devDependencies": {
-    "eslint": "^5.9.0",
-    "eslint-config-standard": "^12.0.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-node": "^8.0.0",
-    "eslint-plugin-only-warn": "^1.0.1",
-    "eslint-plugin-promise": "^4.0.1",
-    "eslint-plugin-standard": "^4.0.0"
-  },
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Satsaa/Nomodbot.git"
+    "url": "Nomodbot"
   },
   "keywords": [
-    "twitch",
     "irc",
+    "twitch",
     "bot"
   ],
   "author": "Satsaa",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Satsaa/Nomodbot/issues"
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^5.12.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-only-warn": "^1.0.1",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0"
   },
-  "homepage": "https://github.com/Satsaa/Nomodbot#readme"
+  "dependencies": {
+    "ws": "^6.1.3"
+  }
 }
