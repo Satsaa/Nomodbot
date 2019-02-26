@@ -1,4 +1,6 @@
 
+import 'test.d.ts'
+
 const secretKey = require('./lib/secretKey')
 const Client = require('./lib/Client')
 var client = new Client({

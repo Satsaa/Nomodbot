@@ -1,6 +1,6 @@
-
 const WebSocket = require('ws')
 const matchKeys = require('./matchKeys')
+const parser = require('./parser')
 
 /**
  * A client for interacting with Twitch servers
@@ -53,20 +53,15 @@ module.exports = class TwitchClient {
   }
 
   /**
-   * Execute `cb` when matching message is received
-   * @param {Object} match Object containing matched keys
-   * @param {Object.<string, string|true>} [match.tags]
-   * @param {string} [match.nick]
-   * @param {string} [match.user]
-   * @param {string} [match.prefix]
-   * @param {string} [match.cmd]
-   * @param {string[]} [match.params]
-   * @param {Function} cb Function called when matching message is received
+   * Call `cb` when matching message is received
+   * @param {{cmd?:string|null, nick?:string|null, params?:string[], prefix?:string|null, tags?:{[x:string]:string|true}, user?:string|null}} match Object containing matched keys
+   * @param {boolean} matchValues If values should be matched
+   * @param {(timedOut:number, message:number)} cb Function called when matching message is received
    * @param {number} timeout Stop waiting after this many ms and don't callback
    */
   expect (match, matchValues, cb, timeout = 3000) {
     // when message received: test for match
-    if (matchKeys(match, message, true)) cb(message)
+    if (matchKeys(match, message, matchValues)) cb(timedOut, message)
   }
 
   join (channel) {
