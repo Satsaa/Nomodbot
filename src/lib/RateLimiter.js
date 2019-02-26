@@ -1,24 +1,23 @@
 
 /**
- * Enables creating ratelimits for actions  
+ * Enables creating ratelimiting for actions  
  * 
  */
 module.exports = {
   Queue: class RateLimiter {
     /**
-     * Construct a new RateLimiter  
-     * This variant is queue centric
+     * Enables queueing actions within limits
      * @param {Object} options
      * @param {number} options.duration Max age of an entry
-     * @param {number} options.limit Max entries within duration
+     * @param {number} options.limit Max entries within `options.duration`
      * @param {number} options.queueSize Max queued entries
      * @param {number} options.delay Min time between entries
      */
     constructor (options = {}) {
-      this.duration = options.duration || 10000 || 60000
-      this.limit = options.limit || 5 || 30
-      this.queueSize = options.queueSize || null || null
-      this.delay = options.delay || 1000 || 1200
+      this.duration = options.duration || 60000
+      this.limit = options.limit || 30
+      this.queueSize = options.queueSize || null
+      this.delay = options.delay || 1200
 
       this._times = []
       this._callbacks = []
@@ -27,14 +26,13 @@ module.exports = {
     }
 
     /**
-     * Queue execution of a function with optional arguments
+     * Queue execution of `cb` with optional `args`  
      * This entry will be placed last on the queue
      * @param {Function} cb Callback function
-     * @param {any=} args Arguments for the callback function
+     * @param {any=} args Function arguments for `cb`
      */
     queue (cb, ...args) {
       if (this.queueSize !== null && this._callbacks.length + 1 > this.queueSize) {
-        console.log('Max queued entries reached!')
         return
       }
       if (this._callbacks.push({ cb: cb, args: args }) === 1) {
@@ -43,15 +41,14 @@ module.exports = {
     }
 
     /**
-     * Queue execution of a function with optional arguments  
+     * Queue execution of `cb` with optional `args`  
      * This entry will be placed FIRST on the queue
      * @param {Function} cb Callback function
-     * @param {any=} args Arguments for the callback function
+     * @param {any=} args Function arguments for `cb`
      */
     queueFirst (cb, ...args) {
       if (this.queueSize !== null && this._callbacks.length + 1 > this.queueSize) {
         this._callbacks.pop()
-        console.log('Max queued entries reached!')
       }
       if (this._callbacks.unshift({ cb: cb, args: args }) === 1) {
         this._refreshLoop()
@@ -91,30 +88,25 @@ module.exports = {
 
       // if there is more or equal items in array than limit
       if (this._times.length >= this.limit) {
-        // (oldest_message_time + limit_period) - current time // ms until limit is not full anymore
-        console.log((this._times[0] + this.duration) - now)
         return (this._times[0] + this.duration) - now
       }
 
       let lastMsgTime = this._times[this._times.length - 1]
       if (isNaN(lastMsgTime)) lastMsgTime = 0
-      // current_time - last_msg_time > message_delay ? 0 : message_delay - (current_time - last_msg_time)
-      console.log((now - lastMsgTime > this.delay) ? 0 : (this.delay - (now - lastMsgTime)))
       return (now - lastMsgTime > this.delay) ? 0 : (this.delay - (now - lastMsgTime))
     }
   },
 
   Passive: class RateLimiter {
   /**
-   * Construct a new RateLimiter  
-   * This variant has no timers nor queuing  
+   * Enables ratelimiting manually
    *  
    * add() adds current time to an array  
    * next() returns the remaining time until add() can be used without exceeding limits
    * 
    * @param {Object} options
    * @param {number} options.duration Max age of an entry
-   * @param {number} options.limit Max entries within duration
+   * @param {number} options.limit Max entries within `options.duration`
    * @param {number} options.delay Min time between entries
    */
     constructor (options = {}) {
@@ -130,9 +122,9 @@ module.exports = {
     }
 
     /**
-   * Calculate how long untill add() can be used without exceeding ratelimits
-   * @returns {number} Milliseconds
-   */
+     * Calculate how long untill add() can be used without exceeding ratelimits
+     * @returns {number} Milliseconds
+     */
     next () {
       let now = Date.now()
 
@@ -157,10 +149,10 @@ module.exports = {
     }
 
     /**
-   * Calculate how many times add() can be used without exceeding ratelimits  
-   * Calls next() so a bit of overhead
-   * @returns {number} Entries until full
-   */
+     * Calculate how many times add() can be used without exceeding ratelimits  
+     * Calls next() so a bit of overhead
+     * @returns {number} Entries until full
+     */
     remaining () {
       this.next() // Must be called to refresh times
       return this.limit - this._times.length

@@ -21,7 +21,7 @@
 
 /**
  * Parse ircV3 tagged messages  
- * Tries its hardest to give a result... even if the message might be malformed
+ * Tries its hardest to give a result... even if `msg` is malformed
  * @param {string} msg Message to parse
  */
 module.exports = (msg) => {
@@ -29,6 +29,7 @@ module.exports = (msg) => {
   if (msg.length === 0) return null
 
   let result = {
+    /** @type {Object.<string, string|true>} */
     tags: {},
     nick: null,
     user: null,
