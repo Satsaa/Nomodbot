@@ -13,6 +13,10 @@ var msg = '' // Definitely invalid
 
 assert.deepStrictEqual(parser(msg), null)
 
+msg = '                  ' // Space invalid
+
+assert.deepStrictEqual(parser(msg), null)
+
 msg = 'Command' // Single command
 
 assert.deepStrictEqual(parser(msg), {
