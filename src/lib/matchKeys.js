@@ -2,7 +2,7 @@
  * Test if `obj` has all the keys of `matchObj`
  * @param {object} matchObj Object of required keys
  * @param {object} obj Test this object for required keys
- * @param {Object} options
+ * @param {object} options
  * @param {boolean} options.matchValues Whether or not values are matched
  * @param {number} options.maxDepth Return after object depth reaches this
  */

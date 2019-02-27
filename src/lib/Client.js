@@ -8,7 +8,7 @@ const parser = require('./parser')
 module.exports = class TwitchClient {
   /**
    * Twitch client
-   * @param {Object} options
+   * @param {object} options
    * @param {string} options.username Twitch username (lowcase)
    * @param {string} options.password Password? Oauth token: "oauth:<token>"
    * @param {string} options.server Server url. E.G. "irc-ws.chat.twitch.tv"
@@ -54,7 +54,16 @@ module.exports = class TwitchClient {
 
   /**
    * Call `cb` when matching message is received
-   * @param {{cmd?:string|null, nick?:string|null, params?:string[], prefix?:string|null, tags?:{[x:string]:string|true}, user?:string|null}} match Object containing matched keys
+   * @param {object} match Object containing matched keys
+   * @param {string | null} match.cmd Command name
+   * @param {string | null} match.nick Portion before ! in prefix
+   * @param {string[]} match.params Command parameters
+   * @param {string | null} match.prefix Url prefix. Source of message
+   * @param {{ [x: string]: string|true }} match.tags Key values pairs
+   * @param {string | null} match.user Portion before (at) in prefix
+   * 
+   * {cmd?:string|null, nick?:string|null, params?:string[], prefix?:string|null, tags?:{[x:string]:string|true}, user?:string|null}
+   * 
    * @param {boolean} matchValues If values should be matched
    * @param {(timedOut:number, message:number)} cb Function called when matching message is received
    * @param {number} timeout Stop waiting after this many ms and don't callback
