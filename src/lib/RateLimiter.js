@@ -7,7 +7,7 @@ module.exports = {
   Queue: class RateLimiter {
     /**
      * Enables queueing actions within limits
-     * @param {Object} options
+     * @param {object} options
      * @param {number} options.duration Max age of an entry
      * @param {number} options.limit Max entries within `options.duration`
      * @param {number} options.queueSize Max queued entries
@@ -104,7 +104,7 @@ module.exports = {
    * add() adds current time to an array  
    * next() returns the remaining time until add() can be used without exceeding limits
    * 
-   * @param {Object} options
+   * @param {object} options
    * @param {number} options.duration Max age of an entry
    * @param {number} options.limit Max entries within `options.duration`
    * @param {number} options.delay Min time between entries
