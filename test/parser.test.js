@@ -21,9 +21,9 @@ msg = 'Command' // Single command
 
 assert.deepStrictEqual(parser(msg), {
   tags: {},
+  prefix: null,
   nick: null,
   user: null,
-  prefix: null,
   cmd: 'Command',
   params: []
 })
@@ -32,9 +32,9 @@ msg = ' Command ' // Single command with spaces
 
 assert.deepStrictEqual(parser(msg), {
   tags: {},
+  prefix: null,
   nick: null,
   user: null,
-  prefix: null,
   cmd: 'Command',
   params: []
 })
@@ -43,9 +43,9 @@ msg = ':ex.am.ple.com' // Complicated prefix
 
 assert.deepStrictEqual(parser(msg), {
   tags: {},
+  prefix: 'ex.am.ple.com',
   nick: null,
   user: null,
-  prefix: 'ex.am.ple.com',
   cmd: null,
   params: []
 })
@@ -59,9 +59,9 @@ assert.deepStrictEqual(parser(msg), {
     c: 'd',
     d: '\\ \r\n;'
   },
+  prefix: null,
   nick: null,
   user: null,
-  prefix: null,
   cmd: null,
   params: []
 })
@@ -72,9 +72,9 @@ assert.deepStrictEqual(parser(msg), {
   tags: {
     'escapedVar\\s\\:\\\n\\r': 'asd'
   },
+  prefix: null,
   nick: null,
   user: null,
-  prefix: null,
   cmd: null,
   params: []
 })
@@ -85,9 +85,9 @@ assert.deepStrictEqual(parser(msg), {
   tags: {
     a: ';'
   },
+  prefix: 'nick!user@ex.com',
   nick: 'nick',
   user: 'user',
-  prefix: 'nick!user@ex.com',
   cmd: null,
   params: []
 })
@@ -98,9 +98,9 @@ assert.deepStrictEqual(parser(msg), {
   tags: {
     a: ';'
   },
+  prefix: 'nick!user@ex.com',
   nick: 'nick',
   user: 'user',
-  prefix: 'nick!user@ex.com',
   cmd: 'cmd',
   params: [
     'param0',
@@ -115,9 +115,9 @@ assert.deepStrictEqual(parser(msg), {
   tags: {
     a: ';'
   },
+  prefix: 'nick!user@ex.com',
   nick: 'nick',
   user: 'user',
-  prefix: 'nick!user@ex.com',
   cmd: 'cmd',
   params: [
     'param0',
@@ -129,9 +129,9 @@ msg = ':user@ex.com cmd param0' // Prefix with user but no nick
 
 assert.deepStrictEqual(parser(msg), {
   tags: {},
+  prefix: 'user@ex.com',
   nick: null,
   user: 'user',
-  prefix: 'user@ex.com',
   cmd: 'cmd',
   params: [
     'param0'
@@ -142,9 +142,9 @@ msg = ':nick!ex.com cmd param0' // Prefix with nick but no user
 
 assert.deepStrictEqual(parser(msg), {
   tags: {},
+  prefix: 'nick!ex.com',
   nick: 'nick',
   user: null,
-  prefix: 'nick!ex.com',
   cmd: 'cmd',
   params: [
     'param0'
@@ -155,9 +155,9 @@ msg = 'cmd param0 param1 param2' // Command with parameters
 
 assert.deepStrictEqual(parser(msg), {
   tags: {},
+  prefix: null,
   nick: null,
   user: null,
-  prefix: null,
   cmd: 'cmd',
   params: [
     'param0',
@@ -170,9 +170,9 @@ msg = 'cmd paramAndSpace ' // Command with a parameter that has a space after it
 
 assert.deepStrictEqual(parser(msg), {
   tags: {},
+  prefix: null,
   nick: null,
   user: null,
-  prefix: null,
   cmd: 'cmd',
   params: [
     'paramAndSpace'
@@ -183,9 +183,9 @@ msg = 'cmd :paramAndSpace ' // Command with a parameter that has a space after i
 
 assert.deepStrictEqual(parser(msg), {
   tags: {},
+  prefix: null,
   nick: null,
   user: null,
-  prefix: null,
   cmd: 'cmd',
   params: [
     'paramAndSpace '
@@ -201,9 +201,9 @@ assert.deepStrictEqual(parser(msg), {
     'target-user-id': '147764434',
     'tmi-sent-ts': '1550286954898'
   },
+  prefix: 'tmi.twitch.tv',
   nick: null,
   user: null,
-  prefix: 'tmi.twitch.tv',
   cmd: 'CLEARCHAT',
   params: [
     '#satsaa',

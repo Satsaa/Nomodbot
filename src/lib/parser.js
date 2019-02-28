@@ -31,12 +31,12 @@ module.exports = (msg) => {
 
   /**
    * @typedef {object} IrcMessage Object form of an IRCv3 string message
-   * @property {string | null} cmd Command name
-   * @property {string | null} nick Portion before ! in prefix
-   * @property {string[]} params Command parameters
-   * @property {string | null} prefix Url prefix. Source of message
    * @property {{ [x: string]: string|true }} tags Key values pairs
+   * @property {string | null} prefix Url prefix. Source of message
+   * @property {string | null} nick Portion before ! in prefix
    * @property {string | null} user Portion before (at) in prefix
+   * @property {string | null} cmd Command name
+   * @property {string[]} params Command parameters
    */
 
   /**
