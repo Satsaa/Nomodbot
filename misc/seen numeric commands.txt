@@ -1,0 +1,10 @@
+001 RPL_WELCOME               nomodbot :Welcome, GLHF
+002 RPL_YOURHOST              nomodbot :Your host is tmi.twitch.tv
+003 RPL_CREATED               nomodbot :This server is rather new
+004 RPL_MYINFO                nomodbot -
+353 RPL_NAMREPLY              nomodbot = #satsaa nomodbot
+366 RPL_ENDOFNAMES            nomodbot #satsaa :End of /NAMES list
+372 RPL_MOTD                  nomodbot :You are in a maze of twisty passages, all alike.
+375 RPL_MOTDSTART             nomodbot -
+376 RPL_ENDOFMOTD             nomodbot >
+421 ERR_UNKNOWNCOMMAND        Unknown command
