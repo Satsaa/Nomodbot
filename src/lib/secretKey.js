@@ -4,7 +4,6 @@
 var cache = {}
 
 module.exports = {
-
   /**
    * Return key value if it exists in JSON `file`  
    * Creates `file` and the key if needed. Created keys are set to null
