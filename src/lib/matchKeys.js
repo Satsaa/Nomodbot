@@ -1,10 +1,12 @@
 /**
- * Test if `obj` has all the keys of `matchObj`
- * @param {object} matchObj Object of required keys
- * @param {object} obj Test this object for required keys
- * @param {Object} options
+ * Test if `obj` has all the keys of `matchObj`  
+ * Considers arrays objects with indexes as keys [5,4,3] = {0:5,1:4,2:3}
+ * @param {object | array} matchObj Object of required keys
+ * @param {object | array} obj Test this object for required keys
+ * @param {object} options
  * @param {boolean} options.matchValues Whether or not values are matched
- * @param {number} options.maxDepth Return after object depth reaches this
+ * @param {number} options.ignoreUndefined If a value in matchObj is undefined, the value is not matched when `matchValues` is used
+ * @param {number} options.maxDepth Maximum depth checked. Deeper objects are ignored
  */
 module.exports = (matchObj, obj, options = {}) => {
   var i = 0
@@ -14,26 +16,30 @@ module.exports = (matchObj, obj, options = {}) => {
   function testKeys (matchObj, obj) {
     if (typeof options.maxDepth === 'number') {
       i++
-      if (i > options.maxDepth) return
+      if (i > options.maxDepth) return true
     }
     for (var key in matchObj) {
-      if (typeof obj[key] === 'undefined') return false // key didnt exist in obj
+      var matchKey = matchObj[key]
+      var objKey = obj[key]
+      if (typeof objKey === 'undefined') return false // key didnt exist in obj
       // test that values match
       if (options.matchValues) {
-        if (matchObj[key] !== obj[key]) {
-          if (typeof matchObj[key] !== 'object' || typeof obj[key] !== 'object') {
-            return false
+        if (!(options.ignoreUndefined && matchKey === undefined)) {
+          if (matchKey !== objKey) {
+            if (typeof matchKey !== 'object' || typeof objKey !== 'object') {
+              return false
+            }
           }
         }
       }
       // test that keys exist
-      if (typeof matchObj[key] === 'object' && matchObj[key] !== null) {
-        if (typeof obj[key] !== 'object' && obj[key] !== null) {
-          for (var k in matchObj[key]) {
+      if (typeof matchKey === 'object' && matchKey !== null) {
+        if (typeof objKey !== 'object' && objKey !== null) {
+          for (var k in matchKey) {
             return false
           }
         }
-        if (!testKeys(matchObj[key], obj[key])) return false
+        if (!testKeys(matchKey, objKey)) return false
       }
     }
     return true

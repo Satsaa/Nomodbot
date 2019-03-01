@@ -20,22 +20,35 @@
 */
 
 /**
- * Parse ircV3 tagged messages  
+ * Parse IRCv3 tagged messages  
  * Tries its hardest to give a result... even if `msg` is malformed
  * @param {string} msg Message to parse
+ * @returns {IrcMessage} result
  */
 module.exports = (msg) => {
   msg = msg.trimStart()
   if (msg.length === 0) return null
 
+  /**
+   * @typedef {object} IrcMessage Object form of an IRCv3 string message
+   * @property {{ [x: string]: string|true }} tags Key values pairs
+   * @property {string | null} prefix Url prefix. Source of message
+   * @property {string | null} nick Portion before ! in prefix
+   * @property {string | null} user Portion before (at) in prefix
+   * @property {string | null} cmd Command name
+   * @property {string[]} params Command parameters
+   */
+
+  /**
+   * @type {IrcMessage}
+   */
   let result = {
-    /** @type {Object.<string, string|true>} */
-    tags: {},
-    nick: null,
-    user: null,
-    prefix: null,
     cmd: null,
-    params: []
+    nick: null,
+    params: [],
+    prefix: null,
+    tags: {},
+    user: null
   }
 
   let i = 0

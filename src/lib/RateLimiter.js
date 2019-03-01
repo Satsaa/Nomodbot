@@ -7,7 +7,7 @@ module.exports = {
   Queue: class RateLimiter {
     /**
      * Enables queueing actions within limits
-     * @param {Object} options
+     * @param {object} options
      * @param {number} options.duration Max age of an entry
      * @param {number} options.limit Max entries within `options.duration`
      * @param {number} options.queueSize Max queued entries
@@ -26,9 +26,9 @@ module.exports = {
     }
 
     /**
-     * Queue execution of `cb` with optional `args`  
+     * Queue calling of `cb` with optional `args`  
      * This entry will be placed last on the queue
-     * @param {Function} cb Callback function
+     * @param {(...args)} cb Callback function
      * @param {any=} args Function arguments for `cb`
      */
     queue (cb, ...args) {
@@ -41,9 +41,9 @@ module.exports = {
     }
 
     /**
-     * Queue execution of `cb` with optional `args`  
+     * Queue calling of `cb` with optional `args`  
      * This entry will be placed FIRST on the queue
-     * @param {Function} cb Callback function
+     * @param {(...args)} cb Callback function
      * @param {any=} args Function arguments for `cb`
      */
     queueFirst (cb, ...args) {
@@ -104,7 +104,7 @@ module.exports = {
    * add() adds current time to an array  
    * next() returns the remaining time until add() can be used without exceeding limits
    * 
-   * @param {Object} options
+   * @param {object} options
    * @param {number} options.duration Max age of an entry
    * @param {number} options.limit Max entries within `options.duration`
    * @param {number} options.delay Min time between entries

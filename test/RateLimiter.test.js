@@ -33,7 +33,7 @@ assert.strictEqual(rlQueue._callbacks.length, 5)
 
 rlQueue.limit = 999
 
-// Test for execution of callbacks
+// Test for calling of callbacks
 var test
 
 rlQueue.queueFirst(() => { test = 777 })
