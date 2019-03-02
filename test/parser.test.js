@@ -1,6 +1,6 @@
 const { PerformanceObserver, performance } = require('perf_hooks')
 const assert = require('assert')
-const parser = require('../src/lib/parser')
+const parser = require('../src/lib/parser').default
 
 /*
 Test most situations that parser.js may encounter 
@@ -228,3 +228,4 @@ let end = performance.now()
 console.log(`${Math.round(100000 * (1 / (end - start)))}k parses/sec wow!`)
 
 console.log('No errors found in parser')
+console.log('\n')

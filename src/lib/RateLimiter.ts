@@ -1,19 +1,34 @@
 
+
+export interface RateLimiterOptions {
+  /** Max age of an entry */
+  duration?: number,
+  /** Max entries within `options.duration` */
+  limit?: number,
+  /** Max queued entries */
+  queueSize?: number | null,
+  /** Min time between entries */
+  delay?: number
+}
+
 /**
- * Enables creating ratelimiting for actions  
- * 
+ * Enables creating queuing for actions and keeping rates within limits  
  */
-module.exports = {
-  Queue: class RateLimiter {
+export default class RateLimiter {
+
+    duration: number;
+    limit: number;
+    queueSize: number | null;
+    delay: number;
+    _times: number[];
+    _callbacks: {cb:(...args:any[]) => void, args: any[] }[];
+
     /**
      * Enables queueing actions within limits
-     * @param {object} options
-     * @param {number} options.duration Max age of an entry
-     * @param {number} options.limit Max entries within `options.duration`
-     * @param {number} options.queueSize Max queued entries
-     * @param {number} options.delay Min time between entries
+     * @param options
      */
-    constructor (options = {}) {
+    constructor (options?: RateLimiterOptions) {
+      if (!options) options = {}
       this.duration = options.duration || 60000
       this.limit = options.limit || 30
       this.queueSize = options.queueSize || null
@@ -21,62 +36,60 @@ module.exports = {
 
       this._times = []
       this._callbacks = []
-      this._timer = null
-      this._active = false
     }
 
     /**
      * Queue calling of `cb` with optional `args`  
      * This entry will be placed last on the queue
-     * @param {(...args)} cb Callback function
-     * @param {any=} args Function arguments for `cb`
+     * @param cb Callback function
+     * @param args Function arguments for `cb`
      */
-    queue (cb, ...args) {
+    queue (cb: (...args:any[]) => void, ...args: any[]) {
       if (this.queueSize !== null && this._callbacks.length + 1 > this.queueSize) {
         return
       }
       if (this._callbacks.push({ cb: cb, args: args }) === 1) {
-        this._refreshLoop()
+        this.refreshLoop()
       }
     }
 
     /**
      * Queue calling of `cb` with optional `args`  
      * This entry will be placed FIRST on the queue
-     * @param {(...args)} cb Callback function
-     * @param {any=} args Function arguments for `cb`
+     * @param cb Callback function
+     * @param args Function arguments for `cb`
      */
-    queueFirst (cb, ...args) {
+    queueFirst (cb: (...args:any[]) => void, ...args: any[]) {
       if (this.queueSize !== null && this._callbacks.length + 1 > this.queueSize) {
         this._callbacks.pop()
       }
       if (this._callbacks.unshift({ cb: cb, args: args }) === 1) {
-        this._refreshLoop()
+        this.refreshLoop()
       }
     }
 
-    _loop () {
+    private loop () {
       this._times.push(Date.now())
       this._callbacks[0].cb(...this._callbacks[0].args)
       this._callbacks.shift()
       if (this._callbacks.length > 0) {
         setTimeout(() => {
-          this._loop()
-        }, this._getTimeout())
+          this.loop()
+        }, this.getTimeout())
       }
     }
 
     // Call when new entry added
-    _refreshLoop () {
+    private refreshLoop () {
       if (this._callbacks.length === 1) {
         setTimeout(() => {
-          this._loop()
-        }, this._getTimeout())
+          this.loop()
+        }, this.getTimeout())
       }
     }
 
-    _getTimeout () {
-      let now = Date.now()
+    private getTimeout () {
+      const now = Date.now()
 
       // Remove old entries
       for (let i = 0; i < this._times.length; i++) {
@@ -95,21 +108,24 @@ module.exports = {
       if (isNaN(lastMsgTime)) lastMsgTime = 0
       return (now - lastMsgTime > this.delay) ? 0 : (this.delay - (now - lastMsgTime))
     }
-  },
+  }
 
-  Passive: class RateLimiter {
+export class ManualRateLimiter {
+
+    duration: any;
+    limit: any;
+    delay: any;
+    _times: number[];
+
   /**
-   * Enables ratelimiting manually
-   *  
-   * add() adds current time to an array  
-   * next() returns the remaining time until add() can be used without exceeding limits
+   * Helps manual ratelimiting
    * 
-   * @param {object} options
-   * @param {number} options.duration Max age of an entry
-   * @param {number} options.limit Max entries within `options.duration`
-   * @param {number} options.delay Min time between entries
+   * `RateLimiter.add()` adds current time to an array  
+   * `RateLimiter.next()` returns the remaining time until `add()` can be used without exceeding limits
+   * @deprecated
    */
-    constructor (options = {}) {
+    constructor (options?: RateLimiterOptions) {
+      if (!options) options = {}
       this.duration = options.duration || 6000
       this.limit = options.limit || 10
       this.delay = options.delay || 0
@@ -117,16 +133,16 @@ module.exports = {
       this._times = []
     }
 
-    add (ms = Date.now()) {
+    add (ms = Date.now()):void {
       this._times.push(ms)
     }
 
     /**
-     * Calculate how long untill add() can be used without exceeding ratelimits
-     * @returns {number} Milliseconds
+     * Calculate how long until add() can be used without exceeding ratelimits
+     * @returns Milliseconds
      */
-    next () {
-      let now = Date.now()
+    next ():number {
+      const now = Date.now()
 
       // Remove times older than duration
       for (let i = 0; i < this._times.length; i++) {
@@ -141,9 +157,9 @@ module.exports = {
       // Calculate needed wait for delay
         return this._times.length ? (this._times[this._times.length - 1] + this.delay) - now : 0
       } else {
-        let exceeds = this._times.length - this.limit
-        let delayTest = (this._times[this._times.length - 1] + this.delay) - now // test only for delay
-        let limitTest = (this._times[0 + exceeds] + this.duration) - now // test all but delay
+        const exceeds = this._times.length - this.limit
+        const delayTest = (this._times[this._times.length - 1] + this.delay) - now // test only for delay
+        const limitTest = (this._times[0 + exceeds] + this.duration) - now // test all but delay
         return delayTest > limitTest ? delayTest : limitTest
       }
     }
@@ -151,11 +167,10 @@ module.exports = {
     /**
      * Calculate how many times add() can be used without exceeding ratelimits  
      * Calls next() so a bit of overhead
-     * @returns {number} Entries until full
+     * @returns Entries until full
      */
-    remaining () {
+    remaining ():number {
       this.next() // Must be called to refresh times
       return this.limit - this._times.length
     }
   }
-}

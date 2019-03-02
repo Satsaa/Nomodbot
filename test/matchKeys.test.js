@@ -10,7 +10,7 @@ Tests most intended use cases
 
 console.log('Testing "../src/lib/matchKeys"')
 
-var matchKeys = require('../src/lib/matchKeys')
+var matchKeys = require('../src/lib/matchKeys').default
 
 assert.strictEqual(matchKeys({}, {}), true)
 assert.strictEqual(matchKeys({ a: 1 }, { a: 1 }), true)
@@ -87,3 +87,4 @@ assert.strictEqual(matchKeys({
 assert.strictEqual(matchKeys(new Date(), new Date()), true)
 
 console.log('No errors found in matchKeys.js')
+console.log('\n')
