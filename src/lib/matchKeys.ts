@@ -27,8 +27,8 @@ export default (matchObj: {[x:string]:any}, obj: {[x: string]: any}, options?:Ma
       if (i > options.maxDepth) return true
     }
     for (let key in matchObj) {
-      let matchKey = matchObj[key]
-      let objKey = obj[key]
+      const matchKey = matchObj[key]
+      const objKey = obj[key]
       if (typeof objKey === 'undefined') return false // key didnt exist in obj
       // test that values match
       if (options.matchValues) {

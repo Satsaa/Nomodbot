@@ -35,3 +35,4 @@ assert.strictEqual(keys.getKey('./test/test_keys_temp.json', 'testkey0'), null) 
 
 fs.unlinkSync('./test/test_keys_temp.json') // Delete file
 console.log('No errors found in secretKey.js')
+console.log('\n')

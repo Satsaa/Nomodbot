@@ -36,19 +36,19 @@ export interface IrcMessage {
  * Tries its hardest to give a result... even if `msg` is malformed
  * @param msg Message to parse
  */
-export default function parse (msg: string): IrcMessage {
+export default function parse (msg: string): IrcMessage | null {
+
+  msg = msg.trimLeft()
+  if (msg.length === 0) return null
 
   const result: IrcMessage = {
-    tags: {a:true},
+    tags: {},
     prefix: null,
     nick: null,
     user: null,
     cmd: null,
     params: []
   }
-
-  msg = msg.trimLeft()
-  if (msg.length === 0) return result
   
   let i = 0
 
