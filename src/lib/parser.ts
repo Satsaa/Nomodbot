@@ -19,10 +19,8 @@
 ---------------------------------------------
 */
 
-
-
 export interface IrcMessage {
-  tags: { [x: string]: string|true },
+  tags: { [x: string]: string | true },
   prefix: string | null,
   nick: string | null,
   user: string | null,
@@ -30,50 +28,51 @@ export interface IrcMessage {
   params: string[]
 }
 
-
 /**
  * Parse IRCv3 tagged messages  
  * Tries its hardest to give a result... even if `msg` is malformed
  * @param msg Message to parse
  */
-export default function parse (msg: string): IrcMessage | null {
+export default function parse(msg: string): IrcMessage | null {
 
   msg = msg.trimLeft()
   if (msg.length === 0) return null
 
   const result: IrcMessage = {
-    tags: {},
-    prefix: null,
-    nick: null,
-    user: null,
     cmd: null,
-    params: []
+    nick: null,
+    params: [],
+    prefix: null,
+    tags: {},
+    user: null,
   }
-  
+
   let i = 0
 
   if (msg.charAt(i) === '@') {
     i++
-    // Tags | @strValue=str;truthyVar;zeroLengthStr= 
+    // Tags | @strValue=str;truthyVar;zeroLengthStr=
     let nextSpace = msg.indexOf(' ')
     if (nextSpace === -1) nextSpace = msg.length
+
+    // find next '=', ';' or ' ' and slice keys and values based on those
     while (i < nextSpace) {
-      // find next '=', ';' or ' ' and slice keys and values based on those
       let nextEquals = msg.indexOf('=', i)
       let nextSemiColon = msg.indexOf(';', i)
       if (nextEquals === -1) { nextEquals = nextSpace }
       if (nextSemiColon === -1) { nextSemiColon = nextSpace }
-      const minVal = Math.min(nextEquals, nextSpace, nextSemiColon)
-      const lessMinVal = Math.min(nextSpace, nextSemiColon)
-      // let key = msg.slice(i, minVal)
-      let val = msg.slice(minVal + 1, lessMinVal)
+      const minIndex = Math.min(nextEquals, nextSpace, nextSemiColon)
+      const semiMinIndex = Math.min(nextSpace, nextSemiColon)
 
-      // Handle escaped characters | |\|;|\n|\r|
-      // if (key.indexOf('\\') !== -1) key = key.replace(/\\:/g, ';').replace(/\\s/g, ' ').replace(/\\\\/g, '\\').replace(/\\r/g, '\r').replace(/\\n/g, '\n')
-      if (val.indexOf('\\') !== -1) val = val.replace(/\\:/g, ';').replace(/\\s/g, ' ').replace(/\\\\/g, '\\').replace(/\\r/g, '\r').replace(/\\n/g, '\n')
+      let val = msg.slice(minIndex + 1, semiMinIndex)
 
-      result.tags[msg.slice(i, minVal)] = (val === '' && msg.charAt(lessMinVal - 1) !== '=') ? true : val
-      i = lessMinVal + 1
+      // Handle escaped characters: ' ' '/' ';' '\n' '\r'
+      if (val.indexOf('\\') !== -1) {
+        val = val.replace(/\\s/g, ' ').replace(/\\:/g, ';').replace(/\\\\/g, '\\').replace(/\\n/g, '\n').replace(/\\r/g, '\r')
+      }
+
+      result.tags[msg.slice(i, minIndex)] = (val === '' && msg.charAt(semiMinIndex - 1) !== '=') ? true : val
+      i = semiMinIndex + 1
     }
   }
 
@@ -86,7 +85,9 @@ export default function parse (msg: string): IrcMessage | null {
     const prefixNextExclam = result.prefix.indexOf('!')
     if (prefixNextExclam !== -1) result.nick = result.prefix.slice(0, prefixNextExclam)
     const prefixNextAt = result.prefix.indexOf('@')
-    if (prefixNextAt !== -1) result.user = result.prefix.slice(prefixNextExclam === -1 ? 0 : prefixNextExclam + 1, prefixNextAt)
+    if (prefixNextAt !== -1) {
+      result.user = result.prefix.slice(prefixNextExclam === -1 ? 0 : prefixNextExclam + 1, prefixNextAt)
+    }
     i = nextSpace
   }
 

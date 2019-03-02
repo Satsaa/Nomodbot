@@ -1,19 +1,19 @@
-import * as secretKey from './lib/secretKey';
-import Client from './lib/Client';
-// client.connect()
+import Client from './lib/Client'
+import * as secretKey from './lib/secretKey'
 
 export default class Bot {
-  
-  client: Client;
+
+  public client: Client
 
   constructor() {
     this.client = new Client({
+      password: secretKey.getKey('./src/cfg/keys.json', 'twitch', 'password'),
       username: secretKey.getKey('./src/cfg/keys.json', 'twitch', 'username'),
-      password: secretKey.getKey('./src/cfg/keys.json', 'twitch', 'password')
     })
-    
+
+// tslint:disable-next-line: no-empty
     setTimeout(() => {
     }, 10000000)
   }
-  
+
 }

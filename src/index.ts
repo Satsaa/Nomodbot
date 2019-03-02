@@ -1,3 +1,3 @@
 import Bot from './bot'
-let bot = new Bot()
+const bot = new Bot()
 bot.client.connect()

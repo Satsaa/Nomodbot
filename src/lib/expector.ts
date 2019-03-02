@@ -1,24 +1,26 @@
 
-import matchKeys, { MatchKeysOptions } from './matchKeys';
+import matchKeys, { MatchKeysOptions } from './matchKeys'
 
 export interface ExpectOptions {
   /** Timeout after this ms and callback with `expired` = true. Timeouts are checked on message received */
-  timeout?:null | number,
+  timeout?: null | number,
   /** Whether or not to return after first match */
-  once?:boolean,
+  once?: boolean,
   /** Options on how matching is done */
-  matchOptions?:MatchKeysOptions
+  matchOptions?: MatchKeysOptions
 }
 
 /**
- * The `Expector` is used to check if an object sent through `Expector.receive`  matches any entries created through `Expector.expect` and calls the supplied callback
+ * The `Expector` is used to check if an object sent through
+ * `Expector.receive` matches any entries created through
+ * `Expector.expect` and calls the supplied callback
  */
 export default class Expector {
 
-  private id: number;
-  private entries: any[];
+  private id: number
+  private entries: any[]
 
-  constructor () {
+  constructor() {
     this.id = 1
     this.entries = []
   }
@@ -27,14 +29,14 @@ export default class Expector {
    * Test all entries against `testObj`
    * @param tesObj 
    */
-  receive (tesObj: {[x:string]:any}) {
+  public receive(tesObj: {[x: string]: any}) {
     if (this.entries.length) {
       for (let i = 0; i < this.entries.length; i++) {
         const entry = this.entries[i]
 
         // Test for match
         if (matchKeys(entry.match, tesObj, entry.matchOptions)) {
-          console.log(`MATCHED`)
+          console.log('MATCHED')
           entry.cb(false, tesObj)
           if (entry.once) {
             if (entry.timeout) clearTimeout(entry.timeout)
@@ -57,22 +59,22 @@ export default class Expector {
    * 
    * @returns Identifier for this entry
    */
-  expect (match: {[x:string]:any}, options: ExpectOptions, cb: (expired:boolean, message?:string) => void): number {
+  public expect(match: {[x: string]: any}, options: ExpectOptions, cb: (expired: boolean, message?: string) => void): number {
     if (typeof options === 'function') {
       cb = options
       options = {}
     }
     const id = this.id++
     this.entries.push({
-      id: id,
-      match: match,
-      cb: cb,
+      cb,
+      id,
+      match,
+      matchOptions: options.matchOptions || {once: true, matchValues: true, timeout: null},
       once: options.once === undefined ? true : options.once,
       timeout: !options.timeout ? null : setTimeout(() => {
         cb(true)
         this.unExpect(id)
       }, options.timeout),
-      matchOptions: options.matchOptions || {once:true, matchValues: true, timeout: null}
     })
     return id
   }
@@ -81,11 +83,11 @@ export default class Expector {
    * Delete entries
    * @param ids
    */
-  unExpect (ids: number | number[]) {
+  public unExpect(ids: number | number[]) {
     if (typeof ids === 'number') ids = [ids]
-    ids.forEach(id => {
+    ids.forEach((id) => {
       const index = this.entries.indexOf(id)
-      if (index !== -1) delete this.entries[index]
+      if (index !== -1) this.entries.splice(index)
     })
   }
 }

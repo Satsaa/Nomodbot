@@ -1,11 +1,11 @@
 
 export interface MatchKeysOptions {
   /** Whether or not values are matched */
-  matchValues?:boolean,
+  matchValues?: boolean,
   /** If a value in matchObj is undefined, the value is not matched when `matchValues` is used */
-  ignoreUndefined?:boolean,
+  ignoreUndefined?: boolean,
   /** Maximum depth checked. Deeper objects are ignored */
-  maxDepth?:number
+  maxDepth?: number
 }
 
 /**
@@ -15,35 +15,32 @@ export interface MatchKeysOptions {
  * @param obj Test this object for required keys
  * @param options
  */
-export default (matchObj: {[x:string]:any}, obj: {[x: string]: any}, options?:MatchKeysOptions) => {
-  if (typeof options === "undefined") options = {}
+export default (matchObj: {[x: string]: any}, obj: {[x: string]: any}, options?: MatchKeysOptions) => {
+  if (typeof options === 'undefined') options = {}
   let i = 0
 
   return testKeys(matchObj, obj, options)
 
-  function testKeys (matchObj: {[x:string]:any}, obj: {[x:string]:any}, options: MatchKeysOptions) {
+  function testKeys(matchObj: {[x: string]: any}, obj: {[x: string]: any}, options: MatchKeysOptions) {
     if (typeof options.maxDepth === 'number') {
       i++
       if (i > options.maxDepth) return true
     }
-    for (let key in matchObj) {
+    for (const key in matchObj) {
       const matchKey = matchObj[key]
       const objKey = obj[key]
       if (typeof objKey === 'undefined') return false // key didnt exist in obj
       // test that values match
-      if (options.matchValues) {
-        if (!(options.ignoreUndefined && matchKey === undefined)) {
-          if (matchKey !== objKey) {
-            if (typeof matchKey !== 'object' || typeof objKey !== 'object') {
-              return false
-            }
-          }
-        }
+      if ((options.matchValues)                                             // Test values if chosen
+      && (!options.ignoreUndefined || matchKey !== undefined)               // Ignore undefined values if chosen
+      && (matchKey !== objKey)                                              // Check if values don't match
+      && (typeof matchKey !== 'object' || typeof objKey !== 'object')) {    // Check that both are not objects
+        return false
       }
       // test that keys exist
       if (typeof matchKey === 'object' && matchKey !== null) {
         if (typeof objKey !== 'object' && objKey !== null) {
-          for (let k in matchKey) {
+          for (const k in matchKey) {
             return false
           }
         }

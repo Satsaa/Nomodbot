@@ -228,4 +228,4 @@ let end = performance.now()
 console.log(`${Math.round(100000 * (1 / (end - start)))}k parses/sec wow!`)
 
 console.log('No errors found in parser')
-console.log('\n')
+console.log('')
