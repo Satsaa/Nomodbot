@@ -19,38 +19,37 @@
 ---------------------------------------------
 */
 
+
+
+export interface IrcMessage {
+  tags: { [x: string]: string|true },
+  prefix: string | null,
+  nick: string | null,
+  user: string | null,
+  cmd: string | null,
+  params: string[]
+}
+
+
 /**
  * Parse IRCv3 tagged messages  
  * Tries its hardest to give a result... even if `msg` is malformed
- * @param {string} msg Message to parse
- * @returns {IrcMessage} result
+ * @param msg Message to parse
  */
-module.exports = (msg) => {
-  msg = msg.trimStart()
-  if (msg.length === 0) return null
+export default function parse (msg: string): IrcMessage {
 
-  /**
-   * @typedef {object} IrcMessage Object form of an IRCv3 string message
-   * @property {{ [x: string]: string|true }} tags Key values pairs
-   * @property {string | null} prefix Url prefix. Source of message
-   * @property {string | null} nick Portion before ! in prefix
-   * @property {string | null} user Portion before (at) in prefix
-   * @property {string | null} cmd Command name
-   * @property {string[]} params Command parameters
-   */
-
-  /**
-   * @type {IrcMessage}
-   */
-  let result = {
-    cmd: null,
-    nick: null,
-    params: [],
+  const result: IrcMessage = {
+    tags: {a:true},
     prefix: null,
-    tags: {},
-    user: null
+    nick: null,
+    user: null,
+    cmd: null,
+    params: []
   }
 
+  msg = msg.trimLeft()
+  if (msg.length === 0) return result
+  
   let i = 0
 
   if (msg.charAt(i) === '@') {
@@ -58,16 +57,14 @@ module.exports = (msg) => {
     // Tags | @strValue=str;truthyVar;zeroLengthStr= 
     let nextSpace = msg.indexOf(' ')
     if (nextSpace === -1) nextSpace = msg.length
-    let nextEquals = 0
-    let nextSemiColon = 0
     while (i < nextSpace) {
       // find next '=', ';' or ' ' and slice keys and values based on those
-      nextEquals = msg.indexOf('=', i)
-      nextSemiColon = msg.indexOf(';', i)
+      let nextEquals = msg.indexOf('=', i)
+      let nextSemiColon = msg.indexOf(';', i)
       if (nextEquals === -1) { nextEquals = nextSpace }
       if (nextSemiColon === -1) { nextSemiColon = nextSpace }
-      let minVal = Math.min(nextEquals, nextSpace, nextSemiColon)
-      let lessMinVal = Math.min(nextSpace, nextSemiColon)
+      const minVal = Math.min(nextEquals, nextSpace, nextSemiColon)
+      const lessMinVal = Math.min(nextSpace, nextSemiColon)
       // let key = msg.slice(i, minVal)
       let val = msg.slice(minVal + 1, lessMinVal)
 
@@ -75,8 +72,7 @@ module.exports = (msg) => {
       // if (key.indexOf('\\') !== -1) key = key.replace(/\\:/g, ';').replace(/\\s/g, ' ').replace(/\\\\/g, '\\').replace(/\\r/g, '\r').replace(/\\n/g, '\n')
       if (val.indexOf('\\') !== -1) val = val.replace(/\\:/g, ';').replace(/\\s/g, ' ').replace(/\\\\/g, '\\').replace(/\\r/g, '\r').replace(/\\n/g, '\n')
 
-      if (val === '' && msg.charAt(lessMinVal - 1) !== '=') val = true
-      result.tags[msg.slice(i, minVal)] = val
+      result.tags[msg.slice(i, minVal)] = (val === '' && msg.charAt(lessMinVal - 1) !== '=') ? true : val
       i = lessMinVal + 1
     }
   }
@@ -87,9 +83,9 @@ module.exports = (msg) => {
   // Prefix and its user and nick | nick!user@example.com
   if (msg.charAt(i) === ':') {
     result.prefix = msg.slice(i + 1, nextSpace)
-    let prefixNextExclam = result.prefix.indexOf('!')
+    const prefixNextExclam = result.prefix.indexOf('!')
     if (prefixNextExclam !== -1) result.nick = result.prefix.slice(0, prefixNextExclam)
-    let prefixNextAt = result.prefix.indexOf('@')
+    const prefixNextAt = result.prefix.indexOf('@')
     if (prefixNextAt !== -1) result.user = result.prefix.slice(prefixNextExclam === -1 ? 0 : prefixNextExclam + 1, prefixNextAt)
     i = nextSpace
   }
