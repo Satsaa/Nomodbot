@@ -1,32 +1,29 @@
 
 /** Returns a random integer betweent `min` and `max`
- * @param {number} min Minimum possible output
- * @param {number} max Maximum possible output
+ * @param min Minimum possible output
+ * @param max Maximum possible output
  */
-function randomInt (min, max) {
+export function randomInt (min: number, max: number) {
   min = Math.ceil(min)
   max = Math.floor(max)
   return Math.floor(Math.random() * (max - min)) + min // The maximum is exclusive and the minimum is inclusive
 }
-module.exports.randomInt = randomInt
 
 /**
  * Returns first value that is not undefined
- * @param {...any} values
+ * @param values
  */
-function get (...values) {
+export function get (...values: any[]) {
   for (let i = 0; i < values.length; i++) {
     if (values[i] !== undefined) return values[i]
   }
 }
-module.exports.get = get
 
 /** Returns `singular` or `plural` based on `value`
- * @param {number | string} value If this is 1 or '1' `singular` is returned
- * @param {string} singular Singular form
- * @param {string} [plural] Plural form. Default is `singular` + 's'
+ * @param value If this is 1 or '1' `singular` is returned
+ * @param singular Singular form
+ * @param plural Plural form. Default is `singular` + 's'
  */
-function plural (value, singular, plural) {
+export function plural (value: string | number, singular: string, plural?: string) {
   return (value === 1 || value === '1' ? singular : get(plural, singular + 's'))
 }
-module.exports.plural = plural
