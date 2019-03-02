@@ -72,7 +72,7 @@ export default class Expector {
         cb(true)
         this.unExpect(id)
       }, options.timeout),
-      matchOptions: options.matchOptions || {}
+      matchOptions: options.matchOptions || {once:true, matchValues: true, timeout: null}
     })
     return id
   }

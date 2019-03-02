@@ -1,3 +1,3 @@
-import Bot from './src/bot'
+import Bot from './bot'
 let bot = new Bot()
 bot.client.connect()

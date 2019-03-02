@@ -16,9 +16,10 @@ var duration = 100
 var limit = 3
 var delay = 50
 
-var rateLimiter = require('../src/lib/rateLimiter')
+var RateLimiter = require('../src/lib/rateLimiter').default
+var ManualRateLimiter = require('../src/lib/rateLimiter').ManualRateLimiter
 
-var rlQueue = new rateLimiter.Queue({ duration: duration, limit: limit, delay: delay, queueSize: 1 })
+var rlQueue = new RateLimiter({ duration: duration, limit: limit, delay: delay, queueSize: 1 })
 
 // Test for queueSize limit enforcement
 rlQueue.queue(() => {})
@@ -47,7 +48,7 @@ setTimeout(() => {
 
     /// Test for passive rateLimiter //////////////////////////////////////////////////////
 
-    var rlPassive = new rateLimiter.Passive({ duration: duration, limit: limit, delay: delay })
+    var rlPassive = new ManualRateLimiter({ duration: duration, limit: limit, delay: delay })
 
     // Remaining entries at start when empty
     assert.strictEqual(limit, rlPassive.remaining())
@@ -75,6 +76,7 @@ setTimeout(() => {
       assert.strictEqual(0, rlPassive.next())
 
       console.log('No errors found in rateHandler.js')
+      console.log('\n')
       // Test end
     }, (duration > delay ? duration : delay) + 10)
   }, Math.max(duration, delay) + 10)

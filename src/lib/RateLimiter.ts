@@ -12,11 +12,9 @@ export interface RateLimiterOptions {
 }
 
 /**
- * Enables creating ratelimiting for actions  
- * 
+ * Enables creating queuing for actions and keeping rates within limits  
  */
-export default {
-  Queue: class RateLimiter {
+export default class RateLimiter {
 
     duration: number;
     limit: number;
@@ -110,9 +108,9 @@ export default {
       if (isNaN(lastMsgTime)) lastMsgTime = 0
       return (now - lastMsgTime > this.delay) ? 0 : (this.delay - (now - lastMsgTime))
     }
-  },
+  }
 
-  Passive: class RateLimiter {
+export class ManualRateLimiter {
 
     duration: any;
     limit: any;
@@ -176,4 +174,3 @@ export default {
       return this.limit - this._times.length
     }
   }
-}

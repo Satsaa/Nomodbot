@@ -21,9 +21,9 @@ export default class TwitchClient {
   private server: string
   private secure: boolean
   private port: number
-  expector: Expector;
   private channels: {[x:string]: Channel};
   ws: undefined | WebSocket;
+  expector: Expector;
 
   /**
    * Twitch client
@@ -112,9 +112,10 @@ export default class TwitchClient {
         if (message === null) return
         console.log(message)
 
-        this.expector.receive(parse(msgStr))
+        const parseRes = parse(msgStr)
+        if (parseRes !== null) this.expector.receive(parseRes)
       })
-    } throw('NON STRING DATA')
+    } else throw('NON STRING DATA')
   }
 
   onClose (event: { wasClean: boolean, code: number, reason: string, target: WebSocket }): void {
