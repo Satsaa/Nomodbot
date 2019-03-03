@@ -17,7 +17,7 @@ export interface TwitchClientOptions {
  */
 export default class TwitchClient {
 
-  get ready() {
+  public get ready() {
     if (this.ws && this.ws.readyState === 1) return true
     return false
   }

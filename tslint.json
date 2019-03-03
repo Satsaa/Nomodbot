@@ -17,6 +17,7 @@
       "max-line-length": [true, 128],
       "no-console": false,
       "typeof-compare": true,
+      "member-access": [true, "check-accessor"],
       
       // tslint-eslint-rules
       "variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],

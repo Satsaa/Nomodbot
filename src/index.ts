@@ -1,3 +1,8 @@
 import Bot from './bot'
-const bot = new Bot()
+
+// Blyat
+global.v8debug = {}
+global.v8debug.bot = new Bot()
+
+const bot = global.v8debug.bot
 bot.client.connect()
