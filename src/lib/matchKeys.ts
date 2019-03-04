@@ -1,25 +1,28 @@
 
 export interface MatchKeysOptions {
+  /** Keys that are undefined, won't be matched by value */
+  ignoreUndefined?: boolean,
   /** Whether or not values are matched */
   matchValues?: boolean,
-  /** If a value in matchObj is undefined, the value is not matched when `matchValues` is used */
-  ignoreUndefined?: boolean,
   /** Maximum depth checked. Deeper objects are ignored */
   maxDepth?: number
 }
 
 /**
- * Test if `obj` has all the keys of `matchObj`  
+ * Test if `testObj` has all the keys of `matchObj`  
  * Considers arrays objects with indexes as keys [5,4,3] = {0:5,1:4,2:3}
  * @param matchObj Object of required keys
- * @param obj Test this object for required keys
+ * @param testObj Test this object for required keys
  * @param options
  */
-export default (matchObj: {[x: string]: any}, obj: {[x: string]: any}, options?: MatchKeysOptions) => {
+export default (matchObj: {[x: string]: any}, testObj: {[x: string]: any}, options?: MatchKeysOptions) => {
+
+  if (typeof matchObj !== 'object' || typeof testObj !== 'object') return matchObj === testObj
+
   if (typeof options === 'undefined') options = {}
   let i = 0
 
-  return testKeys(matchObj, obj, options)
+  return testKeys(matchObj, testObj, options)
 
   function testKeys(matchObj: {[x: string]: any}, obj: {[x: string]: any}, options: MatchKeysOptions) {
     if (typeof options.maxDepth === 'number') {

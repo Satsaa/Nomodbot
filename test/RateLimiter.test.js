@@ -1,18 +1,9 @@
 const assert = require('assert')
 
-/*
-Incomplete test for RateLimiter.js
-
-+ Queue test
-  + queue specific tests
-  - basic tests
-+ Passive test
-
-*/
 
 process.on('uncaughtException', (e) => {
   console.log(e.message);
-  console.log('^ERROR^');
+  console.log('ERRORED');
   console.log('');
 });
 
@@ -51,8 +42,7 @@ setTimeout(() => {
     assert.notStrictEqual(test, 555, 'Callback with params was excecuted in time but params were not passed')
     assert.strictEqual(test, 666, 'Callback with params was not excecuted in time')
 
-    console.log('No errors found in RateLimiter.js')
-    console.log('')
+    console.log('No errors found in RateLimiter\n')
    // Test end
   }, (duration > delay ? duration : delay) + 10)
 }, Math.max(duration, delay) + 10)

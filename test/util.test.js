@@ -1,17 +1,11 @@
 import * as u from '../src/lib/util';
 import assert from 'assert'
 
-/*
-Incomplete test for util.js
-
-
-*/
-
 console.log('Testing "../src/lib/util"')
 
 process.on('uncaughtException', (e) => {
   console.log(e.message)
-  console.log('^ERROR^')
+  console.log('ERRORED')
   console.log('')
 });
 
@@ -57,4 +51,4 @@ try {
 }
 
 
-console.log('Finished tests for util.js \n')
+console.log('Finished tests for util\n')

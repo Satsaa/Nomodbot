@@ -2,10 +2,6 @@ const { PerformanceObserver, performance } = require('perf_hooks')
 const assert = require('assert')
 const parser = require('../src/lib/parser').default
 
-/*
-Test most situations that parser.js may encounter 
-
-*/
 
 console.log('Testing "../src/lib/parser"')
 
@@ -20,6 +16,7 @@ assert.deepStrictEqual(parser(msg), null)
 msg = 'Command' // Single command
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {},
   prefix: null,
   nick: null,
@@ -31,6 +28,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = ' Command ' // Single command with spaces
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {},
   prefix: null,
   nick: null,
@@ -42,6 +40,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = ':ex.am.ple.com' // Complicated prefix
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {},
   prefix: 'ex.am.ple.com',
   nick: null,
@@ -53,6 +52,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = '@a;b=;c=d;d=\\\\\\s\\r\\n\\:' // Irc v3.2 tags specify escaping for values
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {
     a: true,
     b: '',
@@ -69,6 +69,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = '@escapedVar\\s\\:\\\n\\r=asd' // Irc v3.2 tags only specify escaping ONLY for values, not keys
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {
     'escapedVar\\s\\:\\\n\\r': 'asd'
   },
@@ -82,6 +83,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = '@a=\\: :nick!user@ex.com' // Tag with escaping and prefix with nick and user
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {
     a: ';'
   },
@@ -95,6 +97,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = '@a=\\: :nick!user@ex.com cmd param0 param1 param2' // Previous with command and parameters
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {
     a: ';'
   },
@@ -112,6 +115,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = '@a=\\: :nick!user@ex.com cmd param0 :multi word parameter:;DF:;VDVVM;#¤"¤"££$' // Previous with command and parameters and multi word parameter with ':' in it
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {
     a: ';'
   },
@@ -128,6 +132,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = ':user@ex.com cmd param0' // Prefix with user but no nick
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {},
   prefix: 'user@ex.com',
   nick: null,
@@ -141,6 +146,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = ':nick!ex.com cmd param0' // Prefix with nick but no user
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {},
   prefix: 'nick!ex.com',
   nick: 'nick',
@@ -154,6 +160,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = 'cmd param0 param1 param2' // Command with parameters
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {},
   prefix: null,
   nick: null,
@@ -169,6 +176,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = 'cmd paramAndSpace ' // Command with a parameter that has a space after it
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {},
   prefix: null,
   nick: null,
@@ -182,6 +190,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = 'cmd :paramAndSpace ' // Command with a parameter that has a space after it and the param is prefixed
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {},
   prefix: null,
   nick: null,
@@ -195,6 +204,7 @@ assert.deepStrictEqual(parser(msg), {
 msg = '@ban-duration=23;room-id=61365582;target-user-id=147764434;tmi-sent-ts=1550286954898 :tmi.twitch.tv CLEARCHAT #satsaa :123asd' // Example
 
 assert.deepStrictEqual(parser(msg), {
+  raw: msg,
   tags: {
     'ban-duration': '23',
     'room-id': '61365582',
@@ -227,5 +237,4 @@ let end = performance.now()
 
 console.log(`${Math.round(100000 * (1 / (end - start)))}k parses/sec wow!`)
 
-console.log('No errors found in parser')
-console.log('')
+console.log('No errors found in parser\n')

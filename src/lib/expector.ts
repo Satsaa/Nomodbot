@@ -1,77 +1,75 @@
-
 import matchKeys, { MatchKeysOptions } from './matchKeys'
 
 export interface ExpectOptions {
-  /** Timeout after this ms and callback with `expired` = true. Timeouts are checked on message received */
-  timeout?: null | number,
-  /** Whether or not to return after first match */
+  /** Whether to return after first match or not */
   once?: boolean,
+  /** Timeout after this ms and callback with `expired` = true */
+  timeout?: null | number,
   /** Options on how matching is done */
   matchOptions?: MatchKeysOptions
 }
 
+export interface ExpectEntry {
+  cb: CallBack,
+  id: number,
+  once: boolean,
+  matchObj: {[x: string]: any},
+  options: ExpectOptions,
+  timeout: null | NodeJS.Timeout,
+}
+
+export type CallBack = (expired: boolean, match?: {[x: string]: any}) => void
+
 /**
- * The `Expector` is used to check if an object sent through
- * `Expector.receive` matches any entries created through
+ * The `Expector` is used to check if an object sent through  
+ * `Expector.receive` matches any entries created through  
  * `Expector.expect` and calls the supplied callback
  */
 export default class Expector {
 
+  private entries: ExpectEntry[]
   private id: number
-  private entries: any[]
 
   constructor() {
-    this.id = 1
     this.entries = []
+    this.id = 1
   }
 
   /**
-   * Test all entries against `testObj`
-   * @param tesObj 
-   */
-  public receive(tesObj: {[x: string]: any}) {
-    if (this.entries.length) {
-      for (let i = 0; i < this.entries.length; i++) {
-        const entry = this.entries[i]
-
-        // Test for match
-        if (matchKeys(entry.match, tesObj, entry.matchOptions)) {
-          console.log('MATCHED')
-          entry.cb(false, tesObj)
-          if (entry.once) {
-            if (entry.timeout) clearTimeout(entry.timeout)
-            this.entries.splice(i)
-            i--
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Call `cb` when a matching object is received
+   * Call `cb` when a matching object is received  
    * Place keys that are most likely to be incorrect first
-   * 
-   * @param match Object containing matched keys
-   * 
-   * @param options `options` or `cb`
-   * @param cb Called when timedout or matchingmessage is received
-   * 
+   * @param matchObj Object containing matched keys
+   * @param options options
+   * [Defaults]({once:true,timeout:null,matchOptions:{ignoreUndefined:true,matchValues:true,maxDepth:undefined}})
+   * @param cb Called when timedout or matching object is received
    * @returns Identifier for this entry
    */
-  public expect(match: {[x: string]: any}, options: ExpectOptions, cb: (expired: boolean, message?: string) => void): number {
+  public expect(matchObj: {[x: string]: any}, cb: CallBack): number
+  public expect(matchObj: {[x: string]: any}, options: ExpectOptions, cb: CallBack): number
+  public expect(matchObj: {[x: string]: any}, options: ExpectOptions | CallBack, cb?: CallBack) {
+
     if (typeof options === 'function') {
       cb = options
       options = {}
     }
+    if (typeof cb !== 'function') throw new Error('Callback is no a function?')
+
     const id = this.id++
     this.entries.push({
-      cb,
-      id,
-      match,
-      matchOptions: options.matchOptions || {once: true, matchValues: true, timeout: null},
+      cb, id,
       once: options.once === undefined ? true : options.once,
-      timeout: !options.timeout ? null : setTimeout(() => {
+      matchObj,
+      options: {
+        once: true,
+        timeout: null,
+        matchOptions: {
+          ignoreUndefined: true,
+          matchValues: true,
+          maxDepth: undefined,
+          ...(options.matchOptions || {}) },
+        ...options},
+      timeout: typeof options.timeout !== 'number' ? null : setTimeout(() => {
+        if (cb === undefined) throw new Error('Callback is undefined?')
         cb(true)
         this.unExpect(id)
       }, options.timeout),
@@ -80,14 +78,37 @@ export default class Expector {
   }
 
   /**
-   * Delete entries
-   * @param ids
+   * Delete an entry
+   * @param id
    */
-  public unExpect(ids: number | number[]) {
-    if (typeof ids === 'number') ids = [ids]
-    ids.forEach((id) => {
-      const index = this.entries.indexOf(id)
-      if (index !== -1) this.entries.splice(index)
-    })
+  public unExpect(id: number) {
+    for (let i = 0; i < this.entries.length; i++) {
+      const entry = this.entries[i]
+      if (entry.id === id) {
+        this.entries.splice(i, 1)
+      }
+    }
+  }
+
+  /**
+   * Test all entries against `testObj`
+   * @param testObj 
+   */
+  public receive(testObj: {[x: string]: any}) {
+    if (this.entries.length) {
+      for (let i = 0; i < this.entries.length; i++) {
+        const entry = this.entries[i]
+
+        // Test for match
+        if (matchKeys(entry.matchObj, testObj, entry.options.matchOptions)) {
+          if (entry.once) {
+            this.entries.splice(i, 1)
+            if (entry.timeout) clearTimeout(entry.timeout)
+            i--
+          }
+          entry.cb(false, testObj)
+        }
+      }
+    }
   }
 }

@@ -4,9 +4,9 @@ import TwitchClient from './Client'
  * Stores channel specific methods and data
  */
 export default class Channel {
-  public channel: string
-  public data: {}
   public active: boolean
+  public channel: string
+  public data: {[x: string]: {[x: string]: any}}
   private client: TwitchClient
   /**
    * Channel instance

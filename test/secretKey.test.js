@@ -1,16 +1,10 @@
 const assert = require('assert')
 const fs = require('fs')
 
-/*
-Satisfying test for keys.js
-
-Tests most intended use cases
-
-*/
 
 process.on('uncaughtException', (e) => {
   console.log(e.message);
-  console.log('^ERROR^');
+  console.log('ERRORED');
   console.log('');
 });
 
@@ -40,5 +34,4 @@ assert.strictEqual(keys.getKey('./test/test_keys_temp.json', 'testkey0'), undefi
 assert.strictEqual(keys.getKey('./test/test_keys_temp.json', 'testkey0'), null, 'Newly created keys are not set to null') // Now set to null previously
 
 fs.unlinkSync('./test/test_keys_temp.json') // Delete file
-console.log('No errors found in secretKey.js')
-console.log('')
+console.log('No errors found in secretKey\n')

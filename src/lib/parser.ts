@@ -20,6 +20,7 @@
 */
 
 export interface IrcMessage {
+  raw: string,
   tags: { [x: string]: string | true },
   prefix: string | null,
   nick: string | null,
@@ -35,17 +36,18 @@ export interface IrcMessage {
  */
 export default function parse(msg: string): IrcMessage | null {
 
+  const result: IrcMessage = {
+    raw: msg,
+    tags: {},
+    prefix: null,
+    nick: null,
+    user: null,
+    cmd: null,
+    params: [],
+  }
+
   msg = msg.trimLeft()
   if (msg.length === 0) return null
-
-  const result: IrcMessage = {
-    cmd: null,
-    nick: null,
-    params: [],
-    prefix: null,
-    tags: {},
-    user: null,
-  }
 
   let i = 0
 
