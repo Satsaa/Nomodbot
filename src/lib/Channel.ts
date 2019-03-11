@@ -6,17 +6,19 @@ import TwitchClient from './Client'
 export default class Channel {
   public active: boolean
   public channel: string
-  public data: {[x: string]: {[x: string]: any}}
+  public roomState: {}
+  // public data: {[x: string]: {[x: string]: any}}
   private client: TwitchClient
   /**
    * Channel instance
    * @param client Twitch client instance
    * @param channel Channel name
    */
-  constructor(client: any, channel: string) {
+  constructor(client: TwitchClient, channel: string) {
     this.client = client
     this.channel = channel
-    this.data = {}
+    // this.data = {}
+    this.roomState = {}
     this.active = true
   }
   public join() { return this.client.join(this.channel) }

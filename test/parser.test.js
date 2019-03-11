@@ -206,10 +206,10 @@ msg = '@ban-duration=23;room-id=61365582;target-user-id=147764434;tmi-sent-ts=15
 assert.deepStrictEqual(parser(msg), {
   raw: msg,
   tags: {
-    'ban-duration': '23',
-    'room-id': '61365582',
-    'target-user-id': '147764434',
-    'tmi-sent-ts': '1550286954898'
+    'ban-duration': 23,
+    'room-id': 61365582,
+    'target-user-id': 147764434,
+    'tmi-sent-ts': 1550286954898
   },
   prefix: 'tmi.twitch.tv',
   nick: null,
@@ -235,6 +235,6 @@ for (let i = 0; i < 100000; i++) {
 }
 let end = performance.now()
 
-console.log(`${Math.round(100000 * (1 / (end - start)))}k parses/sec wow!`)
+console.log(`${Math.round(1000 / (end - start) * 100000 / 1000)}k parses/sec wow!`)
 
 console.log('No errors found in parser\n')

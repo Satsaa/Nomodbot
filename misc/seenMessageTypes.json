@@ -1,0 +1,304 @@
+{
+  "commands": {
+    "353": {
+      "__count__": 1058
+    },
+    "366": {
+      "__count__": 234
+    },
+    "372": {
+      "__count__": 11
+    },
+    "375": {
+      "__count__": 11
+    },
+    "376": {
+      "__count__": 11
+    },
+    "421": {
+      "__count__": 3
+    },
+    "CAP": {
+      "__count__": 11
+    },
+    "001": {
+      "__count__": 11
+    },
+    "002": {
+      "__count__": 11
+    },
+    "003": {
+      "__count__": 11
+    },
+    "004": {
+      "__count__": 11
+    },
+    "GLOBALUSERSTATE": {
+      "__count__": 11,
+      "badges": 11,
+      "color": 11,
+      "display-name": 11,
+      "emote-sets": 11,
+      "user-id": 11,
+      "user-type": 11
+    },
+    "JOIN": {
+      "__count__": 91139
+    },
+    "USERSTATE": {
+      "__count__": 234,
+      "badges": 234,
+      "color": 234,
+      "display-name": 234,
+      "emote-sets": 234,
+      "mod": 234,
+      "subscriber": 234,
+      "user-type": 234
+    },
+    "ROOMSTATE": {
+      "__count__": 419,
+      "broadcaster-lang": 254,
+      "emote-only": 317,
+      "followers-only": 282,
+      "r9k": 258,
+      "rituals": 254,
+      "room-id": 419,
+      "slow": 264,
+      "subs-only": 314
+    },
+    "MODE": {
+      "__count__": 9744
+    },
+    "PRIVMSG": {
+      "__count__": 2128237,
+      "badges": 2128237,
+      "color": 2128237,
+      "display-name": 2128237,
+      "emotes": 2128237,
+      "flags": 2128237,
+      "id": 2128237,
+      "mod": 2128237,
+      "room-id": 2128237,
+      "subscriber": 2128237,
+      "tmi-sent-ts": 2128237,
+      "turbo": 2128237,
+      "user-id": 2128237,
+      "user-type": 2128237,
+      "emote-only": 272240,
+      "bits": 800
+    },
+    "CLEARCHAT": {
+      "__count__": 25651,
+      "ban-duration": 25081,
+      "room-id": 25651,
+      "target-user-id": 25650,
+      "tmi-sent-ts": 25651,
+      "target-msg-id": 458
+    },
+    "USERNOTICE": {
+      "__count__": 14968,
+      "badges": 14968,
+      "color": 14968,
+      "display-name": 14968,
+      "emotes": 14968,
+      "flags": 14968,
+      "id": 12437,
+      "login": 14968,
+      "mod": 14968,
+      "msg-id": 14968,
+      "msg-param-cumulative-months": 12162,
+      "msg-param-months": 14095,
+      "msg-param-should-share-streak": 12162,
+      "msg-param-sub-plan-name": 14095,
+      "msg-param-sub-plan": 14299,
+      "room-id": 14968,
+      "subscriber": 14968,
+      "system-msg": 14968,
+      "tmi-sent-ts": 14968,
+      "turbo": 12437,
+      "user-id": 14968,
+      "user-type": 14968,
+      "msg-param-streak-months": 1962,
+      "msg-param-ritual-name": 653,
+      "msg-param-mass-gift-count": 204,
+      "msg-param-origin-id": 2137,
+      "msg-param-sender-count": 1973,
+      "msg-param-recipient-display-name": 1933,
+      "msg-param-recipient-id": 1933,
+      "msg-param-recipient-user-name": 1933,
+      "msg-param-fun-string": 156,
+      "msg-param-sender-login": 7,
+      "msg-param-sender-name": 7,
+      "msg-param-displayName": 4,
+      "msg-param-login": 4,
+      "msg-param-profileImageURL": 4,
+      "msg-param-viewerCount": 4,
+      "msg-param-threshold": 3
+    },
+    "PART": {
+      "__count__": 109315
+    },
+    "PING": {
+      "__count__": 217
+    },
+    "PONG": {
+      "__count__": 193
+    },
+    "CLEARMSG": {
+      "__count__": 609,
+      "login": 609,
+      "target-msg-id": 609,
+      "room-id": 75,
+      "tmi-sent-ts": 75
+    },
+    "HOSTTARGET": {
+      "__count__": 135
+    },
+    "NOTICE": {
+      "__count__": 320,
+      "msg-id": 320
+    }
+  },
+  "noticeIds": {
+    "submysterygift": {
+      "__count__": 78,
+      "badges": 78,
+      "color": 78,
+      "display-name": 78,
+      "emotes": 78,
+      "flags": 78,
+      "login": 78,
+      "mod": 78,
+      "msg-id": 78,
+      "msg-param-mass-gift-count": 78,
+      "msg-param-origin-id": 78,
+      "msg-param-sender-count": 75,
+      "msg-param-sub-plan": 78,
+      "room-id": 78,
+      "subscriber": 78,
+      "system-msg": 78,
+      "tmi-sent-ts": 78,
+      "user-id": 78,
+      "user-type": 78
+    },
+    "subgift": {
+      "__count__": 733,
+      "badges": 733,
+      "color": 733,
+      "display-name": 733,
+      "emotes": 733,
+      "flags": 733,
+      "login": 733,
+      "mod": 733,
+      "msg-id": 733,
+      "msg-param-months": 733,
+      "msg-param-origin-id": 733,
+      "msg-param-recipient-display-name": 733,
+      "msg-param-recipient-id": 733,
+      "msg-param-recipient-user-name": 733,
+      "msg-param-sender-count": 715,
+      "msg-param-sub-plan-name": 733,
+      "msg-param-sub-plan": 733,
+      "room-id": 733,
+      "subscriber": 733,
+      "system-msg": 733,
+      "tmi-sent-ts": 733,
+      "user-id": 733,
+      "user-type": 733,
+      "msg-param-fun-string": 18
+    },
+    "resub": {
+      "__count__": 399,
+      "badges": 399,
+      "color": 399,
+      "display-name": 399,
+      "emotes": 399,
+      "flags": 399,
+      "login": 399,
+      "mod": 399,
+      "msg-id": 399,
+      "msg-param-cumulative-months": 399,
+      "msg-param-months": 399,
+      "msg-param-should-share-streak": 399,
+      "msg-param-sub-plan-name": 399,
+      "msg-param-sub-plan": 399,
+      "room-id": 399,
+      "subscriber": 399,
+      "system-msg": 399,
+      "tmi-sent-ts": 399,
+      "user-id": 399,
+      "user-type": 399,
+      "msg-param-streak-months": 105
+    },
+    "sub": {
+      "__count__": 970,
+      "badges": 970,
+      "color": 970,
+      "display-name": 970,
+      "emotes": 970,
+      "flags": 970,
+      "login": 970,
+      "mod": 970,
+      "msg-id": 970,
+      "msg-param-cumulative-months": 970,
+      "msg-param-months": 970,
+      "msg-param-should-share-streak": 970,
+      "msg-param-sub-plan-name": 970,
+      "msg-param-sub-plan": 970,
+      "room-id": 970,
+      "subscriber": 970,
+      "system-msg": 970,
+      "tmi-sent-ts": 970,
+      "user-id": 970,
+      "user-type": 970
+    },
+    "ritual": {
+      "__count__": 46,
+      "badges": 46,
+      "color": 46,
+      "display-name": 46,
+      "emotes": 46,
+      "flags": 46,
+      "login": 46,
+      "mod": 46,
+      "msg-id": 46,
+      "msg-param-ritual-name": 46,
+      "room-id": 46,
+      "subscriber": 46,
+      "system-msg": 46,
+      "tmi-sent-ts": 46,
+      "user-id": 46,
+      "user-type": 46
+    }
+  },
+  "userNoticeIds": {
+    "host_on": {
+      "__count__": 20,
+      "msg-id": 20
+    },
+    "emote_only_on": {
+      "__count__": 6,
+      "msg-id": 6
+    },
+    "host_target_went_offline": {
+      "__count__": 9,
+      "msg-id": 9
+    },
+    "emote_only_off": {
+      "__count__": 5,
+      "msg-id": 5
+    },
+    "slow_on": {
+      "__count__": 4,
+      "msg-id": 4
+    },
+    "subs_off": {
+      "__count__": 2,
+      "msg-id": 2
+    },
+    "subs_on": {
+      "__count__": 2,
+      "msg-id": 2
+    }
+  }
+}

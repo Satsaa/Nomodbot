@@ -21,7 +21,7 @@
 
 export interface IrcMessage {
   raw: string,
-  tags: { [x: string]: string | true },
+  tags: { [x: string]: string | number | true },
   prefix: string | null,
   nick: string | null,
   user: string | null,
@@ -66,14 +66,19 @@ export default function parse(msg: string): IrcMessage | null {
       const minIndex = Math.min(nextEquals, nextSpace, nextSemiColon)
       const semiMinIndex = Math.min(nextSpace, nextSemiColon)
 
-      let val = msg.slice(minIndex + 1, semiMinIndex)
+      let val: string | true | number = msg.slice(minIndex + 1, semiMinIndex)
 
-      // Handle escaped characters: ' ' '/' ';' '\n' '\r'
+      // Unescape characters: ' ' '/' ';' '\n' '\r'
       if (val.indexOf('\\') !== -1) {
         val = val.replace(/\\s/g, ' ').replace(/\\:/g, ';').replace(/\\\\/g, '\\').replace(/\\n/g, '\n').replace(/\\r/g, '\r')
+      } else if (val.length === 0) val = nextEquals > semiMinIndex ? true : val
+      else {
+        const prev = val
+        val = +val
+        if (isNaN(val)) val = prev
       }
 
-      result.tags[msg.slice(i, minIndex)] = (val === '' && msg.charAt(semiMinIndex - 1) !== '=') ? true : val
+      result.tags[msg.slice(i, minIndex)] = val
       i = semiMinIndex + 1
     }
   }
