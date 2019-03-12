@@ -9,8 +9,8 @@ export default class Bot {
 
   constructor() {
     this.client = new Client({
-      username: secretKey.getKey('./src/cfg/keys.json', 'twitch', 'username'),
-      password: secretKey.getKey('./src/cfg/keys.json', 'twitch', 'password'),
+      username: secretKey.getKey('./main/cfg/keys.json', 'twitch', 'username'),
+      password: secretKey.getKey('./main/cfg/keys.json', 'twitch', 'password'),
     })
 
     this.data = new Data()

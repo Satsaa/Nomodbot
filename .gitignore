@@ -1,6 +1,7 @@
 
 node_modules
 .vscode/
-src/cfg/keys.json
+*/cfg/*
+*/data/*
 tempCodeRunnerFile.js
 bin/

@@ -43,7 +43,7 @@ export default class TwitchClient extends EventEmitter {
     this.expector = new Expector()
 
     this.messageTypes = JSON.parse(fs.readFileSync('./misc/seenMessageTypes.json', {encoding: 'utf8'}))
-    setInterval(() => { if (this.ws) this.ws.send('PING') }, 5 * 60 * 1000)
+    setTimeout(this.pingLoop.bind(this), 5 * 60 * 1000 * u.randomFloat(0.9, 1.0))
     setInterval(() => {
       fs.writeFileSync('./misc/seenMessageTypes.json', JSON.stringify(this.messageTypes, null, 2))
     }, 10 * 1000)
@@ -104,8 +104,16 @@ export default class TwitchClient extends EventEmitter {
       event.data.split('\r\n').forEach((msgStr) => {
         const message = parse(msgStr)
         if (message === null) return
-        // Document message types
+          // Functionality
+        if (message.cmd !== 'PRIVMSG') {
+          console.log(message.cmd)
+          console.log(message)
+        }
+        this.handleMessage(message)
+
         if (message.cmd !== null) {
+
+          // Document message types
           // .noticeIds
           if (message.cmd === 'NOTICE' && typeof message.tags['msg-id'] === 'string') {
             const tag3 = message.tags['msg-id'].toString()
@@ -130,8 +138,7 @@ export default class TwitchClient extends EventEmitter {
               }
             }
           }
-
-        // .commands
+          // .commands
           if (!this.messageTypes.commands[message.cmd]) this.messageTypes.commands[message.cmd] = { __count__: 1}
           else this.messageTypes.commands[message.cmd].__count__++
           for (const tag in message.tags) {
@@ -143,15 +150,6 @@ export default class TwitchClient extends EventEmitter {
 
           }
         }
-
-        // Functionality
-        if (message.cmd !== 'PRIVMSG') {
-          console.log(message.cmd)
-          console.log(message)
-        }
-
-        const parseRes = parse(msgStr)
-        if (parseRes !== null) this.expector.receive(parseRes)
       })
     } else throw (new Error('NON STRING DATA'))
   }
@@ -164,6 +162,11 @@ export default class TwitchClient extends EventEmitter {
   private onClose(event: { code: number, reason: string, target: WebSocket , wasClean: boolean }): void {
     console.log(`Connection closed: ${event.code}, ${event.reason}`)
     this.ws = undefined
+  }
+
+  private pingLoop() {
+    if (this.ws) this.ws.send('PING')
+    setTimeout(this.pingLoop.bind(this), 5 * 60 * 1000 * u.randomFloat(0.9, 1.0))
   }
 
   private handleMessage(message: IrcMessage) {

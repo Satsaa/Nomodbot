@@ -7,40 +7,40 @@
       "__count__": 234
     },
     "372": {
-      "__count__": 11
+      "__count__": 20
     },
     "375": {
-      "__count__": 11
+      "__count__": 20
     },
     "376": {
-      "__count__": 11
+      "__count__": 20
     },
     "421": {
       "__count__": 3
     },
     "CAP": {
-      "__count__": 11
+      "__count__": 22
     },
     "001": {
-      "__count__": 11
+      "__count__": 20
     },
     "002": {
-      "__count__": 11
+      "__count__": 20
     },
     "003": {
-      "__count__": 11
+      "__count__": 20
     },
     "004": {
-      "__count__": 11
+      "__count__": 20
     },
     "GLOBALUSERSTATE": {
-      "__count__": 11,
-      "badges": 11,
-      "color": 11,
-      "display-name": 11,
-      "emote-sets": 11,
-      "user-id": 11,
-      "user-type": 11
+      "__count__": 20,
+      "badges": 20,
+      "color": 20,
+      "display-name": 20,
+      "emote-sets": 20,
+      "user-id": 20,
+      "user-type": 20
     },
     "JOIN": {
       "__count__": 91139
@@ -139,10 +139,10 @@
       "__count__": 109315
     },
     "PING": {
-      "__count__": 217
+      "__count__": 228
     },
     "PONG": {
-      "__count__": 193
+      "__count__": 204
     },
     "CLEARMSG": {
       "__count__": 609,
@@ -155,7 +155,7 @@
       "__count__": 135
     },
     "NOTICE": {
-      "__count__": 320,
+      "__count__": 322,
       "msg-id": 320
     }
   },

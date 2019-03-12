@@ -13,12 +13,12 @@ export interface ExpectEntry {
   cb: CallBack,
   id: number,
   once: boolean,
-  matchObj: {[x: string]: any},
+  matchObj: object,
   options: ExpectOptions,
   timeout: null | NodeJS.Timeout,
 }
 
-export type CallBack = (expired: boolean, match?: {[x: string]: any}) => void
+export type CallBack = (expired: boolean, match?: object) => void
 
 /**
  * The `Expector` is used to check if an object sent through  
@@ -44,9 +44,9 @@ export default class Expector {
    * @param cb Called when timedout or matching object is received
    * @returns Identifier for this entry
    */
-  public expect(matchObj: {[x: string]: any}, cb: CallBack): number
-  public expect(matchObj: {[x: string]: any}, options: ExpectOptions, cb: CallBack): number
-  public expect(matchObj: {[x: string]: any}, options: ExpectOptions | CallBack, cb?: CallBack) {
+  public expect(matchObj: object, cb: CallBack): number
+  public expect(matchObj: object, options: ExpectOptions, cb: CallBack): number
+  public expect(matchObj: object, options: ExpectOptions | CallBack, cb?: CallBack) {
 
     if (typeof options === 'function') {
       cb = options
@@ -94,7 +94,7 @@ export default class Expector {
    * Test all entries against `testObj`
    * @param testObj 
    */
-  public receive(testObj: {[x: string]: any}) {
+  public receive(testObj: object) {
     if (this.entries.length) {
       for (let i = 0; i < this.entries.length; i++) {
         const entry = this.entries[i]

@@ -15,7 +15,7 @@ export interface MatchKeysOptions {
  * @param testObj Test this object for required keys
  * @param options
  */
-export default (matchObj: {[x: string]: any}, testObj: {[x: string]: any}, options?: MatchKeysOptions) => {
+export default (matchObj: object, testObj: object, options?: MatchKeysOptions) => {
 
   if (typeof matchObj !== 'object' || typeof testObj !== 'object') return matchObj === testObj
 
