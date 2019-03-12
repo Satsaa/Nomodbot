@@ -1,9 +1,9 @@
 const { PerformanceObserver, performance } = require('perf_hooks')
 const assert = require('assert')
-const parser = require('../src/lib/parser').default
+const parser = require('../bin/src/lib/parser').default
 
 
-console.log('Testing "../src/lib/parser"')
+console.log('Testing "../bin/src/lib/parser"')
 
 var msg = '' // Definitely invalid
 

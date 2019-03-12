@@ -7,13 +7,13 @@ process.on('uncaughtException', (e) => {
   console.log('');
 });
 
-console.log('Testing "../src/lib/RateLimiter"')
+console.log('Testing "../bin/src/lib/RateLimiter"')
 
 var duration = 100
 var limit = 3
 var delay = 50
 
-var RateLimiter = require('../src/lib/RateLimiter').default
+var RateLimiter = require('../bin/src/lib/RateLimiter').default
 
 var rlQueue = new RateLimiter({ duration: duration, limit: limit, delay: delay, queueSize: 1 })
 

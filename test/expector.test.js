@@ -1,9 +1,9 @@
-import Expector from '../src/lib/expector';
-import assert from 'assert'
+const Expector = require('../bin/src/lib/expector').default
+const assert = require('assert')
 
 var expector = new Expector
 
-console.log('Testing "../src/lib/expector"')
+console.log('Testing "../bin/src/lib/expector"')
 
 process.on('uncaughtException', (e) => { 
     console.log(e.message)

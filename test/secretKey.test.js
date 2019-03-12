@@ -8,9 +8,9 @@ process.on('uncaughtException', (e) => {
   console.log('');
 });
 
-console.log('Testing "../src/lib/secretKey"')
+console.log('Testing "../bin/src/lib/secretKey"')
 
-var keys = require('../src/lib/secretKey')
+var keys = require('../bin/src/lib/secretKey')
 
 fs.writeFileSync('./test/test_keys_temp.json', JSON.stringify({
   testkey1: '_testkey1',

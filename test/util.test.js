@@ -1,7 +1,7 @@
-import * as u from '../src/lib/util';
-import assert from 'assert'
+const assert = require('assert')
+var u = require('../bin/src/lib/util')
 
-console.log('Testing "../src/lib/util"')
+console.log('Testing "../bin/src/lib/util"')
 
 process.on('uncaughtException', (e) => {
   console.log(e.message)
@@ -13,11 +13,24 @@ try {
   assert.strictEqual(typeof u.randomInt(0,99), 'number', 'randomInt(0,99) did not return a number')
   assert.strictEqual(u.randomInt(0,0), 0, 'randomInt(0,0) did not return 0')
   assert.strictEqual(u.randomInt(99,99), 99, 'randomInt(99,99) did not return 99')
+  assert.strictEqual(u.randomInt(0.1,1.9), 1, 'randomInt(0.1,1.9) did not return 1')
+  assert.strictEqual(u.randomInt(0,0.9), 0, 'randomInt(0,0.9) did not return 0')
 } catch (e) {
   if (e)
     console.log(e.message)
 } finally {
   console.log('No errors found in randomInt')
+}
+
+try {
+  assert.strictEqual(typeof u.randomFloat(0,99), 'number', 'randomFloat(0,99) did not return a number')
+  assert.strictEqual(u.randomFloat(0,0), 0, 'randomFloat(0,0) did not return 0')
+  assert.strictEqual(u.randomFloat(99,99), 99, 'randomFloat(99,99) did not return 99')
+} catch (e) {
+  if (e)
+    console.log(e.message)
+} finally {
+  console.log('No errors found in randomFloat')
 }
 
 try {
