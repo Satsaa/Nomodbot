@@ -20,9 +20,10 @@
       "member-access": [true, "check-accessor"],
       "member-ordering": [true, {"order": "fields-first", "alphabetize": false}],
       "binary-expression-operand-order": true,
-      "object-literal-sort-keys": [true, "ignore-case", "locale-compare", "match-declaration-order", "shorthand-first"],
+      "object-literal-sort-keys": [true, "ignore-case", "locale-compare", "match-declaration-order-only", "shorthand-first"],
       "no-empty": false,
       "no-bitwise": false,
+      "max-classes-per-file": false,
       
       // tslint-eslint-rules
       "variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],

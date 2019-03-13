@@ -1,4 +1,5 @@
 import * as fs from 'fs'
+import TwitchClient from './lib/Client'
 
 export default class Data  {
 
@@ -6,14 +7,21 @@ export default class Data  {
   public static: {[x: string]: {[x: string]: any}}
   /** This data changes all the time but is only saved on exit */
   public dynamic: {[x: string]: {[x: string]: any}}
+  private client: TwitchClient
+  private autoLoads: Array<{type: 'static' | 'dynamic', name: string, defaultData: null | object, cb?: (data: object) => void}>
 
-  constructor() {
+  constructor(client: TwitchClient) {
     if (!fs.existsSync('./main/data/')) fs.mkdirSync('./main/data/')
     if (!fs.existsSync('./main/data/static')) fs.mkdirSync('./main/data/static')
     if (!fs.existsSync('./main/data/dynamic')) fs.mkdirSync('./main/data/dynamic')
 
+    this.client = client
+    this.client.on('join', this.onJoin.bind(this))
+    this.client.on('part', this.onPart.bind(this))
+
     this.static = {}
     this.dynamic = {}
+    this.autoLoads = []
   }
 
   public saveAllSync() {
@@ -46,7 +54,7 @@ export default class Data  {
   /**
    * Loads a file in ./main/data/`type`/`subFolder`/`name`
    * @param type 'static' or 'dynamic' required
-   * @param subType #channel, 'global' or something else
+   * @param subType #channel, 'global' or something else. You may want to use Data.autoLoad for channel specific data.
    * @param name file name
    * @param defaultData If the file doesn't exist, create it with this data
    * @param cb Callback with data
@@ -77,5 +85,34 @@ export default class Data  {
         })
       }
     })
+  }
+
+  /**
+   * Loads specified data for each channel when the bot joins or leaves one
+   * @param type 'static' or 'dynamic' required
+   * @param name file name
+   * @param defaultData If the file doesn't exist, create it with this data
+   * @param cb Callback when data is loaded (every time a channel is joined)
+   */
+  public autoLoad(type: 'static' | 'dynamic', name: string, defaultData: null | object , cb?: (data: object) => void) {
+    this.autoLoads.push({type, name, defaultData, cb})
+  }
+
+  private onJoin(channel: string) {
+    for (const autoLoad of this.autoLoads) {
+      if (!this[autoLoad.type][channel]) this[autoLoad.type][channel] = {}
+      if (!this[autoLoad.type][channel][autoLoad.name]) {
+        this.load(autoLoad.type, channel, autoLoad.name, autoLoad.defaultData, autoLoad.cb)
+      }
+    }
+  }
+
+  private onPart(channel: string) {
+    for (const autoLoad of this.autoLoads) {
+      if (!this[autoLoad.type][channel]) this[autoLoad.type][channel] = {}
+      if (!this[autoLoad.type][channel][autoLoad.name]) {
+        this.save(autoLoad.type, channel, autoLoad.name, true, (err) => {console.log(`[Data.autoLoad] Error unloading ${channel}`, err)})
+      }
+    }
   }
 }

@@ -52,7 +52,7 @@ export default class Expector {
       cb = options
       options = {}
     }
-    if (typeof cb !== 'function') throw new Error('Callback is no a function?')
+    if (typeof cb !== 'function') throw new Error('Callback is not a function?')
 
     const id = this.id++
     this.entries.push({

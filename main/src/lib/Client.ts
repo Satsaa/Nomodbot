@@ -105,10 +105,10 @@ export default class TwitchClient extends EventEmitter {
         const message = parse(msgStr)
         if (message === null) return
           // Functionality
-        if (message.cmd !== 'PRIVMSG') {
-          console.log(message.cmd)
-          console.log(message)
-        }
+        // if (message.cmd !== 'PRIVMSG') {
+        //  console.log(message.cmd)
+        //  console.log(message)
+        // }
         this.handleMessage(message)
 
         if (message.cmd !== null) {
@@ -171,9 +171,9 @@ export default class TwitchClient extends EventEmitter {
 
   private handleMessage(message: IrcMessage) {
     if (message === null || !this.ws) return
-// tslint:disable-next-line: no-all-duplicated-branches
     switch (message.cmd) {
       case '001': // <prefix> 001 <you> :Welcome, GLHF!
+        console.log('BOT WELCOME')
         this.emit('welcome')
         break
       case '002': // <prefix> 002 <you> :Your host is tmi.twitch.tv
@@ -185,19 +185,24 @@ export default class TwitchClient extends EventEmitter {
       case '376': // <prefix> 376 <you> :>
         break
       case '353': // :nomodbot.<prefix> 353 <you> = #<channel> :<user1> <user2> ... <userN>
-        this.emit('join')
+        // this.emit('userjoin')
         break
       case 'CAP':
-        this.emit('capabilities')
+        // this.emit('capabilities')
         break
       case 'MODE': // :jtv MODE #<channel> +o||-o <user>
         break
       case 'JOIN': // :<user>!<user>@<user>.tmi.twitch.tv JOIN #<channel>
-        this.emit('join')
+        if (message.user === this.opts.username) {
+          console.log('BOT JOINED ' + message.params[0])
+          this.emit('join', message.params[0])
+        } else this.emit('userjoin', message.params[0], message.user)
         break
       case 'PART': // :<user>!<user>@<user>.tmi.twitch.tv PART #<channel>
-        this.emit('part')
-        break
+        if (message.user === this.opts.username) {
+          console.log('BOT PARTED ' + message.params[0])
+          this.emit('part', message.params[0])
+        } else this.emit('userpart', message.params[0], message.user)
       case 'CLEARCHAT': // @ban-duration=10;room-id=62300805;target-user-id=274274870;tmi-sent-ts=1551880699566 <prefix> CLEARCHAT #<channel> :<user>
         break
       case 'USERSTATE': // @badges=;color=#008000;display-name=NoModBot;emote-sets=0,326755;mod=0;subscriber=0;user-type=
@@ -214,6 +219,9 @@ export default class TwitchClient extends EventEmitter {
         // Host off has ":- 0"?
         break
       case 'PRIVMSG': // @userstate :<user>!<user>@<user>.tmi.twitch.tv PRIVMSG #<channel> :<message>
+        console.log(`[${message.params[0]}] ${message.tags['display-name']}: ${message.params[1]}`)
+        if (message.params[1].startsWith('ACTION ')) this.emit('message', message.params[0], message.tags, message.params[1].slice(8, -1), true)
+        else this.emit('message', message.params[0], message.tags, message.params[1], false)
         break
       case 'WHISPER': // @userstate :<user>!<user>@<user>.tmi.twitch.tv WHISPER <you> :<message>
         break
@@ -245,16 +253,3 @@ export default class TwitchClient extends EventEmitter {
     }
   }
 }
-/*
-001           Welcome message by server
-
-CAP * ACK     Server acknowledges that you have requested capabilities
-:(<twitch.tv/tags twitch.tv/commands twitch.tv/membership>)
-
-003           Tells nuffing
-002           Tells nuffing
-004           Tells nuffing
-375           Tells nuffing
-376           Tells nuffing
-372           Tells nuffing
-*/
