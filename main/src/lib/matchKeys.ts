@@ -15,11 +15,10 @@ export interface MatchKeysOptions {
  * @param testObj Test this object for required keys
  * @param options
  */
-export default (matchObj: object, testObj: object, options?: MatchKeysOptions) => {
+export default (matchObj: object, testObj: object, options: MatchKeysOptions = {}) => {
 
   if (typeof matchObj !== 'object' || typeof testObj !== 'object') return matchObj === testObj
 
-  if (typeof options === 'undefined') options = {}
   let i = 0
 
   return testKeys(matchObj, testObj, options)

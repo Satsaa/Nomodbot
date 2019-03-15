@@ -23,3 +23,5 @@ FileDelete, %ts%
 
 FileAppend , {}, %js%
 FileAppend , {}, %ts%
+
+MsgBox ,, Done, DONE, 0.33333

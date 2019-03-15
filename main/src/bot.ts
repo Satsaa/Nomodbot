@@ -13,9 +13,10 @@ export default class Bot {
     this.client = new Client({
       username: secretKey.getKey('./main/cfg/keys.json', 'twitch', 'username'),
       password: secretKey.getKey('./main/cfg/keys.json', 'twitch', 'password'),
+      logIrc: true,
     })
     this.client.connect()
-    this.client.once('welcome', () => this.client.join('#satsaa'))
+    this.client.on('welcome', () => {this.client.join('#satsaa')})
 
     this.data = new Data(this.client)
     this.commander = new Commander(this.client, this.data)

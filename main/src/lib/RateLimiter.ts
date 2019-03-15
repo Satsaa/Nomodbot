@@ -15,23 +15,22 @@ export interface RateLimiterOptions {
  */
 export default class RateLimiter {
 
-  public duration: number
-  public limit: number
-  public queueSize: number | null
-  public delay: number
   public _times: number[]
   public _callbacks: Array<{cb: (...args: any[]) => void, args: any[] }>
+  private opts: Required<RateLimiterOptions>
 
     /**
      * Enables queueing actions within limits
      * @param options
      */
-  constructor(options?: RateLimiterOptions) {
-    if (!options) options = {}
-    this.duration = options.duration || 60000
-    this.limit = options.limit || 30
-    this.queueSize = options.queueSize || null
-    this.delay = options.delay || 1200
+  constructor(options: RateLimiterOptions = {}) {
+    this.opts = {
+      duration: 60000,
+      limit: 30,
+      queueSize: null,
+      delay: 1200,
+      ...options,
+    }
 
     this._times = []
     this._callbacks = []
@@ -44,7 +43,7 @@ export default class RateLimiter {
      * @param args Function arguments for `cb`
      */
   public queue(cb: (...args: any[]) => void, ...args: any[]) {
-    if (this.queueSize !== null && this._callbacks.length + 1 > this.queueSize) {
+    if (this.opts.queueSize !== null && this._callbacks.length + 1 > this.opts.queueSize) {
       return
     }
     if (this._callbacks.push({ cb, args }) === 1) {
@@ -59,7 +58,7 @@ export default class RateLimiter {
      * @param args Function arguments for `cb`
      */
   public queueFirst(cb: (...args: any[]) => void, ...args: any[]) {
-    if (this.queueSize !== null && this._callbacks.length + 1 > this.queueSize) {
+    if (this.opts.queueSize !== null && this._callbacks.length + 1 > this.opts.queueSize) {
       this._callbacks.pop()
     }
     if (this._callbacks.unshift({ cb, args }) === 1) {
@@ -92,19 +91,19 @@ export default class RateLimiter {
 
       // Remove old entries
     for (let i = 0; i < this._times.length; i++) {
-      if (this._times[i] < now - this.duration) {
+      if (this._times[i] < now - this.opts.duration) {
         this._times.shift()
         i--
       } else break
     }
 
       // if there is more or equal items in array than limit
-    if (this._times.length >= this.limit) {
-      return (this._times[0] + this.duration) - now
+    if (this._times.length >= this.opts.limit) {
+      return (this._times[0] + this.opts.duration) - now
     }
 
     let lastMsgTime = this._times[this._times.length - 1]
     if (isNaN(lastMsgTime)) lastMsgTime = 0
-    return (now - lastMsgTime > this.delay) ? 0 : (this.delay - (now - lastMsgTime))
+    return (now - lastMsgTime > this.opts.delay) ? 0 : (this.opts.delay - (now - lastMsgTime))
   }
 }

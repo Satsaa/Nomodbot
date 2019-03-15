@@ -1,5 +1,6 @@
 import * as fs from 'fs'
 import TwitchClient from './lib/Client'
+import { IrcMessage } from './lib/parser'
 
 export default class Data  {
 
@@ -36,15 +37,15 @@ export default class Data  {
   }
 
   /**
-   * Saves a file in ./main/data/`type`/`subFolder`/`name`
+   * Saves a file in ./main/data/`type`/`subType`/`name`
    * @param type 'static' or 'dynamic' required
-   * @param subType #channel, 'global' or something else
-   * @param name file name
+   * @param subType E.g. 'default', 'global'. Use autoLoad for channel specific data.
+   * @param name File name
    * @param unload Unload from memory if save is succesful
    * @param cb Callback with error
    */
   public save(type: 'static' | 'dynamic', subType: string, name: string, unload: boolean, cb: (err: NodeJS.ErrnoException) => void) {
-    if (!this.static[name]) console.error(`${name} isn't loaded and is therefore not saved`)
+    if (!this[type][subType][name]) console.error(`${name} isn't loaded and is therefore not saved`)
     fs.writeFile(`./main/data/${type}/${subType}/${name}.json`, JSON.stringify(this[type][subType][name], null, 2), (err) => {
       if (!err && unload) this[type][subType][name] = undefined
       cb(err)
@@ -52,10 +53,10 @@ export default class Data  {
   }
 
   /**
-   * Loads a file in ./main/data/`type`/`subFolder`/`name`
+   * Loads a file in ./main/data/`type`/`subType`/`name`
    * @param type 'static' or 'dynamic' required
-   * @param subType #channel, 'global' or something else. You may want to use Data.autoLoad for channel specific data.
-   * @param name file name
+   * @param subType E.g. 'default', 'global'. Use autoLoad for channel specific data.
+   * @param name File name
    * @param defaultData If the file doesn't exist, create it with this data
    * @param cb Callback with data
    */
@@ -71,8 +72,10 @@ export default class Data  {
           if (defaultData !== null) {
             const pathOnly = file.slice(0, file.lastIndexOf('/'))
             if (!fs.existsSync(pathOnly)) fs.mkdirSync(pathOnly, {recursive: true})
-            fs.writeFile(file, JSON.stringify(defaultData, null, 2), () => {
-              if (cb) cb(this[type][subType][name] = defaultData)
+            this[type][subType][name] = defaultData
+            fs.writeFile(file, JSON.stringify(defaultData, null, 2), (err) => {
+              if (err) throw(err)
+              if (cb) cb(this[type][subType][name])
             })
             return
           } else throw new Error('Cannot load file that doesn\'t exist. Define defaultData if you want to create it if needed')
@@ -81,7 +84,8 @@ export default class Data  {
         fs.readFile(file, 'utf8', (err, data) => {
           if (err) throw err
           if (typeof data !== 'string') throw new Error('File must be in string/JSON format')
-          if (cb) cb(this[type][subType][name] = JSON.parse(data))
+          this[type][subType][name] = JSON.parse(data)
+          if (cb) cb(this[type][subType][name])
         })
       }
     })
@@ -90,7 +94,7 @@ export default class Data  {
   /**
    * Loads specified data for each channel when the bot joins or leaves one
    * @param type 'static' or 'dynamic' required
-   * @param name file name
+   * @param name File name
    * @param defaultData If the file doesn't exist, create it with this data
    * @param cb Callback when data is loaded (every time a channel is joined)
    */
@@ -98,7 +102,7 @@ export default class Data  {
     this.autoLoads.push({type, name, defaultData, cb})
   }
 
-  private onJoin(channel: string) {
+  private onJoin(raw: IrcMessage, channel: string) {
     for (const autoLoad of this.autoLoads) {
       if (!this[autoLoad.type][channel]) this[autoLoad.type][channel] = {}
       if (!this[autoLoad.type][channel][autoLoad.name]) {
@@ -107,11 +111,11 @@ export default class Data  {
     }
   }
 
-  private onPart(channel: string) {
+  private onPart(raw: IrcMessage, channel: string) {
     for (const autoLoad of this.autoLoads) {
       if (!this[autoLoad.type][channel]) this[autoLoad.type][channel] = {}
-      if (!this[autoLoad.type][channel][autoLoad.name]) {
-        this.save(autoLoad.type, channel, autoLoad.name, true, (err) => {console.log(`[Data.autoLoad] Error unloading ${channel}`, err)})
+      if (this[autoLoad.type][channel][autoLoad.name]) {
+        this.save(autoLoad.type, channel, autoLoad.name, true, (err) => {if (err) console.log(`[Data.autoLoad] Error unloading ${channel}`, err)})
       }
     }
   }

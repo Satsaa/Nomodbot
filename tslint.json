@@ -23,7 +23,6 @@
       "object-literal-sort-keys": [true, "ignore-case", "locale-compare", "match-declaration-order-only", "shorthand-first"],
       "no-empty": false,
       "no-bitwise": false,
-      "max-classes-per-file": false,
       
       // tslint-eslint-rules
       "variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],
@@ -34,7 +33,9 @@
       "cognitive-complexity": false,
       "no-unconditional-jump": false,
       "no-commented-code": false,
-      "arguments-order": true
+      "use-type-alias": false,
+      "arguments-order": true,
+      "no-collapsible-if": false
     },
     "rulesDirectory": [
       //"node_modules/tslint-eslint-rules/dist/rules"
