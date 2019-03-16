@@ -97,13 +97,16 @@ export default class RateLimiter {
       } else break
     }
 
-      // if there is more or equal items in array than limit
-    if (this._times.length >= this.opts.limit) {
-      return (this._times[0] + this.opts.duration) - now
-    }
-
     let lastMsgTime = this._times[this._times.length - 1]
     if (isNaN(lastMsgTime)) lastMsgTime = 0
+
+      // if there is more or equal items in array than limit
+    if (this._times.length >= this.opts.limit) {
+      return now - lastMsgTime > this.opts.delay
+        ? (this._times[0] + this.opts.duration) - now
+        : (this._times[0] + this.opts.duration) - now + this.opts.delay - (now - lastMsgTime)
+    }
+
     return (now - lastMsgTime > this.opts.delay) ? 0 : (this.opts.delay - (now - lastMsgTime))
   }
 }
