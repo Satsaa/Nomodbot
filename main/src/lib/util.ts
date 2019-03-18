@@ -26,3 +26,18 @@ export function get(...values: any[]) { for (const key of values) { if (key !== 
  * @param plural Plural form. Defaults to `singular + 's'`
  */
 export function plural(v: string | number, singular: string, plural?: string) { return (v === 1 || v === '1' ? singular : plural || singular + 's') }
+
+const onExitCbs: Array<(code: number) => void> = []
+const signals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBUS', 'SIGFPE', 'SIGSEGV', 'SIGILL', 'SIGUSR1', 'SIGUSR2', 'SIGQUIT', 'uncaughtException']
+signals.forEach((signal: any) => {
+  process.on(signal, (code) => {
+    onExitCbs.forEach((cb) => {cb(code)})
+    process.exit(code)
+  })
+})
+/**
+ * Attempts to excecute `cb` when the script is exiting.  
+ * Does process.exit(code) after callbacks are finished
+ * @param cb Synchronous callback
+ */
+export function onExit(cb: (code: number) => void) { onExitCbs.push(cb) }

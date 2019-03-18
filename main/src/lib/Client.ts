@@ -1,10 +1,10 @@
 import { EventEmitter } from 'events'
 import * as fs from 'fs'
 import WebSocket from 'ws'
-import Expector from './expector'
+import defaultKeys from './defaultKeys'
+import Expector from './Expector'
 import parse, { IrcMessage } from './parser'
 import RateLimiter, { RateLimiterOptions } from './RateLimiter'
-
 import * as u from './util'
 
 export interface TwitchClientOptions {
@@ -13,11 +13,15 @@ export interface TwitchClientOptions {
   server?: string,
   secure?: boolean,
   port?: number,
+  /** Client data will be loaded and saved in this directory as clientData.json */
+  readonly dataDir?: null | string,
   logIrc?: boolean,
+  /** Server might refuse to connect with fast intervals */
+  reconnectInterval?: number,
   defaultTimeout?: number,
-  // trackAllUserstates?: boolean,
-  rateLimiterOptions?: RateLimiterOptions,
-  modRateLimiterOptions?: RateLimiterOptions,
+  antiDupe?: string,
+  readonly msgRLOpts?: RateLimiterOptions,
+  readonly whisperRLOpts?: RateLimiterOptions | RateLimiterOptions[],
 }
 
 /**
@@ -26,13 +30,17 @@ export interface TwitchClientOptions {
 export default class TwitchClient extends EventEmitter {
   public get ready() { return this.ws && this.ws.readyState === 1 }
   public opts: Required<TwitchClientOptions>
-  public globaluserstate: {[x: string]: any} // userstates: {[x: string]: any}
-  public channels: {[x: string]: undefined | {[x: string]: any, userstates: IrcMessage['tags']}}
-  public expector: Expector
+  public globaluserstate: {[x: string]: any}
+  public clientData: {
+    global: {whisperTimes: number[][], msgTimes: number[][]},
+    channels: {[channel: string]: {userstate: IrcMessage['tags'], phase: boolean}},
+  }
   public ws?: WebSocket
-  private rateLimiter: RateLimiter
-  private modRateLimiter: RateLimiter
 
+  private rateLimiter: RateLimiter
+  private whisperRateLimiter: RateLimiter
+
+  private interval: null | NodeJS.Timeout
   private messageTypes: any
 
   /**
@@ -45,32 +53,51 @@ export default class TwitchClient extends EventEmitter {
       server: 'irc-ws.chat.twitch.tv',
       secure: false,
       port: u.get(options.port, options.secure ? 443 : 80),
+      dataDir: null,
       logIrc : false,
+      reconnectInterval: 15000,
       defaultTimeout: 2000,
-      // trackAllUserstates: false,
+      antiDupe: ' \u206D',
       ...options,
-      rateLimiterOptions: {
+      msgRLOpts: options.msgRLOpts || {
         duration: 30000,
         limit: 19,
-        queueSize: null,
         delay: 1200,
-        ...options.rateLimiterOptions,
       },
-      modRateLimiterOptions: {
-        duration: 30000,
-        limit: 99,
-        queueSize: null,
-        delay: 250,
-        ...options.modRateLimiterOptions,
-      },
+      // 3 per second, up to 100 per minute; 40 accounts per day... uh
+      whisperRLOpts: options.whisperRLOpts || [
+        {
+          duration: 60000,
+          limit: 34,
+          delay: 600,
+        },
+      ],
     }
-    this.globaluserstate = {}
-    this.channels = {}
-    this.expector = new Expector()
-    this.rateLimiter = new RateLimiter(this.opts.rateLimiterOptions)
-    this.modRateLimiter = new RateLimiter(this.opts.modRateLimiterOptions)
 
+    this.globaluserstate = {}
+    this.clientData = {global: {whisperTimes: [], msgTimes: []} , channels: {}}
+    if (this.opts.dataDir !== null) {
+      fs.mkdirSync(this.opts.dataDir, {recursive: true})
+      try {
+        fs.accessSync(`${this.opts.dataDir}clientData.json`, fs.constants.R_OK | fs.constants.W_OK)
+      } catch (err) {
+        if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataDir}clientData.json`, '{}')
+        else throw err
+      }
+      fs.accessSync(`${this.opts.dataDir}clientData.json`)
+      defaultKeys(this.clientData, JSON.parse(fs.readFileSync(`${this.opts.dataDir}clientData.json`, 'utf8')))
+      u.onExit(this.onExit.bind(this))
+    }
+
+    this.rateLimiter = new RateLimiter(this.opts.msgRLOpts)
+    this.whisperRateLimiter = new RateLimiter(this.opts.whisperRLOpts)
+
+    this.clientData.global.msgTimes = this.rateLimiter.times
+    this.clientData.global.whisperTimes = this.whisperRateLimiter.times
+
+    this.interval = null
     this.messageTypes = JSON.parse(fs.readFileSync('./misc/seenMessageTypes.json', {encoding: 'utf8'}))
+
     setTimeout(this.pingLoop.bind(this), 5 * 60 * 1000 * u.randomFloat(0.9, 1.0))
     setInterval(() => {
       fs.writeFileSync('./misc/seenMessageTypes.json', JSON.stringify(this.messageTypes, null, 2))
@@ -85,6 +112,18 @@ export default class TwitchClient extends EventEmitter {
     this.ws.onmessage = this.onMessage.bind(this)
     this.ws.onerror = this.onError.bind(this)
     this.ws.onclose = this.onClose.bind(this)
+  }
+
+  /**
+   * Send `data` over the connection
+   * @param data 
+   * @param cb Call when data is sent
+   */
+  public send(data: any, cb?: (err?: Error) => void): void {
+    if (this.ws && this.ws.readyState === 1) {
+      if (cb) this.ws.send(data, cb)
+      else this.ws.send(data)
+    }
   }
 
   /** Join `channel` */
@@ -113,30 +152,22 @@ export default class TwitchClient extends EventEmitter {
         }
       }
     }
+    if (typeof this.clientData.channels[channel].phase === 'undefined') return console.log('Not connected to this channel')
 
-    /*if (mod){
-      this.modRateLimiter.queue(() => {
-        this.send(`PRIVMSG ${channel} :${msg}`)
-      })
-    } else {
-      this.rateLimiter.queue(() => {
-        this.send(`PRIVMSG ${channel} :${msg}`)
-      })
-    }*/
+    // It is not possible to know if nmb has been unmodded before sending a message. (pubsub may tell this? Still would be too late?)
+    // Being over basic limits and losing mod will cause the bot to be disconnected and muted for 30 or so minutes (not good)
     this.rateLimiter.queue(() => {
+      this.clientData.channels[channel].phase = !this.clientData.channels[channel].phase
+      if (this.clientData.channels[channel].phase) msg += this.opts.antiDupe
       this.send(`PRIVMSG ${channel} :${msg}`)
     })
   }
 
-  /**
-   * Send `data` over the connection
-   * @param data 
-   * @param cb Call when data is sent
-   */
-  public send(data: any, cb?: (err?: Error) => void): void {
-    if (this.ws && this.ws.readyState === 1) {
-      cb ? this.ws.send(data, cb) : this.ws.send(data)
-    }
+  /** Whisper `msg` to `user` */
+  public whisper(user: string, msg: string) {
+    this.whisperRateLimiter.queue(() => {
+      this.send(`PRIVMSG #${this.opts.username} :/w ${user} ${msg}`)
+    })
   }
 
   private onOpen(event: { target: WebSocket }): void {
@@ -212,20 +243,52 @@ export default class TwitchClient extends EventEmitter {
       })
     } else throw (new Error('NON STRING DATA'))
   }
+
   private onError(event: { error: any, message: string, target: WebSocket, type: string }): void {
     this.emit('ws error')
     console.error(event.error)
     this.ws = undefined
+    this.reconnect()
   }
 
   private onClose(event: { code: number, reason: string, target: WebSocket , wasClean: boolean }): void {
     this.emit('ws close')
     console.log(`Connection closed: ${event.code}, ${event.reason}`)
+    this.ws = undefined
+    this.reconnect()
+  }
+
+  private onExit() {
+    if (!this.opts.dataDir) {
+      console.warn('CHANNELDATA COULD NOT BE SAVED!!! PRINTING DATA!!!\n', JSON.stringify(this.clientData, null, 2))
+    } else {
+      try {
+        fs.writeFileSync(`${this.opts.dataDir}clientData.json`, JSON.stringify(this.clientData, replacer, 2))
+      } catch (err) {
+        console.warn('CHANNELDATA COULD NOT BE SAVED!!! PRINTING ERROR AND DATA!!!\n', err, '\n', JSON.stringify(this.clientData, null, 2))
+      }
+    }
+    function replacer(k: string, v: any) {
+      if (['userstate'].indexOf(k) !== -1) return undefined
+      else return v
+    }
   }
 
   private pingLoop() {
     if (this.ws) this.ws.send('PING')
     setTimeout(this.pingLoop.bind(this), 5 * 60 * 1000 * u.randomFloat(0.9, 1.0))
+  }
+
+  private reconnect(interval: number = this.opts.reconnectInterval) {
+    if (this.ws) this.ws.close()
+    if (this.interval) return
+    this.interval = setInterval(() => {
+      this.connect()
+    }, interval)
+    this.once('welcome', () => {
+      clearInterval(this.interval!)
+      this.interval = null
+    })
   }
 
   private ircLog(msg: any) {
@@ -248,10 +311,12 @@ export default class TwitchClient extends EventEmitter {
       case '376': // <prefix> 376 <you> :>
         break
       case '353': // :nomodbot.<prefix> 353 <you> = #<channel> :<user1> <user2> ... <userN>
-        // this.emit('userjoin')
+        msg.params[3].split(' ').forEach((user) => {
+          this.ircLog(`${user} already in ${msg.params[2]}`)
+          this.emit('userjoin', msg, msg.params[2], user)
+        })
         break
       case 'CAP':
-        // this.emit('capabilities')
         break
       case 'MODE': // :jtv MODE #<channel> +o||-o <user>
         this.ircLog(`${msg.params[2]} ${msg.params[1] === '+o' ? 'gains' : 'loses'} moderator in ${msg.params[0]}`)
@@ -260,7 +325,7 @@ export default class TwitchClient extends EventEmitter {
       case 'JOIN': // :<user>!<user>@<user>.tmi.twitch.tv JOIN #<channel>
         this.ircLog(`${msg.user} joins ${msg.params[0]}`)
         if (msg.user === this.opts.username) {
-          this.channels[msg.params[0]] = {userstates: {}}
+          this.clientData.channels[msg.params[0]] = {userstate: {}, phase: false}
           this.emit('join', msg, msg.params[0])
         }
         this.emit('userjoin', msg, msg.params[0], msg.user)
@@ -269,7 +334,7 @@ export default class TwitchClient extends EventEmitter {
         this.ircLog(`${msg.user} parts ${msg.params[0]}`)
         if (msg.user === this.opts.username) {
           this.emit('part', msg, msg.params[0])
-          this.channels[msg.params[0]] = undefined
+          delete this.clientData.channels[msg.params[0]]
         }
         this.emit('userpart', msg, msg.params[0], msg.user)
         break
@@ -289,8 +354,7 @@ export default class TwitchClient extends EventEmitter {
         break
       case 'USERSTATE': // <tags> <prefix> USERSTATE #<channel>
           // @badges=;color=#008000;display-name=NoModBot;emote-sets=0,326755;mod=0;subscriber=0;user-type=
-          // Non null assertion (!) used because of a compiler issue
-        this.channels[msg.params[0]]!.userstates = {...this.channels[msg.params[0]]!.userstates, ...msg.tags}
+        this.clientData.channels[msg.params[0]].userstate = {...this.clientData.channels[msg.params[0]].userstate, ...(msg ? msg.tags : {})}
         this.emit('userstate', msg)
         break
       case 'GLOBALUSERSTATE': // <tags> <prefix> GLOBALUSERSTATE
@@ -323,11 +387,13 @@ export default class TwitchClient extends EventEmitter {
         // switch
         break
       case 'NOTICE': // <tags> <prefix> NOTICE #<channel> :<message>
+        // @msg-id=msg_ratelimit :tmi.twitch.tv NOTICE #satsaa :Your message was not sent because you are sending messages too quickly.
+        if (msg.tags['msg-id'] === 'msg_ratelimit') this.ircLog('Rate limited')
         this.emit('notice', msg)
         // switch
         break
       case 'RECONNECT':
-        this.emit('reconnect', msg)
+        this.reconnect()
         break
       case 'CLEARMSG':
         this.emit('clearmsg', msg)

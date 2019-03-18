@@ -5,25 +5,25 @@ import TwitchClient from './lib/Client'
 import { IrcMessage } from './lib/parser'
 import RateLimiter, { RateLimiterOptions } from './lib/RateLimiter'
 
-export interface CommandOptions {
+export interface Command {
   type: 'command',
-  /** Used for identifying this plugin */
+  /** Unique id for identifying this plugin */
   id: string,
   name: string,
   description: string,
-  /** Usage instructions */
+  /** [default command alias, CommandAlias options] */
   default: [string, Pick<CommandAlias, Exclude<keyof CommandAlias, 'id'>>],
   /** Usage instructions */
   help: string,
-  /** Command is succesfully called from chat */
+  /** When a command is succesfully called */
   call: (raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) => Promise<{}>,
-  /** Command is called but is ignored due to cooldowns */
+  /** When a command is called but is ignored due to cooldowns */
   overFlow?: (raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) => void,
 }
 
-export interface ControllerOptions {
+export interface Controller {
   type: 'controller',
-  /** Used for identifying this plugin */
+  /** Unique id for identifying this plugin */
   id: string,
   name: string,
   title: string,
@@ -34,18 +34,19 @@ export interface ControllerOptions {
 export interface CommandAlias {
   disabled: boolean,
   id: string,
-  channelRateLimit: number | RateLimiterOptions,
-  globalCooldown: number | RateLimiterOptions,
-  userCooldown: number | RateLimiterOptions,
-  globalUserCooldown: number | RateLimiterOptions,
+  cooldown: number | {duration: number, uses: number},
+  userCooldown: number | {duration: number, uses: number},
+  /*
+  data.dynamic.channel.cooldowns.alias = {channel: [timesArray], user: {USER:[timesArray]}}
+  */
 }
 
 export default class Commander {
-  public commands: {[x: string]: CommandOptions}
-  public controllers: {[x: string]: ControllerOptions}
+  public commands: {[x: string]: Command}
+  public controllers: {[x: string]: Controller}
   private defaults: {[x: string]: CommandAlias}
   private client: TwitchClient
-  private data: Data // & {static: {default?: {commands: {[x: string]: CommandAlias}}}}
+  private data: Data
 
   constructor(client: TwitchClient, data: Data) {
     this.commands = {}
@@ -74,6 +75,8 @@ export default class Commander {
 
   public init(): Promise<{loaded: string[], failed: string[]}> {
     this.data.autoLoad('static', 'commands', {})
+    this.data.autoLoad('dynamic', 'cooldowns', {})
+    this.data.load('dynamic', 'global', 'cooldowns', {})
     return new Promise((resolve, reject) => {
       readDirRecursive('./main/commands/', (err, files) => {
         if (err) return reject(err)
@@ -81,7 +84,7 @@ export default class Commander {
         const loaded: string[] = []
         const failed: string[] = []
         files.forEach((file) => {
-          const plugin: {options: CommandOptions | ControllerOptions} = require(file)
+          const plugin: {options: Command | Controller} = require(file)
           const options = plugin.options
           if (options) {
             if (options.type === 'command') {

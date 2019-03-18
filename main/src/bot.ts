@@ -2,6 +2,7 @@ import Commander from './Commander'
 import Data from './Data'
 import Client from './lib/Client'
 import * as secretKey from './lib/secretKey'
+import {onExit} from './lib/util'
 
 export default class Bot {
 
@@ -10,9 +11,11 @@ export default class Bot {
   private commander: Commander
 
   constructor() {
+    onExit(this.onExit.bind(this))
     this.client = new Client({
       username: secretKey.getKey('./main/cfg/keys.json', 'twitch', 'username'),
       password: secretKey.getKey('./main/cfg/keys.json', 'twitch', 'password'),
+      dataDir: './main/data/dynamic/global/',
       logIrc: true,
     })
     this.client.connect()
@@ -27,5 +30,9 @@ export default class Bot {
     }, (err) => {
       console.error('Error loading commands:', err)
     })
+  }
+
+  private onExit(code: any) {
+    this.data.saveAllSync()
   }
 }
