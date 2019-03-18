@@ -64,14 +64,12 @@ export default class TwitchClient extends EventEmitter {
         limit: 19,
         delay: 1200,
       },
-      // 3 per second, up to 100 per minute; 40 accounts per day... uh
-      whisperRLOpts: options.whisperRLOpts || [
-        {
-          duration: 60000,
-          limit: 34,
-          delay: 600,
-        },
-      ],
+      // 3 per second, up to 100 per minute; 40 accounts per day... uh sure
+      whisperRLOpts: options.whisperRLOpts || {
+        duration: 60000,
+        limit: 34,
+        delay: 1050,
+      },
     }
 
     this.globaluserstate = {}
