@@ -8,7 +8,10 @@ process.on('uncaughtException', (e) => {
 
 console.log('Testing "../bin/src/lib/matchKeys"')
 
-let matchKeys = require('../bin/src/lib/matchKeys').default
+let _matchKeys = require('../bin/src/lib/matchKeys').default
+function matchKeys(needle, hay, options){
+  return _matchKeys(hay, needle, options)
+}
 
 let testType = 'Simple > '
 assert.strictEqual(matchKeys({}, {}), true, testType + 'Failed on empty objects: {} = {}')
