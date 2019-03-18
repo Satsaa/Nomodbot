@@ -100,7 +100,7 @@ export default class Expector {
         const entry = this.entries[i]
 
         // Test for match
-        if (matchKeys(entry.matchObj, testObj, entry.options.matchOptions)) {
+        if (matchKeys(testObj, entry.matchObj, entry.options.matchOptions)) {
           if (entry.once) {
             this.entries.splice(i, 1)
             if (entry.timeout) clearTimeout(entry.timeout)

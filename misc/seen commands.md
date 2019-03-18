@@ -66,6 +66,8 @@ USERNOTICE    Subs, rituals and more
 @msg-id=resub;msg-param-cumulative-months=4;msg-param-months=0;msg-param-should-share-streak=1;msg-param-streak-months=4;msg-param-sub-plan-name=Channel\sSubscription\s(meclipse);msg-param-sub-plan=1000;...
 @...msg-id=subgift;msg-param-months=0;msg-param-origin-id=da\s39\sa3\see\s5e\s6b\s4b\s0d\s32\s55\sbf\sef\s95\s60\s18\s90\saf\sd8\s07\s09;msg-param-recipient-display-name=FluffingtonTV;msg-param-recipient-id=70300918;msg-param-recipient-user-name=fluffingtontv;msg-param-sender-count=0;msg-param-sub-plan-name=Channel\sSubscription\s(meclipse);msg-param-sub-plan=1000;...
 @display-name=AnAnonymousGifter;<login=ananonymousgifter>;<msg-id=subgift>;<msg-param-fun-string=FunStringFour>;<msg-param-months=20>;<sg-param-recipient-display-name=colt149>;<msg-param-recipient-user-name=colt149>;<msg-param-sub-plan-name=8=D>;system-msg=An\s<anonymous>\suser\sgifted\sa\sTier\s1\ssub\sto\scolt149!\s;
+@badges=;color=#FF69B4;display-name=Satsaa;emotes=64138:0-8;flags=;id=3b314fa7-06af-4e14-bf07-bd58d686049a;login=satsaa;mod=0;msg-id=ritual;msg-param-ritual-name=new_chatter;room-id=116888929;subscriber=0;system-msg=@Satsaa\sis\snew\shere.\sSay\shello!;tmi-sent-ts=1552772151290;user-id=61365582;user-type= :tmi.twitch.tv USERNOTICE #ssaab :SeemsGood
+^new chatter ritual
 
 PRIVMSG       Someone sends a message
 @userstate :<poiintxblank!poiintxblank@poiintxblank>.tmi.twitch.tv PRIVMSG #shroud :<@hunzerrr oh, yea it is>

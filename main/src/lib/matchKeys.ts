@@ -9,19 +9,19 @@ export interface MatchKeysOptions {
 }
 
 /**
- * Test if `testObj` has all the keys of `matchObj`  
+ * Deeply tests if `haystackObj` has all the keys of `needleObj`  
  * Considers arrays objects with indexes as keys [5,4,3] = {0:5,1:4,2:3}
- * @param matchObj Object of required keys
- * @param testObj Test this object for required keys
+ * @param needleObj Object of required keys
+ * @param haystackObj Test this object for required keys
  * @param options
  */
-export default (matchObj: object, testObj: object, options: MatchKeysOptions = {}) => {
+export default (haystackObj: object, needleObj: object, options: MatchKeysOptions = {}) => {
 
-  if (typeof matchObj !== 'object' || typeof testObj !== 'object') return matchObj === testObj
+  if (typeof needleObj !== 'object' || typeof haystackObj !== 'object') return needleObj === haystackObj
 
   let i = 0
 
-  return testKeys(matchObj, testObj, options)
+  return testKeys(needleObj, haystackObj, options)
 
   function testKeys(matchObj: {[x: string]: any}, obj: {[x: string]: any}, options: MatchKeysOptions) {
     if (typeof options.maxDepth === 'number') {
@@ -34,9 +34,9 @@ export default (matchObj: object, testObj: object, options: MatchKeysOptions = {
       if (typeof objKey === 'undefined') return false // key didnt exist in obj
       // test that values match
       if ((options.matchValues)                                             // Test values if chosen
-      && (!options.ignoreUndefined || matchKey !== undefined)               // Ignore undefined values if chosen
-      && (matchKey !== objKey)                                              // Check if values don't match
-      && (typeof matchKey !== 'object' || typeof objKey !== 'object')) {    // Check that both are not objects
+        && (!options.ignoreUndefined || matchKey !== undefined)             // Ignore undefined values if chosen
+        && (matchKey !== objKey)                                            // Check if values don't match
+        && (typeof matchKey !== 'object' || typeof objKey !== 'object')) {  // Check that both are not objects
         return false
       }
       // test that keys exist
