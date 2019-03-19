@@ -12,10 +12,12 @@ export const options: Command = {
     userCooldown: 0,
   }],
   help: 'Just smile! 4Head',
-  call: (raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) => {
-    return new Promise((resolve) => {
-      console.log('We smilin')
-      resolve(':) /\\ :)')
-    })
+  actions: {
+    call: (raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) => {
+      return new Promise((resolve) => {
+        console.log('We smilin')
+        resolve(':) /\\ :)')
+      })
+    },
   },
 }

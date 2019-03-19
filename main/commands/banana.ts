@@ -1,5 +1,5 @@
 import { Command } from '../src/Commander'
-import { IrcMessage } from './../src/lib/parser'
+import { IrcMessage } from '../src/lib/parser'
 
 export const options: Command = {
   type: 'command',
@@ -12,10 +12,13 @@ export const options: Command = {
     userCooldown: 0,
   }],
   help: 'Goin bananas fo help',
-  call: (raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) => {
-    return new Promise((resolve) => {
-      console.log('🍌🍌🍌🍌🍌🍌🍌🍌')
-      resolve(':O 🍌')
-    })
-  },
+  actions: {
+    call: (raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) => {
+      return new Promise((resolve) => {
+        console.log('🍌🍌🍌🍌🍌🍌🍌🍌')
+        resolve(':O 🍌')
+      })
+    },
+  }
+  ,
 }

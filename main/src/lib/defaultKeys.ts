@@ -15,7 +15,8 @@ export default (checkObj: object, defaultObj: object) => {
         if (!checkObj.hasOwnProperty(key)) { // Key doesnt exist?
           checkObj[key] = Array.isArray(defaultObj[key]) ? [] : {} // Define as object type
           defaults(checkObj[key], defaultObj[key]) // Go deeper
-        } else if (isObject(checkObj[key]) && Array.isArray(key) === Array.isArray(checkObj[key])) { // make sure both are same type of object
+        } else if (isObject(checkObj[key])
+          && Array.isArray(defaultObj[key]) === Array.isArray(checkObj[key])) { // make sure both are same type of object
           defaults(checkObj[key], defaultObj[key]) // Go deeper
         } // continue if not same type of object
       } else { // default key is not object. Set default value
@@ -30,7 +31,3 @@ export default (checkObj: object, defaultObj: object) => {
 function isObject(v: any) {
   return v !== null && typeof v === 'object'
 }
-
-setInterval(() => {
-
-}, 100000000)

@@ -20,8 +20,8 @@ export interface TwitchClientOptions {
   reconnectInterval?: number,
   defaultTimeout?: number,
   antiDupe?: string,
-  readonly msgRLOpts?: RateLimiterOptions,
-  readonly whisperRLOpts?: RateLimiterOptions | RateLimiterOptions[],
+  readonly msgRLOpts?: Readonly<RateLimiterOptions>,
+  readonly whisperRLOpts?: Readonly<RateLimiterOptions | RateLimiterOptions[]>,
 }
 
 /**
@@ -58,18 +58,18 @@ export default class TwitchClient extends EventEmitter {
       reconnectInterval: 15000,
       defaultTimeout: 2000,
       antiDupe: ' \u206D',
-      ...options,
-      msgRLOpts: options.msgRLOpts || {
+      msgRLOpts: {
         duration: 30000,
         limit: 19,
         delay: 1200,
       },
       // 3 per second, up to 100 per minute; 40 accounts per day... uh sure
-      whisperRLOpts: options.whisperRLOpts || {
+      whisperRLOpts: {
         duration: 60000,
         limit: 34,
         delay: 1050,
       },
+      ...options,
     }
 
     this.globaluserstate = {}
@@ -90,8 +90,16 @@ export default class TwitchClient extends EventEmitter {
     this.rateLimiter = new RateLimiter(this.opts.msgRLOpts)
     this.whisperRateLimiter = new RateLimiter(this.opts.whisperRLOpts)
 
-    this.clientData.global.msgTimes = this.rateLimiter.times
-    this.clientData.global.whisperTimes = this.whisperRateLimiter.times
+    // Match rateLimiter's options length with times lengths
+    // Make sure the times arrays are big enough
+    this.rateLimiter.times.forEach((v, i) => {if (!this.clientData.global.msgTimes[i]) this.clientData.global.msgTimes.push([])})
+    this.whisperRateLimiter.times.forEach((v, i) => {if (!this.clientData.global.whisperTimes[i]) this.clientData.global.whisperTimes.push([])})
+    // Make sure the times arrays are not too big
+    this.clientData.global.msgTimes.length = this.rateLimiter.times.length
+    this.clientData.global.whisperTimes.length = this.whisperRateLimiter.times.length
+    // Link the times array to clientData so it can be saved
+    this.rateLimiter.times = this.clientData.global.msgTimes
+    this.whisperRateLimiter.times = this.clientData.global.whisperTimes
 
     this.interval = null
     this.messageTypes = JSON.parse(fs.readFileSync('./misc/seenMessageTypes.json', {encoding: 'utf8'}))
@@ -181,65 +189,62 @@ export default class TwitchClient extends EventEmitter {
     this.emit('ws message')
     if (typeof event.data === 'string') {
       event.data.split('\r\n').forEach((msgStr) => {
-        const message = parse(msgStr)
-        if (message === null) return
-          // Functionality
-        this.handleMessage(message)
-
-        if (message.cmd !== null) {
-
-          // Document message types
-          // .noticeIds
-          if (message.cmd === 'NOTICE' && typeof message.tags['msg-id'] === 'string') {
-            const tag3 = message.tags['msg-id'].toString()
-            if (!this.messageTypes.userNoticeIds[tag3]) this.messageTypes.userNoticeIds[tag3] = { __count__: 1}
-            else this.messageTypes.userNoticeIds[tag3].__count__++
-            for (const tag in message.tags) {
-              if (message.tags.hasOwnProperty(tag)) {
-                const commandObj = this.messageTypes.userNoticeIds[tag3]
-                if (!commandObj[tag]) commandObj[tag] = 1
-                else commandObj[tag]++
-              }
-            }
-          } else if (message.cmd === 'USERNOTICE' && typeof message.tags['msg-id'] === 'string') {
-            const tag3 = message.tags['msg-id'].toString()
-            if (!this.messageTypes.noticeIds[tag3]) this.messageTypes.noticeIds[tag3] = { __count__: 1}
-            else this.messageTypes.noticeIds[tag3].__count__++
-            const commandObj = this.messageTypes.noticeIds[tag3]
-            for (const tag in message.tags) {
-              if (message.tags.hasOwnProperty(tag)) {
-                if (!commandObj[tag]) commandObj[tag] = 1
-                else commandObj[tag]++
-              }
-            }
-          }
-          // .commands
-          if (!this.messageTypes.commands[message.cmd]) this.messageTypes.commands[message.cmd] = { __count__: 1}
-          else this.messageTypes.commands[message.cmd].__count__++
-          const commandObj = this.messageTypes.commands[message.cmd]
-          for (const tag in message.tags) {
-            if (message.tags.hasOwnProperty(tag)) {
-              if (!commandObj[tag]) commandObj[tag] = 1
-              else commandObj[tag]++
-            }
-          }
-          if (!commandObj._paramlengths_) commandObj._paramlengths_ = {}
-          if (!commandObj._paramlengths_[message.params.length]) commandObj._paramlengths_[message.params.length] = 1
-          else commandObj._paramlengths_[message.params.length]++
-
-          if (!commandObj._prefix_) commandObj._prefix_ = {}
-
-          if (!message.prefix) commandObj._prefix_.prefix = 1
-          else commandObj._prefix_.prefix++
-
-          if (!message.user) commandObj._prefix_.user = 1
-          else commandObj._prefix_.user++
-
-          if (!message.nick) commandObj._prefix_.nick = 1
-          else commandObj._prefix_.nick++
-        }
+        const msg = parse(msgStr)
+        if (msg === null) return
+        this.handleMessage(msg)
+        this.doc(msg)
       })
     } else throw (new Error('NON STRING DATA'))
+  }
+
+  private doc(msg: IrcMessage) {
+    if (msg.cmd !== null) {
+      // noticeIds
+      if (msg.cmd === 'NOTICE' && typeof msg.tags['msg-id'] === 'string') {
+        const tag3 = msg.tags['msg-id'].toString()
+        if (!this.messageTypes.userNoticeIds[tag3]) this.messageTypes.userNoticeIds[tag3] = { __count__: 1}
+        else this.messageTypes.userNoticeIds[tag3].__count__++
+        for (const tag in msg.tags) {
+          if (msg.tags.hasOwnProperty(tag)) {
+            const commandObj = this.messageTypes.userNoticeIds[tag3]
+            if (!commandObj[tag]) commandObj[tag] = 1
+            else commandObj[tag]++
+          }
+        }
+      } else if (msg.cmd === 'USERNOTICE' && typeof msg.tags['msg-id'] === 'string') {
+        const tag3 = msg.tags['msg-id'].toString()
+        if (!this.messageTypes.noticeIds[tag3]) this.messageTypes.noticeIds[tag3] = { __count__: 1}
+        else this.messageTypes.noticeIds[tag3].__count__++
+        const commandObj = this.messageTypes.noticeIds[tag3]
+        for (const tag in msg.tags) {
+          if (msg.tags.hasOwnProperty(tag)) {
+            if (!commandObj[tag]) commandObj[tag] = 1
+            else commandObj[tag]++
+          }
+        }
+      }
+      // commands
+      if (!this.messageTypes.commands[msg.cmd]) this.messageTypes.commands[msg.cmd] = { __count__: 1}
+      else this.messageTypes.commands[msg.cmd].__count__++
+      const commandObj = this.messageTypes.commands[msg.cmd]
+      for (const tag in msg.tags) {
+        if (msg.tags.hasOwnProperty(tag)) {
+          if (!commandObj[tag]) commandObj[tag] = 1
+          else commandObj[tag]++
+        }
+      }
+      if (!commandObj._paramlengths_) commandObj._paramlengths_ = {}
+      if (!commandObj._paramlengths_[msg.params.length]) commandObj._paramlengths_[msg.params.length] = 1
+      else commandObj._paramlengths_[msg.params.length]++
+
+      if (!commandObj._prefix_) commandObj._prefix_ = {}
+      if (!msg.prefix) commandObj._prefix_.prefix = 1
+      else commandObj._prefix_.prefix++
+      if (!msg.user) commandObj._prefix_.user = 1
+      else commandObj._prefix_.user++
+      if (!msg.nick) commandObj._prefix_.nick = 1
+      else commandObj._prefix_.nick++
+    }
   }
 
   private onError(event: { error: any, message: string, target: WebSocket, type: string }): void {
@@ -257,13 +262,16 @@ export default class TwitchClient extends EventEmitter {
   }
 
   private onExit() {
+    console.log('[Client] Saving clientData')
     if (!this.opts.dataDir) {
-      console.warn('CHANNELDATA COULD NOT BE SAVED!!! PRINTING DATA!!!\n', JSON.stringify(this.clientData, null, 2))
+      console.warn('CLIENTDATA COULD NOT BE SAVED!!! PRINTING DATA!!!\n', JSON.stringify(this.clientData, null, 2))
     } else {
       try {
         fs.writeFileSync(`${this.opts.dataDir}clientData.json`, JSON.stringify(this.clientData, replacer, 2))
+        console.log('[Client] Saved clientData')
       } catch (err) {
-        console.warn('CHANNELDATA COULD NOT BE SAVED!!! PRINTING ERROR AND DATA!!!\n', err, '\n', JSON.stringify(this.clientData, null, 2))
+        console.log('[Client] Could not save clientData:', err)
+        console.warn('[Client] clientData:', JSON.stringify(this.clientData, null, 2))
       }
     }
     function replacer(k: string, v: any) {

@@ -35,7 +35,8 @@
       "no-commented-code": false,
       "use-type-alias": false,
       "arguments-order": true,
-      "no-collapsible-if": false
+      "no-collapsible-if": false,
+      "no-statements-same-line": false
     },
     "rulesDirectory": [
       //"node_modules/tslint-eslint-rules/dist/rules"

@@ -21,7 +21,7 @@ export default class Bot {
     this.client.connect()
     this.client.on('welcome', () => {this.client.join('#satsaa')})
 
-    this.data = new Data(this.client)
+    this.data = new Data(this.client, './main/data/')
     this.commander = new Commander(this.client, this.data)
 
     this.commander.init().then((result) => {
@@ -32,7 +32,7 @@ export default class Bot {
     })
   }
 
-  private onExit(code: any) {
+  private onExit(code: number) {
     this.data.saveAllSync()
   }
 }
