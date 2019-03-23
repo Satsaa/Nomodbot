@@ -1,24 +1,35 @@
-import { Command } from '../src/Commander'
+import { Plugin } from '../src/Commander'
 import { IrcMessage } from '../src/lib/parser'
 
-export const options: Command = {
+export const options: Plugin = {
   type: 'command',
   id: 'banana',
   name: 'Banana',
   description: 'Go bananas',
-  default: ['banana', {
-    disabled: false,
-    cooldown: 0,
-    userCooldown: 0,
-  }],
+  default: {
+    alias: 'banana',
+    options: {
+      disabled: false,
+      cooldown: 0,
+      userCooldown: 0,
+    },
+  },
   help: 'Goin bananas fo help',
   actions: {
-    call: (raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) => {
-      return new Promise((resolve) => {
-        console.log('🍌🍌🍌🍌🍌🍌🍌🍌')
-        resolve(':O 🍌')
-      })
+    call: async (raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) => {
+      console.log('🍌🍌🍌🍌🍌🍌🍌🍌')
+      return ':O 🍌'
     },
+  },
+}
+
+export default class NewPluginStructure {
+
+  constructor() {
+
   }
-  ,
+
+  public call() {
+
+  }
 }

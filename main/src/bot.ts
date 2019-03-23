@@ -22,13 +22,11 @@ export default class Bot {
     this.client.on('welcome', () => {this.client.join('#satsaa')})
 
     this.data = new Data(this.client, './main/data/')
+
     this.commander = new Commander(this.client, this.data)
 
     this.commander.init().then((result) => {
-      if (result.failed.length) console.error(`Required 'options' export missing in: ${result.failed.join(', ')}`)
-      console.log(`Loaded commands: ${result.loaded.join(', ')}`)
-    }, (err) => {
-      console.error('Error loading commands:', err)
+      console.log(result)
     })
   }
 

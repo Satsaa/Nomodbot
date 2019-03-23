@@ -2,7 +2,6 @@ import { EventEmitter } from 'events'
 import * as fs from 'fs'
 import WebSocket from 'ws'
 import defaultKeys from './defaultKeys'
-import Expector from './Expector'
 import parse, { IrcMessage } from './parser'
 import RateLimiter, { RateLimiterOptions } from './RateLimiter'
 import * as u from './util'
@@ -14,7 +13,7 @@ export interface TwitchClientOptions {
   secure?: boolean,
   port?: number,
   /** Client data will be loaded and saved in this directory as clientData.json */
-  readonly dataDir?: null | string,
+  dataDir?: null | string,
   logIrc?: boolean,
   /** Server might refuse to connect with fast intervals */
   reconnectInterval?: number,
@@ -28,7 +27,6 @@ export interface TwitchClientOptions {
  * A client for interacting with Twitch servers
  */
 export default class TwitchClient extends EventEmitter {
-  public get ready() { return this.ws && this.ws.readyState === 1 }
   public opts: Required<TwitchClientOptions>
   public globaluserstate: {[x: string]: any}
   public clientData: {
@@ -75,6 +73,7 @@ export default class TwitchClient extends EventEmitter {
     this.globaluserstate = {}
     this.clientData = {global: {whisperTimes: [], msgTimes: []} , channels: {}}
     if (this.opts.dataDir !== null) {
+      if (this.opts.dataDir.endsWith('/')) this.opts.dataDir += '/'
       fs.mkdirSync(this.opts.dataDir, {recursive: true})
       try {
         fs.accessSync(`${this.opts.dataDir}clientData.json`, fs.constants.R_OK | fs.constants.W_OK)

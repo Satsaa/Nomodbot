@@ -1,4 +1,4 @@
-import * as fs from 'fs'
+import { promises as fsp } from 'fs'
 import * as path from 'path'
 
 /**
@@ -48,21 +48,11 @@ export function onExit(cb: (code: number) => void) { onExitCbs.push(cb) }
  * Finds all files in `dir` and its subfolders recursively
  * @param dir A directory path
  */
-export function readDirRecursive(dir: string, cb: (err?: Error, files?: string[]) => void) {
-  const result: string[] = []
-  fs.readdir(dir, (err, files) => {
-    if (err) return cb(err)
-    if (!files.length) return cb(undefined, result)
-    let remain = files.length
-    files.forEach((file) => {
-      file = path.resolve(dir, file)
-      fs.stat(file, (err, stat) => {
-        if (stat && stat.isDirectory()) {
-          readDirRecursive(file, (err, files) => {
-            if (files) result.push(...files)
-            if (--remain === 0) return cb(undefined, result)
-          })
-        } else {
-          result.push(file)
-          if (--remain === 0) return cb(undefined, result)
-        }})})})}
+export async function readDirRecursive(dir: string, allFiles: string[] = []) {
+  const files = (await fsp.readdir(dir)).map((file) => path.resolve(dir, file))
+  allFiles.push(...files)
+  await Promise.all(files.map(async (file) => (
+    (await fsp.stat(file)).isDirectory() && readDirRecursive(file, allFiles)
+  )))
+  return allFiles
+}
