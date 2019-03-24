@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events'
 import * as fs from 'fs'
+import { promises as fsp } from 'fs'
 import TwitchClient from './lib/Client'
 import { IrcMessage } from './lib/parser'
-const fsp = fs.promises
 
 export default class Data extends EventEmitter {
 
@@ -95,7 +95,7 @@ export default class Data extends EventEmitter {
     if (!this.getData(type, subType, name)) return console.error(`${name} isn't loaded and is therefore not saved`)
     try {
       await fsp.writeFile(`${this.dataPath}${type}/${subType}/${name}.json`, JSON.stringify(this.getData(type, subType, name), null, 2))
-      this.delData(type, subType, name)
+      if (unload) this.delData(type, subType, name)
     } catch (err) {
       console.log(`Could not save ${name}:`, err)
     }
@@ -140,7 +140,7 @@ export default class Data extends EventEmitter {
   }
 
   /**
-   * Loads specified data for each channel when the bot joins or leaves one
+   * Loads or unloads specified data for each channel when the bot joins or parts one
    * @param type 'static' or 'dynamic' required
    * @param name File name
    * @param defaultData If the file doesn't exist, create it with this data

@@ -23,11 +23,14 @@
       "object-literal-sort-keys": [true, "ignore-case", "locale-compare", "match-declaration-order-only", "shorthand-first"],
       "no-empty": false,
       "no-bitwise": false,
+      "no-duplicate-imports": false, // fs.promises import issue
+      "arrow-parens": false,
+      "no-string-throw": true,
       
       // tslint-eslint-rules
       "variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],
       "ter-indent": [ true, 2, { "SwitchCase": 1 }],
-      "ter-arrow-parens": [true, "always"],
+      "ter-arrow-parens": [true, "as-needed", { "requireForBlockBody": true }],
 
       // tslint-sonarts
       "cognitive-complexity": false,
@@ -36,7 +39,8 @@
       "use-type-alias": false,
       "arguments-order": true,
       "no-collapsible-if": false,
-      "no-statements-same-line": false
+      "no-statements-same-line": false,
+      "no-try-promise": true
     },
     "rulesDirectory": [
       //"node_modules/tslint-eslint-rules/dist/rules"

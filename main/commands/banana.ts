@@ -1,7 +1,7 @@
-import { Plugin } from '../src/Commander'
+import { PluginOptions } from '../src/Commander'
 import { IrcMessage } from '../src/lib/parser'
 
-export const options: Plugin = {
+export const options: PluginOptions = {
   type: 'command',
   id: 'banana',
   name: 'Banana',
@@ -15,21 +15,16 @@ export const options: Plugin = {
     },
   },
   help: 'Goin bananas fo help',
-  actions: {
-    call: async (raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) => {
-      console.log('🍌🍌🍌🍌🍌🍌🍌🍌')
-      return ':O 🍌'
-    },
-  },
 }
 
-export default class NewPluginStructure {
+export class Instance implements Instance {
 
   constructor() {
 
   }
 
-  public call() {
-
+  public async call(raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) {
+    console.log('🍌🍌🍌🍌🍌🍌🍌🍌')
+    return ':O 🍌'
   }
 }

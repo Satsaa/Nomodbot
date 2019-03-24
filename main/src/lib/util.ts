@@ -49,9 +49,9 @@ export function onExit(cb: (code: number) => void) { onExitCbs.push(cb) }
  * @param dir A directory path
  */
 export async function readDirRecursive(dir: string, allFiles: string[] = []) {
-  const files = (await fsp.readdir(dir)).map((file) => path.resolve(dir, file))
+  const files = (await fsp.readdir(dir)).map(file => path.resolve(dir, file))
   allFiles.push(...files)
-  await Promise.all(files.map(async (file) => (
+  await Promise.all(files.map(async file => (
     (await fsp.stat(file)).isDirectory() && readDirRecursive(file, allFiles)
   )))
   return allFiles

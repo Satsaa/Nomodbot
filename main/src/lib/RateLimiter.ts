@@ -41,7 +41,7 @@ export default class RateLimiter {
         ...element,
       })
     })
-    this.queueSize = Math.max(...this.opts.filter((value) => value.queueSize !== null).map((value) => value.queueSize!))
+    this.queueSize = Math.max(...this.opts.filter(value => value.queueSize !== null).map(value => value.queueSize!))
     if (this.queueSize === -Infinity) this.queueSize = null // Math.max() with no args returns -infinity
     this.callbacks = []
   }

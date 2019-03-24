@@ -1,7 +1,7 @@
-import { Plugin } from '../src/Commander'
+import { InstanceType, PluginOptions } from '../src/Commander'
 import { IrcMessage } from '../src/lib/parser'
 
-export const options: Plugin = {
+export const options: PluginOptions = {
   type: 'command',
   id: 'smile',
   name: 'Smile',
@@ -15,10 +15,16 @@ export const options: Plugin = {
     },
   },
   help: 'Just smile! 4Head',
-  actions: {
-    call: async (raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) => {
-      console.log('We smilin')
-      return ':) /\\ :)'
-    },
-  },
+}
+
+export class Instance implements InstanceType {
+
+  constructor() {
+
+  }
+
+  public async call(raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) {
+    console.log('We smilin')
+    return ':) /\\ :)'
+  }
 }
