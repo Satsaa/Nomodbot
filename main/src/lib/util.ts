@@ -45,7 +45,8 @@ signals.forEach((signal: any) => {
 export function onExit(cb: (code: number) => void) { onExitCbs.push(cb) }
 
 /**
- * Finds all files in `dir` and its subfolders recursively
+ * Finds all files in `dir` and its subfolders recursively  
+ * File paths may not converted by the Typescript compiler so use the __module variable to build dynamic file paths
  * @param dir A directory path
  */
 export async function readDirRecursive(dir: string, allFiles: string[] = []) {

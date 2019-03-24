@@ -1,3 +1,4 @@
+import * as path from 'path'
 import Data from './Data'
 import TwitchClient from './lib/Client'
 import { IrcMessage } from './lib/parser'
@@ -67,7 +68,7 @@ export default class Commander {
     this.data.autoLoad('static', 'aliases', {})
     this.data.autoLoad('dynamic', 'cooldowns', {})
     this.data.load('dynamic', 'global', 'cooldowns', {})
-    const files = (await readDirRecursive(__dirname + '/../commands/')).filter(e => e.endsWith('.ts') || e.endsWith('.js'))
+    const files = (await readDirRecursive(path.join(__dirname, '..', 'commands'))).filter(e => e.endsWith('.ts') || e.endsWith('.js'))
     if (!files || !files.length) return []
     const optionsArr = await Promise.all(files.map(file => this.loadPlugin(file)))
     this.findConflicts(optionsArr)
