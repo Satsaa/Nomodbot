@@ -49,14 +49,14 @@ export interface InstanceType {
 }
 
 export default class Commander {
-  public plugins: {commands: {[x: string]: Command}, controllers: {[x: string]: Controller}}
+  private plugins: {[x: string]: PluginOptions}
   private instances: {[x: string]: InstanceType}
   private defaults: {[x: string]: CommandAlias}
   private client: TwitchClient
   private data: Data
 
   constructor(client: TwitchClient, data: Data) {
-    this.plugins = {commands: {}, controllers: {}}
+    this.plugins = {}
     this.instances = {}
     this.defaults = {}
     this.client = client
@@ -64,13 +64,13 @@ export default class Commander {
     this.client.on('message', this.onPrivMessage.bind(this))
   }
 
-  public async init(): Promise<PluginOptions[]> {
+  public async init(): Promise < PluginOptions[] > {
     this.data.autoLoad('static', 'aliases', {})
     this.data.autoLoad('dynamic', 'cooldowns', {})
     this.data.load('dynamic', 'global', 'cooldowns', {})
     const files = (await readDirRecursive(path.join(__dirname, '..', 'commands'))).filter(e => e.endsWith('.ts') || e.endsWith('.js'))
     if (!files || !files.length) return []
-    const optionsArr = await Promise.all(files.map(file => this.loadPlugin(file)))
+    const optionsArr = files.map(file => this.loadPlugin(file))
     this.findConflicts(optionsArr)
     return optionsArr
   }
@@ -115,25 +115,21 @@ export default class Commander {
     this.data.static[channel].aliases[alias].disabled = true; return true
   }
 
-  private async loadPlugin(file: string) {
+  private loadPlugin(file: string) {
     const plugin: {options: PluginOptions, Instance: new() => InstanceType} = require(file)
     if (plugin.options) {
-      if (plugin.options.requires) {
-        await Promise.all(plugin.options.requires.map((v) => { this.data.waitData(...v) }))
-        return this.handlePlugin(plugin.options, plugin.Instance)
-      } else return  this.handlePlugin(plugin.options, plugin.Instance)
+      return this.handlePlugin(plugin.options, plugin.Instance)
     } else throw console.error('Plugin lacks options export: ' + file)
   }
   /** Helper function for loadPlugin */
   private handlePlugin(options: PluginOptions, constructor: new() => InstanceType) {
     const type = options.type // Cant use options in default case
+    this.plugins[options.id] = options
     switch (options.type) {
       case 'command':
-        this.plugins.commands[options.id] = options
         this.defaults[options.default.alias] = {...options.default.options, id: options.id}
         break
       case 'controller':
-        this.plugins.controllers[options.id] = options
         break
       default:
         throw new Error('Unknown plugin type: ' + type)
@@ -143,9 +139,23 @@ export default class Commander {
   }
 
   private async instantiatePlugin(options: PluginOptions, constructor: new() => InstanceType) {
+    console.log(`Instantiating ${options.name}`)
+    let res: Array<object | undefined> = []
+    if (options.requires) {
+      res = await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1], v[2], 5000)))
+      if (res.some(v => v === undefined)) {
+        console.log(`Instantiating is taking a long time for ${options.name}: waiting for data indefinitely.`)
+        await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1], v[2])))
+      }
+    }
+
     const instance = new constructor()
     if (typeof instance.init === 'function') await instance.init()
+    console.log(`Instantiated ${options.name}`)
     this.instances[options.id] = instance
+    if (typeof this.instances[options.id].call !== 'function') {
+      throw new Error(`Invalid call function on command plugin instance: ${this.plugins[options.id].name}`)
+    }
   }
 
   private onPrivMessage(raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) {
@@ -156,6 +166,8 @@ export default class Commander {
   }
 
   private async callCommand(command: CommandAlias, raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) {
+    if (!this.instances[command.id]) return console.log(`Cannot call unloaded command: ${command.id}`) // Command may not be loaded yet
+    if (typeof this.instances[command.id].call !== 'function') throw new Error(`Invalid call function on command plugin instance: ${command.id}`)
     const res = await this.instances[command.id].call!(raw, channel, userstate, message, me)
     if (typeof res === 'string') this.client.msg(channel, res)
     else if (typeof res) console.warn(res)

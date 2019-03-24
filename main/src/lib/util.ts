@@ -57,3 +57,13 @@ export async function readDirRecursive(dir: string, allFiles: string[] = []) {
   )))
   return allFiles
 }
+
+/**
+ * Promise setTimeout
+ * @param ms Wait duration
+ */
+export const timeout = (ms: number): Promise<void> => new Promise((resolve) => {
+  setTimeout(() => {
+    resolve()
+  }, ms)
+})

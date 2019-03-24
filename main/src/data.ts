@@ -3,6 +3,7 @@ import * as fs from 'fs'
 import { promises as fsp } from 'fs'
 import TwitchClient from './lib/Client'
 import { IrcMessage } from './lib/parser'
+import * as u from './lib/util'
 
 export default class Data extends EventEmitter {
 
@@ -71,6 +72,13 @@ export default class Data extends EventEmitter {
       }
       this.once(`load ${type} ${subType} ${name}`, cb)
     })
+  }
+  /** Wait until the data is loaded. Returns error if timedout ??????????? */
+  public async _waitData(type: 'static' | 'dynamic', subType: string, name: string, timeout?: number): Promise<object | void> {
+    if (this.getData(type, subType, name)) return this.getData(type, subType, name)
+    if (timeout) return Promise.race([u.timeout(timeout)])
+    else return Promise.race([])
+
   }
 
   public saveAllSync() {

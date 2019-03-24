@@ -25,7 +25,7 @@ export default class Bot {
     this.commander = new Commander(this.client, this.data)
 
     this.commander.init().then((result) => {
-      console.log(result)
+      console.log(result.reduce((acc, cur, i) => acc + cur.name + (i === result.length - 1 ? '' : ', '), 'Loaded plugins: '))
     })
   }
 
