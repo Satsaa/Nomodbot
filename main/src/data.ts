@@ -2,8 +2,6 @@ import { EventEmitter } from 'events'
 import * as fs from 'fs'
 import { promises as fsp } from 'fs'
 import TwitchClient from './lib/Client'
-import { IrcMessage } from './lib/parser'
-import * as u from './lib/util'
 
 export default class Data extends EventEmitter {
 
@@ -11,9 +9,11 @@ export default class Data extends EventEmitter {
   public static: {[x: string]: {[x: string]: {[x: string]: any}}}
   /** This data changes all the time but is only saved on exit */
   public dynamic: {[x: string]: {[x: string]: {[x: string]: any}}}
+  public config: {[x: string]: {[x: string]: {[x: string]: any}}}
+
   public dataPath: string
   private client: TwitchClient
-  private autoLoads: Array<{type: 'static' | 'dynamic', name: string, defaultData?: object, cb?: (data: object) => void}>
+  private autoLoads: Array<{type: 'static' | 'dynamic' | 'config', name: string, defaultData?: object, cb?: (data: object) => void}>
 
   constructor(client: TwitchClient, dataPath: string) {
     super()
@@ -29,12 +29,13 @@ export default class Data extends EventEmitter {
 
     this.static = {}
     this.dynamic = {}
+    this.config = {}
 
     this.autoLoads = []
   }
 
   /** Returns the path to the data file */
-  public getPath(type: 'static' | 'dynamic', subType: string, name: string, fileType: string = 'json') {
+  public getPath(type: 'static' | 'dynamic' | 'config', subType: string, name: string, fileType: string = 'json') {
     return `${this.dataPath}${type}/${subType}/${name}.${fileType}`
   }
 
@@ -42,22 +43,22 @@ export default class Data extends EventEmitter {
    * Returns the data or undefined if it isn't loaded.  
    * Data will be an object and therefore a reference, so keep that it mind. The undefined value is not a reference
    */
-  public getData(type: 'static' | 'dynamic', subType: string, name: string) {
+  public getData(type: 'static' | 'dynamic' | 'config', subType: string, name: string) {
     if ((this[type][subType] || {})[name]) return this[type][subType][name]
     return
   }
   /** Sets the data variable to `value` */
-  public setData(type: 'static' | 'dynamic', subType: string, name: string, value: object) {
+  public setData(type: 'static' | 'dynamic' | 'config', subType: string, name: string, value: object) {
     if (!this[type][subType]) this[type][subType] = {}
     return this[type][subType][name] = value
   }
   /** Delete the data */
-  public delData(type: 'static' | 'dynamic', subType: string, name: string) {
+  public delData(type: 'static' | 'dynamic' | 'config', subType: string, name: string) {
     if ((this[type][subType] || {})[name]) delete this[type][subType][name]
   }
 
   /** Wait until the data is loaded. Resolves with the arguments the event gives or undefined if timedout */
-  public async waitData(type: 'static' | 'dynamic', subType: string, name: string, timeout?: number): Promise<object | undefined> {
+  public async waitData(type: 'static' | 'dynamic' | 'config', subType: string, name: string, timeout?: number): Promise<object | undefined> {
     if (this.getData(type, subType, name)) return this.getData(type, subType, name)
     return new Promise((resolve) => {
       const cbFunc = (t?: string, s?: string, n?: string, data?: object) => {
@@ -85,12 +86,12 @@ export default class Data extends EventEmitter {
 
   /**
    * Saves a file in `Data.dataPath`/`type`/`subType`/`name`
-   * @param type 'static' or 'dynamic' required
+   * @param type 'static', 'dynamic' or 'config' required
    * @param subType E.g. 'default', 'global'. Use autoLoad for channel specific data.
    * @param name File name
    * @param unload Unload from memory if save is succesful
    */
-  public async save(type: 'static' | 'dynamic', subType: string, name: string, unload: boolean = false) {
+  public async save(type: 'static' | 'dynamic' | 'config', subType: string, name: string, unload: boolean = false) {
     if (!this.getData(type, subType, name)) return console.error(`${name} isn't loaded and is therefore not saved`)
     try {
       await fsp.writeFile(`${this.dataPath}${type}/${subType}/${name}.json`, JSON.stringify(this.getData(type, subType, name), null, 2))
@@ -102,12 +103,12 @@ export default class Data extends EventEmitter {
 
   /**
    * Loads a file in `Data.dataPath`/`type`/`subType`/`name`
-   * @param type 'static' or 'dynamic' required
+   * @param type 'static', 'dynamic' or 'config' required
    * @param subType E.g. 'default', 'global'. Use autoLoad for channel specific data.
    * @param name File name
    * @param defaultData If the file doesn't exist, create it with this data
    */
-  public async load(type: 'static' | 'dynamic', subType: string, name: string, defaultData?: object): Promise<object> {
+  public async load(type: 'static' | 'dynamic' | 'config', subType: string, name: string, defaultData?: object): Promise<object> {
     if (!this[type][subType]) this[type][subType] = {}
     if (this.getData(type, subType, name)) throw new Error(`${name} has already been loaded by another source`)
     this.setData(type, subType, name, {}) // Blocks new loads on this data type
@@ -134,11 +135,11 @@ export default class Data extends EventEmitter {
   /**
    * Loads or unloads specified data for each channel when the bot joins or parts one  
    * Also loads for each channel that the bot has already joined
-   * @param type 'static' or 'dynamic' required
+   * @param type 'static', 'dynamic' or 'config' required
    * @param name File name
    * @param defaultData If the file doesn't exist, create it with this data
    */
-  public autoLoad(type: 'static' | 'dynamic', name: string, defaultData?: object) {
+  public autoLoad(type: 'static' | 'dynamic' | 'config', name: string, defaultData?: object) {
     for (const channel in this.client.clientData.channels) { // Load for present channels
       this.load(type, channel, name, defaultData)
     }

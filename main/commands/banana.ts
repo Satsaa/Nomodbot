@@ -1,5 +1,5 @@
 import { PluginInstance, PluginOptions } from '../src/Commander'
-import { IrcMessage } from '../src/lib/parser'
+import PluginLibrary from '../src/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
@@ -10,7 +10,7 @@ export const options: PluginOptions = {
     alias: 'banana',
     options: {
       disabled: false,
-      cooldown: 0,
+      cooldown: 10000,
       userCooldown: 0,
     },
   },
@@ -20,12 +20,16 @@ export const options: PluginOptions = {
 
 export class Instance implements PluginInstance {
 
-  constructor() {
+  constructor(pluginLib: PluginLibrary) {
 
   }
 
   public async call(channel: string, userstate: object, message: string, me: boolean) {
     console.log('🍌🍌🍌🍌🍌🍌🍌🍌')
     return ':O 🍌'
+  }
+
+  public cooldown(channel: string, userstate: object, message: string, me: boolean) {
+    console.log('🍌C🍌O🍌O🍌L🍌D🍌O🍌W🍌N🍌')
   }
 }

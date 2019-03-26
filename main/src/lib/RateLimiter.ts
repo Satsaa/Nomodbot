@@ -97,13 +97,13 @@ export default class RateLimiter {
     }
   }
 
-  private getTimeout(a: boolean = false) {
+  private getTimeout() {
     return Math.max(...this.opts.map((options, i) => {
-      return this._getTimeout(options, i, a)
+      return this._getTimeout(options, i)
     }))
   }
 
-  private _getTimeout(options: Required<RateLimiterOptions>, timesIndex: number, a: boolean) {
+  private _getTimeout(options: Required<RateLimiterOptions>, timesIndex: number) {
     const now = Date.now()
     const times = this.times[timesIndex]
 

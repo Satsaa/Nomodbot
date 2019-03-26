@@ -42,7 +42,8 @@
       "no-statements-same-line": false,
       "no-try-promise": true,
       "no-nested-template-literals": false,
-      "no-duplicate-string": [true, 5]
+      "no-duplicate-string": [true, 5],
+      "no-nested-switch": false
     },
     "rulesDirectory": [
       //"node_modules/tslint-eslint-rules/dist/rules"

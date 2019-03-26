@@ -29,8 +29,8 @@ interface Events {
   part: (channel: string) => void
   userjoin: (channel: string, user: string) => void
   userpart: (channel: string, user: string) => void
-  chat: (channel: string, userstate: IrcMessage['tags'], message: string, me: boolean) => void
-  mode: (channel: string, mod: boolean, user: string) => void
+  chat: (channel: string, user: string, userstate: IrcMessage['tags'], message: string, me: boolean) => void
+  mod: (channel: string, user: string, mod: boolean) => void
   welcome: () => void
   clearmsg: (channel: string, targetMsgID: IrcMessage['tags']['target-msg-id'], tags: IrcMessage['tags'], message: string) => void
   clear: (channel: string) => void
@@ -49,17 +49,6 @@ interface Events {
   ws_message: (ws: WebSocket | undefined) => void
   ws_error: (ws: WebSocket | undefined) => void
   ws_close: (ws: WebSocket | undefined) => void
-  /*
-  this.emit('globaluserstate', msg)
-  this.emit('hosttarget', msg)
-  this.emit('message', msg, msg.params[0], msg.tags, msg.params[1].slice(8, -1), true)
-  this.emit('chat', msg, msg.params[0], msg.tags, msg.params[1], false)
-  this.emit('pong', msg)
-  this.emit('usernotice', msg)
-  this.emit('notice', msg)
-  this.emit('clearmsg', msg)
-  this.emit('unknown', msg)
-  */
 }
 
 /**
@@ -68,6 +57,8 @@ interface Events {
 export default class TwitchClient {
   public opts: Required<TwitchClientOptions>
   public globaluserstate: {[x: string]: any}
+  /** To provide accurate userjoin and userpart events, channel users must be tracked */
+  public channelCache: { mods: {[channel: string]: {[user: string]: true}}, users: {[channel: string]: {[user: string]: true}}}
   public clientData: {
     global: {whisperTimes: number[][], msgTimes: number[][]},
     channels: {[channel: string]: {userstate: IrcMessage['tags'], phase: boolean}},
@@ -117,6 +108,7 @@ export default class TwitchClient {
     }
 
     this.globaluserstate = {}
+    this.channelCache = {mods: {}, users: {}}
     this.clientData = {global: {whisperTimes: [], msgTimes: []} , channels: {}}
     if (this.opts.dataDir !== null) {
       if (this.opts.dataDir.endsWith('/')) this.opts.dataDir += '/'
@@ -132,6 +124,7 @@ export default class TwitchClient {
       u.onExit(this.onExit.bind(this))
     }
 
+    // Do this isntead of using "extends" so event typings work
     this.emitter = new EventEmitter()
     this.on = this.emitter.on
     this.once = this.emitter.once
@@ -354,6 +347,31 @@ export default class TwitchClient {
     if (this.opts.logIrc) console.log(msg)
   }
 
+  private mod(channel: string, user: string, mod: boolean) {
+    if (!this.channelCache.mods[channel]) this.channelCache.mods[channel] = {}
+    if (mod) {
+      if (this.channelCache.mods[channel][user]) return
+    } else if (!this.channelCache.mods[channel][user]) return // Not modded
+
+    this.emit('mod', channel, user, mod)
+    this.ircLog(`${user} ${mod ? 'gains' : 'loses'} moderator in ${channel}`)
+  }
+
+  private userJoin(channel: string, user: string) {
+    if (!this.channelCache.users[channel]) this.channelCache.users[channel] = {}
+    if (this.channelCache.users[channel][user]) return // Already joined
+    this.ircLog(`${user} joins ${channel}`)
+    this.emit('userjoin', channel, user)
+    this.channelCache.users[channel][user] = true
+  }
+  private userPart(channel: string, user: string) {
+    if (!this.channelCache.users[channel]) this.channelCache.users[channel] = {}
+    if (!this.channelCache.users[channel][user]) return // Not joined
+    this.ircLog(`${user} parts ${channel}`)
+    this.emit('userpart', channel, user)
+    delete this.channelCache.users[channel][user]
+  }
+
   private handleMessage(msg: IrcMessage) {
     if (msg === null) return
     switch (msg.cmd) {
@@ -370,32 +388,26 @@ export default class TwitchClient {
       case '376': // <prefix> 376 <you> :>
         break
       case '353': // :nomodbot.<prefix> 353 <you> = #<channel> :<user1> <user2> ... <userN>
-        msg.params[3].split(' ').forEach((user) => {
-          this.ircLog(`${user} already in ${msg.params[2]}`)
-          this.emit('userjoin', msg.params[2], user)
-        })
+        msg.params[3].split(' ').forEach((user) => { this.userJoin(msg.params[2], user) })
         break
       case 'CAP':
         break
       case 'MODE': // :jtv MODE #<channel> +o||-o <user>
-        this.ircLog(`${msg.params[2]} ${msg.params[1] === '+o' ? 'gains' : 'loses'} moderator in ${msg.params[0]}`)
-        this.emit('mode', msg.params[0], msg.params[1] === '+o', msg.params[2])
+        this.mod(msg.params[0], msg.params[2], msg.params[1] === '+o')
         break
       case 'JOIN': // :<user>!<user>@<user>.tmi.twitch.tv JOIN #<channel>
-        this.ircLog(`${msg.user} joins ${msg.params[0]}`)
         if (msg.user === this.opts.username) {
           this.clientData.channels[msg.params[0]] = {userstate: {}, phase: false}
           this.emit('join', msg.params[0])
         }
-        this.emit('userjoin', msg.params[0], msg.user as string)
+        this.userJoin(msg.params[0], msg.user as string)
         break
       case 'PART': // :<user>!<user>@<user>.tmi.twitch.tv PART #<channel>
-        this.ircLog(`${msg.user} parts ${msg.params[0]}`)
         if (msg.user === this.opts.username) {
           this.emit('part', msg.params[0])
           delete this.clientData.channels[msg.params[0]]
         }
-        this.emit('userpart', msg.params[0], msg.user as string)
+        this.userPart(msg.params[0], msg.user as string)
         break
       case 'CLEARCHAT':
         // @ban-duration=10;room-id=62300805;target-user-id=274274870;tmi-sent-ts=1551880699566 <prefix> CLEARCHAT #<channel> :<user>
@@ -436,8 +448,8 @@ export default class TwitchClient {
         break
       case 'PRIVMSG': // @userstate :<user>!<user>@<user>.tmi.twitch.tv PRIVMSG #<channel> :<message>
         this.ircLog(`[${msg.params[0]}] ${msg.tags['display-name']}: ${msg.params[1]}`)
-        if (msg.params[1].startsWith('ACTION ')) this.emit('chat', msg.params[0], msg.tags, msg.params[1].slice(8, -1), true)
-        else this.emit('chat', msg.params[0], msg.tags, msg.params[1], false)
+        if (msg.params[1].startsWith('ACTION ')) this.emit('chat', msg.params[0], msg.user as string, msg.tags, msg.params[1].slice(8, -1), true)
+        else this.emit('chat', msg.params[0], msg.user as string, msg.tags, msg.params[1], false)
         break
       case 'WHISPER': // @userstate :<user>!<user>@<user>.tmi.twitch.tv WHISPER <you> :<message>
         this.emit('whisper', msg.user as string, msg.params[1])
@@ -447,16 +459,6 @@ export default class TwitchClient {
         break
       case 'PONG':
         this.emit('pong')
-        break
-      case 'USERNOTICE': // <tags> <prefix> USERNOTICE #<channel> :<message>
-        this.emit('usernotice', msg.params[0], msg.tags, msg.params[1])
-        // switch
-        break
-      case 'NOTICE': // <tags> <prefix> NOTICE #<channel> :<message>
-        // @msg-id=msg_ratelimit :tmi.twitch.tv NOTICE #satsaa :Your message was not sent because you are sending messages too quickly.
-        if (msg.tags['msg-id'] === 'msg_ratelimit') this.ircLog('Rate limited')
-        this.emit('notice', msg.params[0], msg.tags, msg.params[1])
-        // switch
         break
       case 'RECONNECT':
         this.reconnect()
@@ -471,6 +473,14 @@ export default class TwitchClient {
         break
       case '421': // Unknown command
         console.warn('Unknown command')
+        break
+      case 'USERNOTICE': // <tags> <prefix> USERNOTICE #<channel> :<message>
+        this.emit('usernotice', msg.params[0], msg.tags, msg.params[1])
+        break
+      case 'NOTICE': // <tags> <prefix> NOTICE #<channel> :<message>
+          // @msg-id=msg_ratelimit :tmi.twitch.tv NOTICE #satsaa :Your message was not sent because you are sending messages too quickly.
+        if (msg.tags['msg-id'] === 'msg_ratelimit') this.ircLog('Rate limited')
+        this.emit('notice', msg.params[0], msg.tags, msg.params[1])
         break
       default:
         console.warn('COULDN\'T PARSE MESSAGE:')
