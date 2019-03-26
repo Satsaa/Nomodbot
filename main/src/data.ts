@@ -13,7 +13,7 @@ export default class Data extends EventEmitter {
   public dynamic: {[x: string]: {[x: string]: {[x: string]: any}}}
   public dataPath: string
   private client: TwitchClient
-  private autoLoads: Array<{type: 'static' | 'dynamic', name: string, defaultData: null | object, cb?: (data: object) => void}>
+  private autoLoads: Array<{type: 'static' | 'dynamic', name: string, defaultData?: object, cb?: (data: object) => void}>
 
   constructor(client: TwitchClient, dataPath: string) {
     super()
@@ -40,7 +40,7 @@ export default class Data extends EventEmitter {
 
   /**
    * Returns the data or undefined if it isn't loaded.  
-   * Data will be an object and therefore a reference, so keep that it mind. The undefined value is not a reference.
+   * Data will be an object and therefore a reference, so keep that it mind. The undefined value is not a reference
    */
   public getData(type: 'static' | 'dynamic', subType: string, name: string) {
     if ((this[type][subType] || {})[name]) return this[type][subType][name]
@@ -56,29 +56,20 @@ export default class Data extends EventEmitter {
     if ((this[type][subType] || {})[name]) delete this[type][subType][name]
   }
 
-  /** Wait until the data is loaded. Returns error if timedout */
-  public waitData(type: 'static' | 'dynamic', subType: string, name: string, timeout?: number): Promise<object | undefined> {
-    return new Promise((resolve) => {
-      if (this.getData(type, subType, name)) return resolve(this.getData(type, subType, name))
-      const cb = (data: object) => { resolve(data) }
-      if (timeout) {
-        const deleteCb = () => { clearTimeout(_timeout)}
-        const _timeout = setTimeout(() => {
-          this.removeListener(`load ${type} ${subType} ${name}`, deleteCb)
-          this.removeListener(`load ${type} ${subType} ${name}`, cb)
-          resolve(undefined)
-        }, timeout)
-        this.once(`load ${type} ${subType} ${name}`, deleteCb)
-      }
-      this.once(`load ${type} ${subType} ${name}`, cb)
-    })
-  }
-  /** Wait until the data is loaded. Returns error if timedout ??????????? */
-  public async _waitData(type: 'static' | 'dynamic', subType: string, name: string, timeout?: number): Promise<object | void> {
+  /** Wait until the data is loaded. Resolves with the arguments the event gives or undefined if timedout */
+  public async waitData(type: 'static' | 'dynamic', subType: string, name: string, timeout?: number): Promise<object | undefined> {
     if (this.getData(type, subType, name)) return this.getData(type, subType, name)
-    if (timeout) return Promise.race([u.timeout(timeout)])
-    else return Promise.race([])
-
+    return new Promise((resolve) => {
+      const cbFunc = (t?: string, s?: string, n?: string, data?: object) => {
+        if (t && s && n) if (t !== type || s !== subType || n !== name) return
+        this.removeListener('load', cbFunc)
+        clearTimeout(_timeout)
+        resolve(data)
+      }
+      let _timeout: number
+      if (timeout !== undefined) _timeout = setTimeout(cbFunc, timeout)
+      this.on('load', cbFunc)
+    })
   }
 
   public saveAllSync() {
@@ -116,60 +107,55 @@ export default class Data extends EventEmitter {
    * @param name File name
    * @param defaultData If the file doesn't exist, create it with this data
    */
-  public load(type: 'static' | 'dynamic', subType: string, name: string, defaultData: null | object , cb?: (data: object) => void) {
+  public async load(type: 'static' | 'dynamic', subType: string, name: string, defaultData?: object): Promise<object> {
     if (!this[type][subType]) this[type][subType] = {}
     if (this.getData(type, subType, name)) throw new Error(`${name} has already been loaded by another source`)
-
+    this.setData(type, subType, name, {}) // Blocks new loads on this data type
     const file = `${this.dataPath}${type}/${subType}/${name}.json`
-    // tslint:disable-next-line: no-bitwise
-    fs.access(file, fs.constants.F_OK | fs.constants.W_OK, (err) => {
-      if (err) {
-        if (err.code === 'ENOENT') {
-          if (defaultData !== null) {
-            const pathOnly = file.slice(0, file.lastIndexOf('/'))
-            if (!fs.existsSync(pathOnly)) fs.mkdirSync(pathOnly, {recursive: true})
-            const cbData = this.setData(type, subType, name, defaultData)
-            this.emit(`load ${type} ${subType} ${name}`, cbData)
-            this.save(type, subType, name).then((result) => {
-              if (cb) cb(cbData)
-            }, (err) => { throw err })
-            return
-          } else throw new Error('Cannot load file that doesn\'t exist. Define defaultData if you want to create it if needed')
-        } else throw err
-      } else {
-        fs.readFile(file, 'utf8', (err, data) => {
-          if (err) throw err
-          const cbData = this.setData(type, subType, name, JSON.parse(data))
-          this.emit(`load ${type} ${subType} ${name}`, cbData)
-          if (cb) cb(cbData)
-        })
-      }
-    })
+    try {
+      await fsp.access(file, fs.constants.F_OK | fs.constants.W_OK)
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err
+      if (defaultData) {
+        const pathOnly = file.slice(0, file.lastIndexOf('/'))
+        if (!fs.existsSync(pathOnly)) fs.mkdirSync(pathOnly, {recursive: true})
+        const result = this.setData(type, subType, name, defaultData)
+        this.emit('load', type, subType, name, result)
+        this.save(type, subType, name).catch((err) => { throw err })
+        return result
+      } else throw new Error('Cannot load file that doesn\'t exist. Define defaultData if you want to create it if needed')
+    }
+    const data = await fsp.readFile(file, 'utf8')
+    const result = this.setData(type, subType, name, JSON.parse(data))
+    this.emit('load', type, subType, name, result)
+    return result
   }
 
   /**
-   * Loads or unloads specified data for each channel when the bot joins or parts one
+   * Loads or unloads specified data for each channel when the bot joins or parts one  
+   * Also loads for each channel that the bot has already joined
    * @param type 'static' or 'dynamic' required
    * @param name File name
    * @param defaultData If the file doesn't exist, create it with this data
    */
-  public autoLoad(type: 'static' | 'dynamic', name: string, defaultData: null | object) {
+  public autoLoad(type: 'static' | 'dynamic', name: string, defaultData?: object) {
+    for (const channel in this.client.clientData.channels) { // Load for present channels
+      this.load(type, channel, name, defaultData)
+    }
     this.autoLoads.push({type, name, defaultData})
   }
 
-  private onJoin(raw: IrcMessage, channel: string) {
+  private onJoin(channel: string) {
     for (const autoLoad of this.autoLoads) {
-      if (!this[autoLoad.type][channel]) this[autoLoad.type][channel] = {}
-      if (!this[autoLoad.type][channel][autoLoad.name]) {
+      if (!(this[autoLoad.type][channel] || {})[autoLoad.name]) {
         this.load(autoLoad.type, channel, autoLoad.name, autoLoad.defaultData)
       }
     }
   }
 
-  private onPart(raw: IrcMessage, channel: string) {
+  private onPart(channel: string) {
     for (const autoLoad of this.autoLoads) {
-      if (!this[autoLoad.type][channel]) this[autoLoad.type][channel] = {}
-      if (this[autoLoad.type][channel][autoLoad.name]) {
+      if ((this[autoLoad.type][channel] || {})[autoLoad.name]) {
         this.save(autoLoad.type, channel, autoLoad.name, true).then(() => {}, (err) => {
           console.log(`[Data.autoLoad] Error unloading ${channel}`, err)
         })

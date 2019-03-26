@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events'
 import * as fs from 'fs'
+import StrictEventEmitter from 'strict-event-emitter-types'
 import WebSocket from 'ws'
 import defaultKeys from './defaultKeys'
 import parse, { IrcMessage } from './parser'
@@ -23,10 +24,48 @@ export interface TwitchClientOptions {
   readonly whisperRLOpts?: Readonly<RateLimiterOptions | RateLimiterOptions[]>,
 }
 
+interface Events {
+  join: (channel: string) => void
+  part: (channel: string) => void
+  userjoin: (channel: string, user: string) => void
+  userpart: (channel: string, user: string) => void
+  chat: (channel: string, userstate: IrcMessage['tags'], message: string, me: boolean) => void
+  mode: (channel: string, mod: boolean, user: string) => void
+  welcome: () => void
+  clearmsg: (channel: string, targetMsgID: IrcMessage['tags']['target-msg-id'], tags: IrcMessage['tags'], message: string) => void
+  clear: (channel: string) => void
+  timeout: (channel: string, user: string, duration: number) => void
+  ban: (channel: string, user: string) => void
+  roomstate: (channel: string, roomstate: IrcMessage['tags']) => void
+  userstate: (channel: string, userstate: IrcMessage['tags']) => void
+  globaluserstate: (channel: string, globaluserstate: IrcMessage['tags']) => void
+  hosttarget: (channel: string, hostChannel: string | null, viewerCount: number | null) => void
+  whisper: (user: string, message: string) => void
+  pong: () => void
+  usernotice: (channel: string, tags: IrcMessage['tags'], message?: string) => void
+  notice: (channel: string, tags: IrcMessage['tags'], message: string) => void
+
+  ws_open: (ws: WebSocket | undefined) => void
+  ws_message: (ws: WebSocket | undefined) => void
+  ws_error: (ws: WebSocket | undefined) => void
+  ws_close: (ws: WebSocket | undefined) => void
+  /*
+  this.emit('globaluserstate', msg)
+  this.emit('hosttarget', msg)
+  this.emit('message', msg, msg.params[0], msg.tags, msg.params[1].slice(8, -1), true)
+  this.emit('chat', msg, msg.params[0], msg.tags, msg.params[1], false)
+  this.emit('pong', msg)
+  this.emit('usernotice', msg)
+  this.emit('notice', msg)
+  this.emit('clearmsg', msg)
+  this.emit('unknown', msg)
+  */
+}
+
 /**
  * A client for interacting with Twitch servers
  */
-export default class TwitchClient extends EventEmitter {
+export default class TwitchClient {
   public opts: Required<TwitchClientOptions>
   public globaluserstate: {[x: string]: any}
   public clientData: {
@@ -34,6 +73,14 @@ export default class TwitchClient extends EventEmitter {
     channels: {[channel: string]: {userstate: IrcMessage['tags'], phase: boolean}},
   }
   public ws?: WebSocket
+
+  public on: TwitchClient['emitter']['on']
+  public once: TwitchClient['emitter']['once']
+  public prependListener: TwitchClient['emitter']['prependListener']
+  public prependOnceListener: TwitchClient['emitter']['prependOnceListener']
+  public removeListener: TwitchClient['emitter']['removeListener']
+  public emit: TwitchClient['emitter']['emit']
+  private emitter: StrictEventEmitter<EventEmitter, Events>
 
   private rateLimiter: RateLimiter
   private whisperRateLimiter: RateLimiter
@@ -46,7 +93,6 @@ export default class TwitchClient extends EventEmitter {
    * @param options 
    */
   constructor(options: TwitchClientOptions) {
-    super()
     this.opts = {
       server: 'irc-ws.chat.twitch.tv',
       secure: false,
@@ -85,6 +131,14 @@ export default class TwitchClient extends EventEmitter {
       defaultKeys(this.clientData, JSON.parse(fs.readFileSync(`${this.opts.dataDir}clientData.json`, 'utf8')))
       u.onExit(this.onExit.bind(this))
     }
+
+    this.emitter = new EventEmitter()
+    this.on = this.emitter.on
+    this.once = this.emitter.once
+    this.prependListener = this.emitter.prependListener
+    this.prependOnceListener = this.emitter.prependOnceListener
+    this.removeListener = this.emitter.removeListener
+    this.emit = this.emitter.emit
 
     this.rateLimiter = new RateLimiter(this.opts.msgRLOpts)
     this.whisperRateLimiter = new RateLimiter(this.opts.whisperRLOpts)
@@ -148,7 +202,7 @@ export default class TwitchClient extends EventEmitter {
   }
 
   /** Send `msg` to `channel` */
-  public msg(channel: string, msg: string, allowCommand: boolean = false) {
+  public chat(channel: string, msg: string, allowCommand: boolean = false) {
     msg = msg.replace(/ +(?= )/g, '') // replace multiple spaces with a single space
     if (!allowCommand) {
       if (!msg.match(/^(\/|\\|\.)me /)) {  // allow actions
@@ -176,7 +230,7 @@ export default class TwitchClient extends EventEmitter {
   }
 
   private onOpen(event: { target: WebSocket }): void {
-    this.emit('ws open')
+    this.emit('ws_open', this.ws)
     console.log('Connected')
     this.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership') // Before login so globaluserstate is received
     this.send(`PASS ${this.opts.password}`)
@@ -185,7 +239,7 @@ export default class TwitchClient extends EventEmitter {
   }
 
   private onMessage(event: { data: WebSocket.Data, target: WebSocket, type: string }): void {
-    this.emit('ws message')
+    this.emit('ws_message', this.ws)
     if (typeof event.data === 'string') {
       event.data.split('\r\n').forEach((msgStr) => {
         const msg = parse(msgStr)
@@ -247,14 +301,14 @@ export default class TwitchClient extends EventEmitter {
   }
 
   private onError(event: { error: any, message: string, target: WebSocket, type: string }): void {
-    this.emit('ws error')
+    this.emit('ws_error', this.ws)
     console.error(event.error)
     this.ws = undefined
     this.reconnect()
   }
 
   private onClose(event: { code: number, reason: string, target: WebSocket , wasClean: boolean }): void {
-    this.emit('ws close')
+    this.emit('ws_close', this.ws)
     console.log(`Connection closed: ${event.code}, ${event.reason}`)
     this.ws = undefined
     this.reconnect()
@@ -286,18 +340,18 @@ export default class TwitchClient extends EventEmitter {
 
   private reconnect(interval: number = this.opts.reconnectInterval) {
     if (this.ws) this.ws.close()
-    if (this.interval) return
+    if (this.interval) return // !!! Will this stop the reconnect loop after a single failure to connect?
     this.interval = setInterval(() => {
       this.connect()
     }, interval)
     this.once('welcome', () => {
       clearInterval(this.interval!)
-      this.interval = null
+      this.interval = null // !!! Will this stop the reconnect loop after a single failure to connect?
     })
   }
 
   private ircLog(msg: any) {
-    if (this.opts.logIrc) console.warn(msg)
+    if (this.opts.logIrc) console.log(msg)
   }
 
   private handleMessage(msg: IrcMessage) {
@@ -305,7 +359,7 @@ export default class TwitchClient extends EventEmitter {
     switch (msg.cmd) {
       case '001': // <prefix> 001 <you> :Welcome, GLHF!
         this.ircLog('Bot is welcome')
-        this.emit('welcome', msg)
+        this.emit('welcome')
         break
       case '002': // <prefix> 002 <you> :Your host is tmi.twitch.tv
       case '003': // <prefix> 003 <you> :This server is rather new
@@ -318,100 +372,109 @@ export default class TwitchClient extends EventEmitter {
       case '353': // :nomodbot.<prefix> 353 <you> = #<channel> :<user1> <user2> ... <userN>
         msg.params[3].split(' ').forEach((user) => {
           this.ircLog(`${user} already in ${msg.params[2]}`)
-          this.emit('userjoin', msg, msg.params[2], user)
+          this.emit('userjoin', msg.params[2], user)
         })
         break
       case 'CAP':
         break
       case 'MODE': // :jtv MODE #<channel> +o||-o <user>
         this.ircLog(`${msg.params[2]} ${msg.params[1] === '+o' ? 'gains' : 'loses'} moderator in ${msg.params[0]}`)
-        this.emit('mode', msg, msg.params[0], msg.params[1] === '+o', msg.params[2])
+        this.emit('mode', msg.params[0], msg.params[1] === '+o', msg.params[2])
         break
       case 'JOIN': // :<user>!<user>@<user>.tmi.twitch.tv JOIN #<channel>
         this.ircLog(`${msg.user} joins ${msg.params[0]}`)
         if (msg.user === this.opts.username) {
           this.clientData.channels[msg.params[0]] = {userstate: {}, phase: false}
-          this.emit('join', msg, msg.params[0])
+          this.emit('join', msg.params[0])
         }
-        this.emit('userjoin', msg, msg.params[0], msg.user)
+        this.emit('userjoin', msg.params[0], msg.user as string)
         break
       case 'PART': // :<user>!<user>@<user>.tmi.twitch.tv PART #<channel>
         this.ircLog(`${msg.user} parts ${msg.params[0]}`)
         if (msg.user === this.opts.username) {
-          this.emit('part', msg, msg.params[0])
+          this.emit('part', msg.params[0])
           delete this.clientData.channels[msg.params[0]]
         }
-        this.emit('userpart', msg, msg.params[0], msg.user)
+        this.emit('userpart', msg.params[0], msg.user as string)
         break
-      case 'CLEARCHAT': // @ban-duration=10;room-id=62300805;target-user-id=274274870;tmi-sent-ts=1551880699566 <prefix> CLEARCHAT #<channel> :<user>
-        this.ircLog(`${msg.params[1]} ${typeof msg.tags['ban-duration'] === 'number'
+      case 'CLEARCHAT':
+        // @ban-duration=10;room-id=62300805;target-user-id=274274870;tmi-sent-ts=1551880699566 <prefix> CLEARCHAT #<channel> :<user>
+        // @room-id=61365582;tmi-sent-ts=1553598835278 :tmi.twitch.tv CLEARCHAT #satsaa
+        if (msg.params[1]) this.ircLog(`Chat of ${msg.params[0]} cleared`)
+        else {
+          this.ircLog(`${msg.params[1]} ${typeof msg.tags['ban-duration'] === 'number'
           ? 'is timed out for ' + msg.tags['ban-duration'] + ' seconds'
           : 'is banned'}`)
-        this.emit('clearchat', msg)
+        }
+        if (!msg.params[1]) this.emit('clear', msg.params[0])
+        else if (typeof msg.tags['ban-duration'] === 'number') this.emit('timeout', msg.params[0], msg.params[1], msg.tags['ban-duration'] as number)
+        else this.emit('ban', msg.params[0], msg.params[1])
         break
       case 'ROOMSTATE': // <tags> :tmi.twitch.tv ROOMSTATE #<channel>
         if (msg.tags['emote-only'] === 1) { this.ircLog(`${msg.params[0]} is in emote only mode`)}
         if (msg.tags['followers-only'] !== -1) { this.ircLog(`${msg.params[0]} is in follower only mode (${msg.tags['followers-only']})`)}
         if (msg.tags['subs-only'] === 1) { this.ircLog(`${msg.params[0]} is in subscriber only mode`)}
         if (msg.tags.slow === 1) { this.ircLog(`${msg.params[0]} is in slow mode`)}
-        this.emit('roomstate', msg)
+        this.emit('roomstate', msg.params[0], msg.tags)
         // broadcaster-lang=;emote-only=0;followers-only=-1;r9k=0;rituals=0;room-id=62300805;slow=0;subs-only=0
         break
       case 'USERSTATE': // <tags> <prefix> USERSTATE #<channel>
           // @badges=;color=#008000;display-name=NoModBot;emote-sets=0,326755;mod=0;subscriber=0;user-type=
         this.clientData.channels[msg.params[0]].userstate = {...this.clientData.channels[msg.params[0]].userstate, ...(msg ? msg.tags : {})}
-        this.emit('userstate', msg)
+        this.emit('userstate', msg.params[0],  msg.tags)
         break
       case 'GLOBALUSERSTATE': // <tags> <prefix> GLOBALUSERSTATE
         this.globaluserstate = {...this.globaluserstate, ...msg.tags}
-        this.emit('globaluserstate', msg)
+        this.emit('globaluserstate', msg.params[0],  msg.tags)
         // badges=;color=#008000;display-name=NoModBot;emote-sets=0,326755;user-id=266132990;user-type= <prefix> GLOBALUSERSTATE
         break
       case 'HOSTTARGET':
-        this.emit('hosttarget', msg)
+        this.emit('hosttarget', msg.params[0], msg.params[1] === '- 0' ? msg.params[1] : null, msg.params[2] !== undefined ? ~~msg.params[2] : null)
         // HOSTTARGET #<channel> :<targetchannel> -
         // HOSTTARGET #<channel> :- 0
         // Host off has ":- 0"?
         break
       case 'PRIVMSG': // @userstate :<user>!<user>@<user>.tmi.twitch.tv PRIVMSG #<channel> :<message>
         this.ircLog(`[${msg.params[0]}] ${msg.tags['display-name']}: ${msg.params[1]}`)
-        if (msg.params[1].startsWith('ACTION ')) this.emit('message', msg, msg.params[0], msg.tags, msg.params[1].slice(8, -1), true)
-        else this.emit('message', msg, msg.params[0], msg.tags, msg.params[1], false, msg)
+        if (msg.params[1].startsWith('ACTION ')) this.emit('chat', msg.params[0], msg.tags, msg.params[1].slice(8, -1), true)
+        else this.emit('chat', msg.params[0], msg.tags, msg.params[1], false)
         break
       case 'WHISPER': // @userstate :<user>!<user>@<user>.tmi.twitch.tv WHISPER <you> :<message>
-        this.emit('whisper', msg)
+        this.emit('whisper', msg.user as string, msg.params[1])
         break
       case 'PING':
         this.ws!.send('PONG')
         break
       case 'PONG':
-        this.emit('pong', msg)
+        this.emit('pong')
         break
       case 'USERNOTICE': // <tags> <prefix> USERNOTICE #<channel> :<message>
-        this.emit('usernotice', msg)
+        this.emit('usernotice', msg.params[0], msg.tags, msg.params[1])
         // switch
         break
       case 'NOTICE': // <tags> <prefix> NOTICE #<channel> :<message>
         // @msg-id=msg_ratelimit :tmi.twitch.tv NOTICE #satsaa :Your message was not sent because you are sending messages too quickly.
         if (msg.tags['msg-id'] === 'msg_ratelimit') this.ircLog('Rate limited')
-        this.emit('notice', msg)
+        this.emit('notice', msg.params[0], msg.tags, msg.params[1])
         // switch
         break
       case 'RECONNECT':
         this.reconnect()
         break
-      case 'CLEARMSG':
-        this.emit('clearmsg', msg)
+      case 'CLEARMSG': // @login=<login>;target-msg-id=<target-msg-id> :tmi.twitch.tv CLEARMSG #<channel> :<message>
+        this.emit('clearmsg', msg.params[0], msg.tags['target-msg-id'], msg.tags, msg.params[1])
         break
       case 'SERVERCHANGE':
         // NEED MORE INFO
-        console.warn('SERVERCHANGE INFO', msg)
+        console.warn('SERVERCHANGE INFO')
+        console.log(msg)
         break
       case '421': // Unknown command
-        this.emit('unknown', msg)
+        console.warn('Unknown command')
         break
       default:
-        console.warn(msg)
+        console.warn('COULDN\'T PARSE MESSAGE:')
+        console.log(msg)
         break
     }
   }

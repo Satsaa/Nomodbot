@@ -40,7 +40,9 @@
       "arguments-order": true,
       "no-collapsible-if": false,
       "no-statements-same-line": false,
-      "no-try-promise": true
+      "no-try-promise": true,
+      "no-nested-template-literals": false,
+      "no-duplicate-string": [true, 5]
     },
     "rulesDirectory": [
       //"node_modules/tslint-eslint-rules/dist/rules"

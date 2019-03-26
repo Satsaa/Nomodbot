@@ -1,6 +1,6 @@
 import Bot from './Bot'
 
-console.log('')
+console.log('Launch')
 
 // Blyat
 global.v8debug = {}

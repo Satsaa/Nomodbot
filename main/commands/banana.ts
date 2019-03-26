@@ -1,4 +1,4 @@
-import { PluginOptions } from '../src/Commander'
+import { PluginInstance, PluginOptions } from '../src/Commander'
 import { IrcMessage } from '../src/lib/parser'
 
 export const options: PluginOptions = {
@@ -15,15 +15,16 @@ export const options: PluginOptions = {
     },
   },
   help: 'Goin bananas fo help',
+  // requires: [['dynamic', 'asd', 'asd']],
 }
 
-export class Instance implements Instance {
+export class Instance implements PluginInstance {
 
   constructor() {
 
   }
 
-  public async call(raw: IrcMessage, channel: string, userstate: object, message: string, me: boolean) {
+  public async call(channel: string, userstate: object, message: string, me: boolean) {
     console.log('🍌🍌🍌🍌🍌🍌🍌🍌')
     return ':O 🍌'
   }

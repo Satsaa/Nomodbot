@@ -27,6 +27,7 @@
     "typescript": "^3.3.3333"
   },
   "dependencies": {
+    "strict-event-emitter-types": "^2.0.0",
     "ws": "^6.1.3"
   }
 }
