@@ -45,6 +45,13 @@ interface Events {
   usernotice: (channel: string, tags: IrcMessage['tags'], message?: string) => void
   notice: (channel: string, tags: IrcMessage['tags'], message: string) => void
 
+  // usernotice
+  sub: (channel: string, user: string, streak: number, cumulative: number | null, plan: string | number, gifted: boolean , message: string) => void
+  massgift: (channel: string, user: string, count: number) => void
+  raid: (channel: string, target: string | null, viewerCount: number | null) => void
+  ritual: (channel: string, user: string | null, ritualName: string, message: string) => void
+
+  // websocket
   ws_open: (ws: WebSocket | undefined) => void
   ws_message: (ws: WebSocket | undefined) => void
   ws_error: (ws: WebSocket | undefined) => void
@@ -71,6 +78,7 @@ export default class TwitchClient {
   public prependOnceListener: TwitchClient['emitter']['prependOnceListener']
   public removeListener: TwitchClient['emitter']['removeListener']
   public emit: TwitchClient['emitter']['emit']
+  /** Emitter for usernotices */
   private emitter: StrictEventEmitter<EventEmitter, Events>
 
   private rateLimiter: RateLimiter
@@ -412,7 +420,7 @@ export default class TwitchClient {
       case 'CLEARCHAT':
         // @ban-duration=10;room-id=62300805;target-user-id=274274870;tmi-sent-ts=1551880699566 <prefix> CLEARCHAT #<channel> :<user>
         // @room-id=61365582;tmi-sent-ts=1553598835278 :tmi.twitch.tv CLEARCHAT #satsaa
-        if (msg.params[1]) this.ircLog(`Chat of ${msg.params[0]} cleared`)
+        if (!msg.params[1]) this.ircLog(`Chat of ${msg.params[0]} cleared`)
         else {
           this.ircLog(`${msg.params[1]} ${typeof msg.tags['ban-duration'] === 'number'
           ? 'is timed out for ' + msg.tags['ban-duration'] + ' seconds'
@@ -476,14 +484,91 @@ export default class TwitchClient {
         break
       case 'USERNOTICE': // <tags> <prefix> USERNOTICE #<channel> :<message>
         this.emit('usernotice', msg.params[0], msg.tags, msg.params[1])
+        // tslint:disable: no-duplicated-branches // !!!
+        switch (msg.tags['msg-id']) {
+          case 'resub':
+          case 'sub':
+            let user = msg.tags.login as string
+            let streak = msg.tags['msg-param-months'] as number
+            let cumulative = msg.tags['msg-param-cumulative-months'] as number | null
+            let plan = msg.tags['msg-param-sub-plan-name'] as string | number
+            this.emit('sub', msg.params[0], user, streak, cumulative, plan, false, msg.params[1])
+            break
+          case 'subgift':
+          case 'anonsubgift':
+            user = msg.tags['msg-param-recipient-user-name'] as string
+            streak = msg.tags['msg-param-months'] as number
+            cumulative = null
+            plan = msg.tags['msg-param-sub-plan-name'] as string | number
+            this.emit('sub', msg.params[0], user, streak, cumulative, plan, false, msg.params[1])
+            break
+          case 'submysterygift':
+          case 'anonsubmysterygift':
+            this.emit('massgift', msg.params[0], msg.tags.login as string, msg.tags['msg-param-mass-gift-count'] as number)
+            break
+          case 'charity':
+            break
+          case 'unraid':
+            this.emit('raid', msg.params[0], null, null)
+            break
+          case 'raid':
+            this.emit('raid', msg.params[0], msg.tags.login as string, msg.tags['viewer-count'] as number)
+            break
+          case 'ritual':
+            this.emit('ritual', msg.params[0], msg.tags.login as string, msg.tags['msg-param-ritual-name'] as string, msg.params[1])
+            break
+          // Not actual subscriptions? Advertisement of sorts. Subtember
+          case 'giftpaidupgrade':
+          case 'anongiftpaidupgrade':
+            break
+          case 'crate':
+          case 'rewardgift':
+          case 'purchase':
+          case 'firstcheer':
+          case 'anoncheer':
+          case 'bitsbadgetier':
+            break
+          default:
+            console.warn('COULDN\'T HANDLE THIS INCREDIBLE USERNOTICE:')
+            console.log(msg)
+            break
+        }
         break
       case 'NOTICE': // <tags> <prefix> NOTICE #<channel> :<message>
           // @msg-id=msg_ratelimit :tmi.twitch.tv NOTICE #satsaa :Your message was not sent because you are sending messages too quickly.
         if (msg.tags['msg-id'] === 'msg_ratelimit') this.ircLog('Rate limited')
         this.emit('notice', msg.params[0], msg.tags, msg.params[1])
+        if (msg.params[1]) this.ircLog(msg.params[1])
+        switch (msg.tags['msg-id']) {
+          case 'msg_timedout':
+            const length = typeof msg.params[1] === 'string' ? ~~msg.params[1].match(/([0-9]*)[a-zA-Z .]*$/)![1] : 0
+            this.emit('timeout', msg.params[0], this.opts.username, length)
+          case 'msg_banned':
+            this.emit('ban', msg.params[0], this.opts.username)
+            break
+          default:
+            if (['subs_on' , 'subs_off', 'emote_only_on', 'emote_only_off', 'slow_on', 'slow_off', 'followers_on_zero', 'invalid_user ',
+              'followers_on', 'followers_off', 'r9k_on', 'r9k_off', 'host_on', 'host_off', 'room_mods', 'no_mods', 'msg_channel_suspended',
+              'already_banned', 'bad_ban_admin', 'bad_ban_broadcaster', 'bad_ban_global_mod', 'bad_ban_self', 'bad_ban_staff', 'usage_ban',
+              'ban_success', 'usage_clear', 'usage_mods', 'mod_success', 'usage_mod', 'bad_mod_banned', 'bad_mod_mod', 'unmod_success',
+              'usage_unmod', 'bad_unmod_mod', 'color_changed', 'usage_color', 'turbo_only_color', 'commercial_success', 'usage_commercial',
+              'bad_commercial_error', 'hosts_remaining', 'bad_host_hosting', 'bad_host_rate_exceeded', 'bad_host_error', 'usage_host',
+              'already_r9k_on', 'usage_r9k_on', 'already_r9k_off', 'usage_r9k_off', 'timeout_success', 'already_subs_off', 'usage_subs_off',
+              'already_subs_on', 'usage_subs_on', 'already_emote_only_off', 'usage_emote_only_off', 'already_emote_only_on',
+              'usage_emote_only_on', 'usage_slow_on', 'usage_slow_off', 'usage_timeout', 'bad_timeout_admin', 'bad_timeout_broadcaster',
+              'bad_timeout_duration', 'bad_timeout_global_mod', 'bad_timeout_self', 'bad_timeout_staff', 'unban_success', 'usage_unban',
+              'bad_unban_no_ban', 'usage_unhost', 'not_hosting', 'whisper_invalid_login', 'whisper_invalid_self', 'unrecognized_cmd',
+              'no_permission', 'whisper_limit_per_min', 'whisper_limit_per_sec', 'whisper_restricted_recipient']
+              .includes(msg.tags['msg-id'] as string)) this.ircLog(msg.params[1])
+            else {
+              console.warn('COULDN\'T HANDLE THIS INCREDIBLE NOTICE:')
+              console.log(msg)
+            }
+            break
+        }
         break
       default:
-        console.warn('COULDN\'T PARSE MESSAGE:')
+        console.warn('COULDN\'T HANDLE THIS INCREDIBLE MESSAGE:')
         console.log(msg)
         break
     }
