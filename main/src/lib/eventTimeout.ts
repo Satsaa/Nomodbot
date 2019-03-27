@@ -15,7 +15,7 @@ export default function timeoutEvent(
     timeout?: number,
     matchArgs?: any[],
     matchOptions?: MatchKeysOptions,
-  } = {}): Promise<{timeout: boolean, args: any[] | null}> {
+  } = {}): Promise<{timeout: boolean, args: any[]}> {
 
   return new Promise((resolve) => {
     const cbFunc = (...args: any[]) => {
@@ -28,7 +28,7 @@ export default function timeoutEvent(
     }
     const timeoutFunc = () => {
       emitter.removeListener(event, cbFunc)
-      resolve({timeout: true, args: null})
+      resolve({timeout: true, args: []})
     }
     let timeout: NodeJS.Timeout
     if (options.timeout !== undefined) timeout = setTimeout(timeoutFunc, options.timeout)

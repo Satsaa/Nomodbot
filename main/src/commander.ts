@@ -38,7 +38,15 @@ export interface CommandAlias {
   /** The id of a command plugin */
   id: string,
   disabled?: boolean,
+  /** 
+   * Controls who can use this command. Either an array of permitted badge names or a number.  
+   * Number: 0: everyone, 1: subscriber, 2: moderator, 3: broadcaster, 10: master
+   * Some badges: prime, admin, bits, broadcaster, global_mod, moderator, subscriber, staff, turbo
+   */
+  permissions?: string[] | number,
+  /** Cooldowns are in seconds */
   cooldown?: number | {duration?: number, delay?: number, limit?: number},
+  /** Cooldowns are in seconds */
   userCooldown?: number | {duration?: number, delay?: number, limit?: number},
 }
 
@@ -46,7 +54,7 @@ export interface PluginInstance {
   // * Execute before enabling this plugin */
   init?: () => Promise<void>
   // * An alias of this command is called */
-  call?: (channel: string, userstate: object, message: string, me: boolean) => Promise<string | null>,
+  call?: (channel: string, userstate: object, message: string, me: boolean) => Promise<string | void>,
   // * An alias of this command is called but it was on cooldown */
   cooldown?: (channel: string, userstate: object, message: string, me: boolean) => void,
 }
@@ -58,11 +66,13 @@ export default class Commander {
   private client: TwitchClient
   private data: Data
   private pluginLib: PluginLibrary
+  private masters: string[]
 
-  constructor(client: TwitchClient, data: Data) {
+  constructor(client: TwitchClient, data: Data, masters: string[]) {
     this.defaults = {}
     this.plugins = {}
     this.instances = {}
+    this.masters = masters
     this.client = client
     this.data = data
     this.pluginLib = new PluginLibrary(client, data, this)
@@ -76,15 +86,22 @@ export default class Commander {
     const files = (await readDirRecursive(path.join(__dirname, '..', 'commands'))).filter(e => e.endsWith('.ts') || e.endsWith('.js'))
     if (!files || !files.length) return []
     const optionsArr = files.map(file => this.loadPlugin(file))
-    this.findConflicts(optionsArr)
+    this.findConflicts(optionsArr, files)
     return optionsArr
   }
 
   /** Check for duplicate data type creations and if a plugin requires data that no present plugin creates */
-  public findConflicts(optionsArray: PluginOptions[]) {
+  public findConflicts(optionsArray: PluginOptions[], files: string[]) {
     const messages: string[] = []
     const created: string[] = []
     const names: string[] = [] // Corresponding plugin name for created entries
+    const ids: string[] = [] // Corresponding plugin name for created entries
+    let i = 0
+    optionsArray.forEach((c) => {
+      if (ids.includes(c.id)) messages.push(`${c.id} id is duplicated in ${path.basename(files[i])} and ${path.basename(files[ids.indexOf(c.id)])}`)
+      ids.push(c.id)
+      i++
+    })
     optionsArray.forEach((c) => {
       if (c.creates) {
         c.creates.forEach((e) => {
@@ -93,18 +110,13 @@ export default class Commander {
           }
           names.push(c.name)
           created.push(`${e[0]}\\${e[1]}\\${e[2]}`)
-        })
-      }
-    })
+        }) } })
     optionsArray.forEach((r) => {
       if (r.requires) {
         r.requires.forEach((e) => {
           if (created.indexOf(`${e[0]}\\${e[1]}\\${e[2]}`) === -1) {
             messages.push(`${r.name} requires ${e[0]}\\${e[1]}\\${e[2]}`)
-          }
-        })
-      }
-    })
+          } }) } })
     if (messages.length) throw new Error(messages.join('/n'))
   }
 
@@ -154,8 +166,7 @@ export default class Commander {
     return options
   }
 
-  private async instantiatePlugin(options: PluginOptions, constructor: new() => PluginInstance) {
-    console.log(`Instantiating ${options.name}`)
+  private async instantiatePlugin(options: PluginOptions, constructor: new(pluginLib: PluginLibrary) => PluginInstance) {
     let res: Array<object | undefined> = []
     if (options.requires) {
       res = await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1], v[2], v[3] || 3000)))
@@ -164,7 +175,7 @@ export default class Commander {
         await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1], v[2])))
       }
     }
-    const instance = new constructor()
+    const instance = new constructor(this.pluginLib)
     if (typeof instance.init === 'function') await instance.init()
     console.log(`Instantiated ${options.name}`)
     this.instances[options.id] = instance
@@ -173,21 +184,53 @@ export default class Commander {
     }
   }
 
-  private onPrivMessage(channel: string, user: string, userstate: object, message: string, me: boolean) {
+  private onPrivMessage(channel: string, user: string, userstate: IrcMessage['tags'], message: string, me: boolean, self: boolean) {
+    if (self) return
     const words = message.split(' ')
     const alias = this.getActiveAlias(channel, words[0])
     if (alias) this.callCommand(channel, user, alias, userstate, message, me)
   }
 
-  private async callCommand(channel: string, user: string, alias: CommandAlias, userstate: object, message: string, me: boolean) {
-    if (!this.instances[alias.id]) return console.log(`Cannot call unloaded command: ${alias.id}`) // Command may not be loaded yet
-    if (typeof this.instances[alias.id].call !== 'function') throw new Error(`Invalid call function on command plugin instance: ${alias.id}`)
-    if (this.isOnCooldown(channel, user, alias)) {
-      if (typeof this.instances[alias.id].cooldown === 'function') this.instances[alias.id].cooldown!(channel, userstate, message, me)
-      return
+  private async callCommand(channel: string, user: string, alias: CommandAlias, userstate: IrcMessage['tags'], message: string, me: boolean) {
+    const instance = this.instances[alias.id]
+    if (!instance) return console.log(`Cannot call unloaded command: ${alias.id}`) // Command may not be loaded yet
+    if (typeof instance.call !== 'function') throw new Error(`Invalid call function on command plugin instance: ${alias.id}`)
+    if (alias.permissions === undefined || this.isPermitted(alias.permissions, userstate.badges as {[badge: string]: number}, user)) {
+      if (!this.masters.includes(user) && this.isOnCooldown(channel, user, alias)) {
+        if (typeof instance.cooldown === 'function') instance.cooldown(channel, userstate, message, me)
+        return
+      }
+      const res = await instance.call(channel, userstate, message, me)
+      if (res) this.client.chat(channel, res)
     }
-    const res = await this.instances[alias.id].call!(channel, userstate, message, me)
-    if (typeof res === 'string') this.client.chat(channel, res)
+  }
+
+  /** Determine if a user with `badges` would be permitted to call this command */
+  private isPermitted(permissions: string[] | number, badges: {[badge: string]: number}, user: string) {
+    // Number: 0: everyone, 1: subscriber, 2: moderator, 3: broadcaster, 10: master
+    // if (this.masters.includes(user)) return true
+    if (typeof permissions === 'number') {
+      switch (permissions) {
+        case 0:
+          return true
+        case 1:
+          if (badges.subscriber) return true
+        case 2:
+          if (badges.moderator) return true
+        case 3:
+          if (badges.broadcaster) return true
+        case 10:
+          break
+        default:
+          console.warn(`Unknown permission level: ${permissions}`)
+          return true
+      }
+    } else {
+      for (const badge in badges) {
+        if (permissions.includes(badge)) return true
+      }
+    }
+    return false
   }
 
   /** Determine if command is on cooldown. Assumes a message is sent if returns false */
@@ -221,9 +264,11 @@ export default class Commander {
         if (typeof opts.duration === 'undefined') opts.duration =  30000
         if (typeof opts.limit === 'undefined') opts.limit =  1
       }
+      const duration = opts.duration! * 1000
+
       // Remove times older than duration
       for (let i = 0; i < times.length; i++) {
-        if (times[i] < now - opts.duration!) { // time is expired
+        if (times[i] < now - duration) { // time is expired
           times.shift()
           i--
         } else break
@@ -234,7 +279,7 @@ export default class Commander {
       } else {
         const exceeds = times.length - opts.limit!
         const delayTest = (times[times.length - 1] + opts.delay!) - now // test only for delay
-        const limitTest = (times[exceeds + 0] + opts.duration!) - now // test all but delay
+        const limitTest = (times[exceeds + 0] + duration) - now // test all but delay
         return Math.max(delayTest, limitTest)
       }
     }

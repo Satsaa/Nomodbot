@@ -30,6 +30,8 @@ export default class PluginLibrary {
   public enableAlias: Commander['enableAlias']
   /** Disable command alias */
   public disableAlias: Commander['disableAlias']
+  /** Return active alias */
+  public getActiveAlias: Commander['getActiveAlias']
 
   public on: TwitchClient['on']
   public once: TwitchClient['once']
@@ -46,42 +48,70 @@ export default class PluginLibrary {
     this.data = data
     this.client = client
 
-    this.on = client.on
-    this.once = client.once
-    this.removeListener = client.removeListener
-    this.prependListener = client.prependListener
-    this.prependOnceListener = client.prependOnceListener
+    this.on = client.on.bind(this.client)
+    this.once = client.once.bind(this.client)
+    this.removeListener = client.removeListener.bind(this.client)
+    this.prependListener = client.prependListener.bind(this.client)
+    this.prependOnceListener = client.prependOnceListener.bind(this.client)
 
-    this.getData = this.data.getData
-    this.waitData = this.data.waitData
-    this.autoLoad = this.data.autoLoad
+    this.getData = this.data.getData.bind(this.data)
+    this.waitData = this.data.waitData.bind(this.data)
+    this.autoLoad = this.data.autoLoad.bind(this.data)
 
-    this.chat = this.client.chat
-    this.whisper = this.client.whisper
-    this.join = this.client.join
-    this.part = this.client.part
+    this.chat = this.client.chat.bind(this.client)
+    this.whisper = this.client.whisper.bind(this.client)
+    this.join = this.client.join.bind(this.client)
+    this.part = this.client.part.bind(this.client)
 
-    this.createAlias = this.commander.createAlias
-    this.deleteAlias = this.commander.deleteAlias
-    this.enableAlias = this.commander.enableAlias
-    this.disableAlias = this.commander.disableAlias
+    this.createAlias = this.commander.createAlias.bind(this.commander)
+    this.deleteAlias = this.commander.deleteAlias.bind(this.commander)
+    this.enableAlias = this.commander.enableAlias.bind(this.commander)
+    this.disableAlias = this.commander.disableAlias.bind(this.commander)
+    this.getActiveAlias = this.commander.getActiveAlias.bind(this.commander)
 
   }
 
   /** Websocket is ready */
-  public get connected() {
+  public connected() {
     return this.client.ws ? this.client.ws.readyState === 1 : false
   }
 
-  /** Returns the active command alias options or undefined if the alias doesn't exist */
-  public getActiveAlias(channel: string, word: string): CommandAlias | void  {
-    return this.commander.getActiveAlias(channel, word)
+  /** Returns the emotes in `message` as strings */
+  public getEmotes(emotes: {[emote: string]: {start: number, end: number}}, message: string): string[] {
+    const res = []
+    for (const emote in emotes) {
+      res.push(message.slice(emotes[emote].start, emotes[emote].end + 1))
+    }
+    return res
   }
+
   /** Returns the command alias options or undefined if the alias doesn't exist */
   public getAlias(channel: string, word: string): CommandAlias | void {
     if (((this.data.static[channel] || {}).aliases || {})[word]) {
       return this.data.static[channel].aliases[word]
     } else if (this.commander.defaults[word]) return this.commander.defaults[word]
+  }
+  /** Returns default aliases or aliases of a channel */
+  public getAliases(channel?: string): { [x: string]: CommandAlias; } {
+    if (channel)  return this.data.static[channel].aliases
+    else return this.commander.defaults
+  }
+  /** Returns active default aliases or active aliases of a channel  */
+  public getActiveAliases(channel?: string): { [x: string]: CommandAlias; } {
+    const aliases: { [x: string]: CommandAlias; } = {}
+    // Default aliases
+    for (const alias in this.commander.defaults) {
+      if (this.commander.defaults[alias].disabled) continue
+      aliases[alias] = this.commander.defaults[alias]
+    }
+    if (channel) {
+      // Channel aliases
+      for (const alias in this.data.static[channel].aliases) {
+        if (this.data.static[channel].aliases[alias].disabled) continue
+        aliases[alias] = this.data.static[channel].aliases[alias]
+      }
+    }
+    return aliases
   }
   /** Returns the instance of a plugin or undefined if it doesn't exist */
   public getInstance(pluginID: string): PluginInstance | undefined {

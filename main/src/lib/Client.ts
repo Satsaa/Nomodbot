@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events'
 import * as fs from 'fs'
-import { resolve } from 'path'
 import StrictEventEmitter from 'strict-event-emitter-types'
 import WebSocket from 'ws'
 import defaultKeys from './defaultKeys'
@@ -14,7 +13,7 @@ interface Events {
   part: (channel: string) => void
   userjoin: (channel: string, user: string) => void
   userpart: (channel: string, user: string) => void
-  chat: (channel: string, user: string, userstate: IrcMessage['tags'], message: string, me: boolean) => void
+  chat: (channel: string, user: string, userstate: IrcMessage['tags'], message: string, me: boolean, self: boolean) => void
   mod: (channel: string, user: string, mod: boolean) => void
   welcome: () => void
   clearmsg: (channel: string, targetMsgID: IrcMessage['tags']['target-msg-id'], tags: IrcMessage['tags'], message: string) => void
@@ -178,7 +177,7 @@ export default class TwitchClient {
     this.ws.onmessage = this.onMessage.bind(this)
     this.ws.onerror = this.onError.bind(this)
     this.ws.onclose = this.onClose.bind(this)
-    return !((await eventTimeout(this, 'welcome', {timeout: this.opts.minLatency + 2000})).timeout)
+    return !((await eventTimeout(this, 'welcome', {timeout: this.getLatency() + 2000})).timeout)
   }
 
   /**
@@ -236,9 +235,12 @@ export default class TwitchClient {
         this.clientData.channels[channel].phase = !this.clientData.channels[channel].phase
         if (this.clientData.channels[channel].phase) msg += this.opts.antiDupe
         this.send(`PRIVMSG ${channel} :${msg}`)
-        // userstate: (channel: string, userstate: IrcMessage['tags']) => void
         const res = await eventTimeout(this, 'userstate', {
           timeout: this.getLatency(), matchArgs: [channel, {'display-name': this.globaluserstate['display-name']}]})
+        if (!res.timeout) {
+          // Emit own messages
+          this.emit('chat', channel, this.opts.username, res.args[1] as IrcMessage['tags'], msg, msg.search(/^(\.|\/|\\)me/) !== -1, true)
+        }
         resolve(!res.timeout)
       })
     })
@@ -319,6 +321,8 @@ export default class TwitchClient {
       else commandObj._prefix_.user++
       if (!msg.nick) commandObj._prefix_.nick = 1
       else commandObj._prefix_.nick++
+
+      // badges
     }
   }
 
@@ -491,8 +495,9 @@ export default class TwitchClient {
         break
       case 'PRIVMSG': // @userstate :<user>!<user>@<user>.tmi.twitch.tv PRIVMSG #<channel> :<message>
         this.ircLog(`[${msg.params[0]}] ${msg.tags['display-name']}: ${msg.params[1]}`)
-        if (msg.params[1].startsWith('ACTION ')) this.emit('chat', msg.params[0], msg.user as string, msg.tags, msg.params[1].slice(8, -1), true)
-        else this.emit('chat', msg.params[0], msg.user as string, msg.tags, msg.params[1], false)
+        if (msg.params[1].startsWith('ACTION ')) {
+          this.emit('chat', msg.params[0], msg.user as string, msg.tags, msg.params[1].slice(8, -1), true, msg.user === this.opts.username)
+        } else this.emit('chat', msg.params[0], msg.user as string, msg.tags, msg.params[1], false, msg.user === this.opts.username)
         break
       case 'WHISPER': // @userstate :<user>!<user>@<user>.tmi.twitch.tv WHISPER <you> :<message>
         this.emit('whisper', msg.user as string, msg.params[1])
@@ -594,7 +599,7 @@ export default class TwitchClient {
               'usage_emote_only_on', 'usage_slow_on', 'usage_slow_off', 'usage_timeout', 'bad_timeout_admin', 'bad_timeout_broadcaster',
               'bad_timeout_duration', 'bad_timeout_global_mod', 'bad_timeout_self', 'bad_timeout_staff', 'unban_success', 'usage_unban',
               'bad_unban_no_ban', 'usage_unhost', 'not_hosting', 'whisper_invalid_login', 'whisper_invalid_self', 'unrecognized_cmd',
-              'no_permission', 'whisper_limit_per_min', 'whisper_limit_per_sec', 'whisper_restricted_recipient']
+              'no_permission', 'whisper_limit_per_min', 'whisper_limit_per_sec', 'whisper_restricted_recipient', 'host_target_went_offline']
               .includes(msg.tags['msg-id'] as string)) this.ircLog(`${msg.params[0]}: ${msg.params[1]}`)
             else {
               console.warn('COULDN\'T HANDLE THIS INCREDIBLE NOTICE:')

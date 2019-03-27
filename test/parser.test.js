@@ -201,11 +201,12 @@ assert.deepStrictEqual(parser(msg), {
   ]
 })
 
-msg = '@ban-duration=23;room-id=61365582;target-user-id=147764434;tmi-sent-ts=1550286954898 :tmi.twitch.tv CLEARCHAT #satsaa :123asd' // Example
+msg = '@badges=;ban-duration=23;room-id=61365582;target-user-id=147764434;tmi-sent-ts=1550286954898 :tmi.twitch.tv CLEARCHAT #satsaa :123asd' // Example
 
 assert.deepStrictEqual(parser(msg), {
   raw: msg,
   tags: {
+    'badges': {},
     'ban-duration': 23,
     'room-id': 61365582,
     'target-user-id': 147764434,
@@ -218,6 +219,46 @@ assert.deepStrictEqual(parser(msg), {
   params: [
     '#satsaa',
     '123asd'
+  ]
+})
+
+msg = '@badges=moderator/23,subscriber/1 :tmi.twitch.tv CLEARCHAT #satsaa :123asd' // Badge test
+
+assert.deepStrictEqual(parser(msg), {
+  raw: msg,
+  tags: {
+    'badges': {
+      moderator: 23,
+      subscriber: 1
+    },
+  },
+  prefix: 'tmi.twitch.tv',
+  nick: null,
+  user: null,
+  cmd: 'CLEARCHAT',
+  params: [
+    '#satsaa',
+    '123asd'
+  ]
+})
+
+msg = '@emotes=1:0-1/45:3-7 :tmi.twitch.tv CLEARCHAT #satsaa ::) 4Head' // Badge test
+
+assert.deepStrictEqual(parser(msg), {
+  raw: msg,
+  tags: {
+    'emotes': {
+      1: {start:0, end:1},
+      45: {start:3, end:7}
+    },
+  },
+  prefix: 'tmi.twitch.tv',
+  nick: null,
+  user: null,
+  cmd: 'CLEARCHAT',
+  params: [
+    '#satsaa',
+    ':) 4Head'
   ]
 })
 

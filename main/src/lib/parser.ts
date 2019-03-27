@@ -21,13 +21,15 @@
 
 export interface IrcMessage {
   raw: string,
-  tags: { [x: string]: string | number | true },
+  tags: { [x: string]: Tag },
   prefix: string | null,
   nick: string | null,
   user: string | null,
   cmd: string | null,
   params: string[]
 }
+
+type Tag =  string | number | true | { [badge: string]: number } | { [emote: string]: {start: number, end: number} }
 
 /**
  * Parse IRCv3 tagged messages  
@@ -66,7 +68,7 @@ export default function parse(msg: string): IrcMessage | null {
       const minIndex = Math.min(nextEquals, nextSpace, nextSemiColon)
       const semiMinIndex = Math.min(nextSpace, nextSemiColon)
 
-      let val: string | true | number = msg.slice(minIndex + 1, semiMinIndex)
+      let val: Tag = msg.slice(minIndex + 1, semiMinIndex)
 
       // Unescape characters: ' ' '/' ';' '\n' '\r'
       if (val.indexOf('\\') !== -1) {
@@ -78,7 +80,31 @@ export default function parse(msg: string): IrcMessage | null {
         if (isNaN(val)) val = prev
       }
 
-      result.tags[msg.slice(i, minIndex)] = val
+      const tag = msg.slice(i, minIndex)
+      if (tag === 'badges') { // badges=moderator/1,subscriber/1
+        if (typeof val === 'string' && val !== '') {
+          const badges: {[badge: string]: number} = {}
+          const splitted = val.split(',')
+          splitted.forEach((fullBadge) => {
+            const badge = fullBadge.split('/')
+            badges[badge[0]] = ~~badge[1]
+          })
+          val = badges
+        } else val = {}
+      } else if (tag === 'emotes') { // emotes=25:0-4/354:6-10/1:12-13
+        if (typeof val === 'string' && val !== '') {
+          const emotes: { [emote: string]: {start: number, end: number} } = {}
+          const splitted = val.split('/')
+          splitted.forEach((fullEmote) => {
+            const emote: string[] = fullEmote.split(':')
+            const area = emote[1].split('-')
+            emotes[emote[0]] = {start: ~~area[0], end: ~~area[1]}
+          })
+          val = emotes
+        } else val = {}
+      }
+
+      result.tags[tag] = val
       i = semiMinIndex + 1
     }
   }

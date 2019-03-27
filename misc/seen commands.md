@@ -1,5 +1,7 @@
 
 
+v8debug.bot.client.join(["#yassuo","#forsen","#l34um1","#nymn","#dakotaz","#drlupo","#cohhcarnage","#fextralife","#cloakzy","#timthetatman","#iwilldominate","#nightblue3","#mendokusaii","#jakenbakelive","#ashek","#highdistortion","#singsing","#kinggothalion","#joshog","#zizaran","#ephey","#tejbz","#yelo","#maddy","#kingjae","#waifugate","#tommo","#amaz","#b0aty","#moonmoon_ow","#methodjosh","#yogscast","#roshtein","#symfuhny","#drdisrespect","#xqcow","#twitchrivals","#lirik","#castro_1021","#imaqtpie","#mongraal","#greekgodx","#zai"])
+
 
 [When?]
 CMD           desc
@@ -71,7 +73,7 @@ USERNOTICE    Subs, rituals and more
 
 PRIVMSG       Someone sends a message
 @userstate :<poiintxblank!poiintxblank@poiintxblank>.tmi.twitch.tv PRIVMSG #shroud :<@hunzerrr oh, yea it is>
-@...<emotes=60364:0-6/997820:26-36/1723850:40-48>;<flags>=[50-101]:,50-101:,50-101:,[105-134]:,105-134:,105-134: :streamelements!streamelements@streamelements.tmi.twitch.tv PRIVMSG #shroud :<shroudW> Have you heard of <shroudPrime> ? <shroudHyp> [https://<clips>.twitch.tv/FuriousPiercingBananaPJSugar] - [http://bit.ly/HowToTwitchPrime]
+@...<emotes=60364:0-6/997820:26-36/1723850:40-48>;<flags>=[50-101]:,50-101:,50-101:,[105-134]:,105-134:,105-134: :streamelements!streamelements@streamelements.tmi.twitch.tv PRIVMSG #shroud :shroudW Have you heard of shroudPrime ? shroudHyp https://clips.twitch.tv/FuriousPiercingBananaPJSugar - http://bit.ly/HowToTwitchPrime
 
 WHISPER
 @display-name=Satsaa;emotes=1:[0-1];user-type= :<satsaa!satsaa@satsaa>.tmi.twitch.tv WHISPER nomodbot :<message>
