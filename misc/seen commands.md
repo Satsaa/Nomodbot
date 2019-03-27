@@ -1,4 +1,4 @@
-"#yassuo #forsen #l34um1 #nymn #dakotaz #drlupo #cohhcarnage #fextralife #cloakzy #timthetatman #iwilldominate #nightblue3 #mendokusaii #jakenbakelive #ashek #highdistortion #singsing #kinggothalion #joshog #zizaran #ephey #tejbz #yelo #maddy #kingjae #waifugate #tommo #amaz #b0aty #moonmoon_ow #methodjosh #yogscast #roshtein #symfuhny #drdisrespect #xqcow #twitchrivals #lirik #castro_1021 #imaqtpie #mongraal #greekgodx #zai".split(' ').forEach((e)=>{c.join(e)})
+
 
 
 [When?]

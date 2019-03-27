@@ -30,6 +30,7 @@ export default class Bot {
   }
 
   private onExit(code: number) {
+    if (!this.data) return
     this.data.saveAllSync()
   }
 }

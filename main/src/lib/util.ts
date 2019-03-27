@@ -23,20 +23,25 @@ export function randomFloat(min: number, max: number) { return (Math.random() * 
 export function get(...values: any[]) { for (const key of values) { if (key !== undefined) return key } }
 
 /**
- * Returns `singular` or `plural` based on `value`
+ * Returns `value` `singular` or `value` `plural` based on `value`
  * @param v If this is 1 or '1' `singular` is returned
  * @param singular Singular form
  * @param plural Plural form. Defaults to `singular + 's'`
  */
-export function plural(v: string | number, singular: string, plural?: string) { return (v === 1 || v === '1' ? singular : plural || singular + 's') }
+export function plural(v: string | number, singular: string, plural?: string) {
+  return (v === 1 || v === '1' ? `${v} ${singular}` : `${v} ${plural || singular + 's'}`) }
 
 const onExitCbs: Array<(code: number) => void> = []
 const signals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBUS', 'SIGFPE', 'SIGSEGV', 'SIGILL', 'SIGUSR1', 'SIGUSR2', 'SIGQUIT', 'uncaughtException']
-signals.forEach((signal: any) => {
-  process.on(signal, (code) => {
-    onExitCbs.forEach((cb) => {cb(code)})
-    process.exit(code)
+const onExitFunc = (code: number) => {
+  onExitCbs.forEach((cb) => {cb(code)})
+  signals.forEach((signal: any) => {
+    process.removeListener(signal, onExitFunc)
   })
+  process.exit(code)
+}
+signals.forEach((signal: any) => {
+  process.on(signal, onExitFunc)
 })
 /**
  * Attempts to excecute `cb` when the script is exiting.  
@@ -68,32 +73,5 @@ export function timeout(ms: number): Promise<void> {
     setTimeout(() => {
       resolve()
     }, ms)
-  })
-}
-
-/**
- * Resolve on event or on timeout
- * @param emitter Emitter instance
- * @param event Event
- * @param options `options.timeout` Resolve if timeout executes before the event fires.
- * `options.args` Resolve only if the event returns atleast these arguments and the values match
- * @returns Arguments received from the event as an array
- */
-export function onEvent(emitter: EventEmitter, event: string, options: {timeout?: number, args?: any[] } = {}): Promise<any[]> {
-  return new Promise((resolve) => {
-    const cbFunc = (...args: any[]) => {
-      if (options.args) {
-        let i = 0
-        for (const expected of options.args) {
-          if (arguments[i++] !== expected) return
-        }
-      }
-      emitter.removeListener(event, cbFunc)
-      clearTimeout(timeout)
-      resolve(args)
-    }
-    let timeout: NodeJS.Timeout
-    if (options.timeout !== undefined) timeout = setTimeout(cbFunc, options.timeout)
-    emitter.on(event, cbFunc)
   })
 }

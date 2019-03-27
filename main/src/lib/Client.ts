@@ -1,28 +1,13 @@
 import { EventEmitter } from 'events'
 import * as fs from 'fs'
+import { resolve } from 'path'
 import StrictEventEmitter from 'strict-event-emitter-types'
 import WebSocket from 'ws'
 import defaultKeys from './defaultKeys'
+import eventTimeout from './eventTimeout'
 import parse, { IrcMessage } from './parser'
 import RateLimiter, { RateLimiterOptions } from './RateLimiter'
 import * as u from './util'
-
-export interface TwitchClientOptions {
-  username: string,
-  password: string,
-  server?: string,
-  secure?: boolean,
-  port?: number,
-  /** Client data will be loaded and saved in this directory as clientData.json */
-  dataDir?: null | string,
-  logIrc?: boolean,
-  /** Server might refuse to connect with fast intervals */
-  reconnectInterval?: number,
-  defaultTimeout?: number,
-  antiDupe?: string,
-  readonly msgRLOpts?: Readonly<RateLimiterOptions>,
-  readonly whisperRLOpts?: Readonly<RateLimiterOptions | RateLimiterOptions[]>,
-}
 
 interface Events {
   join: (channel: string) => void
@@ -58,6 +43,24 @@ interface Events {
   ws_close: (ws: WebSocket | undefined) => void
 }
 
+export interface TwitchClientOptions {
+  username: string,
+  password: string,
+  server?: string,
+  secure?: boolean,
+  port?: number,
+  /** Client data will be loaded and saved in this directory as clientData.json */
+  dataDir?: null | string,
+  logIrc?: boolean,
+  /** Server might refuse to connect with fast intervals */
+  reconnectInterval?: number,
+  minLatency?: number,
+  pingInterval?: number,
+  antiDupe?: string,
+  readonly msgRLOpts?: Readonly<RateLimiterOptions>,
+  readonly whisperRLOpts?: Readonly<RateLimiterOptions | RateLimiterOptions[]>,
+}
+
 /**
  * A client for interacting with Twitch servers
  */
@@ -84,7 +87,8 @@ export default class TwitchClient {
   private rateLimiter: RateLimiter
   private whisperRateLimiter: RateLimiter
 
-  private interval: null | NodeJS.Timeout
+  private reconnecting: boolean
+  private latency: number
   private messageTypes: any
 
   /**
@@ -98,8 +102,9 @@ export default class TwitchClient {
       port: u.get(options.port, options.secure ? 443 : 80),
       dataDir: null,
       logIrc : false,
-      reconnectInterval: 15000,
-      defaultTimeout: 2000,
+      reconnectInterval: 10000,
+      minLatency: 800,
+      pingInterval: 60000,
       antiDupe: ' \u206D',
       msgRLOpts: {
         duration: 30000,
@@ -155,16 +160,17 @@ export default class TwitchClient {
     this.rateLimiter.times = this.clientData.global.msgTimes
     this.whisperRateLimiter.times = this.clientData.global.whisperTimes
 
-    this.interval = null
+    this.reconnecting = false
+    this.latency = 0
     this.messageTypes = JSON.parse(fs.readFileSync('./misc/seenMessageTypes.json', {encoding: 'utf8'}))
 
-    setTimeout(this.pingLoop.bind(this), 5 * 60 * 1000 * u.randomFloat(0.9, 1.0))
+    setTimeout(this.pingLoop.bind(this), this.opts.pingInterval * u.randomFloat(0.9, 1.0))
     setInterval(() => {
       fs.writeFileSync('./misc/seenMessageTypes.json', JSON.stringify(this.messageTypes, null, 2))
     }, 10 * 1000)
   }
 
-  public connect() {
+  public async connect() {
     if (this.ws && this.ws.readyState !== 1) return
     console.log('attempting to connect')
     this.ws = new WebSocket(`${this.opts.secure ? 'wss' : 'ws'}://${this.opts.server}:${this.opts.port}/`, 'irc')
@@ -172,6 +178,7 @@ export default class TwitchClient {
     this.ws.onmessage = this.onMessage.bind(this)
     this.ws.onerror = this.onError.bind(this)
     this.ws.onclose = this.onClose.bind(this)
+    return !((await eventTimeout(this, 'welcome', {timeout: this.opts.minLatency + 2000})).timeout)
   }
 
   /**
@@ -179,47 +186,61 @@ export default class TwitchClient {
    * @param data 
    * @param cb Call when data is sent
    */
-  public send(data: any, cb?: (err?: Error) => void): void {
-    if (this.ws && this.ws.readyState === 1) {
-      if (cb) this.ws.send(data, cb)
-      else this.ws.send(data)
-    }
+  public send(data: any, cb?: (err?: Error) => void): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (this.ws && this.ws.readyState === 1) {
+        if (cb) this.ws.send(data, cb)
+        else this.ws.send(data, (err) => {resolve(!err)}) // no error -> true
+      } else resolve(false)
+    })
   }
 
   /** Join `channel` */
-  public join(channels: string | string[]) {
+  public async join(channels: string | string[]): Promise<boolean> {
     if (!Array.isArray(channels)) channels = [channels]
-    channels.forEach((channel) => {
+    const promises: Array<ReturnType<typeof eventTimeout>> = []
+    for (const channel of channels) {
       this.send(`JOIN ${channel}`)
-    })
+      promises.push(eventTimeout(this, 'join', {timeout: this.getLatency(), matchArgs: [channel]}))
+    }
+    return (await Promise.all(promises)).every(v => v.timeout === false)
   }
 
   /** Leave `channel` */
-  public part(channels: string | string[]) {
+  public async part(channels: string | string[]): Promise<boolean> {
     if (!Array.isArray(channels)) channels = [channels]
-    channels.forEach((channel) => {
+    const promises: Array<ReturnType<typeof eventTimeout>> = []
+    for (const channel of channels) {
       this.send(`PART ${channel}`)
-    })
+      promises.push(eventTimeout(this, 'part', {timeout: this.getLatency(), matchArgs: [channel]}))
+    }
+    return (await Promise.all(promises)).every(v => v.timeout === false)
   }
 
   /** Send `msg` to `channel` */
   public chat(channel: string, msg: string, allowCommand: boolean = false) {
-    msg = msg.replace(/ +(?= )/g, '') // replace multiple spaces with a single space
-    if (!allowCommand) {
-      if (!msg.match(/^(\/|\\|\.)me /)) {  // allow actions
-        if (msg.charAt(0) === '/' || msg.charAt(0) === '.' || msg.charAt(0) === '\\') {
-          msg = ' ' + msg
+    return new Promise((resolve) => {
+      msg = msg.replace(/ +(?= )/g, '') // replace multiple spaces with a single space
+      if (!allowCommand) {
+        if (!msg.match(/^(\/|\\|\.)me /)) {  // allow actions
+          if (msg.charAt(0) === '/' || msg.charAt(0) === '.' || msg.charAt(0) === '\\') {
+            msg = ' ' + msg // Adding a space before a command makes it show up in chat
+          }
         }
       }
-    }
-    if (typeof this.clientData.channels[channel].phase === 'undefined') return console.log('Not connected to this channel')
+      if (typeof this.clientData.channels[channel].phase === 'undefined') return console.log('Not connected to this channel')
 
-    // It is not possible to know if nmb has been unmodded before sending a message. (pubsub may tell this? Still would be too late?)
-    // Being over basic limits and losing mod will cause the bot to be disconnected and muted for 30 or so minutes (not good)
-    this.rateLimiter.queue(() => {
-      this.clientData.channels[channel].phase = !this.clientData.channels[channel].phase
-      if (this.clientData.channels[channel].phase) msg += this.opts.antiDupe
-      this.send(`PRIVMSG ${channel} :${msg}`)
+      // It is not possible to know if nmb has been unmodded before sending a message. (pubsub may tell this? Still would be too late?)
+      // Being over basic limits and losing mod will cause the bot to be disconnected and muted for 30 or so minutes (not good)
+      this.rateLimiter.queue(async () => {
+        this.clientData.channels[channel].phase = !this.clientData.channels[channel].phase
+        if (this.clientData.channels[channel].phase) msg += this.opts.antiDupe
+        this.send(`PRIVMSG ${channel} :${msg}`)
+        // userstate: (channel: string, userstate: IrcMessage['tags']) => void
+        const res = await eventTimeout(this, 'userstate', {
+          timeout: this.getLatency(), matchArgs: [channel, {'display-name': this.globaluserstate['display-name']}]})
+        resolve(!res.timeout)
+      })
     })
   }
 
@@ -302,15 +323,15 @@ export default class TwitchClient {
   }
 
   private onError(event: { error: any, message: string, target: WebSocket, type: string }): void {
-    this.emit('ws_error', this.ws)
     console.error(event.error)
+    this.emit('ws_error', this.ws)
     this.ws = undefined
     this.reconnect()
   }
 
   private onClose(event: { code: number, reason: string, target: WebSocket , wasClean: boolean }): void {
-    this.emit('ws_close', this.ws)
     console.log(`Connection closed: ${event.code}, ${event.reason}`)
+    this.emit('ws_close', this.ws)
     this.ws = undefined
     this.reconnect()
   }
@@ -334,21 +355,35 @@ export default class TwitchClient {
     }
   }
 
-  private pingLoop() {
-    if (this.ws) this.ws.send('PING')
-    setTimeout(this.pingLoop.bind(this), 5 * 60 * 1000 * u.randomFloat(0.9, 1.0))
+  private setLatency(latency: number) {
+    return this.latency = latency * 1.5 + 300
+  }
+  private getLatency() {
+    return Math.max(this.latency, this.opts.minLatency)
   }
 
-  private reconnect(interval: number = this.opts.reconnectInterval) {
+  private async pingLoop() {
+    setTimeout(this.pingLoop.bind(this), this.opts.pingInterval * u.randomFloat(0.9, 1.0))
+    if (!this.ws) return
+    this.ws.send('PING')
+    const start = Date.now()
+    if ((await eventTimeout(this, 'pong', {timeout: this.getLatency() * 2})).timeout) {
+      this.reconnect()
+    } else this.setLatency(Date.now() - start)
+  }
+
+  private async reconnect(interval: number = this.opts.reconnectInterval): Promise<void> {
+    if (this.reconnecting) return
+    console.log(`Reconnecting in ${u.plural(Math.round(interval / 1000), 'second')}`)
     if (this.ws) this.ws.close()
-    if (this.interval) return // !!! Will this stop the reconnect loop after a single failure to connect?
-    this.interval = setInterval(() => {
-      this.connect()
-    }, interval)
-    this.once('welcome', () => {
-      clearInterval(this.interval!)
-      this.interval = null // !!! Will this stop the reconnect loop after a single failure to connect?
-    })
+    this.reconnecting = true
+    await u.timeout(interval)
+    const res = await this.connect()
+    if (!res) {
+      this.reconnecting = false
+      return this.reconnect(interval)
+    }
+    this.reconnecting = false
   }
 
   private ircLog(msg: any) {
@@ -535,11 +570,12 @@ export default class TwitchClient {
         }
         break
       case 'NOTICE': // <tags> <prefix> NOTICE #<channel> :<message>
-          // @msg-id=msg_ratelimit :tmi.twitch.tv NOTICE #satsaa :Your message was not sent because you are sending messages too quickly.
         if (msg.tags['msg-id'] === 'msg_ratelimit') this.ircLog('Rate limited')
         this.emit('notice', msg.params[0], msg.tags, msg.params[1])
-        if (msg.params[1]) this.ircLog(msg.params[1])
         switch (msg.tags['msg-id']) {
+          case 'msg_ratelimit':
+            this.ircLog('Rate limited')
+            break
           case 'msg_timedout':
             const length = typeof msg.params[1] === 'string' ? ~~msg.params[1].match(/([0-9]*)[a-zA-Z .]*$/)![1] : 0
             this.emit('timeout', msg.params[0], this.opts.username, length)
@@ -559,7 +595,7 @@ export default class TwitchClient {
               'bad_timeout_duration', 'bad_timeout_global_mod', 'bad_timeout_self', 'bad_timeout_staff', 'unban_success', 'usage_unban',
               'bad_unban_no_ban', 'usage_unhost', 'not_hosting', 'whisper_invalid_login', 'whisper_invalid_self', 'unrecognized_cmd',
               'no_permission', 'whisper_limit_per_min', 'whisper_limit_per_sec', 'whisper_restricted_recipient']
-              .includes(msg.tags['msg-id'] as string)) this.ircLog(msg.params[1])
+              .includes(msg.tags['msg-id'] as string)) this.ircLog(`${msg.params[0]}: ${msg.params[1]}`)
             else {
               console.warn('COULDN\'T HANDLE THIS INCREDIBLE NOTICE:')
               console.log(msg)
