@@ -55,7 +55,8 @@ export interface TwitchClientOptions {
   reconnectInterval?: number,
   minLatency?: number,
   pingInterval?: number,
-  antiDupe?: string,
+  dupeAffix?: string,
+  maxMsgLength?: number,
   readonly msgRLOpts?: Readonly<RateLimiterOptions>,
   readonly whisperRLOpts?: Readonly<RateLimiterOptions | RateLimiterOptions[]>,
 }
@@ -104,7 +105,8 @@ export default class TwitchClient {
       reconnectInterval: 10000,
       minLatency: 800,
       pingInterval: 60000,
-      antiDupe: ' \u206D',
+      dupeAffix: ' \u206D',
+      maxMsgLength: 499,
       msgRLOpts: {
         duration: 30000,
         limit: 19,
@@ -219,6 +221,9 @@ export default class TwitchClient {
   /** Send `msg` to `channel` */
   public chat(channel: string, msg: string, allowCommand: boolean = false) {
     return new Promise((resolve) => {
+      if (typeof this.clientData.channels[channel].phase === 'undefined') return resolve(false)
+      if (msg.length > this.opts.maxMsgLength) msg = msg.slice(0, this.opts.maxMsgLength)
+      if (msg.endsWith(' \u206D')) msg = msg.substring(0, msg.length - 2) // Remove chatterino shit
       msg = msg.replace(/ +(?= )/g, '') // replace multiple spaces with a single space
       if (!allowCommand) {
         if (!msg.match(/^(\/|\\|\.)me /)) {  // allow actions
@@ -227,13 +232,11 @@ export default class TwitchClient {
           }
         }
       }
-      if (typeof this.clientData.channels[channel].phase === 'undefined') return console.log('Not connected to this channel')
-
       // It is not possible to know if nmb has been unmodded before sending a message. (pubsub may tell this? Still would be too late?)
       // Being over basic limits and losing mod will cause the bot to be disconnected and muted for 30 or so minutes (not good)
       this.rateLimiter.queue(async () => {
         this.clientData.channels[channel].phase = !this.clientData.channels[channel].phase
-        if (this.clientData.channels[channel].phase) msg += this.opts.antiDupe
+        if (this.clientData.channels[channel].phase) msg += this.opts.dupeAffix
         this.send(`PRIVMSG ${channel} :${msg}`)
         const res = await eventTimeout(this, 'userstate', {
           timeout: this.getLatency(), matchArgs: [channel, {'display-name': this.globaluserstate['display-name']}]})
@@ -494,10 +497,11 @@ export default class TwitchClient {
         // Host off has ":- 0"?
         break
       case 'PRIVMSG': // @userstate :<user>!<user>@<user>.tmi.twitch.tv PRIVMSG #<channel> :<message>
-        this.ircLog(`[${msg.params[0]}] ${msg.tags['display-name']}: ${msg.params[1]}`)
-        if (msg.params[1].startsWith('ACTION ')) {
-          this.emit('chat', msg.params[0], msg.user as string, msg.tags, msg.params[1].slice(8, -1), true, msg.user === this.opts.username)
-        } else this.emit('chat', msg.params[0], msg.user as string, msg.tags, msg.params[1], false, msg.user === this.opts.username)
+        const _msg = msg.params[1].endsWith(' \u206D') ? msg.params[1].substring(0, msg.params[1].length - 2) : msg.params[1]
+        this.ircLog(`[${msg.params[0]}] ${msg.tags['display-name']}: ${_msg}`)
+        if (_msg.startsWith('ACTION ')) {
+          this.emit('chat', msg.params[0], msg.user as string, msg.tags, _msg.slice(8, -1), true, msg.user === this.opts.username)
+        } else this.emit('chat', msg.params[0], msg.user as string, msg.tags, _msg, false, msg.user === this.opts.username)
         break
       case 'WHISPER': // @userstate :<user>!<user>@<user>.tmi.twitch.tv WHISPER <you> :<message>
         this.emit('whisper', msg.user as string, msg.params[1])

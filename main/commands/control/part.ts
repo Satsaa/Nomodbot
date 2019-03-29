@@ -17,14 +17,13 @@ export const options: PluginOptions = {
 
 export class Instance implements PluginInstance {
 
-  private pluginLib: PluginLibrary
+  private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
-    this.pluginLib = pluginLib
+    this.l = pluginLib
   }
 
-  public async call(channel: string, userstate: object, message: string, me: boolean) {
-    const words = message.split(' ')
-    return await this.pluginLib.part(words.length === 1 ? channel : words.slice(1)) ? undefined : 'Server response timeout'
+  public async call(channel: string, userstate: object, message: string, params: string[], me: boolean) {
+    return await this.l.part(params.length === 1 ? channel : params.slice(1)) ? undefined : 'Server response timeout'
   }
 }

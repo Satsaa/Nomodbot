@@ -3,16 +3,21 @@ import PluginLibrary from '../../src/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'save',
-  name: 'Save',
-  description: 'Saves a file',
+  id: 'example',
+  name: 'Example',
+  description: 'Is an example',
   default: {
-    alias: '$save',
+    alias: '!example',
     options: {
+      disabled: true,
       permissions: 10,
+      cooldown: 30,
+      userCooldown: 60,
     },
   },
-  help: '{alias} <\'static\' | \'dynamic\'> [subType] <name>: Save the file in \\type\\subType | channel\\name',
+  requires: [],
+  creates: [['static', 'fake', 'file']],
+  help: "{alias} required <variable> [optional] [<optVar>] this | that <multiword...>: Is an example(delimiter:'.') {...}",
 }
 
 export class Instance implements PluginInstance {
@@ -34,8 +39,8 @@ export class Instance implements PluginInstance {
       subType = channel
       name = params[2]
     }
-    if (!this.l.getData(type, subType, name)) return `\\${type}\\${subType}\\${name} is not loaded`
-    this.l.save(type, subType, name, false)
-    return `Saved \\${type}\\${subType}\\${name}`
+    if (!this.l.getData(type, subType, name)) return ` \\${type}\\${subType}\\${name} is not loaded`
+    this.l.reload(type, subType, name)
+    return `Reloaded \\${type}\\${subType}\\${name}`
   }
 }

@@ -1,6 +1,7 @@
 
 /**
- * Defines unexisting keys in `checkObj` that exist in `defaultObj`
+ * Defines unexisting keys in `checkObj` that exist in `defaultObj`  
+ * MUTATES `defaultObj`
  * @param defaultObj 
  * @param checkObj 
  */

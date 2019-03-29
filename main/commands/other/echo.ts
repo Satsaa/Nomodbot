@@ -18,13 +18,13 @@ export const options: PluginOptions = {
 
 export class Instance implements PluginInstance {
 
-  private pluginLib: PluginLibrary
+  private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
-    this.pluginLib = pluginLib
+    this.l = pluginLib
   }
 
-  public async call(channel: string, userstate: object, message: string, me: boolean) {
-    return message.split(' ').splice(1).join(' ')
+  public async call(channel: string, userstate: object, message: string, params: string[], me: boolean) {
+    return params.splice(1).join(' ')
   }
 }

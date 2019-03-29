@@ -1,23 +1,23 @@
 import * as path from 'path'
-import Data from './Data'
+import Data, { DataType } from './Data'
 import TwitchClient from './lib/Client'
 import { IrcMessage } from './lib/parser'
 import { readDirRecursive } from './lib/util'
 import PluginLibrary from './pluginLib'
 
-export interface Command {
+interface Command {
   type: 'command',
   default: {
-    /** Default command alias (e.g. !command) */
-    alias: string,
+    /** Default command alias(es) (e.g. !command) */
+    alias: string | string[],
     options: Pick<CommandAlias, Exclude<keyof CommandAlias, 'id'>>,
   }
   /** Usage instructions */
-  help: string,
+  help: string | ((message: string) => string),
 }
 
 /** Controls a data type or something like that */
-export interface Controller {
+interface Controller {
   type: 'controller',
 }
 
@@ -28,9 +28,9 @@ export type PluginOptions = (Command | Controller) & {
   name: string,
   description: string,
   /** Signal that this plugin creates these data types */
-  creates?: Array<['static' | 'dynamic' | 'config', string, string]>,
+  creates?: Array<[DataType[0], string, string]>,
   /** Plugin is not enabled before these data types are loaded. [type,subType,name] */
-  requires?: Array<['static' | 'dynamic' | 'config', string, string, number?]>,
+  requires?: Array<[DataType[0], string, string, number?]>,
 }
 
 /** Properties for aliases (e.g. !uptime) */
@@ -51,12 +51,12 @@ export interface CommandAlias {
 }
 
 export interface PluginInstance {
-  // * Execute before enabling this plugin */
+  /** Execute before enabling this plugin */
   init?: () => Promise<void>
-  // * An alias of this command is called */
-  call?: (channel: string, userstate: object, message: string, me: boolean) => Promise<string | void>,
-  // * An alias of this command is called but it was on cooldown */
-  cooldown?: (channel: string, userstate: object, message: string, me: boolean) => void,
+  /** An alias of this command is called */
+  call?: (channel: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) => Promise<string | void>,
+  /** An alias of this command is called but it was on cooldown */
+  cooldown?: (channel: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) => void,
 }
 
 export default class Commander {
@@ -82,7 +82,6 @@ export default class Commander {
   public async init(): Promise<PluginOptions[]> {
     this.data.autoLoad('static', 'aliases', {})
     this.data.autoLoad('dynamic', 'cooldowns', {})
-    this.data.load('dynamic', 'global', 'cooldowns', {})
     const files = (await readDirRecursive(path.join(__dirname, '..', 'commands'))).filter(e => e.endsWith('.ts') || e.endsWith('.js'))
     if (!files || !files.length) return []
     const optionsArr = files.map(file => this.loadPlugin(file))
@@ -122,7 +121,7 @@ export default class Commander {
 
   public createAlias(channel: string, alias: string, options: CommandAlias): boolean {
     if (!(this.data.static[channel] || {}).aliases) return false
-    this.data.static[channel].aliases[alias] = options; return true
+    this.data.static[channel].aliases[alias] = {...options}; return true
   }
   public deleteAlias(channel: string, alias: string) {
     if (!(this.data.static[channel] || {}).aliases) return false
@@ -130,17 +129,22 @@ export default class Commander {
   }
   public enableAlias(channel: string, alias: string) {
     if (!((this.data.static[channel] || {}).aliases || {})[alias]) return false
-    this.data.static[channel].aliases[alias].disabled = undefined; return true
+    delete this.data.static[channel].aliases[alias].disabled; return true
   }
   public disableAlias(channel: string, alias: string) {
     if (!((this.data.static[channel] || {}).aliases || {})[alias]) return false
     this.data.static[channel].aliases[alias].disabled = true; return true
   }
 
-  public getActiveAlias(channel: string, word: string): CommandAlias | void {
-    if (((this.data.static[channel] || {}).aliases || {})[word] && !this.data.static[channel].aliases[word].disabled) {
-      return this.data.static[channel].aliases[word]
-    } else if (this.defaults[word] && !this.defaults[word].disabled) return this.defaults[word]
+  public getAlias(channel: string, alias: string): CommandAlias | void {
+    if (((this.data.static[channel] || {}).aliases || {})[alias]) {
+      return this.data.static[channel].aliases[alias]
+    } else if (this.defaults[alias]) return this.defaults[alias]
+  }
+  public getActiveAlias(channel: string, alias: string): CommandAlias | void {
+    if (((this.data.static[channel] || {}).aliases || {})[alias] && !this.data.static[channel].aliases[alias].disabled) {
+      return this.data.static[channel].aliases[alias]
+    } else if (this.defaults[alias] && !this.defaults[alias].disabled) return this.defaults[alias]
   }
 
   private loadPlugin(file: string) {
@@ -155,7 +159,13 @@ export default class Commander {
     this.plugins[options.id] = options
     switch (options.type) {
       case 'command':
-        this.defaults[options.default.alias] = {...options.default.options, id: options.id}
+        if (Array.isArray(options.default.alias)) {
+          options.default.alias.forEach((alias) => {
+            this.defaults[alias] = {...options.default.options, id: options.id}
+          })
+        } else {
+          this.defaults[options.default.alias] = {...options.default.options, id: options.id}
+        }
         break
       case 'controller':
         break
@@ -176,8 +186,9 @@ export default class Commander {
       }
     }
     const instance = new constructor(this.pluginLib)
+    console.log(`Instantiating ${options.name}`)
     if (typeof instance.init === 'function') await instance.init()
-    console.log(`Instantiated ${options.name}`)
+    // console.log(`Instantiated ${options.name}`)
     this.instances[options.id] = instance
     if (typeof this.instances[options.id].call !== 'function') {
       throw new Error(`Invalid call function on command plugin instance: ${this.plugins[options.id].name}`)
@@ -197,10 +208,10 @@ export default class Commander {
     if (typeof instance.call !== 'function') throw new Error(`Invalid call function on command plugin instance: ${alias.id}`)
     if (alias.permissions === undefined || this.isPermitted(alias.permissions, userstate.badges as {[badge: string]: number}, user)) {
       if (!this.masters.includes(user) && this.isOnCooldown(channel, user, alias)) {
-        if (typeof instance.cooldown === 'function') instance.cooldown(channel, userstate, message, me)
+        if (typeof instance.cooldown === 'function') instance.cooldown(channel, userstate, message, message.split(' '), me)
         return
       }
-      const res = await instance.call(channel, userstate, message, me)
+      const res = await instance.call(channel, userstate, message, message.split(' '), me)
       if (res) this.client.chat(channel, res)
     }
   }
@@ -208,7 +219,7 @@ export default class Commander {
   /** Determine if a user with `badges` would be permitted to call this command */
   private isPermitted(permissions: string[] | number, badges: {[badge: string]: number}, user: string) {
     // Number: 0: everyone, 1: subscriber, 2: moderator, 3: broadcaster, 10: master
-    // if (this.masters.includes(user)) return true
+    if (this.masters.includes(user)) return true
     if (typeof permissions === 'number') {
       switch (permissions) {
         case 0:
