@@ -1,4 +1,5 @@
 import { PluginInstance, PluginOptions } from '../../src/Commander'
+import { IrcMessage } from '../../src/lib/parser'
 import PluginLibrary from '../../src/pluginLib'
 
 export const options: PluginOptions = {
@@ -12,7 +13,7 @@ export const options: PluginOptions = {
       permissions: 10,
     },
   },
-  help: '{alias}: Exit the process',
+  help: ['Exit the process: {alias}'],
 }
 
 export class Instance implements PluginInstance {
@@ -23,8 +24,9 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
   }
 
-  public async call(channel: string, userstate: object, message: string, params: string[], me: boolean) {
+  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
     process.exit()
+    if (userstate.peter) return
     return 'Exit unsuccessful?'
   }
 }

@@ -1,4 +1,5 @@
 import { PluginInstance, PluginOptions } from '../../src/Commander'
+import { IrcMessage } from '../../src/lib/parser'
 import PluginLibrary from '../../src/pluginLib'
 
 export const options: PluginOptions = {
@@ -12,7 +13,7 @@ export const options: PluginOptions = {
       permissions: 10,
     },
   },
-  help: '{alias} <\'static\' | \'dynamic\'> [subType] <name>: Reload the file in \\type\\subType | channel\\name',
+  help: ['Reload the file in \\type\\subType | channel\\name: {alias} <\'static\' | \'dynamic\'> [subType] <name>'],
 }
 
 export class Instance implements PluginInstance {
@@ -23,7 +24,7 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
   }
 
-  public async call(channel: string, userstate: object, message: string, params: string[], me: boolean) {
+  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
     if (!this.l.DATATYPES.includes(params[1] as PluginLibrary['DATATYPES'][number])) {
       return `Param 1 must be of type ${this.l.DATATYPES.join(' | ')}`
     }

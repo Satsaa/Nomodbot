@@ -1,4 +1,3 @@
-import { EventEmitter } from 'events'
 import { promises as fsp } from 'fs'
 import * as path from 'path'
 
@@ -15,6 +14,16 @@ export function randomInt(min: number, max: number) { return Math.floor(Math.ran
  * @param max Maximum possible output
  */
 export function randomFloat(min: number, max: number) { return (Math.random() * (max - min)) + min }
+
+/**
+ * Returns a random normalized number between min and max
+ * @param min Minimum possible output
+ * @param max Maximum possible output
+ * @param skew Skews the normal mean closer to min (>1) or max (<1). I don't know
+ */
+export function randomNormal(min = 0, max = 100, skew = 1) {
+  return Math.pow(((Math.sqrt(Math.log(Math.random()) * -2.0) * Math.cos(Math.PI * Math.random() * 2.0)) / 10.0 + 0.5), skew) * (max - min) + min
+}
 
 /**
  * Returns first value that is not undefined
@@ -49,28 +58,20 @@ export function getRandomKey(obj: {[x: string]: any}) {
 }
 
 /**
- * Returns a random normalized number between min and max
- * @param min Minimum possible output
- * @param max Maximum possible output
- * @param skew Skews the normal mean closer to min (<1) or max (>1)
+ * Human compatible indexes  
+ * `index` = 1 returns 0. `index` = -3 returns the 3rd largest index
+ * @param index Wanted index
+ * @param max Maximum index. Can also use an array for max index
  */
-export function randomNormal(min = 0, max = 100, skew = 1) {
-  return Math.pow(((Math.sqrt(Math.log(Math.random()) * -2.0) * Math.cos(Math.PI * Math.random() * 2.0)) / 10.0 + 0.5), skew) * (max - min) + min
-}
-
-/**
- * Allow using negative `indexes` to get -nth last index and limits index to 1-`max`
- * @param index Input index
- * @param max Maximum index
- */
-export function smartIndex(index: number, max: number) {
+export function smartIndex(index: number, max: number | any[] = Infinity) {
+  if (typeof max !== 'number') max = max.length
   if (index < 0) {
-    if (index < -max) return 1
-    return max + index + 1 // 100 -1 + 1
+    if (index < -max) return 0
+    return max + index // 100 -1 + 1
   }
-  if (index < 1) return 1
-  if (index > max) return max
-  return index
+  if (index < 1) return 0
+  if (index > max) return max - 1
+  return index - 1
 }
 
 /**
@@ -188,6 +189,9 @@ signals.forEach((signal: any) => {
  * @param cb Synchronous callback
  */
 export function onExit(cb: (code: number) => void) { onExitCbs.push(cb) }
+
+/** Checks if `obj` has the key chain `...keys` */
+export function validChain(obj: {[x: string]: any}, ...keys: string[]) { return keys.reduce((p, c) => (p || {})[c], obj) !== undefined }
 
 /**
  * Finds all files in `dir` and its subfolders recursively  

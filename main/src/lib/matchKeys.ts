@@ -15,7 +15,7 @@ export interface MatchKeysOptions {
  * @param haystackObj Test this object for required keys
  * @param options
  */
-export default (haystackObj: object, needleObj: object, options: MatchKeysOptions = {}) => {
+export default (haystackObj: Readonly<object>, needleObj: Readonly<object>, options: Readonly<MatchKeysOptions> = {}) => {
 
   if (typeof needleObj !== 'object' || typeof haystackObj !== 'object') return needleObj === haystackObj
 
@@ -23,7 +23,7 @@ export default (haystackObj: object, needleObj: object, options: MatchKeysOption
 
   return testKeys(needleObj, haystackObj, options)
 
-  function testKeys(matchObj: {[x: string]: any}, obj: {[x: string]: any}, options: MatchKeysOptions) {
+  function testKeys(matchObj: Readonly<{[x: string]: any}>, obj: Readonly<{[x: string]: any}>, options: Readonly<MatchKeysOptions>) {
     if (typeof options.maxDepth === 'number') {
       i++
       if (i > options.maxDepth) return true

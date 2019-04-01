@@ -13,7 +13,7 @@ interface Command {
     options: Pick<CommandAlias, Exclude<keyof CommandAlias, 'id'>>,
   }
   /** Usage instructions */
-  help: string | ((message: string) => string),
+  help: Array<string | ((message: string) => string)>,
 }
 
 /** Controls a data type or something like that */
@@ -27,10 +27,16 @@ export type PluginOptions = (Command | Controller) & {
   id: string,
   name: string,
   description: string,
-  /** Signal that this plugin creates these data types */
-  creates?: Array<[DataType[0], string, string]>,
-  /** Plugin is not enabled before these data types are loaded. [type,subType,name] */
-  requires?: Array<[DataType[0], string, string, number?]>,
+  /**
+   * Signal that this plugin creates these data types  
+   * type, subtype, name = normal data  
+   * type, name = channel data  
+   */
+  creates?: Array<[DataType[0], string, string] | [DataType[0], string]>,
+  /** Plugin is instantiated after these data types are loaded */
+  requires?: Array<[DataType[0], string, string, number?] | [DataType[0], string, number?]>,
+  /** Plugin is instantiated after these plugins are loaded */
+  requiresPlugins?: string[],
 }
 
 /** Properties for aliases (e.g. !uptime) */
@@ -54,17 +60,18 @@ export interface PluginInstance {
   /** Execute before enabling this plugin */
   init?: () => Promise<void>
   /** An alias of this command is called */
-  call?: (channel: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) => Promise<string | void>,
+  call?: (channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) => Promise<string | void>,
   /** An alias of this command is called but it was on cooldown */
-  cooldown?: (channel: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) => void,
+  cooldown?: (channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) => void,
 }
 
 export default class Commander {
-  public defaults: {[x: string]: CommandAlias}
-  public plugins: {[x: string]: PluginOptions}
-  public instances: {[x: string]: PluginInstance}
+  public defaults: {[alias: string]: CommandAlias}
+  public plugins: {[pluginId: string]: PluginOptions}
+  public instances: {[pluginId: string]: PluginInstance}
   private client: TwitchClient
   private data: Data
+  private waits: {[pluginId: string]: Array<(result: boolean) => any>}
   private pluginLib: PluginLibrary
   private masters: string[]
 
@@ -75,6 +82,7 @@ export default class Commander {
     this.masters = masters
     this.client = client
     this.data = data
+    this.waits = {}
     this.pluginLib = new PluginLibrary(client, data, this)
     this.client.on('chat', this.onPrivMessage.bind(this))
   }
@@ -84,39 +92,50 @@ export default class Commander {
     this.data.autoLoad('dynamic', 'cooldowns', {})
     const files = (await readDirRecursive(path.join(__dirname, '..', 'commands'))).filter(e => e.endsWith('.ts') || e.endsWith('.js'))
     if (!files || !files.length) return []
-    const optionsArr = files.map(file => this.loadPlugin(file))
+    const optionsArr = files.map(file => this.handleOptions(file))
     this.findConflicts(optionsArr, files)
     return optionsArr
   }
 
   /** Check for duplicate data type creations and if a plugin requires data that no present plugin creates */
   public findConflicts(optionsArray: PluginOptions[], files: string[]) {
-    const messages: string[] = []
-    const created: string[] = []
+    const messages: string[] = [] // Error messages
+    const created: string[] = [] // Created data types
     const names: string[] = [] // Corresponding plugin name for created entries
-    const ids: string[] = [] // Corresponding plugin name for created entries
-    let i = 0
-    optionsArray.forEach((c) => {
+    const ids: string[] = [] // Ids of plugin options
+    optionsArray.forEach((c, i) => { // Fill ids
       if (ids.includes(c.id)) messages.push(`${c.id} id is duplicated in ${path.basename(files[i])} and ${path.basename(files[ids.indexOf(c.id)])}`)
       ids.push(c.id)
-      i++
     })
-    optionsArray.forEach((c) => {
+    optionsArray.forEach((c) => { // Check for id duplicates
       if (c.creates) {
         c.creates.forEach((e) => {
-          if (created.includes(`${e[0]}\\${e[1]}\\${e[2]}`)) {
-            messages.push(`${c.name} duplicates ${e[0]}\\${e[1]}\\${e[2]} from ${names[created.indexOf(`${e[0]}\\${e[1]}\\${e[2]}`)]}`)
+          if (created.includes(makePath(e))) {
+            messages.push(`${c.name} duplicates ${makePath(e)} from ${names[created.indexOf(makePath(e))]}`)
           }
           names.push(c.name)
-          created.push(`${e[0]}\\${e[1]}\\${e[2]}`)
+          created.push(makePath(e))
         }) } })
-    optionsArray.forEach((r) => {
+    optionsArray.forEach((r) => { // Check for absent required data
       if (r.requires) {
         r.requires.forEach((e) => {
-          if (created.indexOf(`${e[0]}\\${e[1]}\\${e[2]}`) === -1) {
-            messages.push(`${r.name} requires ${e[0]}\\${e[1]}\\${e[2]}`)
+          if (created.indexOf(makePath(e)) === -1) {
+            messages.push(`${r.name} requires ${makePath(e)}`)
           } }) } })
-    if (messages.length) throw new Error(messages.join('/n'))
+    optionsArray.forEach((c) => { // Check for self requirement
+      if (c.creates) {
+        c.creates.forEach((cr) => {
+          if (c.requires) {
+            c.requires.forEach((re) => {
+              if (makePath(cr) === makePath(re)) messages.push(`${c.id} requires data that it creates`)
+            }) } }) } })
+    if (messages.length) throw new Error(messages.join('. '))
+
+    function makePath(source: [DataType[0], string, (string | number)?, number?]) {
+      const pathOnly = source.filter(v => typeof v === 'string')
+      if (pathOnly.length === 3) return `${pathOnly[0]}\\${pathOnly[1]}\\${pathOnly[2]}`
+      return `${pathOnly[0]}\\#CHANNEL\\${pathOnly[1]}`
+    }
   }
 
   public createAlias(channel: string, alias: string, options: CommandAlias): boolean {
@@ -147,78 +166,10 @@ export default class Commander {
     } else if (this.defaults[alias] && !this.defaults[alias].disabled) return this.defaults[alias]
   }
 
-  private loadPlugin(file: string) {
-    const plugin: {options: PluginOptions, Instance: new() => PluginInstance} = require(file)
-    if (plugin.options) {
-      return this.handlePlugin(plugin.options, plugin.Instance)
-    } else throw console.error('Plugin lacks options export: ' + file)
-  }
-  /** Helper function for loadPlugin */
-  private handlePlugin(options: PluginOptions, constructor: new() => PluginInstance) {
-    const type = options.type // Cant use options in default case
-    this.plugins[options.id] = options
-    switch (options.type) {
-      case 'command':
-        if (Array.isArray(options.default.alias)) {
-          options.default.alias.forEach((alias) => {
-            this.defaults[alias] = {...options.default.options, id: options.id}
-          })
-        } else {
-          this.defaults[options.default.alias] = {...options.default.options, id: options.id}
-        }
-        break
-      case 'controller':
-        break
-      default:
-        throw new Error('Unknown plugin type: ' + type)
-    }
-    this.instantiatePlugin(options, constructor) // Maybe this should be awaited?
-    return options
-  }
-
-  private async instantiatePlugin(options: PluginOptions, constructor: new(pluginLib: PluginLibrary) => PluginInstance) {
-    let res: Array<object | undefined> = []
-    if (options.requires) {
-      res = await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1], v[2], v[3] || 3000)))
-      if (res.some(v => v === undefined)) {
-        console.log(`${options.name} instantiation still waiting for data.`)
-        await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1], v[2])))
-      }
-    }
-    const instance = new constructor(this.pluginLib)
-    console.log(`Instantiating ${options.name}`)
-    if (typeof instance.init === 'function') await instance.init()
-    // console.log(`Instantiated ${options.name}`)
-    this.instances[options.id] = instance
-    if (typeof this.instances[options.id].call !== 'function') {
-      throw new Error(`Invalid call function on command plugin instance: ${this.plugins[options.id].name}`)
-    }
-  }
-
-  private onPrivMessage(channel: string, user: string, userstate: IrcMessage['tags'], message: string, me: boolean, self: boolean) {
-    if (self) return
-    const words = message.split(' ')
-    const alias = this.getActiveAlias(channel, words[0])
-    if (alias) this.callCommand(channel, user, alias, userstate, message, me)
-  }
-
-  private async callCommand(channel: string, user: string, alias: CommandAlias, userstate: IrcMessage['tags'], message: string, me: boolean) {
-    const instance = this.instances[alias.id]
-    if (!instance) return console.log(`Cannot call unloaded command: ${alias.id}`) // Command may not be loaded yet
-    if (typeof instance.call !== 'function') throw new Error(`Invalid call function on command plugin instance: ${alias.id}`)
-    if (alias.permissions === undefined || this.isPermitted(alias.permissions, userstate.badges as {[badge: string]: number}, user)) {
-      if (!this.masters.includes(user) && this.isOnCooldown(channel, user, alias)) {
-        if (typeof instance.cooldown === 'function') instance.cooldown(channel, userstate, message, message.split(' '), me)
-        return
-      }
-      const res = await instance.call(channel, userstate, message, message.split(' '), me)
-      if (res) this.client.chat(channel, res)
-    }
-  }
-
   /** Determine if a user with `badges` would be permitted to call this command */
-  private isPermitted(permissions: string[] | number, badges: {[badge: string]: number}, user: string) {
+  public isPermitted(permissions: string[] | number, badges: IrcMessage['tags']['badges'] /*  { [badge: string]: number } */, user: string) {
     // Number: 0: everyone, 1: subscriber, 2: moderator, 3: broadcaster, 10: master
+    if (badges === undefined) return
     if (this.masters.includes(user)) return true
     if (typeof permissions === 'number') {
       switch (permissions) {
@@ -242,6 +193,94 @@ export default class Commander {
       }
     }
     return false
+  }
+
+  /** Resolves with true when plugin is loaded or with false on timeout */
+  public waitPlugin(pluginId: string, timeout?: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (this.instances[pluginId]) return resolve(true)
+      if (!this.waits[pluginId]) this.waits[pluginId] = [resolve]
+      else this.waits[pluginId].push(resolve)
+      if (timeout !== undefined) {
+        setTimeout(resolve, timeout, false)
+      }
+    })
+  }
+  /** Resolves waitPlugin promises */
+  private resolveWaits(pluginId: string): boolean {
+    if (!this.waits[pluginId] || !this.waits[pluginId].length) return false
+    this.waits[pluginId].forEach(resolveWait => resolveWait(true))
+    this.waits[pluginId] = []
+    return true
+  }
+
+  private handleOptions(file: string) {
+    const plugin: {options: PluginOptions, Instance: new() => PluginInstance} = require(file)
+    const options = plugin.options
+    if (options) {
+      const type = options.type // Cant use options in default case
+      this.plugins[options.id] = options
+      switch (options.type) {
+        case 'command':
+          if (Array.isArray(options.default.alias)) {
+            options.default.alias.forEach((alias) => {
+              this.defaults[alias] = {...options.default.options, id: options.id}
+            })
+          } else {
+            this.defaults[options.default.alias] = {...options.default.options, id: options.id}
+          }
+          break
+        case 'controller':
+          break
+        default:
+          throw new Error('Unknown plugin type: ' + type)
+      }
+      this.instantiatePlugin(options, plugin.Instance) // Maybe this should be awaited?
+      return options
+    } else throw console.error('Plugin lacks options export: ' + file)
+  }
+
+  private async instantiatePlugin(options: PluginOptions, instantiator: new(pluginLib: PluginLibrary) => PluginInstance) {
+    // console.log(`Instantiating ${options.id}`)
+    let res: Array<object | undefined> = []
+    // Wait for requirements. Do not wait for channel data requirements
+    if (options.requires && options.requires.map(v => typeof v === 'string').length === 3) {
+      res = await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1], v[2] as string, v[3] || 3000)))
+      if (res.some(v => v === undefined)) { // A wait promise timedout
+        console.log(`${options.id} instantiation still waiting for data.`)
+        await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1], v[2] as string)))
+      }
+    }
+    if (options.requiresPlugins) await Promise.all(options.requiresPlugins.map(id => this.waitPlugin(id)))
+    const instance = new instantiator(this.pluginLib)
+    if (typeof instance.init === 'function') await instance.init()
+    // console.log(`Instantiated ${options.id}`)
+    this.instances[options.id] = instance
+    this.resolveWaits(options.id)
+    if (options.type === 'command' && typeof this.instances[options.id].call !== 'function') {
+      throw new Error(`Invalid call function on command plugin instance: ${this.plugins[options.id].id}`)
+    }
+  }
+
+  private onPrivMessage(channel: string, user: string, userstate: IrcMessage['tags'], message: string, me: boolean, self: boolean) {
+    if (self) return
+    const words = message.split(' ')
+    const alias = this.getActiveAlias(channel, words[0])
+    if (alias) this.callCommand(channel, user, alias, userstate, message, me)
+  }
+
+  private async callCommand(channel: string, user: string, alias: CommandAlias, userstate: IrcMessage['tags'], message: string, me: boolean) {
+    const instance = this.instances[alias.id]
+    if (!instance) return console.log(`Cannot call unloaded command: ${alias.id}`) // Command may not be loaded yet
+    if (typeof instance.call !== 'function') throw new Error(`Invalid call function on command plugin instance: ${alias.id}`)
+    if (alias.permissions === undefined || this.isPermitted(alias.permissions, userstate.badges, user)) {
+      if (!this.masters.includes(user) && this.isOnCooldown(channel, user, alias)) {
+        if (typeof instance.cooldown === 'function') instance.cooldown(channel, user, userstate, message, message.split(' '), me)
+        return
+      }
+      const res = await instance.call(channel, user, userstate, message, message.split(' '), me)
+      if (res) this.client.chat(channel, res)
+    }
   }
 
   /** Determine if command is on cooldown. Assumes a message is sent if returns false */

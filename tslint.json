@@ -26,6 +26,8 @@
       "no-duplicate-imports": false, // fs.promises import issue
       "arrow-parens": false,
       "no-string-throw": true,
+      "max-classes-per-file": false,
+      "unified-signatures": false,
       
       // tslint-eslint-rules
       "variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],

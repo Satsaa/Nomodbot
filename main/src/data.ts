@@ -18,7 +18,7 @@ export default class Data extends EventEmitter {
 
   public dataPath: string
   private client: TwitchClient
-  private autoLoads: Array<{type: DataType[0], name: string, defaultData?: object, setKeys?: boolean}>
+  private autoLoads: Array<{type: DataType[0], name: string, defaultData?: object, setDefaults?: boolean}>
 
   constructor(client: TwitchClient, dataPath: string) {
     super()
@@ -143,9 +143,9 @@ export default class Data extends EventEmitter {
    * @param subType E.g. 'default', 'global'. Use autoLoad for channel specific data.
    * @param name File name
    * @param defaultData If the file doesn't exist, create it with this data
-   * @param setKeys Define all keys of the loaded data that exist in `defaultData` with the default value
+   * @param setDefaults Sets all undefined keys in the returned data that exist in `defaultData` to the value of `defaultData`
    */
-  public async load(type: DataType[0], subType: string, name: string, defaultData?: object, setKeys = false): Promise<object> {
+  public async load(type: DataType[0], subType: string, name: string, defaultData?: object, setDefaults = false): Promise<object> {
     if (!this[type][subType]) this[type][subType] = {}
     if (this.getData(type, subType, name)) throw new Error(`${name} has already been loaded by another source`)
     this.setData(type, subType, name, {}) // Blocks new loads on this data type
@@ -171,7 +171,7 @@ export default class Data extends EventEmitter {
     let data
     try { data = JSON.parse(await fsp.readFile(file, 'utf8'))
     } catch (err) { throw new Error(`${file} is corrupted: ${err.name}`) }
-    if (setKeys) defaultKeys(data, defaultData || {})
+    if (setDefaults) defaultKeys(data, defaultData || {})
     const result = this.setData(type, subType, name, data)
     this.emit('load', type, subType, name, result)
     return result
@@ -183,19 +183,19 @@ export default class Data extends EventEmitter {
    * @param type 'static' or 'dynamic' required
    * @param name File name
    * @param defaultData If the file doesn't exist, create it with this data
-   * @param setKeys Define all keys of the loaded data that exist in `defaultData` with the default value
+   * @param setDefaults Define all keys of the loaded data that exist in `defaultData` with the default value
    */
-  public autoLoad(type: DataType[0], name: string, defaultData?: object, setKeys = false) {
+  public autoLoad(type: DataType[0], name: string, defaultData?: object, setDefaults = false) {
     for (const channel in this.client.clientData.channels) { // Load for present channels
-      this.load(type, channel, name, defaultData, setKeys)
+      this.load(type, channel, name, defaultData, setDefaults)
     }
-    this.autoLoads.push({type, name, defaultData, setKeys})
+    this.autoLoads.push({type, name, defaultData, setDefaults})
   }
 
   private onJoin(channel: string) {
     for (const autoLoad of this.autoLoads) {
       if (!(this[autoLoad.type][channel] || {})[autoLoad.name]) {
-        this.load(autoLoad.type, channel, autoLoad.name, autoLoad.defaultData, autoLoad.setKeys)
+        this.load(autoLoad.type, channel, autoLoad.name, autoLoad.defaultData, autoLoad.setDefaults)
       }
     }
   }

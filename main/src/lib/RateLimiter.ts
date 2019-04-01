@@ -27,11 +27,11 @@ export default class RateLimiter {
      * Lowest defined queueSize is selected.
      * @param queueSize Maximum queued entries at once
      */
-  constructor(options: RateLimiterOptions | RateLimiterOptions[] = [{}]) {
-    if (!Array.isArray(options)) options = [options]
+  constructor(options: Readonly<RateLimiterOptions | RateLimiterOptions[]>) {
+    const opts = (Array.isArray(options)) ? options : [options]
     this.opts = []
     this.times = []
-    options.forEach((element) => {
+    opts.forEach((element) => {
       this.times.push([])
       this.opts.push({
         duration: 60000,

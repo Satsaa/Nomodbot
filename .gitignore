@@ -5,3 +5,4 @@ node_modules
 */data/*
 tempCodeRunnerFile.js
 bin/
+tsconfig.tsbuildinfo

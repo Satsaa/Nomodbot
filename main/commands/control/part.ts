@@ -1,4 +1,5 @@
 import { PluginInstance, PluginOptions } from '../../src/Commander'
+import { IrcMessage } from '../../src/lib/parser'
 import PluginLibrary from '../../src/pluginLib'
 
 export const options: PluginOptions = {
@@ -12,7 +13,10 @@ export const options: PluginOptions = {
       permissions: 10,
     },
   },
-  help: '{alias} <channels...>: Leave channels',
+  help: [
+    'Leave channels: {alias} <channels...>',
+    'Leave {channel}: {alias}',
+  ],
 }
 
 export class Instance implements PluginInstance {
@@ -23,7 +27,8 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
   }
 
-  public async call(channel: string, userstate: object, message: string, params: string[], me: boolean) {
-    return await this.l.part(params.length === 1 ? channel : params.slice(1)) ? undefined : 'Server response timeout'
+  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
+    const final = params[1] ? params.slice(1) : channel
+    return await this.l.part(final) ? undefined : 'Server response timeout'
   }
 }

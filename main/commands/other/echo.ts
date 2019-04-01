@@ -1,4 +1,5 @@
 import { PluginInstance, PluginOptions } from '../../src/Commander'
+import { IrcMessage } from '../../src/lib/parser'
 import PluginLibrary from '../../src/pluginLib'
 
 export const options: PluginOptions = {
@@ -13,7 +14,7 @@ export const options: PluginOptions = {
       usercooldown: 30,
     },
   },
-  help: '{alias} <echo...>: Reply with echo',
+  help: ['Reply with echo: {alias} <echo...>'],
 }
 
 export class Instance implements PluginInstance {
@@ -24,7 +25,7 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
   }
 
-  public async call(channel: string, userstate: object, message: string, params: string[], me: boolean) {
+  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
     return params.splice(1).join(' ')
   }
 }

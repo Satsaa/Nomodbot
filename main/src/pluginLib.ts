@@ -12,22 +12,50 @@ export default class PluginLibrary {
   public readonly getData: Data['getData']
   /** Wait until the data is loaded. Resolves with the arguments the event gives or undefined if timedout */
   public readonly waitData: Data['waitData']
-  /** Loads the specified data type for each joined channel and unloads when a channel is parted */
+  /**
+   * Loads or unloads specified data for each channel when the bot joins or parts one  
+   * Also loads for each channel that the bot has already joined
+   * @param type 'static' or 'dynamic' required
+   * @param name File name
+   * @param defaultData If the file doesn't exist, create it with this data
+   * @param setKeys Define all keys of the loaded data that exist in `defaultData` with the default value
+   */
   public readonly autoLoad: Data['autoLoad']
-  /** Loads the specified data type */
+  /**
+   * Loads a file in `Data.dataPath`/`type`/`subType`/`name`
+   * @param type 'static' or 'dynamic' required
+   * @param subType E.g. 'default', 'global'. Use autoLoad for channel specific data.
+   * @param name File name
+   * @param defaultData If the file doesn't exist, create it with this data
+   * @param setDefaults Sets all undefined keys in the returned data that exist in `defaultData` to the value of `defaultData`
+   */
   public readonly load: Data['load']
-  /** Reloads the specified data type without saving it */
+  /**
+   * Reloads a file in `Data.dataPath`/`type`/`subType`/`name`
+   * @param type 'static' or 'dynamic' required
+   * @param subType E.g. 'default', 'global'.
+   * @param name File name
+   * @param save Save before reloading
+   */
   public readonly reload: Data['reload']
-  /** Saves the specified data type and optionally unloads it */
-  public readonly save: Data['save']
+  /**
+   * Saves a file in `Data.dataPath`/`type`/`subType`/`name`
+   * @param type 'static' or 'dynamic' required
+   * @param subType E.g. 'default', 'global'
+   * @param name File name
+   * @param unload Unload from memory if save is succesful
+   */
+  public readonly saveData: Data['save']
+  /** Saves all loaded data types synchronously */
+  public readonly saveAllSync: Data['saveAllSync']
 
-  /** Send `message` to `channel` */
+  /** Whisper `msg` to `channel` */
   public readonly chat: TwitchClient['chat']
-  /** Send `message` to `user` */
+  /** Whisper `msg` to `user` */
   public readonly whisper: TwitchClient['whisper']
-  /** Join `channel` */
+  /** Join `channels` */
   public readonly join: TwitchClient['join']
-  /** Part `channel` */
+  /** Leave `channels` */
   public readonly part: TwitchClient['part']
 
   /** Create command alias */
@@ -40,6 +68,8 @@ export default class PluginLibrary {
   public readonly disableAlias: Commander['disableAlias']
   /** Return active alias */
   public readonly getActiveAlias: Commander['getActiveAlias']
+  /** Determine if a user with `badges` would be permitted to call this command */
+  public readonly isPermitted: Commander['isPermitted']
 
   public emitter: {
     readonly on: TwitchClient['on']
@@ -49,10 +79,10 @@ export default class PluginLibrary {
     readonly prependOnceListener: TwitchClient['prependOnceListener'],
   }
 
-  /** util lib */
+  /** util library */
   public u: typeof util
-  /** Plugins can define keys to this object. Other plugins can then use them. Use `requires` option to make sure the properties are ready for use */
-  public extend: {[x: string]: any}
+  /** Plugin created extensions/methods */
+  public ext: {[commandId: string]: {[x: string]: any}}
 
   public readonly DATATYPES: typeof DATATYPES
 
@@ -66,7 +96,7 @@ export default class PluginLibrary {
     this.client = client
 
     this.u = util
-    this.extend = {}
+    this.ext = {}
 
     this.DATATYPES = DATATYPES
 
@@ -83,7 +113,8 @@ export default class PluginLibrary {
     this.autoLoad = this.data.autoLoad.bind(this.data)
     this.load = this.data.load.bind(this.data)
     this.reload = this.data.reload.bind(this.data)
-    this.save = this.data.save.bind(this.data)
+    this.saveData = this.data.save.bind(this.data)
+    this.saveAllSync = this.data.saveAllSync.bind(this.data)
 
     this.chat = this.client.chat.bind(this.client)
     this.whisper = this.client.whisper.bind(this.client)
@@ -95,6 +126,7 @@ export default class PluginLibrary {
     this.enableAlias = this.commander.enableAlias.bind(this.commander)
     this.disableAlias = this.commander.disableAlias.bind(this.commander)
     this.getActiveAlias = this.commander.getActiveAlias.bind(this.commander)
+    this.isPermitted = this.commander.isPermitted.bind(this.commander)
 
   }
 
@@ -113,9 +145,36 @@ export default class PluginLibrary {
     return this.client.ws ? this.client.ws.readyState === 1 : false
   }
 
-  /** Gets a key from the config\keys.json file */
-  public getKeys(arg: any) {
+  /** Add keys to pluginLib.ext[pluginId] */
+  public extend(pluginId: string, method: string, value: any): void
+  /** Set the pluginLib.ext[pluginId] key */
+  public extend(pluginId: string, value: {[key: string]: any}): void
 
+  public extend(pluginId: string, method: string | {[key: string]: any}, value?: any) {
+    if (typeof method === 'object') {
+      this.ext[pluginId] = method
+    } else {
+      if (!this.ext[pluginId]) this.ext[pluginId] = {}
+      this.ext[pluginId][method] = value
+    }
+  }
+
+  /** Disables the default aliases of `pluginId` */
+  public disableDefaults(pluginId: string) {
+    const aliases = this.getAliases()
+    for (const alias in aliases) { if (aliases[alias].id === pluginId) delete aliases[alias].disabled }
+  }
+  /** Enables the default aliases of `pluginId` */
+  public enableDefaults(pluginId: string) {
+    const aliases = this.getAliases()
+    for (const alias in aliases) { if (aliases[alias].id === pluginId) aliases[alias].disabled = true }
+  }
+  /**
+   * Gets a key from the config/keys.json file.  
+   * `keys` is a path to a key (e.g. 'myService', 'oauth' would result in FILE.myService.oauth key value being returned)
+   */
+  public getKey(...keys: string[]) {
+    return secretKey.getKey('./main/cfg/keys.json', ...keys)
   }
 
   /** Returns the emotes in `message` as strings */
@@ -156,11 +215,11 @@ export default class PluginLibrary {
     return aliases
   }
   /** Returns the instance of a plugin or undefined if it doesn't exist */
-  public getInstance(pluginID: string): PluginInstance | undefined {
-    return this.commander.instances[pluginID]
+  public getInstance(pluginId: string): PluginInstance | undefined {
+    return this.commander.instances[pluginId]
   }
   /** Returns the options export of a plugin or undefined if the plugin doesn't exist */
-  public getPlugin(pluginID: string): PluginOptions | undefined {
-    return this.commander.plugins[pluginID]
+  public getPlugin(pluginId: string): PluginOptions | undefined {
+    return this.commander.plugins[pluginId]
   }
 }

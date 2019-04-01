@@ -16,7 +16,7 @@ interface Events {
   chat: (channel: string, user: string, userstate: IrcMessage['tags'], message: string, me: boolean, self: boolean) => void
   mod: (channel: string, user: string, mod: boolean) => void
   welcome: () => void
-  clearmsg: (channel: string, targetMsgID: IrcMessage['tags']['target-msg-id'], tags: IrcMessage['tags'], message: string) => void
+  clearmsg: (channel: string, targetMsgId: IrcMessage['tags']['target-msg-id'], tags: IrcMessage['tags'], message: string) => void
   clear: (channel: string) => void
   timeout: (channel: string, user: string, duration: number) => void
   ban: (channel: string, user: string) => void
@@ -196,7 +196,7 @@ export default class TwitchClient {
     })
   }
 
-  /** Join `channel` */
+  /** Join `channels` */
   public async join(channels: string | string[]): Promise<boolean> {
     if (!Array.isArray(channels)) channels = [channels]
     const promises: Array<ReturnType<typeof eventTimeout>> = []
@@ -207,7 +207,7 @@ export default class TwitchClient {
     return (await Promise.all(promises)).every(v => v.timeout === false)
   }
 
-  /** Leave `channel` */
+  /** Leave `channels` */
   public async part(channels: string | string[]): Promise<boolean> {
     if (!Array.isArray(channels)) channels = [channels]
     const promises: Array<ReturnType<typeof eventTimeout>> = []
@@ -219,13 +219,13 @@ export default class TwitchClient {
   }
 
   /** Send `msg` to `channel` */
-  public chat(channel: string, msg: string, allowCommand: boolean = false) {
+  public chat(channel: string, msg: string, options: {command?: boolean, cutTheLine?: boolean} = {}) {
     return new Promise((resolve) => {
-      if (typeof this.clientData.channels[channel].phase === 'undefined') return resolve(false)
+      if (!this.clientData.channels[channel]) return resolve(false)
       if (msg.length > this.opts.maxMsgLength) msg = msg.slice(0, this.opts.maxMsgLength)
       if (msg.endsWith(' \u206D')) msg = msg.substring(0, msg.length - 2) // Remove chatterino shit
       msg = msg.replace(/ +(?= )/g, '') // replace multiple spaces with a single space
-      if (!allowCommand) {
+      if (!options.command) {
         if (!msg.match(/^(\/|\\|\.)me /)) {  // allow actions
           if (msg.charAt(0) === '/' || msg.charAt(0) === '.' || msg.charAt(0) === '\\') {
             msg = ' ' + msg // Adding a space before a command makes it show up in chat
@@ -324,8 +324,6 @@ export default class TwitchClient {
       else commandObj._prefix_.user++
       if (!msg.nick) commandObj._prefix_.nick = 1
       else commandObj._prefix_.nick++
-
-      // badges
     }
   }
 

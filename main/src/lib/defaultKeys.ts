@@ -5,9 +5,9 @@
  * @param defaultObj 
  * @param checkObj 
  */
-export default (checkObj: object, defaultObj: object) => {
+export default (mutatedObj: object, defaultObj: object) => {
 
-  defaults(checkObj, defaultObj)
+  defaults(mutatedObj, defaultObj)
 
   function defaults(checkObj: {[x: string]: any}, defaultObj: {[x: string]: any}) {
 

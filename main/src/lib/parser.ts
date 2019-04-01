@@ -21,15 +21,23 @@
 
 export interface IrcMessage {
   raw: string,
-  tags: { [x: string]: Tag },
+  tags: {
+    [x: string]: string | number | true,
+    // @ts-ignore // Restrictive indexes FeelsWeirdMan
+    badges?: { [badge: string]: number },
+    // @ts-ignore
+    emotes?: { [emote: string]: {start: number, end: number} },
+    // @ts-ignore
+    'display-name'?: string,
+    // @ts-ignore
+    'user-id'?: number,
+  },
   prefix: string | null,
   nick: string | null,
   user: string | null,
   cmd: string | null,
   params: string[]
 }
-
-type Tag =  string | number | true | { [badge: string]: number } | { [emote: string]: {start: number, end: number} }
 
 /**
  * Parse IRCv3 tagged messages  
@@ -68,7 +76,7 @@ export default function parse(msg: string): IrcMessage | null {
       const minIndex = Math.min(nextEquals, nextSpace, nextSemiColon)
       const semiMinIndex = Math.min(nextSpace, nextSemiColon)
 
-      let val: Tag = msg.slice(minIndex + 1, semiMinIndex)
+      let val: string | number | true = msg.slice(minIndex + 1, semiMinIndex)
 
       // Unescape characters: ' ' '/' ';' '\n' '\r'
       if (val.indexOf('\\') !== -1) {
@@ -89,8 +97,8 @@ export default function parse(msg: string): IrcMessage | null {
             const badge = fullBadge.split('/')
             badges[badge[0]] = ~~badge[1]
           })
-          val = badges
-        } else val = {}
+          result.tags.badges = badges
+        } else result.tags.badges = {}
       } else if (tag === 'emotes') { // emotes=25:0-4/354:6-10/1:12-13
         if (typeof val === 'string' && val !== '') {
           const emotes: { [emote: string]: {start: number, end: number} } = {}
@@ -100,11 +108,9 @@ export default function parse(msg: string): IrcMessage | null {
             const area = emote[1].split('-')
             emotes[emote[0]] = {start: ~~area[0], end: ~~area[1]}
           })
-          val = emotes
-        } else val = {}
-      }
-
-      result.tags[tag] = val
+          result.tags.emotes = emotes
+        } else result.tags.emotes = {}
+      } else result.tags[tag] = val // Normal tag
       i = semiMinIndex + 1
     }
   }
