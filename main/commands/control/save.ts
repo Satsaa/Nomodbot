@@ -15,8 +15,8 @@ export const options: PluginOptions = {
   },
   help: [
     'Save all loaded files: {alias} all',
-    'Save the file in \\type\\{channel}\\name: {alias} <\'static\' | \'dynamic\'> <name>',
-    'Save the file in \\type\\subType\\name: {alias} <\'static\' | \'dynamic\'> <subType> <name>',
+    'Save the file in \\{channel}\\name: {alias} <name>',
+    'Save the file in \\subType\\name: {alias} <subType> <name>',
   ],
 }
 
@@ -33,18 +33,14 @@ export class Instance implements PluginInstance {
       this.l.saveAllSync()
       return 'Saved all data'
     }
-    if (!this.l.DATATYPES.includes(params[1] as PluginLibrary['DATATYPES'][number])) {
-      return `Param 1 must be of type ${this.l.DATATYPES.join(' | ')}`
-    }
-    const type = params[1] as PluginLibrary['DATATYPES'][number]
-    let subType = params[2]
-    let name = params[3]
-    if (!params[3]) { // If only 2 params
+    let subType = params[1]
+    let name = params[2]
+    if (!params[2]) { // Channel specific with single param
       subType = channel
-      name = params[2]
+      name = params[1]
     }
-    if (!this.l.getData(type, subType, name)) return `\\${type}\\${subType}\\${name} is not loaded`
-    this.l.saveData(type, subType, name, false)
-    return `Saved \\${type}\\${subType}\\${name}`
+    if (!this.l.getData(subType, name)) return `\\${subType}\\${name} is not loaded`
+    this.l.saveData(subType, name, false)
+    return `Saved \\${subType}\\${name}`
   }
 }

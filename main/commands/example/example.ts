@@ -17,7 +17,7 @@ export const options: PluginOptions = {
     },
   },
   requires: [],
-  creates: [['static', 'fake', 'file']],
+  creates: [['fake', 'file']],
   help: [
     'Is an example: {alias} required <variable> [optional] [<optVar>] this | that <multiword...>',
     'nother example',

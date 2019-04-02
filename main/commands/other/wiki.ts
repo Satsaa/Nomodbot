@@ -89,8 +89,8 @@ export class Instance implements PluginInstance {
             redirects++
             if (redirects > 3) resolve('Too many redirects')
             else if (res.headers.location) get.bind(this)(res.headers.location).then(resolve, reject)
-            else resolve(`${res.statusCode}: ${res.statusMessage}`)
-          } else resolve(`${res.statusCode}: ${res.statusMessage}`)
+            else resolve(`${res.statusCode}: ${this.l.u.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
+          } else resolve(`${res.statusCode}: ${this.l.u.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
         })
       })
     }

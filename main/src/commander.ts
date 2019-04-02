@@ -1,5 +1,5 @@
 import * as path from 'path'
-import Data, { DataType } from './Data'
+import Data from './Data'
 import TwitchClient from './lib/Client'
 import { IrcMessage } from './lib/parser'
 import { readDirRecursive } from './lib/util'
@@ -29,12 +29,12 @@ export type PluginOptions = (Command | Controller) & {
   description: string,
   /**
    * Signal that this plugin creates these data types  
-   * type, subtype, name = normal data  
-   * type, name = channel data  
+   * subtype, name = normal data  
+   * name = channel data  
    */
-  creates?: Array<[DataType[0], string, string] | [DataType[0], string]>,
+  creates?: Array<[string, string] | [string]>,
   /** Plugin is instantiated after these data types are loaded */
-  requires?: Array<[DataType[0], string, string, number?] | [DataType[0], string, number?]>,
+  requires?: Array<[string, string, number?] | [string, number?]>,
   /** Plugin is instantiated after these plugins are loaded */
   requiresPlugins?: string[],
 }
@@ -88,8 +88,8 @@ export default class Commander {
   }
 
   public async init(): Promise<PluginOptions[]> {
-    this.data.autoLoad('static', 'aliases', {})
-    this.data.autoLoad('dynamic', 'cooldowns', {})
+    this.data.autoLoad('aliases', {})
+    this.data.autoLoad('cooldowns', {})
     const files = (await readDirRecursive(path.join(__dirname, '..', 'commands'))).filter(e => e.endsWith('.ts') || e.endsWith('.js'))
     if (!files || !files.length) return []
     const optionsArr = files.map(file => this.handleOptions(file))
@@ -131,38 +131,38 @@ export default class Commander {
             }) } }) } })
     if (messages.length) throw new Error(messages.join('. '))
 
-    function makePath(source: [DataType[0], string, (string | number)?, number?]) {
+    function makePath(source: [string, (string | number)?, number?]) {
       const pathOnly = source.filter(v => typeof v === 'string')
-      if (pathOnly.length === 3) return `${pathOnly[0]}\\${pathOnly[1]}\\${pathOnly[2]}`
-      return `${pathOnly[0]}\\#CHANNEL\\${pathOnly[1]}`
+      if (pathOnly.length === 2) return `${pathOnly[0]}\\${pathOnly[1]}`
+      return `#CHANNEL\\${pathOnly[0]}`
     }
   }
 
   public createAlias(channel: string, alias: string, options: CommandAlias): boolean {
-    if (!(this.data.static[channel] || {}).aliases) return false
-    this.data.static[channel].aliases[alias] = {...options}; return true
+    if (!(this.data.data[channel] || {}).aliases) return false
+    this.data.data[channel].aliases[alias] = {...options}; return true
   }
   public deleteAlias(channel: string, alias: string) {
-    if (!(this.data.static[channel] || {}).aliases) return false
-    delete this.data.static[channel].aliases[alias]; return true
+    if (!(this.data.data[channel] || {}).aliases) return false
+    delete this.data.data[channel].aliases[alias]; return true
   }
   public enableAlias(channel: string, alias: string) {
-    if (!((this.data.static[channel] || {}).aliases || {})[alias]) return false
-    delete this.data.static[channel].aliases[alias].disabled; return true
+    if (!((this.data.data[channel] || {}).aliases || {})[alias]) return false
+    delete this.data.data[channel].aliases[alias].disabled; return true
   }
   public disableAlias(channel: string, alias: string) {
-    if (!((this.data.static[channel] || {}).aliases || {})[alias]) return false
-    this.data.static[channel].aliases[alias].disabled = true; return true
+    if (!((this.data.data[channel] || {}).aliases || {})[alias]) return false
+    this.data.data[channel].aliases[alias].disabled = true; return true
   }
 
   public getAlias(channel: string, alias: string): CommandAlias | void {
-    if (((this.data.static[channel] || {}).aliases || {})[alias]) {
-      return this.data.static[channel].aliases[alias]
+    if (((this.data.data[channel] || {}).aliases || {})[alias]) {
+      return this.data.data[channel].aliases[alias]
     } else if (this.defaults[alias]) return this.defaults[alias]
   }
   public getActiveAlias(channel: string, alias: string): CommandAlias | void {
-    if (((this.data.static[channel] || {}).aliases || {})[alias] && !this.data.static[channel].aliases[alias].disabled) {
-      return this.data.static[channel].aliases[alias]
+    if (((this.data.data[channel] || {}).aliases || {})[alias] && !this.data.data[channel].aliases[alias].disabled) {
+      return this.data.data[channel].aliases[alias]
     } else if (this.defaults[alias] && !this.defaults[alias].disabled) return this.defaults[alias]
   }
 
@@ -245,10 +245,10 @@ export default class Commander {
     let res: Array<object | undefined> = []
     // Wait for requirements. Do not wait for channel data requirements
     if (options.requires && options.requires.map(v => typeof v === 'string').length === 3) {
-      res = await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1], v[2] as string, v[3] || 3000)))
+      res = await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1] as string, v[2] || 3000)))
       if (res.some(v => v === undefined)) { // A wait promise timedout
         console.log(`${options.id} instantiation still waiting for data.`)
-        await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1], v[2] as string)))
+        await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1] as string)))
       }
     }
     if (options.requiresPlugins) await Promise.all(options.requiresPlugins.map(id => this.waitPlugin(id)))
@@ -285,7 +285,7 @@ export default class Commander {
 
   /** Determine if command is on cooldown. Assumes a message is sent if returns false */
   private isOnCooldown(channel: string, user: string, alias: CommandAlias) {
-    const cooldowns = this.data.getData('dynamic', channel, 'cooldowns')
+    const cooldowns = this.data.getData(channel, 'cooldowns')
     if (!cooldowns) return false
     let res1 = 0
     let res2 = 0

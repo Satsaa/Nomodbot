@@ -1,5 +1,5 @@
 import Commander, { CommandAlias, PluginInstance, PluginOptions } from './Commander'
-import Data, { DATATYPES } from './Data'
+import Data from './Data'
 import TwitchClient from './lib/Client'
 import * as secretKey from './lib/secretKey'
 import * as util from './lib/util'
@@ -15,15 +15,13 @@ export default class PluginLibrary {
   /**
    * Loads or unloads specified data for each channel when the bot joins or parts one  
    * Also loads for each channel that the bot has already joined
-   * @param type 'static' or 'dynamic' required
    * @param name File name
    * @param defaultData If the file doesn't exist, create it with this data
    * @param setKeys Define all keys of the loaded data that exist in `defaultData` with the default value
    */
   public readonly autoLoad: Data['autoLoad']
   /**
-   * Loads a file in `Data.dataPath`/`type`/`subType`/`name`
-   * @param type 'static' or 'dynamic' required
+   * Loads a file in `Data.dataPath`/`subType`/`name`
    * @param subType E.g. 'default', 'global'. Use autoLoad for channel specific data.
    * @param name File name
    * @param defaultData If the file doesn't exist, create it with this data
@@ -31,16 +29,14 @@ export default class PluginLibrary {
    */
   public readonly load: Data['load']
   /**
-   * Reloads a file in `Data.dataPath`/`type`/`subType`/`name`
-   * @param type 'static' or 'dynamic' required
+   * Reloads a file in `Data.dataPath`/`subType`/`name`
    * @param subType E.g. 'default', 'global'.
    * @param name File name
    * @param save Save before reloading
    */
   public readonly reload: Data['reload']
   /**
-   * Saves a file in `Data.dataPath`/`type`/`subType`/`name`
-   * @param type 'static' or 'dynamic' required
+   * Saves a file in `Data.dataPath`/`subType`/`name`
    * @param subType E.g. 'default', 'global'
    * @param name File name
    * @param unload Unload from memory if save is succesful
@@ -84,8 +80,6 @@ export default class PluginLibrary {
   /** Plugin created extensions/methods */
   public ext: {[commandId: string]: {[x: string]: any}}
 
-  public readonly DATATYPES: typeof DATATYPES
-
   private readonly commander: Commander
   private readonly data: Data
   private readonly client: TwitchClient
@@ -97,8 +91,6 @@ export default class PluginLibrary {
 
     this.u = util
     this.ext = {}
-
-    this.DATATYPES = DATATYPES
 
     this.emitter = {
       on: client.on.bind(this.client),
@@ -188,13 +180,13 @@ export default class PluginLibrary {
 
   /** Returns the command alias options or undefined if the alias doesn't exist */
   public getAlias(channel: string, word: string): CommandAlias | void {
-    if (((this.data.static[channel] || {}).aliases || {})[word]) {
-      return this.data.static[channel].aliases[word]
+    if (((this.data.data[channel] || {}).aliases || {})[word]) {
+      return this.data.data[channel].aliases[word]
     } else if (this.commander.defaults[word]) return this.commander.defaults[word]
   }
   /** Returns default aliases or aliases of a channel */
   public getAliases(channel?: string): { [x: string]: CommandAlias; } {
-    if (channel)  return this.data.static[channel].aliases
+    if (channel)  return this.data.data[channel].aliases
     else return this.commander.defaults
   }
   /** Returns active default aliases or active aliases of a channel  */
@@ -207,9 +199,9 @@ export default class PluginLibrary {
     }
     if (channel) {
       // Channel aliases
-      for (const alias in this.data.static[channel].aliases) {
-        if (this.data.static[channel].aliases[alias].disabled) continue
-        aliases[alias] = this.data.static[channel].aliases[alias]
+      for (const alias in this.data.data[channel].aliases) {
+        if (this.data.data[channel].aliases[alias].disabled) continue
+        aliases[alias] = this.data.data[channel].aliases[alias]
       }
     }
     return aliases

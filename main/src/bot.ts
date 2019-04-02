@@ -25,7 +25,7 @@ export default class Bot {
     this.client = new Client({
       username: secretKey.getKey('./main/cfg/keys.json', 'twitch', 'username'),
       password: secretKey.getKey('./main/cfg/keys.json', 'twitch', 'password'),
-      dataDir: './main/data/dynamic/global/',
+      dataDir: './main/data/global/',
       logIrc: true,
     })
     this.client.on('welcome', () => {this.client.join('#satsaa')})

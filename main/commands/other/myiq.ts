@@ -15,7 +15,7 @@ export const options: PluginOptions = {
     },
   },
   requires: [],
-  creates: [['static', 'myIQ']],
+  creates: [['myIQ']],
   help: [
     'Returns your or users iq: {alias} [<user>]',
     'Get your record and the channel record: {alias} record',
@@ -39,11 +39,11 @@ export class Instance implements PluginInstance {
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
-    this.l.autoLoad('static', 'myIQ', { high: {}, low: {} }, true)
+    this.l.autoLoad('myIQ', { high: {}, low: {} }, true)
   }
 
   public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
-    const data = this.l.getData('static', channel, 'myIQ') as MyIQData
+    const data = this.l.getData(channel, 'myIQ') as MyIQData
     if (!data) return 'Data unavailable'
 
     const high = typeof data.high.value === 'number' ? data.high.value : -Infinity

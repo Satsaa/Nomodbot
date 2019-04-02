@@ -7,7 +7,7 @@ export const options: PluginOptions = {
   id: 'lists',
   name: 'Lists',
   description: 'Used to make and handle arrays of data. Like a list of quotes',
-  creates: [['static', 'global', 'listData']],
+  creates: [['global', 'listData']],
 }
 
 export interface ListsExtension {
@@ -38,8 +38,8 @@ export interface ListsExtension {
 }
 
 interface ListsType {
-  channels: {[channel: string]: {[pluginId: string]: any[]}},
-  globals: {[pluginId: string]: any[]},
+  channels: { [channel: string]: {[pluginId: string]: any[]} },
+  globals: { [pluginId: string]: any[] },
 }
 
 export class Instance implements PluginInstance {
@@ -54,7 +54,7 @@ export class Instance implements PluginInstance {
   }
 
   public async init(): Promise<void> {
-    this.lists = await this.l.load('static', 'global', 'listData', {channels: {}, globals: {}}, true) as ListsType
+    this.lists = await this.l.load('global', 'listData', {channels: {}, globals: {}}, true) as ListsType
     const extensions: ListsExtension = {
       getList: (pluginId: string, channel?: string, defaultData: any[] = [], setDefaults = false) => {
         if (channel) { // Channel list

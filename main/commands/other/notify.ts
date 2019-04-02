@@ -13,7 +13,7 @@ export const options: PluginOptions = {
       userCooldown: 90,
     },
   },
-  creates: [['static', 'notifies']],
+  creates: [['notifies']],
   help: [
     'Notify a user with a message when they type in chat: {alias} <user> <message...>',
     'Delete notifies you created: {alias} delete [<user>]',
@@ -35,13 +35,13 @@ export class Instance implements PluginInstance {
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
-    this.l.autoLoad('static', 'notifies', {})
+    this.l.autoLoad('notifies', {})
 
     this.l.emitter.on('chat', this.onChat.bind(this))
   }
 
   public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
-    const data = this.l.getData('static', channel, 'notifies') as NotifyData
+    const data = this.l.getData(channel, 'notifies') as NotifyData
     if (data === undefined) return 'Unavailable: required data is not present'
 
     if (!params[1]) return 'Define a user (param 1)'
@@ -78,7 +78,7 @@ export class Instance implements PluginInstance {
   }
 
   private onChat(channel: string, user: string, userstate: IrcMessage['tags'], message: string, me: boolean, self: boolean) {
-    const data = this.l.getData('static', channel, 'notifies') as NotifyData
+    const data = this.l.getData(channel, 'notifies') as NotifyData
     if (data === undefined) return
     if (data[user]) {
       for (const notify of data[user]) {

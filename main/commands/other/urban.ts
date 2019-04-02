@@ -31,7 +31,7 @@ export class Instance implements PluginInstance {
     try {
       const data = await this.getUrban(params.slice(1).join(' '))
       if (typeof data !== 'object' || !Array.isArray(data.list)) {
-        if (typeof data === 'string') return this.l.u.cap(data.toLowerCase())
+        if (typeof data === 'string') return data
         return 'The API returned invalid data'
       }
       const def = data.list[0]
@@ -87,7 +87,7 @@ export class Instance implements PluginInstance {
             resolve(result)
           }).on('error', reject)
         } else {
-          resolve(`${res.statusCode}: ${res.statusMessage}`)
+          resolve(`${res.statusCode}: ${this.l.u.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
         }
       })
     })

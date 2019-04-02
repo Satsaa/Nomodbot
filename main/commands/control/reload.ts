@@ -13,7 +13,7 @@ export const options: PluginOptions = {
       permissions: 10,
     },
   },
-  help: ['Reload the file in \\type\\subType | channel\\name: {alias} <\'static\' | \'dynamic\'> [subType] <name>'],
+  help: ['Reload the file in \\subType | channel\\name: {alias} [subType] <name>'],
 }
 
 export class Instance implements PluginInstance {
@@ -25,18 +25,14 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
-    if (!this.l.DATATYPES.includes(params[1] as PluginLibrary['DATATYPES'][number])) {
-      return `Param 1 must be of type ${this.l.DATATYPES.join(' | ')}`
-    }
-    const type = params[1] as PluginLibrary['DATATYPES'][number]
-    let subType = params[2]
-    let name = params[3]
-    if (!params[3]) { // If only 2 params
+    let subType = params[1]
+    let name = params[2]
+    if (!params[2]) { // Channel specific with single param
       subType = channel
-      name = params[2]
+      name = params[1]
     }
-    if (!this.l.getData(type, subType, name)) return ` \\${type}\\${subType}\\${name} is not loaded`
-    this.l.reload(type, subType, name)
-    return `Reloaded \\${type}\\${subType}\\${name}`
+    if (!this.l.getData(subType, name)) return ` \\${subType}\\${name} is not loaded`
+    this.l.reload(subType, name)
+    return `Reloaded \\${subType}\\${name}`
   }
 }

@@ -103,7 +103,7 @@ export class Instance implements PluginInstance {
             resolve(result)
           }).on('error', reject)
         } else {
-          resolve(`${res.statusCode}: ${res.statusMessage}`)
+          resolve(`${res.statusCode}: ${this.l.u.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
         }
       })
     })
