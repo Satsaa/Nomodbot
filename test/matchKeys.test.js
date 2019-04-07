@@ -98,6 +98,39 @@ assert.strictEqual(matchKeys({
   c: 'asd',
 }, { matchValues: true }), false, testType + 'Failed on identical objects by keys with different values and depth')
 
+testType = 'Circularity > '
+
+let obj1 = {}
+obj1.a = obj1
+let obj2 = {}
+obj2.a = obj2
+try {
+  assert.strictEqual(matchKeys(obj1, obj2), true, testType + 'Failed on identical circular objects: {a: CIRCULAR} = {a: CIRCULAR}')
+} catch (e) {
+  throw new Error('Cannot handle circular objects: ' + e)
+}
+
+let arr1 = {}
+arr1[0] = arr1
+let arr2 = {}
+arr2[0] = arr2
+try {
+  assert.strictEqual(matchKeys(obj1, obj2), true, testType + 'Failed on identical circular arrays: [self] = [self]')
+} catch (e) {
+  throw new Error('Cannot handle circular arrays: ' + e)
+}
+
+obj1 = {}
+obj1.a = obj1
+obj2 = {b: 99}
+obj2.a = obj2
+try {
+  assert.strictEqual(matchKeys(obj1, obj2), true, testType + 'Failed on unidentical circular objects: {a: CIRCULAR} != {a: CIRCULAR, b: 99}')
+} catch (e) {
+  throw new Error('Cannot handle circular objects: ' + e)
+}
+
+
 testType = 'new Date object > '
 assert.strictEqual(matchKeys(new Date(), new Date()), true, testType + 'Failed on identical Date objects')
 

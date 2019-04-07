@@ -4,7 +4,7 @@ export interface MatchKeysOptions {
   ignoreUndefined?: boolean,
   /** Whether or not values are matched */
   matchValues?: boolean,
-  /** Maximum depth checked. Deeper objects are ignored */
+  /** Maximum depth checked. Deeper objects are ignored. Circular objects don't cause infinite loops regardless of this setting */
   maxDepth?: number
 }
 
@@ -18,6 +18,8 @@ export interface MatchKeysOptions {
 export default (haystackObj: Readonly<object>, needleObj: Readonly<object>, options: Readonly<MatchKeysOptions> = {}) => {
 
   if (typeof needleObj !== 'object' || typeof haystackObj !== 'object') return needleObj === haystackObj
+
+  const references: any[] = [] // Avoid circular reasoning
 
   let i = 0
 
@@ -46,6 +48,8 @@ export default (haystackObj: Readonly<object>, needleObj: Readonly<object>, opti
             return false
           }
         }
+        if (references.includes(matchKey)) return true // True?
+        references.push(matchKey)
         if (!testKeys(matchKey, objKey, options)) return false
       }
     }

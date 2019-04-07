@@ -34,6 +34,33 @@ assert.deepStrictEqual(defaultKeys({}, {a:[1,2,3,4,5]}), {a:[1,2,3,4,5]}, 'Array
 assert.deepStrictEqual(defaultKeys({a:[9,8]}, {a:[1,2,3,4,5]}), {a:[9,8,3,4,5]}, 'Partial array values are overwritten')
 assert.deepStrictEqual(defaultKeys({a:{b:8}}, {a:{a:1,b:2}}), {a:{a:1,b:8}}, 'Partial object key values are overwritten')
 assert.deepStrictEqual(defaultKeys({}, {a:[{a:1},{b:1}]}), {a:[{a:1},{b:1}]}, 'Array values are not transferred if they are objects')
+
+let obj1 = {}
+let obj2 = {a:{b:{}}}
+assert.deepStrictEqual(defaultKeys(obj1, obj2), {a:{b:{}}}, 'Not recursive (2.)')
+obj1.a = 999 // Should not change value in obj2
+assert.deepStrictEqual(obj2, {a:{b:{}}}, 'An object reference was copied')
+
+try {
+  let obj1 = {}
+  obj1.a = obj1
+  let obj2 = {b: 'huh'}
+  obj2.a = obj2
+  assert.deepStrictEqual(defaultKeys(obj1, obj2), obj2, 'Doesn\'t work with circular objects')
+} catch (e) {
+  throw new Error('Cannot handle circular objects: ' + e)
+}
+
+try {
+  let array1 = []
+  array1[0] = array1
+  let array2 = []
+  array2[0] = array2
+  assert.deepStrictEqual(defaultKeys(array1, array2), array2, 'Doesn\'t work with circular objects')
+} catch (e) {
+  throw new Error('Cannot handle circular arrays: ' + e)
+}
+
 var a = {
   global: {
     whisperTimes: [],
