@@ -31,6 +31,11 @@ Shows a message with 3 random emotes and gives points based on that
 - 3x same emote = ~ 10 x EmoteWeight x bet
 - Subscriber emotes give extra points (rare) (requires subscription of bot)
 
+## Category
+!category
+
+Shows current category duuh
+
 # Plugins
 
 ## plugin.requires

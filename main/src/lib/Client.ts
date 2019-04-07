@@ -152,8 +152,12 @@ export default class TwitchClient {
 
     // Match rateLimiter's options length with times lengths
     // Make sure the times arrays are big enough
-    this.rateLimiter.times.forEach((v, i) => {if (!this.clientData.global.msgTimes[i]) this.clientData.global.msgTimes.push([])})
-    this.whisperRateLimiter.times.forEach((v, i) => {if (!this.clientData.global.whisperTimes[i]) this.clientData.global.whisperTimes.push([])})
+    this.rateLimiter.times.forEach((v, i) => {
+      if (!this.clientData.global.msgTimes[i]) this.clientData.global.msgTimes.push([])
+    })
+    this.whisperRateLimiter.times.forEach((v, i) => {
+      if (!this.clientData.global.whisperTimes[i]) this.clientData.global.whisperTimes.push([])
+    })
     // Make sure the times arrays are not too big
     this.clientData.global.msgTimes.length = this.rateLimiter.times.length
     this.clientData.global.whisperTimes.length = this.whisperRateLimiter.times.length
@@ -369,7 +373,7 @@ export default class TwitchClient {
 
   private async pingLoop() {
     setTimeout(this.pingLoop.bind(this), this.opts.pingInterval * u.randomFloat(0.9, 1.0))
-    if (!this.ws) return
+    if (!this.ws || this.ws.readyState !== 1) return
     this.ws.send('PING')
     const start = Date.now()
     if ((await eventTimeout(this, 'pong', {timeout: this.getLatency() * 2})).timeout) {
@@ -505,7 +509,7 @@ export default class TwitchClient {
         this.emit('whisper', msg.user as string, msg.params[1])
         break
       case 'PING':
-        this.ws!.send('PONG')
+        this.send('PONG')
         break
       case 'PONG':
         this.emit('pong')

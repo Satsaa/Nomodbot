@@ -66,15 +66,11 @@ export class Instance implements PluginInstance {
       const options = terms.length ? {
         host: 'api.urbandictionary.com',
         path: '/v0/define?term=' + encodeURIComponent(terms),
-        headers: {
-          accept: 'application/json',
-        },
+        headers: { accept: 'application/json' },
       } : {
         host: 'api.urbandictionary.com',
         path: '/v0/random',
-        headers: {
-          accept: 'application/json',
-        },
+        headers: { accept: 'application/json' },
       }
 
       https.get(options, (res) => {

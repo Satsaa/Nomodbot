@@ -7,7 +7,7 @@ import defaultKeys from './lib/defaultKeys'
 export default class Data extends EventEmitter {
 
   /** This data changes when events happen */
-  public data: {[x: string]: {[x: string]: any}}
+  public data: {[subType: string]: {[name: string]: {[x: string]: any}}}
 
   public dataPath: string
   private client: TwitchClient

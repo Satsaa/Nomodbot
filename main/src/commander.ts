@@ -34,7 +34,7 @@ export type PluginOptions = (Command | Controller) & {
    */
   creates?: Array<[string, string] | [string]>,
   /** Plugin is instantiated after these data types are loaded */
-  requires?: Array<[string, string, number?] | [string, number?]>,
+  requires?: Array<[string, string, number?]>,
   /** Plugin is instantiated after these plugins are loaded */
   requiresPlugins?: string[],
 }
@@ -115,20 +115,29 @@ export default class Commander {
           }
           names.push(c.name)
           created.push(makePath(e))
-        }) } })
+        })
+      }
+    })
     optionsArray.forEach((r) => { // Check for absent required data
       if (r.requires) {
         r.requires.forEach((e) => {
           if (created.indexOf(makePath(e)) === -1) {
             messages.push(`${r.name} requires ${makePath(e)}`)
-          } }) } })
+          }
+        })
+      }
+    })
     optionsArray.forEach((c) => { // Check for self requirement
       if (c.creates) {
         c.creates.forEach((cr) => {
           if (c.requires) {
             c.requires.forEach((re) => {
               if (makePath(cr) === makePath(re)) messages.push(`${c.id} requires data that it creates`)
-            }) } }) } })
+            })
+          }
+        })
+      }
+    })
     if (messages.length) throw new Error(messages.join('. '))
 
     function makePath(source: [string, (string | number)?, number?]) {
@@ -245,10 +254,10 @@ export default class Commander {
     let res: Array<object | undefined> = []
     // Wait for requirements. Do not wait for channel data requirements
     if (options.requires && options.requires.map(v => typeof v === 'string').length === 3) {
-      res = await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1] as string, v[2] || 3000)))
+      res = await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1], v[2] || 3000)))
       if (res.some(v => v === undefined)) { // A wait promise timedout
         console.log(`${options.id} instantiation still waiting for data.`)
-        await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1] as string)))
+        await Promise.all(options.requires.map(v => this.data.waitData(v[0], v[1])))
       }
     }
     if (options.requiresPlugins) await Promise.all(options.requiresPlugins.map(id => this.waitPlugin(id)))
@@ -270,6 +279,7 @@ export default class Commander {
   }
 
   private async callCommand(channel: string, user: string, alias: CommandAlias, userstate: IrcMessage['tags'], message: string, me: boolean) {
+    // !!! Implement the ban API
     const instance = this.instances[alias.id]
     if (!instance) return console.log(`Cannot call unloaded command: ${alias.id}`) // Command may not be loaded yet
     if (typeof instance.call !== 'function') throw new Error(`Invalid call function on command plugin instance: ${alias.id}`)
@@ -287,6 +297,7 @@ export default class Commander {
   private isOnCooldown(channel: string, user: string, alias: CommandAlias) {
     const cooldowns = this.data.getData(channel, 'cooldowns')
     if (!cooldowns) return false
+    // !!! Implement the permit API
     let res1 = 0
     let res2 = 0
     const now = Date.now()

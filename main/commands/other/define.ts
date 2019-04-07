@@ -87,7 +87,7 @@ export class Instance implements PluginInstance {
         path: '/api/v1/entries/' + lang + '/' + encodeURIComponent(words),
         method: 'GET',
         headers: {
-          Accept: 'application/json',
+          accept: 'application/json',
           app_id: appId,
           app_key: appKey,
         },
