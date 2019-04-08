@@ -1,4 +1,5 @@
 const assert = require('assert')
+const util = require('../bin/src/lib/util')
 
 process.on('uncaughtException', (e) => {
   console.log(e.message)
@@ -35,20 +36,39 @@ assert.deepStrictEqual(defaultKeys({a:[9,8]}, {a:[1,2,3,4,5]}), {a:[9,8,3,4,5]},
 assert.deepStrictEqual(defaultKeys({a:{b:8}}, {a:{a:1,b:2}}), {a:{a:1,b:8}}, 'Partial object key values are overwritten')
 assert.deepStrictEqual(defaultKeys({}, {a:[{a:1},{b:1}]}), {a:[{a:1},{b:1}]}, 'Array values are not transferred if they are objects')
 
-let obj1 = {}
-let obj2 = {a:{b:{}}}
-assert.deepStrictEqual(defaultKeys(obj1, obj2), {a:{b:{}}}, 'Not recursive (2.)')
-obj1.a = 999 // Should not change value in obj2
-assert.deepStrictEqual(obj2, {a:{b:{}}}, 'An object reference was copied')
+let _obj1 = {}
+let _obj2 = {a:{b:{}}}
+assert.deepStrictEqual(defaultKeys(_obj1, _obj2), {a:{b:{}}}, 'Not recursive (2.)')
+_obj1.a = 999 // Should not change value in obj2
+assert.deepStrictEqual(_obj2, {a:{b:{}}}, 'An object reference was copied')
 
 try {
   let obj1 = {}
   obj1.a = obj1
   let obj2 = {b: 'huh'}
   obj2.a = obj2
-  assert.deepStrictEqual(defaultKeys(obj1, obj2), obj2, 'Doesn\'t work with circular objects')
+  assert.deepStrictEqual(defaultKeys(obj1, obj2), obj2, 'Not strictly equal')
+  if (util.containsSharedReference(obj1, obj2)) throw new Error('Reference value copied')
 } catch (e) {
   throw new Error('Cannot handle circular objects: ' + e)
+}
+
+try {
+  let obj1 = {}
+  let obj2 = {a: {}}
+  assert.deepStrictEqual(defaultKeys(obj1, obj2), obj2, 'Not strictly equal')
+  if (util.containsSharedReference(obj1, obj2)) throw new Error('Reference value copied')
+} catch (e) {
+  throw new Error('Cannot handle nested circular objects: ' + e)
+}
+
+try {
+  let obj1 = {}
+  let obj2 = {a: {}, b:{}}
+  assert.deepStrictEqual(defaultKeys(obj1, obj2), obj2, 'Not strictly equal')
+  if (util.containsSharedReference(obj1, obj2)) throw new Error('Reference value copied')
+} catch (e) {
+  throw new Error('Cannot handle multiple nested circular objects: ' + e)
 }
 
 try {
@@ -56,7 +76,8 @@ try {
   array1[0] = array1
   let array2 = []
   array2[0] = array2
-  assert.deepStrictEqual(defaultKeys(array1, array2), array2, 'Doesn\'t work with circular objects')
+  assert.deepStrictEqual(defaultKeys(array1, array2), array2, 'Not strictly equal')
+  if (util.containsSharedReference(array1, array2)) throw new Error('Reference value copied')
 } catch (e) {
   throw new Error('Cannot handle circular arrays: ' + e)
 }

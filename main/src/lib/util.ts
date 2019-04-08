@@ -170,6 +170,40 @@ export function durationStr(t: number | number[], top = 4, short = true) {
   return str
 }
 
+const parseTimeTypes: Array<{strings: string[], value: number}> = [
+  {strings: ['y', 'yr', 'yrs', 'year', 'years'], value: 31536000000},
+  {strings: ['d', 'day', 'days'], value: 86400000},
+  {strings: ['h', 'hr', 'hrs', 'hour', 'hours'], value: 3600000},
+  {strings: ['m', 'min', 'mins', 'minute', 'minutes'], value: 60000},
+  {strings: ['s', 'sec', 'secs', 'second', 'seconds'], value: 1000},
+  {strings: ['ms', 'millisecond', 'milliseconds'], value: 1},
+  {strings: ['ns', 'millisecond', 'milliseconds'], value: 1},
+]
+/**
+ * Converts strings like 5days600min99ms to time in milliseconds  
+ * The order or case of time units doesn't matter.
+ * Most important thing is that the time unit strings are typical.
+ * Any non numeric or alphabetic characters are removed
+ */
+export function parseTimeString(str: string): number {
+  const split = str.replace(/\W/, '').toLowerCase().match(/[a-zA-Z]+|[0-9]+/g)
+  if (!split) return 0
+  let total = 0
+  for (let i = 0; i < split.length; i++) {
+    if (!isNaN(+split[i + 1])) continue
+    const num: number = +split[i]
+    if (isNaN(num)) continue
+    total += getMultiplier(split[i + 1]) * num
+    i++ // Skip time string
+  }
+  return total
+
+  function getMultiplier(str: string): number { // Gets the ms multiplier for time units ('sec' = 1000)
+    for (const v of parseTimeTypes) if (v.strings.includes(str)) return v.value
+    return 0
+  }
+}
+
 /**
  * Returns time converted to YYYY-MM-DD, the only logical format
  * @param ms Time in milliseconds

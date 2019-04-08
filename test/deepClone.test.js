@@ -89,7 +89,7 @@ try {
   obj.a = obj
   res = deepClone(obj)
   assert.deepStrictEqual(res, obj, 'Clone is not identical')
-  if (util.hasSharedReference(obj, res)) throw new Error('a reference value was copied')
+  if (util.containsSharedReference(obj, res)) throw new Error('a reference value was copied')
 } catch (e) {
   throw new Error('Circular object fail: ' + e)
 }
@@ -99,7 +99,7 @@ try {
   obj.b.a = obj.b
   res = deepClone(obj)
   assert.deepStrictEqual(res, obj, 'Clone is not identical')
-  if (util.hasSharedReference(obj, res)) throw new Error('a reference value was copied')
+  if (util.containsSharedReference(obj, res)) throw new Error('a reference value was copied')
 } catch (e) {
   throw new Error('Nested circular object fail: ' + e)
 }
@@ -110,7 +110,7 @@ try {
   obj.b.a = obj.b
   res = deepClone(obj)
   assert.deepStrictEqual(res, obj, 'Clone is not identical')
-  if (util.hasSharedReference(obj, res)) throw new Error('a reference value was copied')
+  if (util.containsSharedReference(obj, res)) throw new Error('a reference value was copied')
 } catch (e) {
   throw new Error('Multiple nested circular objects fail: ' + e)
 }
@@ -121,7 +121,7 @@ try {
   obj.b.a = obj.a
   res = deepClone(obj)
   assert.deepStrictEqual(res, obj, 'Clone is not identical')
-  if (util.hasSharedReference(obj, res)) throw new Error('a reference value was copied')
+  if (util.containsSharedReference(obj, res)) throw new Error('a reference value was copied')
 } catch (e) {
   throw new Error('Multiple nested circular objects fail: ' + e)
 }
@@ -131,7 +131,7 @@ try {
   obj[0] = obj
   res = deepClone(obj)
   assert.deepStrictEqual(res, obj, 'Clone is not identical')
-  if (util.hasSharedReference(obj, res)) throw new Error('a reference value was copied')
+  if (util.containsSharedReference(obj, res)) throw new Error('a reference value was copied')
 } catch (e) {
   throw new Error('Circular array fail: ' + e)
 }

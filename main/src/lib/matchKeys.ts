@@ -48,9 +48,10 @@ export default (haystackObj: Readonly<object>, needleObj: Readonly<object>, opti
             return false
           }
         }
-        if (references.includes(matchKey)) return true // True?
-        references.push(matchKey)
-        if (!testKeys(matchKey, objKey, options)) return false
+        if (!references.includes(matchKey)) {
+          references.push(matchKey)
+          if (!testKeys(matchKey, objKey, options)) return false
+        }
       }
     }
     return true

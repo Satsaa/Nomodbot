@@ -1,11 +1,9 @@
 
-export default main
-
 /**
  * Deeply clones `obj`  
  * Only own keys are cloned
  */
-function main<T extends object | any[]>(obj: T): T {
+export default <T extends object | any[]>(obj: T): T => {
 
   const sourceRefs: any[] = [] // Avoid circular reasoning
   const outRefs: {[x: string]: any} = [] // Avoid circular reasoning

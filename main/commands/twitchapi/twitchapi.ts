@@ -1,5 +1,6 @@
 import https from 'https'
 import { PluginInstance, PluginOptions } from '../../src/Commander'
+import deepClone from '../../src/lib/deepClone'
 import { IrcMessage } from '../../src/lib/parser'
 import PluginLibrary from '../../src/pluginLib'
 
@@ -28,7 +29,7 @@ export interface TwitchApiExtension {
   readonly getFollow: Instance['getFollow']
   /** https://dev.twitch.tv/docs/api/reference/#get-users-follows */
   readonly _follows: Instance['_follows']
-  /** Gets the most recent videos of `channel` of the type 'broadcast'. Max `count` 100 */
+  /** Gets the most recent videos of `channel` of the type 'broadcast' */
   readonly recentBroadcasts: Instance['recentBroadcasts']
   /** https://dev.twitch.tv/docs/api/reference/#get-videos */
   readonly _videos: Instance['_videos']
@@ -67,24 +68,27 @@ export class Instance implements PluginInstance {
     this.rlRemaining = 30
     this.rlReset = 0
 
-    this.deprecate = { recentBroadcasts: 5 * 60 * 1000 }
+    this.deprecate = {
+      recentBroadcasts: 30 * 60 * 1000, // 30 min
+    }
   }
 
   public async init(): Promise<void> {
     this.clientId = this.l.getKey('twitch', 'client-id')
     this.cache = await this.l.load('global', 'twitchApi', this.cache, true) as Instance['cache']
+    if (!this.cache) throw new Error('Failure to load cache')
     for (const display in this.cache.userIds) { // Build display cache from id cache
       this.displays[this.cache.userIds[display]] = display
     }
     const extensions: TwitchApiExtension = {
-      getId: this.getId,
-      getDisplay: this.getDisplay,
-      _users: this._users,
-      _streams: this._streams,
-      getFollow: this.getFollow,
-      _follows: this._follows,
-      recentBroadcasts: this.recentBroadcasts,
-      _videos: this._videos,
+      getId: this.getId.bind(this),
+      getDisplay: this.getDisplay.bind(this),
+      _users: this._users.bind(this),
+      _streams: this._streams.bind(this),
+      getFollow: this.getFollow.bind(this),
+      _follows: this._follows.bind(this),
+      recentBroadcasts: this.recentBroadcasts.bind(this),
+      _videos: this._videos.bind(this),
     }
     this.l.extend(options.id, extensions)
     this.l.emitter.on('chat', this.onChat.bind(this))
@@ -141,7 +145,6 @@ export class Instance implements PluginInstance {
 
   /** 'xXx_yoyo_xXx' -> 283291183 */
   private async getId(display: string): Promise<number | void> {
-    if (display.includes('#')) console.warn(`${display} DEPRECATED '#' IN getId`)
     display = display.replace('#', '').toLowerCase()
     if (this.cache.userIds[display]) return this.cache.userIds[display]
     // Get previosuly requested but failed ids and displayNames
@@ -237,6 +240,7 @@ export class Instance implements PluginInstance {
     if (typeof res === 'object') {
       const data = this.l.getData(`#${channel}`, 'twitchApi')
       if (data) data.recentBroadcasts = {time: Date.now(), res}
+      return deepClone(res)
     }
     return res
   }
@@ -309,22 +313,22 @@ interface UsersResponse {
 }
 
 interface StreamsOptions {
-  /** Cursor for forward pagination */
-  after?: string
-  /** Cursor for backward pagination */
-  before?: string
-  /** Returns streams in a specified community ID. You can specify up to 100 IDs */
-  community_id?: number | number[]
-  /** Maximum number of objects to return. Maximum: 100. Default: 20 */
-  first?: number
-  /** Returns streams broadcasting a specified game ID. You can specify up to 100 IDs */
-  game_id?: number | number[]
-  /** Stream language. You can specify up to 100 languages */
-  language?: string | string[]
   /** Returns streams broadcast by one or more specified user IDs. You can specify up to 100 IDs */
   user_id?: number | number[]
   /** Returns streams broadcast by one or more specified user login names. You can specify up to 100 names */
   user_login?: string | string[]
+  /** Returns streams broadcasting a specified game ID. You can specify up to 100 IDs */
+  game_id?: number | number[]
+  /** Returns streams in a specified community ID. You can specify up to 100 IDs */
+  community_id?: number | number[]
+  /** Maximum number of objects to return. Maximum: 100. Default: 20 */
+  first?: number
+  /** Stream language. You can specify up to 100 languages */
+  language?: string | string[]
+  /** Cursor for forward pagination */
+  after?: string
+  /** Cursor for backward pagination */
+  before?: string
 }
 interface StreamsResponse {
   data: Array<{

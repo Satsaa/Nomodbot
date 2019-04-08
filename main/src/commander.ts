@@ -90,7 +90,8 @@ export default class Commander {
   public async init(): Promise<PluginOptions[]> {
     this.data.autoLoad('aliases', {})
     this.data.autoLoad('cooldowns', {})
-    const files = (await readDirRecursive(path.join(__dirname, '..', 'commands'))).filter(e => e.endsWith('.ts') || e.endsWith('.js'))
+    const files = (await readDirRecursive(path.join(__dirname, '..', 'commands')))
+      .filter(f => (f.endsWith('.ts') || f.endsWith('.js') && !f.includes('tempCodeRunnerFile')))
     if (!files || !files.length) return []
     const optionsArr = files.map(file => this.handleOptions(file))
     this.findConflicts(optionsArr, files)

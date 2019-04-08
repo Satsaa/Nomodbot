@@ -73,11 +73,8 @@ export default class Data extends EventEmitter {
     for (const subType in this.data) {
       for (const name in this.data[subType]) {
         const data  = this.getData(subType, name)
-        if (!data) {
-          console.error(`Failed to save ${subType}\\${name} because it was undefined`)
-          continue
-        }
-        fs.writeFileSync(`${this.dataPath}${subType}/${name}.json`, JSON.stringify(data, null, 2))
+        if (data) fs.writeFileSync(`${this.dataPath}${subType}/${name}.json`, JSON.stringify(data, null, 2))
+        else console.error(`Failed to save ${subType}\\${name} because it was undefined`)
       }
     }
   }
