@@ -1,4 +1,5 @@
 const assert = require('assert')
+const util = require('../bin/src/lib/util')
 
 process.on('uncaughtException', (e) => {
   console.log(e.message)
@@ -84,23 +85,53 @@ res.b = 999
 assert.notDeepStrictEqual(res, obj, 'Complex array fail (a reference value was copied)')
 
 try {
-obj = {a: undefined}
-obj.a = obj
-res = deepClone(obj)
-assert.deepStrictEqual(res, obj, 'Circular object fail')
-res.b = 999
-assert.notDeepStrictEqual(res, obj, 'Circular object fail (a reference value was copied)')
+  obj = {}
+  obj.a = obj
+  res = deepClone(obj)
+  assert.deepStrictEqual(res, obj, 'Clone is not identical')
+  if (util.hasSharedReference(obj, res)) throw new Error('a reference value was copied')
 } catch (e) {
   throw new Error('Circular object fail: ' + e)
 }
 
 try {
-obj = []
-obj[0] = obj
-res = deepClone(obj)
-assert.deepStrictEqual(res, obj, 'Circular array fail')
-res[1] = 999
-assert.notDeepStrictEqual(res, obj, 'Circular array fail (a reference value was copied)')
+  obj = {b:{}}
+  obj.b.a = obj.b
+  res = deepClone(obj)
+  assert.deepStrictEqual(res, obj, 'Clone is not identical')
+  if (util.hasSharedReference(obj, res)) throw new Error('a reference value was copied')
+} catch (e) {
+  throw new Error('Nested circular object fail: ' + e)
+}
+
+try {
+  obj = {a:{},b:{}}
+  obj.a.a = obj.a
+  obj.b.a = obj.b
+  res = deepClone(obj)
+  assert.deepStrictEqual(res, obj, 'Clone is not identical')
+  if (util.hasSharedReference(obj, res)) throw new Error('a reference value was copied')
+} catch (e) {
+  throw new Error('Multiple nested circular objects fail: ' + e)
+}
+
+try {
+  obj = {a:{},b:{}}
+  obj.a.a = obj.a
+  obj.b.a = obj.a
+  res = deepClone(obj)
+  assert.deepStrictEqual(res, obj, 'Clone is not identical')
+  if (util.hasSharedReference(obj, res)) throw new Error('a reference value was copied')
+} catch (e) {
+  throw new Error('Multiple nested circular objects fail: ' + e)
+}
+
+try {
+  obj = []
+  obj[0] = obj
+  res = deepClone(obj)
+  assert.deepStrictEqual(res, obj, 'Clone is not identical')
+  if (util.hasSharedReference(obj, res)) throw new Error('a reference value was copied')
 } catch (e) {
   throw new Error('Circular array fail: ' + e)
 }
