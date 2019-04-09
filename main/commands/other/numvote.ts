@@ -16,17 +16,10 @@ export const options: PluginOptions = {
   help: ['This command is counted as a vote'],
 }
 
-interface NotifyData {
-  [user: string]: Array<{
-    msg: string,
-    time: number,
-    from: string,
-  }>
-}
-
 export class Instance implements PluginInstance {
-  private data: {
+  private voteData: {
     [channel: string]: {
+      voters: number[]
       votes: {[vote: string]: number},
       time: number,
       timeout?: NodeJS.Timeout,
@@ -49,7 +42,7 @@ export class Instance implements PluginInstance {
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
-    this.data = {}
+    this.voteData = {}
     this.opts = {
       minVotes: 3,
       minTotal: 10,
@@ -59,9 +52,12 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
-    if (!this.data[channel]) this.data[channel] = { votes: {}, time: this.opts.time, timeout: undefined }
+    if (!this.voteData[channel]) this.voteData[channel] = { voters: [], votes: {}, time: this.opts.time, timeout: undefined }
 
-    const voting = this.data[channel]
+    const voting = this.voteData[channel]
+
+    if (voting.voters.includes(userstate['user-id']!)) return // Single vote per user
+    voting.voters.push(userstate['user-id']!)
 
     if (!voting.votes[params[0]]) voting.votes[params[0]] = 0
     voting.votes[params[0]]++
@@ -75,7 +71,7 @@ export class Instance implements PluginInstance {
         if (voting.votes[vote] >= this.opts.minVotes) accepted[vote] = voting.votes[vote]
       }
       if (total < this.opts.minTotal || Object.keys(accepted).length < 2) {
-        this.data[channel] = { votes: {}, time: this.opts.time, timeout: undefined }
+        this.voteData[channel] = { voters: [], votes: {}, time: this.opts.time, timeout: undefined }
         return
       }
       const results = []
@@ -84,7 +80,7 @@ export class Instance implements PluginInstance {
       }
       // Votes displayed like: '| 1: 25% | 2: 45% |'
       this.l.chat(channel, `| ${results.join(' | ')} |`)
-      this.data[channel] = { votes: {}, time: this.opts.time, timeout: undefined }
+      this.voteData[channel] = { voters: [], votes: {}, time: this.opts.time, timeout: undefined }
     }, voting.time)
     console.log(voting.time)
     voting.time *= this.opts.decay
