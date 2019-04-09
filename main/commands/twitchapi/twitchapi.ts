@@ -17,21 +17,14 @@ export const options: PluginOptions = {
  * API for some often used 
  */
 export interface TwitchApiExtension {
-  /** Gets the cached user ID for `display` or fetches it from the API */
   readonly getId: Instance['getId']
-  /** Gets the cached display name for `id` or fetches it from the API */
   readonly getDisplay: Instance['getDisplay']
-  /** https://dev.twitch.tv/docs/api/reference/#get-users */
+  readonly toDisplay: Instance['toDisplay']
   readonly _users: Instance['_users']
-  /** https://dev.twitch.tv/docs/api/reference/#get-streams */
   readonly _streams: Instance['_streams']
-  /** Gets the follow status of `user` towards `channel` from the API */
   readonly getFollow: Instance['getFollow']
-  /** https://dev.twitch.tv/docs/api/reference/#get-users-follows */
   readonly _follows: Instance['_follows']
-  /** Gets the most recent videos of `channel` of the type 'broadcast' */
   readonly recentBroadcasts: Instance['recentBroadcasts']
-  /** https://dev.twitch.tv/docs/api/reference/#get-videos */
   readonly _videos: Instance['_videos']
 }
 
@@ -83,6 +76,7 @@ export class Instance implements PluginInstance {
     const extensions: TwitchApiExtension = {
       getId: this.getId.bind(this),
       getDisplay: this.getDisplay.bind(this),
+      toDisplay: this.toDisplay.bind(this),
       _users: this._users.bind(this),
       _streams: this._streams.bind(this),
       getFollow: this.getFollow.bind(this),
@@ -143,7 +137,7 @@ export class Instance implements PluginInstance {
     })
   }
 
-  /** 'xXx_yoyo_xXx' -> 283291183 */
+  /** Gets the cached user ID for `display` or fetches it from the API */
   private async getId(display: string): Promise<number | void> {
     display = display.replace('#', '').toLowerCase()
     if (this.cache.userIds[display]) return this.cache.userIds[display]
@@ -168,7 +162,8 @@ export class Instance implements PluginInstance {
       return
     }
   }
-  /** 98993843 -> 'LoliboyWasTaken' */
+
+  /** Gets the cached display name for `id` or fetches it from the API */
   private async getDisplay(id: number): Promise<string | void>  {
     if (this.displays[id]) return this.displays[id]
     // Get previosuly requested but failed ids and displayNames
@@ -192,14 +187,25 @@ export class Instance implements PluginInstance {
       return
     }
   }
+
+  /** Gets the cached display name by user `name` or fetches it from the API */
+  private async toDisplay(name: string) {
+    const uid = await this.getId(name)
+    if (!uid) return
+    return this.getDisplay(uid)
+  }
+
+  /** https://dev.twitch.tv/docs/api/reference/#get-users */
   private _users(options: UsersOptions) {
     return this.get('/helix/users?', options) as Promise<UsersResponse | undefined | string>
   }
 
+  /** https://dev.twitch.tv/docs/api/reference/#get-streams */
   private _streams(options: StreamsOptions) {
     return this.get('/helix/streams?', options) as Promise<StreamsResponse | undefined | string>
   }
 
+  /** Gets the follow status of `user` towards `channel` from the API */
   private async getFollow(user: string | number, channel: string | number): Promise<FollowsResponse | undefined | string> {
     if (typeof user === 'string' || typeof channel === 'string') {
       const usersOpts: UsersOptions = {login: []}
@@ -225,6 +231,7 @@ export class Instance implements PluginInstance {
     return this.get('/helix/follows?', options) as Promise<FollowsResponse | undefined | string>
   }
 
+  /** Gets the most recent videos of `channel` of the type 'broadcast' */
   private async recentBroadcasts(channel: string | number, generic: GenericOptions = {})
     : Promise<string | VideosResponse | undefined> {
     if (typeof channel === 'string') channel = channel.replace('#', '')
@@ -245,6 +252,7 @@ export class Instance implements PluginInstance {
     return res
   }
 
+  /** https://dev.twitch.tv/docs/api/reference/#get-videos */
   private _videos(options: VideosOptions) {
     return this.get('/helix/videos?', options) as Promise<VideosResponse | undefined | string>
   }

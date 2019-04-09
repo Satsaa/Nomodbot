@@ -9,7 +9,9 @@ export const options: PluginOptions = {
   description: 'Shows a message to the target user when they type',
   default: {
     alias: ['0', '1', '2', '3'],
-    options: {},
+    options: {
+      hidden: true,
+    },
   },
   help: ['This command is counted as a vote'],
 }
@@ -36,7 +38,7 @@ export class Instance implements PluginInstance {
     minVotes: number,
     /** Minimum votes for a vote to be shown */
     minTotal: number,
-    /** Timeouts after ms of no votes. Affected by `decay` */
+    /** Timeouts after this ms of no votes. Affected by `decay` */
     time: number,
     /** For each vote the addPerVote value is multiplied with this */
     decay: number,

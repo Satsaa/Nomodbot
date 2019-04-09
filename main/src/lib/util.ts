@@ -123,17 +123,17 @@ export function MSToDHMS(ms: number) {
  * Get string telling how long until time is `ms`
  * @param ms Time in milliseconds
  * @param top How many time units to return
- * @param short Use short units (d or days)
+ * @param long Use short units (d or days)
  */
-export function timeUntill(ms: number, top = 4, short = true) { return durationStr(MSToDHMS(ms - Date.now()), top, short) }
+export function timeUntill(ms: number, top = 4, long = false) { return timeDuration(MSToDHMS(ms - Date.now()), top, long) }
 
 /**
  * Get string telling how long since time was `ms`
  * @param ms Time in milliseconds
  * @param top How many time units to return
- * @param short Use short units (d or days)
+ * @param long Use short units (d or days)
  */
-export function timeSince(ms: number, top = 4, short = true) { return durationStr(MSToDHMS(Date.now() - ms), top, short) }
+export function timeSince(ms: number, top = 4, long = false) { return timeDuration(MSToDHMS(Date.now() - ms), top, long) }
 
 /**
  * Get string telling how long is ms
@@ -141,7 +141,7 @@ export function timeSince(ms: number, top = 4, short = true) { return durationSt
  * @param top How many time units to return
  * @param short Use short units (d or days)
  */
-export function durationStr(t: number | number[], top = 4, short = true) {
+export function timeDuration(t: number | number[], top = 4, long = false) {
   let exists = 0
   const untill = []
   const dateStrLong = [' day', ' hour', ' minute', ' second']
@@ -155,7 +155,7 @@ export function durationStr(t: number | number[], top = 4, short = true) {
     if (t[i]) {
       exists++
       if (exists < top + 1) {
-        if (short) untill[i] = t[i] + dateStrShort[i] // short
+        if (!long) untill[i] = t[i] + dateStrShort[i] // short
         else { // long with singular/plural
           if (t[i] === 1) untill[i] = t[i] + dateStrLong[i] // singular
           else untill[i] = t[i] + dateStrLong[i] + 's' // plural
@@ -165,7 +165,7 @@ export function durationStr(t: number | number[], top = 4, short = true) {
   }
   const str = untill.join(' ').trim()
   if (str === '') {
-    return short ? '0s' : '0 seconds'
+    return long ? '0 seconds' : '0s'
   }
   return str
 }
@@ -177,7 +177,7 @@ const parseTimeTypes: Array<{strings: string[], value: number}> = [
   {strings: ['m', 'min', 'mins', 'minute', 'minutes'], value: 60000},
   {strings: ['s', 'sec', 'secs', 'second', 'seconds'], value: 1000},
   {strings: ['ms', 'millisecond', 'milliseconds'], value: 1},
-  {strings: ['ns', 'millisecond', 'milliseconds'], value: 1},
+  {strings: ['ns', 'nanosecond', 'nanoseconds'], value: 1},
 ]
 /**
  * Converts strings like 5days600min99ms to time in milliseconds  
@@ -185,7 +185,7 @@ const parseTimeTypes: Array<{strings: string[], value: number}> = [
  * Most important thing is that the time unit strings are typical.
  * Any non numeric or alphabetic characters are removed
  */
-export function parseTimeString(str: string): number {
+export function parseTimeStr(str: string): number {
   const split = str.replace(/\W/, '').toLowerCase().match(/[a-zA-Z]+|[0-9]+/g)
   if (!split) return 0
   let total = 0
@@ -229,9 +229,19 @@ export function insert(str: string, index: number, insert: string) { return str.
  * @param v If this is 1 or '1' `singular` is returned
  * @param singular Singular form
  * @param plural Plural form. Defaults to `singular + 's'`
+ * @param noValue `value` wont be returned with the result
  */
-export function plural(v: string | number, singular: string, plural?: string) {
-  return (v === 1 || v === '1' ? `${v} ${singular}` : `${v} ${plural || singular + 's'}`) }
+export function plural(v: string | number, singular: string, noValue?: boolean, plural?: string): string
+export function plural(v: string | number, singular: string, plural?: string, noValue?: boolean): string
+export function plural(v: string | number, singular: string, plural?: string | boolean, noValue: boolean | string = false) {
+  if (typeof plural === 'boolean') {
+    const old = noValue
+    noValue = plural
+    plural = old
+  }
+  if (noValue) return (v === 1 || v === '1' ? `${singular}` : `${plural || singular + 's'}`)
+  return (v === 1 || v === '1' ? `${v} ${singular}` : `${v} ${plural || singular + 's'}`)
+}
 
 const onExitCbs: Array<(code: number) => void> = []
 const signals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBUS', 'SIGFPE', 'SIGSEGV', 'SIGILL', 'SIGUSR1', 'SIGUSR2', 'SIGQUIT', 'uncaughtException']

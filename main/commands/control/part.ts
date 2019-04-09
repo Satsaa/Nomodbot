@@ -28,7 +28,8 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
-    const final = params[1] ? params.slice(1) : channel
-    return await this.l.part(final) ? undefined : 'Server response timeout'
+    let _channel = params[1] ? params.slice(1) : channel
+    if (!_channel.includes('#')) _channel = '#' + _channel
+    return await this.l.part(_channel) ? undefined : 'Server response timeout'
   }
 }

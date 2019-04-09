@@ -24,26 +24,26 @@ interface Controller {
 export type PluginOptions = (Command | Controller) & {
   type: string,
   /** Unique id for identifying this plugin */
-  id: string,
-  name: string,
-  description: string,
+  id: string
+  name: string
+  description: string
   /**
    * Signal that this plugin creates these data types  
    * subtype, name = normal data  
    * name = channel data  
    */
-  creates?: Array<[string, string] | [string]>,
+  creates?: Array<[string, string] | [string]>
   /** Plugin is instantiated after these data types are loaded */
-  requires?: Array<[string, string, number?]>,
+  requires?: Array<[string, string, number?]>
   /** Plugin is instantiated after these plugins are loaded */
-  requiresPlugins?: string[],
+  requiresPlugins?: string[]
 }
 
 /** Properties for aliases (e.g. !uptime) */
 export interface CommandAlias {
   /** The id of a command plugin */
-  id: string,
-  disabled?: boolean,
+  id: string
+  disabled?: boolean
   /** 
    * Controls who can use this command. Either an array of permitted badge names or a number.  
    * Number: 0: everyone, 1: subscriber, 2: moderator, 3: broadcaster, 10: master
@@ -51,9 +51,11 @@ export interface CommandAlias {
    */
   permissions?: string[] | number,
   /** Cooldowns are in seconds */
-  cooldown?: number | {duration?: number, delay?: number, limit?: number},
+  cooldown?: number | {duration?: number, delay?: number, limit?: number}
   /** Cooldowns are in seconds */
-  userCooldown?: number | {duration?: number, delay?: number, limit?: number},
+  userCooldown?: number | {duration?: number, delay?: number, limit?: number}
+  /** Marks the alias as hidden. Plugins can then do specific handling based on the visibility (e.g. hidden commands are not shown with !commands) */
+  hidden?: boolean
 }
 
 export interface PluginInstance {

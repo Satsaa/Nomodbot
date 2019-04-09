@@ -50,7 +50,8 @@
       "no-nested-switch": false,
       "no-big-function": false,
       "max-switch-cases": false,
-      "max-union-size": false
+      "max-union-size": false,
+      "bool-param-default": false // Asks for defaults on overloads which is forbidden
     },
     "rulesDirectory": [
       //"node_modules/tslint-eslint-rules/dist/rules"

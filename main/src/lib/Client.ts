@@ -348,7 +348,7 @@ export default class TwitchClient {
   private onExit() {
     console.log('[Client] Saving clientData')
     if (!this.opts.dataDir) {
-      console.warn('CLIENTDATA COULD NOT BE SAVED!!! PRINTING DATA!!!\n', JSON.stringify(this.clientData, null, 2))
+      console.warn('CLIENTDATA COULD NOT BE SAVED! PRINTING DATA!\n', JSON.stringify(this.clientData, null, 2))
     } else {
       try {
         fs.writeFileSync(`${this.opts.dataDir}clientData.json`, JSON.stringify(this.clientData, replacer, 2))
@@ -530,7 +530,6 @@ export default class TwitchClient {
         break
       case 'USERNOTICE': // <tags> <prefix> USERNOTICE #<channel> :<message>
         this.emit('usernotice', msg.params[0], msg.tags, msg.params[1])
-        // tslint:disable: no-duplicated-branches // !!!
         switch (msg.tags['msg-id']) {
           case 'resub':
           case 'sub':
