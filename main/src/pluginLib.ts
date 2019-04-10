@@ -1,10 +1,25 @@
+import TwitchClient from './client/Client'
 import Commander, { CommandAlias, PluginInstance, PluginOptions } from './Commander'
 import Data from './Data'
-import TwitchClient from './lib/Client'
 import * as secretKey from './lib/secretKey'
 import * as util from './lib/util'
 
 export default class PluginLibrary {
+
+  /** util library */
+  public u: typeof util
+  /** Libaries shared by plugins */
+  public ext: {[commandId: string]: {[x: string]: any}}
+
+  public emitter: {
+    readonly on: TwitchClient['on']
+    readonly once: TwitchClient['once']
+    readonly removeListener: TwitchClient['removeListener']
+    readonly prependListener: TwitchClient['prependListener']
+    readonly prependOnceListener: TwitchClient['prependOnceListener'],
+  }
+  public api: TwitchClient['api']
+
   /**
    * Returns the data or undefined if it isn't loaded.  
    * Data will be an object and therefore a reference, so keep that it mind. The undefined value is not a reference
@@ -67,19 +82,6 @@ export default class PluginLibrary {
   /** Determine if a user with `badges` would be permitted to call this command */
   public readonly isPermitted: Commander['isPermitted']
 
-  public emitter: {
-    readonly on: TwitchClient['on']
-    readonly once: TwitchClient['once']
-    readonly removeListener: TwitchClient['removeListener']
-    readonly prependListener: TwitchClient['prependListener']
-    readonly prependOnceListener: TwitchClient['prependOnceListener'],
-  }
-
-  /** util library */
-  public u: typeof util
-  /** Plugin created extensions/methods */
-  public ext: {[commandId: string]: {[x: string]: any}}
-
   private readonly commander: Commander
   private readonly data: Data
   private readonly client: TwitchClient
@@ -88,6 +90,8 @@ export default class PluginLibrary {
     this.commander = commander
     this.data = data
     this.client = client
+
+    // Public
 
     this.u = util
     this.ext = {}
@@ -99,6 +103,7 @@ export default class PluginLibrary {
       prependListener: client.prependListener.bind(this.client),
       prependOnceListener: client.prependOnceListener.bind(this.client),
     }
+    this.api = this.client.api
 
     this.getData = this.data.getData.bind(this.data)
     this.waitData = this.data.waitData.bind(this.data)
@@ -154,12 +159,12 @@ export default class PluginLibrary {
   /** Disables the default aliases of `pluginId` */
   public disableDefaults(pluginId: string) {
     const aliases = this.getAliases()
-    for (const alias in aliases) { if (aliases[alias].id === pluginId) delete aliases[alias].disabled }
+    for (const alias in aliases) if (aliases[alias].id === pluginId) delete aliases[alias].disabled
   }
   /** Enables the default aliases of `pluginId` */
   public enableDefaults(pluginId: string) {
     const aliases = this.getAliases()
-    for (const alias in aliases) { if (aliases[alias].id === pluginId) aliases[alias].disabled = true }
+    for (const alias in aliases) if (aliases[alias].id === pluginId) aliases[alias].disabled = true
   }
   /**
    * Gets a key from the config/keys.json file.  

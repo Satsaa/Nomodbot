@@ -2,11 +2,12 @@ import { EventEmitter } from 'events'
 import * as fs from 'fs'
 import StrictEventEmitter from 'strict-event-emitter-types'
 import WebSocket from 'ws'
-import defaultKeys from './defaultKeys'
-import eventTimeout from './eventTimeout'
+import defaultKeys from '../lib/defaultKeys'
+import eventTimeout from '../lib/eventTimeout'
+import RateLimiter, { RateLimiterOptions } from '../lib/RateLimiter'
+import * as u from '../lib/util'
+import TwitchApi from './api'
 import parse, { IrcMessage } from './parser'
-import RateLimiter, { RateLimiterOptions } from './RateLimiter'
-import * as u from './util'
 
 interface Events {
   join: (channel: string) => void
@@ -43,22 +44,29 @@ interface Events {
 }
 
 export interface TwitchClientOptions {
-  username: string,
-  password: string,
-  server?: string,
-  secure?: boolean,
-  port?: number,
-  /** Client data will be loaded and saved in this directory as clientData.json */
-  dataDir?: null | string,
-  logIrc?: boolean,
+  username: string
+  password: string
+  clientId: string
+  server?: string
+  secure?: boolean
+  port?: number
+  /** Client data will be loaded from and saved in this directory */
+  dataDir: string
+  /** Client data will be loaded from and saved with this file name */
+  dataFile?: string
+  /** API cache data will be loaded from and saved with this file name */
+  apiDataFile?: string
+  logInfo?: boolean
+  /** Log all messages received over the Websocket */
+  logAll?: boolean
   /** Server might refuse to connect with fast intervals */
-  reconnectInterval?: number,
-  minLatency?: number,
-  pingInterval?: number,
-  dupeAffix?: string,
-  maxMsgLength?: number,
-  readonly msgRLOpts?: Readonly<RateLimiterOptions>,
-  readonly whisperRLOpts?: Readonly<RateLimiterOptions | RateLimiterOptions[]>,
+  reconnectInterval?: number
+  minLatency?: number
+  pingInterval?: number
+  dupeAffix?: string
+  maxMsgLength?: number
+  readonly msgRLOpts?: Readonly<RateLimiterOptions>
+  readonly whisperRLOpts?: Readonly<RateLimiterOptions | RateLimiterOptions[]>
 }
 
 /**
@@ -68,12 +76,17 @@ export default class TwitchClient {
   public opts: Required<TwitchClientOptions>
   public globaluserstate: {[x: string]: any}
   /** To provide accurate userjoin and userpart events, channel users must be tracked */
-  public channelCache: { mods: {[channel: string]: {[user: string]: true}}, users: {[channel: string]: {[user: string]: true}}}
+  public channelCache: {
+    mods: {[channel: string]: {[user: string]: true}}
+    users: {[channel: string]: {[user: string]: true}}
+  }
   public clientData: {
-    global: {whisperTimes: number[][], msgTimes: number[][]},
-    channels: {[channel: string]: {userstate: IrcMessage['tags'], phase: boolean}},
+    global: {whisperTimes: number[][], msgTimes: number[][]}
+    channels: {[channel: string]: {userstate: IrcMessage['tags'], phase: boolean}}
   }
   public ws?: WebSocket
+  /** Ratelimited partial twitch API */
+  public api: TwitchApi
 
   public on: TwitchClient['emitter']['on']
   public once: TwitchClient['emitter']['once']
@@ -81,6 +94,7 @@ export default class TwitchClient {
   public prependOnceListener: TwitchClient['emitter']['prependOnceListener']
   public removeListener: TwitchClient['emitter']['removeListener']
   public emit: TwitchClient['emitter']['emit']
+
   /** Emitter for usernotices */
   private emitter: StrictEventEmitter<EventEmitter, Events>
 
@@ -100,8 +114,10 @@ export default class TwitchClient {
       server: 'irc-ws.chat.twitch.tv',
       secure: false,
       port: u.get(options.port, options.secure ? 443 : 80),
-      dataDir: null,
-      logIrc : false,
+      dataFile: 'clientData.json',
+      logInfo : false,
+      logAll: false,
+      apiDataFile: 'apiCache.json',
       reconnectInterval: 10000,
       minLatency: 800,
       pingInterval: 60000,
@@ -124,19 +140,17 @@ export default class TwitchClient {
     this.globaluserstate = {}
     this.channelCache = {mods: {}, users: {}}
     this.clientData = {global: {whisperTimes: [], msgTimes: []} , channels: {}}
-    if (this.opts.dataDir !== null) {
-      if (this.opts.dataDir.endsWith('/')) this.opts.dataDir += '/'
-      fs.mkdirSync(this.opts.dataDir, {recursive: true})
-      try {
-        fs.accessSync(`${this.opts.dataDir}clientData.json`, fs.constants.R_OK | fs.constants.W_OK)
-      } catch (err) {
-        if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataDir}clientData.json`, '{}')
-        else throw err
-      }
-      fs.accessSync(`${this.opts.dataDir}clientData.json`)
-      defaultKeys(this.clientData, JSON.parse(fs.readFileSync(`${this.opts.dataDir}clientData.json`, 'utf8')))
-      u.onExit(this.onExit.bind(this))
+
+    fs.mkdirSync(this.opts.dataDir, {recursive: true})
+    try {
+      fs.accessSync(`${this.opts.dataDir}//${this.opts.dataFile}`, fs.constants.R_OK | fs.constants.W_OK)
+    } catch (err) {
+      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataDir}//${this.opts.dataFile}`, '{}')
+      else throw err
     }
+    fs.accessSync(`${this.opts.dataDir}//${this.opts.dataFile}`)
+    defaultKeys(this.clientData, JSON.parse(fs.readFileSync(`${this.opts.dataDir}//${this.opts.dataFile}`, 'utf8')))
+    u.onExit(this.onExit.bind(this))
 
     // Do this isntead of using "extends" so event typings work
     this.emitter = new EventEmitter()
@@ -149,6 +163,8 @@ export default class TwitchClient {
 
     this.rateLimiter = new RateLimiter(this.opts.msgRLOpts)
     this.whisperRateLimiter = new RateLimiter(this.opts.whisperRLOpts)
+
+    this.api = new TwitchApi({clientId: this.opts.clientId, dataDir: this.opts.dataDir, dataFile: this.opts.apiDataFile})
 
     // Match rateLimiter's options length with times lengths
     // Make sure the times arrays are big enough
@@ -347,20 +363,19 @@ export default class TwitchClient {
 
   private onExit() {
     console.log('[Client] Saving clientData')
-    if (!this.opts.dataDir) {
-      console.warn('CLIENTDATA COULD NOT BE SAVED! PRINTING DATA!\n', JSON.stringify(this.clientData, null, 2))
-    } else {
-      try {
-        fs.writeFileSync(`${this.opts.dataDir}clientData.json`, JSON.stringify(this.clientData, replacer, 2))
-        console.log('[Client] Saved clientData')
-      } catch (err) {
-        console.log('[Client] Could not save clientData:', err)
-        console.warn('[Client] clientData:', JSON.stringify(this.clientData, null, 2))
-      }
+    if (!this.clientData) {
+      console.warn('[Client] clientData not saved due to it being undefined!')
+      return
+    }
+    try {
+      fs.writeFileSync(`${this.opts.dataDir}//${this.opts.dataFile}`, JSON.stringify(this.clientData, replacer, 2))
+      console.log('[Client] Saved clientData')
+    } catch (err) {
+      console.log('[Client] Could not save clientData:', err)
+      console.warn('[Client] clientData:', JSON.stringify(this.clientData, null, 2))
     }
     function replacer(k: string, v: any) {
-      if (['userstate'].indexOf(k) !== -1) return undefined
-      else return v
+      if (['userstate'].indexOf(k) === -1) return v
     }
   }
 
@@ -396,7 +411,7 @@ export default class TwitchClient {
   }
 
   private ircLog(msg: any) {
-    if (this.opts.logIrc) console.log(msg)
+    if (this.opts.logInfo) console.log(msg)
   }
 
   private mod(channel: string, user: string, mod: boolean) {
@@ -426,6 +441,7 @@ export default class TwitchClient {
 
   private handleMessage(msg: IrcMessage) {
     if (msg === null) return
+    console.log(msg)
     switch (msg.cmd) {
       case '001': // <prefix> 001 <you> :Welcome, GLHF!
         this.ircLog('Bot is welcome')
@@ -452,14 +468,14 @@ export default class TwitchClient {
           this.clientData.channels[msg.params[0]] = {userstate: {}, phase: false}
           this.emit('join', msg.params[0])
         }
-        this.userJoin(msg.params[0], msg.user as string)
+        this.userJoin(msg.params[0], msg.user || 'undefined')
         break
       case 'PART': // :<user>!<user>@<user>.tmi.twitch.tv PART #<channel>
         if (msg.user === this.opts.username) {
           this.emit('part', msg.params[0])
           delete this.clientData.channels[msg.params[0]]
         }
-        this.userPart(msg.params[0], msg.user as string)
+        this.userPart(msg.params[0], msg.user || 'undefined')
         break
       case 'CLEARCHAT':
         // @ban-duration=10;room-id=62300805;target-user-id=274274870;tmi-sent-ts=1551880699566 <prefix> CLEARCHAT #<channel> :<user>
@@ -502,11 +518,12 @@ export default class TwitchClient {
         const _msg = msg.params[1].endsWith(' \u206D') ? msg.params[1].substring(0, msg.params[1].length - 2) : msg.params[1]
         this.ircLog(`[${msg.params[0]}] ${msg.tags['display-name']}: ${_msg}`)
         if (_msg.startsWith('ACTION ')) {
-          this.emit('chat', msg.params[0], msg.user as string, msg.tags, _msg.slice(8, -1), true, msg.user === this.opts.username)
-        } else this.emit('chat', msg.params[0], msg.user as string, msg.tags, _msg, false, msg.user === this.opts.username)
+          this.emit('chat', msg.params[0], msg.user || 'undefined', msg.tags, _msg.slice(8, -1), true, msg.user === this.opts.username)
+        } else this.emit('chat', msg.params[0], msg.user || 'undefined', msg.tags, _msg, false, msg.user === this.opts.username)
+        if (msg.tags['user-id'] && msg.tags['display-name']) this.api.cacheUser(msg.tags['user-id'], msg.tags['display-name'])
         break
       case 'WHISPER': // @userstate :<user>!<user>@<user>.tmi.twitch.tv WHISPER <you> :<message>
-        this.emit('whisper', msg.user as string, msg.params[1])
+        this.emit('whisper', msg.user || 'undefined', msg.params[1])
         break
       case 'PING':
         this.send('PONG')

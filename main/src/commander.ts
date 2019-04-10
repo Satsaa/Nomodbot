@@ -1,7 +1,7 @@
 import * as path from 'path'
+import TwitchClient from './client/Client'
+import { IrcMessage } from './client/parser'
 import Data from './Data'
-import TwitchClient from './lib/Client'
-import { IrcMessage } from './lib/parser'
 import { readDirRecursive } from './lib/util'
 import PluginLibrary from './pluginLib'
 

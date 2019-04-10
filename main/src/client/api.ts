@@ -1,41 +1,31 @@
+import fs from 'fs'
 import https from 'https'
-import { PluginInstance, PluginOptions } from '../../src/Commander'
-import deepClone from '../../src/lib/deepClone'
-import { IrcMessage } from '../../src/lib/parser'
-import PluginLibrary from '../../src/pluginLib'
+import path from 'path'
+import deepClone from '../lib/deepClone'
+import defaultKeys from '../lib/defaultKeys'
+import * as util from '../lib/util'
 
-export const options: PluginOptions = {
-  type: 'controller',
-  id: 'twitchapi',
-  name: 'TwitchApi',
-  description: 'Cache, ratelimit, update and request API data',
-  creates: [['global', 'twitchApi'], ['twitchApi'],
-  ],
+interface ApiOptions {
+  /** Client id which will be used to make requests */
+  clientId: string,
+  /** Cache data will be loaded from and saved in this directory */
+  dataDir: string
+  /** Cache data will be loaded from and saved with this file name */
+  dataFile?: string
 }
 
-/**
- * API for some often used 
- */
-export interface TwitchApiExtension {
-  readonly getId: Instance['getId']
-  readonly getDisplay: Instance['getDisplay']
-  readonly toDisplay: Instance['toDisplay']
-  readonly _users: Instance['_users']
-  readonly _streams: Instance['_streams']
-  readonly getFollow: Instance['getFollow']
-  readonly _follows: Instance['_follows']
-  readonly recentBroadcasts: Instance['recentBroadcasts']
-  readonly _videos: Instance['_videos']
-}
-
-export class Instance implements PluginInstance {
-
-  private l: PluginLibrary
-  private clientId?: string
+export default class TwitchApi {
+  private opts: ApiOptions
   private cache: {
     queueIds: number[]
     queueDisplays: string[]
-    userIds: {[display: string]: number}
+    userIds: {[name: string]: number}
+    channels: {[channelId: number]: {
+      recentBroadcasts: GenericCache
+    }}
+  }
+  private readonly channelDefault: {
+    recentBroadcasts: GenericCache
   }
   private displays: {[id: number]: string}
 
@@ -50,48 +40,162 @@ export class Instance implements PluginInstance {
     recentBroadcasts: number
   }
 
-  constructor(pluginLib: PluginLibrary) {
-    this.l = pluginLib
-    this.l.autoLoad('twitchApi', { recentBroadcasts: {time: 0, res: undefined} }, true)
+  constructor(options: ApiOptions) { // apiDataFile
+    this.opts = {...{dataFile: 'apiCache.json'}, ...options}
 
-    this.cache = {queueIds: [], queueDisplays: [], userIds: {}}
+    this.channelDefault = {
+      recentBroadcasts: {time: 0},
+    }
     this.displays = {}
 
     this.rlLimit = 30
     this.rlRemaining = 30
     this.rlReset = 0
 
+    /** Default min cache update timings */
     this.deprecate = {
       recentBroadcasts: 30 * 60 * 1000, // 30 min
     }
-  }
 
-  public async init(): Promise<void> {
-    this.clientId = this.l.getKey('twitch', 'client-id')
-    this.cache = await this.l.load('global', 'twitchApi', this.cache, true) as Instance['cache']
-    if (!this.cache) throw new Error('Failure to load cache')
+    fs.mkdirSync(path.dirname(this.opts.dataDir), {recursive: true})
+    try {
+      fs.accessSync(`${this.opts.dataDir}/${this.opts.dataFile}`, fs.constants.R_OK | fs.constants.W_OK)
+    } catch (err) {
+      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, '{}')
+      else throw err
+    }
+    this.cache = JSON.parse(fs.readFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, 'utf8')) as TwitchApi['cache']
+    defaultKeys(this.cache, {queueIds: [], queueDisplays: [], userIds: {}, channels: {}})
+
     for (const display in this.cache.userIds) { // Build display cache from id cache
       this.displays[this.cache.userIds[display]] = display
     }
-    const extensions: TwitchApiExtension = {
-      getId: this.getId.bind(this),
-      getDisplay: this.getDisplay.bind(this),
-      toDisplay: this.toDisplay.bind(this),
-      _users: this._users.bind(this),
-      _streams: this._streams.bind(this),
-      getFollow: this.getFollow.bind(this),
-      _follows: this._follows.bind(this),
-      recentBroadcasts: this.recentBroadcasts.bind(this),
-      _videos: this._videos.bind(this),
-    }
-    this.l.extend(options.id, extensions)
-    this.l.emitter.on('chat', this.onChat.bind(this))
+
+    util.onExit(this.onExit.bind(this))
   }
 
-  private onChat(channel: string, user: string, userstate: IrcMessage['tags'], message: string, me: boolean, self: boolean) {
-    if (!userstate['user-id'] || !userstate['display-name']) return
-    this.cache.userIds[user] = userstate['user-id']
-    this.displays[userstate['user-id']] = userstate['display-name']
+  public cacheUser(id: number, displayName: string) {
+    this.cache.userIds[displayName.toLowerCase()] = id
+    this.displays[id] = displayName
+  }
+
+  /** Gets the cached user ID for `display` or fetches it from the API */
+  public async getId(display: string): Promise<number | void> {
+    display = display.replace('#', '').toLowerCase()
+    if (this.cache.userIds[display]) return this.cache.userIds[display]
+    // Get previosuly requested but failed ids and displayNames
+    const displays = this.cache.queueDisplays.splice(0, 98)
+    displays.push(display) // Add the requested element
+    const ids = this.cache.queueIds.splice(0, 99)
+    // Fetch data
+    const res = await this._users({id: ids, login: displays})
+    if (typeof res === 'object') { // Success! Add new values to cache and return requested value
+      const dlc = display.toLowerCase()
+      let returnVal
+      for (const user of res.data) {
+        if (user.login === dlc) returnVal = ~~user.id
+        this.cacheUser(~~user.id, user.display_name)
+      }
+      return returnVal
+    } else { // Failed... push back to queue
+      this.cache.queueDisplays.push(...displays)
+      this.cache.queueIds.push(...ids)
+      return
+    }
+  }
+
+  /** Gets the cached display name for `id` or fetches it from the API */
+  public async getDisplay(id: number): Promise<string | void>  {
+    if (this.displays[id]) return this.displays[id]
+    // Get previosuly requested but failed ids and displayNames
+    const displays = this.cache.queueDisplays.splice(0, 99)
+    const ids = this.cache.queueIds.splice(0, 98)
+    ids.push(id) // Add the requested element
+    // Fetch data
+    const res = await this._users({id: ids, login: displays})
+    if (typeof res === 'object') { // Success! Add new values to cache and return requested value
+      const idStr = id.toString()
+      let returnVal
+      for (const user of res.data) {
+        if (user.id === idStr) returnVal = user.display_name
+        this.cacheUser(~~user.id, user.display_name)
+      }
+      return returnVal
+    } else { // Failed... push back to queue
+      this.cache.queueDisplays.push(...displays)
+      this.cache.queueIds.push(...ids)
+      return
+    }
+  }
+
+  /** Gets the cached display name by user `name` or fetches it from the API */
+  public async toDisplay(name: string) {
+    const uid = await this.getId(name)
+    if (uid) return this.getDisplay(uid)
+  }
+
+  /** https://dev.twitch.tv/docs/api/reference/#get-users */
+  public _users(options: UsersOptions) {
+    return this.get('/helix/users?', options) as Promise<UsersResponse | undefined | string>
+  }
+
+  /** https://dev.twitch.tv/docs/api/reference/#get-streams */
+  public _streams(options: StreamsOptions) {
+    return this.get('/helix/streams?', options) as Promise<StreamsResponse | undefined | string>
+  }
+
+  /** Gets the follow status of `user` towards `channel` from the API */
+  public async getFollow(user: string | number, channel: string | number): Promise<FollowsResponse | undefined | string> {
+    if (typeof user === 'string' || typeof channel === 'string') {
+      const usersOpts: UsersOptions = {login: []}
+      if (typeof user === 'string') (usersOpts.login as string[]).push(user)
+      if (typeof channel === 'string') {
+        channel = channel.replace('#', '');
+        (usersOpts.login as string[]).push(channel)
+      }
+      const res = await this._users(usersOpts)
+      if (typeof res !== 'object') return res
+      for (const resUser of res.data) {
+        if (typeof user === 'string' && resUser.login === user.toLowerCase()) user = resUser.id
+        if (typeof channel === 'string' && resUser.login === channel.toLowerCase()) channel = resUser.id
+      }
+    }
+    if (typeof user === 'string' || typeof channel === 'string') {
+      console.warn('user or channel was a string. Both should have been converted to numbers (ids) and that conversion failed')
+      return
+    }
+    return this._follows({from_id: user, to_id: channel})
+  }
+  public _follows(options: FollowsOptions) {
+    return this.get('/helix/follows?', options) as Promise<FollowsResponse | undefined | string>
+  }
+
+  /** Gets the most recent videos of `channel` of the type 'broadcast' */
+  public async recentBroadcasts(channel: string | number, generic: GenericOptions = {})
+    : Promise<string | VideosResponse | undefined> {
+    if (typeof channel === 'string') channel = channel.replace('#', '')
+    const channelId = (typeof channel === 'number' ? channel : await this.getId(channel))
+    if (!channelId) return
+
+    if (typeof this.cache.channels[channelId] !== 'object') this.cache.channels[channelId] = deepClone(this.channelDefault)
+    else defaultKeys(this.cache.channels[channelId], this.channelDefault)
+
+    const channelData = this.cache.channels[channelId]
+    if (channelData && channelData.recentBroadcasts) {
+      const cache = this.handleGeneric(channelData.recentBroadcasts, this.deprecate.recentBroadcasts, generic) as VideosResponse | undefined
+      if (cache) return cache
+    }
+    const res = await this._videos({user_id: channelId, first: 100})
+    if (typeof res === 'object') {
+      if (channelData) channelData.recentBroadcasts = {time: Date.now(), res}
+      return deepClone(res)
+    }
+    return res
+  }
+
+  /** https://dev.twitch.tv/docs/api/reference/#get-videos */
+  public _videos(options: VideosOptions) {
+    return this.get('/helix/videos?', options) as Promise<VideosResponse | undefined | string>
   }
 
   private get(path: string, params: {[param: string]: any}): Promise<object | string | undefined> {
@@ -114,7 +218,7 @@ export class Instance implements PluginInstance {
         host: 'api.twitch.tv',
         path: path + queryP,
         headers: {
-          'client-id': this.clientId,
+          'client-id': this.opts.clientId,
         },
       }
       https.get(options, (res) => {
@@ -132,129 +236,9 @@ export class Instance implements PluginInstance {
             console.log(err)
             resolve(undefined)
           })
-        } else resolve(`${res.statusCode}: ${this.l.u.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
+        } else resolve(`${res.statusCode}: ${util.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
       })
     })
-  }
-
-  /** Gets the cached user ID for `display` or fetches it from the API */
-  private async getId(display: string): Promise<number | void> {
-    display = display.replace('#', '').toLowerCase()
-    if (this.cache.userIds[display]) return this.cache.userIds[display]
-    // Get previosuly requested but failed ids and displayNames
-    const displays = this.cache.queueDisplays.splice(0, 98)
-    displays.push(display) // Add the requested element
-    const ids = this.cache.queueIds.splice(0, 99)
-    // Fetch data
-    const res = await this._users({id: ids, login: displays})
-    if (typeof res === 'object') { // Success! Add new values to cache and return requested value
-      const dlc = display.toLowerCase()
-      let returnVal
-      for (const user of res.data) {
-        if (user.login === dlc) returnVal = ~~user.id
-        this.cache.userIds[user.display_name] = ~~user.id // Cache
-        this.displays[~~user.id] = user.display_name // Cache
-      }
-      return returnVal
-    } else { // Failed... push back to queue
-      this.cache.queueDisplays.push(...displays)
-      this.cache.queueIds.push(...ids)
-      return
-    }
-  }
-
-  /** Gets the cached display name for `id` or fetches it from the API */
-  private async getDisplay(id: number): Promise<string | void>  {
-    if (this.displays[id]) return this.displays[id]
-    // Get previosuly requested but failed ids and displayNames
-    const displays = this.cache.queueDisplays.splice(0, 99)
-    const ids = this.cache.queueIds.splice(0, 98)
-    ids.push(id) // Add the requested element
-    // Fetch data
-    const res = await this._users({id: ids, login: displays})
-    if (typeof res === 'object') { // Success! Add new values to cache and return requested value
-      const idStr = id.toString()
-      let returnVal
-      for (const user of res.data) {
-        if (user.id === idStr) returnVal = user.display_name
-        this.cache.userIds[user.display_name] = ~~user.id // Cache
-        this.displays[~~user.id] = user.display_name // Cache
-      }
-      return returnVal
-    } else { // Failed... push back to queue
-      this.cache.queueDisplays.push(...displays)
-      this.cache.queueIds.push(...ids)
-      return
-    }
-  }
-
-  /** Gets the cached display name by user `name` or fetches it from the API */
-  private async toDisplay(name: string) {
-    const uid = await this.getId(name)
-    if (!uid) return
-    return this.getDisplay(uid)
-  }
-
-  /** https://dev.twitch.tv/docs/api/reference/#get-users */
-  private _users(options: UsersOptions) {
-    return this.get('/helix/users?', options) as Promise<UsersResponse | undefined | string>
-  }
-
-  /** https://dev.twitch.tv/docs/api/reference/#get-streams */
-  private _streams(options: StreamsOptions) {
-    return this.get('/helix/streams?', options) as Promise<StreamsResponse | undefined | string>
-  }
-
-  /** Gets the follow status of `user` towards `channel` from the API */
-  private async getFollow(user: string | number, channel: string | number): Promise<FollowsResponse | undefined | string> {
-    if (typeof user === 'string' || typeof channel === 'string') {
-      const usersOpts: UsersOptions = {login: []}
-      if (typeof user === 'string') (usersOpts.login as string[]).push(user)
-      if (typeof channel === 'string') {
-        channel = channel.replace('#', '');
-        (usersOpts.login as string[]).push(channel)
-      }
-      const res = await this._users(usersOpts)
-      if (typeof res !== 'object') return res
-      for (const resUser of res.data) {
-        if (typeof user === 'string' && resUser.login === user.toLowerCase()) user = resUser.id
-        if (typeof channel === 'string' && resUser.login === channel.toLowerCase()) channel = resUser.id
-      }
-    }
-    if (typeof user === 'string' || typeof channel === 'string') {
-      console.warn('user or channel was a string. Both should have been converted to numbers (ids) and that conversion failed')
-      return
-    }
-    return this._follows({from_id: user, to_id: channel})
-  }
-  private _follows(options: FollowsOptions) {
-    return this.get('/helix/follows?', options) as Promise<FollowsResponse | undefined | string>
-  }
-
-  /** Gets the most recent videos of `channel` of the type 'broadcast' */
-  private async recentBroadcasts(channel: string | number, generic: GenericOptions = {})
-    : Promise<string | VideosResponse | undefined> {
-    if (typeof channel === 'string') channel = channel.replace('#', '')
-    const userId = (typeof channel === 'number' ? channel : await this.getId(channel))
-    if (!userId) return
-
-    const data = this.l.getData(`#${channel}`, 'twitchApi') as undefined | {recentBroadcasts: GenericCache}
-    if (data && data.recentBroadcasts) {
-      const cache = this.handleGeneric(data.recentBroadcasts, this.deprecate.recentBroadcasts, generic) as VideosResponse | undefined
-      if (cache) return cache
-    }
-    const res = await this._videos({user_id: userId, first: 100})
-    if (typeof res === 'object') {
-      const data = this.l.getData(`#${channel}`, 'twitchApi')
-      if (data) data.recentBroadcasts = {time: Date.now(), res}
-      return deepClone(res)
-    }
-    return res
-  }
-
-  /** https://dev.twitch.tv/docs/api/reference/#get-videos */
-  private _videos(options: VideosOptions) {
-    return this.get('/helix/videos?', options) as Promise<VideosResponse | undefined | string>
   }
 
   /** Returns the cached data or undefined if an update is necessary */
@@ -269,13 +253,18 @@ export class Instance implements PluginInstance {
     console.log('cached')
     return cache.res
   }
+
+  private onExit() {
+    if (this.cache) fs.writeFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, JSON.stringify(this.cache))
+    else console.warn('[API] cache not saved due to it being undefined!')
+  }
 }
 
 interface GenericCache {
   /** Time of update */
   time: number
   /** Previous cached result */
-  res: any
+  res?: {[x: string]: any}
 }
 
 interface GenericOptions {

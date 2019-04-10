@@ -46,7 +46,7 @@
       "no-statements-same-line": false,
       "no-try-promise": true,
       "no-nested-template-literals": false,
-      "no-duplicate-string": [true, 5],
+      "no-duplicate-string": false,
       "no-nested-switch": false,
       "no-big-function": false,
       "max-switch-cases": false,

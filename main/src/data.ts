@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events'
 import * as fs from 'fs'
 import { promises as fsp } from 'fs'
-import TwitchClient from './lib/Client'
+import TwitchClient from './client/Client'
 import defaultKeys from './lib/defaultKeys'
 
 export default class Data extends EventEmitter {

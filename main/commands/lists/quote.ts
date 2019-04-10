@@ -1,5 +1,5 @@
+import { IrcMessage } from '../../src/client/parser'
 import { PluginInstance, PluginOptions } from '../../src/Commander'
-import { IrcMessage } from '../../src/lib/parser'
 import PluginLibrary from '../../src/pluginLib'
 import { ListsExtension } from './lists'
 
