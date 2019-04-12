@@ -34,12 +34,12 @@ export interface ListsExtension {
    * `getEntry(0, true) => [falsy, undefined]`  
    */
   // tslint:disable-next-line: bool-param-default // Cant set initializers here?
-  getList: (pluginId: string, channel?: string, defaultData?: any[], setDefaults?: boolean) => List,
+  getList: (listName: string, channelId?: number, defaultData?: any[], setDefaults?: boolean) => List,
 }
 
 interface ListsType {
-  channels: { [channel: string]: {[pluginId: string]: any[]} },
-  globals: { [pluginId: string]: any[] },
+  channels: { [id: number]: {[listName: string]: any[]} },
+  globals: { [listName: string]: any[] },
 }
 
 export class Instance implements PluginInstance {
@@ -56,16 +56,16 @@ export class Instance implements PluginInstance {
   public async init(): Promise<void> {
     this.lists = await this.l.load('global', 'listData', {channels: {}, globals: {}}, true) as ListsType
     const extensions: ListsExtension = {
-      getList: (pluginId: string, channel?: string, defaultData: any[] = [], setDefaults = false) => {
-        if (channel) { // Channel list
-          if (!this.lists.channels[channel]) this.lists.channels[channel] = {}
-          if (!this.lists.channels[channel][pluginId]) this.lists.channels[channel][pluginId] = defaultData
-          if (setDefaults) defaultKeys(this.lists.channels[channel][pluginId], defaultData)
-          return new List(pluginId, this.lists.channels[channel], this.l)
+      getList: (listName: string, channelId?: number, defaultData: any[] = [], setDefaults = false) => {
+        if (channelId) { // Channel list
+          if (!this.lists.channels[channelId]) this.lists.channels[channelId] = {}
+          if (!this.lists.channels[channelId][listName]) this.lists.channels[channelId][listName] = defaultData
+          if (setDefaults) defaultKeys(this.lists.channels[channelId][listName], defaultData)
+          return new List(listName, this.lists.channels[channelId], this.l)
         } else { // Global list
-          if (!this.lists.globals[pluginId]) this.lists.globals[pluginId] = defaultData
-          if (setDefaults) defaultKeys(this.lists.globals[pluginId], defaultData)
-          return new List(pluginId, this.lists.globals, this.l)
+          if (!this.lists.globals[listName]) this.lists.globals[listName] = defaultData
+          if (setDefaults) defaultKeys(this.lists.globals[listName], defaultData)
+          return new List(listName, this.lists.globals, this.l)
         }
       },
     }
@@ -75,15 +75,15 @@ export class Instance implements PluginInstance {
 
 class List {
 
-  public get entries(): List['baseList'][List['pluginId']] {
-    return this.baseList[this.pluginId]
+  public get entries(): List['baseList'][List['listName']] {
+    return this.baseList[this.listName]
   }
-  public pluginId: string
-  private baseList: {[pluginId: string]: any[]}
+  public listName: string
+  private baseList: {[listName: string]: any[]}
   private l: PluginLibrary
 
-  constructor(pluginId: string, baseList: {[pluginId: string]: any[]}, l: PluginLibrary) {
-    this.pluginId = pluginId
+  constructor(listName: string, baseList: {[listName: string]: any[]}, l: PluginLibrary) {
+    this.listName = listName
     this.baseList = baseList
     this.l = l
   }

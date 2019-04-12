@@ -27,9 +27,8 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
   }
 
-  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
-    let _channel = params[1] ? params.slice(1) : channel
-    if (!_channel.includes('#')) _channel = '#' + _channel
-    return await this.l.part(_channel) ? undefined : 'Server response timeout'
+  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+    if (!params[1]) return await this.l.part([channelId]) ? undefined : 'Server response timeout'
+    return await this.l.part(params.slice(1)) ? undefined : 'Server response timeout'
   }
 }

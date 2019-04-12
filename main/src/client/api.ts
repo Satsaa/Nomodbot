@@ -17,9 +17,7 @@ interface ApiOptions {
 export default class TwitchApi {
   private opts: ApiOptions
   private cache: {
-    queueIds: number[]
-    queueDisplays: string[]
-    userIds: {[name: string]: number}
+    userIds: {[login: string]: number}
     channels: {[channelId: number]: {
       recentBroadcasts: GenericCache
     }}
@@ -28,6 +26,9 @@ export default class TwitchApi {
     recentBroadcasts: GenericCache
   }
   private displays: {[id: number]: string}
+
+  private waitedIds: {[login: string]: Array<(value?: number | undefined) => void>}
+  private waitedDisplays: {[id: number]: Array<(value?: string | undefined) => void>}
 
   /** Bucket will be reset to this */
   private rlLimit: number
@@ -47,6 +48,9 @@ export default class TwitchApi {
       recentBroadcasts: {time: 0},
     }
     this.displays = {}
+
+    this.waitedIds = {}
+    this.waitedDisplays = {}
 
     this.rlLimit = 30
     this.rlRemaining = 30
@@ -79,59 +83,60 @@ export default class TwitchApi {
     this.displays[id] = displayName
   }
 
-  /** Gets the cached user ID for `display` or fetches it from the API */
-  public async getId(display: string): Promise<number | void> {
-    display = display.replace('#', '').toLowerCase()
-    if (this.cache.userIds[display]) return this.cache.userIds[display]
-    // Get previosuly requested but failed ids and displayNames
-    const displays = this.cache.queueDisplays.splice(0, 98)
-    displays.push(display) // Add the requested element
-    const ids = this.cache.queueIds.splice(0, 99)
-    // Fetch data
-    const res = await this._users({id: ids, login: displays})
-    if (typeof res === 'object') { // Success! Add new values to cache and return requested value
-      const dlc = display.toLowerCase()
-      let returnVal
-      for (const user of res.data) {
-        if (user.login === dlc) returnVal = ~~user.id
-        this.cacheUser(~~user.id, user.display_name)
+  /** Gets the cached user ID for `login` or fetches it from the API */
+  public getId(login: string): Promise<number | undefined> {
+    return new Promise(async (resolve) => {
+      login = login.replace('#', '').toLowerCase()
+      if (this.cache.userIds[login]) return resolve(this.cache.userIds[login])
+      if (this.waitedIds[login]) {
+        this.waitedIds[login].push(resolve)
+        return
       }
-      return returnVal
-    } else { // Failed... push back to queue
-      this.cache.queueDisplays.push(...displays)
-      this.cache.queueIds.push(...ids)
-      return
-    }
+      this.waitedIds[login] = [resolve]
+      // Fetch data
+      const res = await this._users({login})
+      let returnVal: undefined | number
+      if (typeof res === 'object') { // Success! Add new values to cache and return requested value
+        for (const user of res.data) {
+          if (user.login === login) returnVal = ~~user.id
+          this.cacheUser(~~user.id, user.display_name)
+        }
+      }
+      // Resolve all promises for this request
+      for (const resolve of this.waitedIds[login]) resolve(returnVal)
+      delete this.waitedIds[login]
+    })
   }
 
   /** Gets the cached display name for `id` or fetches it from the API */
-  public async getDisplay(id: number): Promise<string | void>  {
-    if (this.displays[id]) return this.displays[id]
-    // Get previosuly requested but failed ids and displayNames
-    const displays = this.cache.queueDisplays.splice(0, 99)
-    const ids = this.cache.queueIds.splice(0, 98)
-    ids.push(id) // Add the requested element
-    // Fetch data
-    const res = await this._users({id: ids, login: displays})
-    if (typeof res === 'object') { // Success! Add new values to cache and return requested value
-      const idStr = id.toString()
-      let returnVal
-      for (const user of res.data) {
-        if (user.id === idStr) returnVal = user.display_name
-        this.cacheUser(~~user.id, user.display_name)
+  public getDisplay(id: number): Promise<string | undefined>  {
+    return new Promise(async (resolve) => {
+      if (this.displays[id]) return resolve(this.displays[id])
+      if (this.waitedDisplays[id]) {
+        this.waitedDisplays[id].push(resolve)
+        return
       }
-      return returnVal
-    } else { // Failed... push back to queue
-      this.cache.queueDisplays.push(...displays)
-      this.cache.queueIds.push(...ids)
-      return
-    }
+      this.waitedDisplays[id] = [resolve]
+      // Fetch data
+      const res = await this._users({id})
+      let returnVal: undefined | string
+      if (typeof res === 'object') { // Success! Add new values to cache and return requested value
+        for (const user of res.data) {
+          if (+user.id === id) returnVal = user.display_name
+          this.cacheUser(~~user.id, user.display_name)
+        }
+      }
+      // Resolve all promises for this request
+      for (const resolve of this.waitedDisplays[id]) resolve(returnVal)
+      delete this.waitedDisplays[id]
+    })
   }
 
   /** Gets the cached display name by user `name` or fetches it from the API */
   public async toDisplay(name: string) {
     const uid = await this.getId(name)
     if (uid) return this.getDisplay(uid)
+    return
   }
 
   /** https://dev.twitch.tv/docs/api/reference/#get-users */
@@ -200,7 +205,10 @@ export default class TwitchApi {
 
   private get(path: string, params: {[param: string]: any}): Promise<object | string | undefined> {
     return new Promise((resolve) => {
-      if (this.rlRemaining < 3 && this.rlReset > Date.now()) return // Avoid ratelimits
+      if (this.rlRemaining < 3 && this.rlReset > Date.now()) {
+        console.log('API being ratelimited')
+        return
+      }
       if (!path.endsWith('?')) path = path + '?'
       if (!path.startsWith('/')) path = '/' + path
 
@@ -224,6 +232,7 @@ export default class TwitchApi {
       https.get(options, (res) => {
         if (typeof res.headers['ratelimit-limit'] === 'string') this.rlLimit = ~~res.headers['ratelimit-limit']!
         if (typeof res.headers['ratelimit-remaining'] === 'string') this.rlRemaining = ~~res.headers['ratelimit-remaining']!
+        console.log(res.headers['ratelimit-remaining'])
         if (typeof res.headers['ratelimit-reset'] === 'string') this.rlReset = ~~res.headers['ratelimit-reset']! * 1000
         if (res.statusCode === 200) { // success!
           let data = ''

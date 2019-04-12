@@ -4,7 +4,7 @@ console.log('Launch')
 
 // Blyat
 global.v8debug = {}
-global.v8debug.bot = new Bot({masters: ['satsaa']})
+global.v8debug.bot = new Bot({masters: [61365582]})
 
 const bot = global.v8debug.bot
 

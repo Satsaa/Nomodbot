@@ -29,7 +29,7 @@ export default class Data extends EventEmitter {
   }
 
   /** Returns the path to the data file */
-  public getPath(subType: string, name: string, fileType: string = 'json') {
+  public getPath(subType: string | number, name: string, fileType: string = 'json') {
     return `${this.dataPath}${subType}/${name}.${fileType}`
   }
 
@@ -37,24 +37,24 @@ export default class Data extends EventEmitter {
    * Returns the data or undefined if it isn't loaded.  
    * Data will be an object and therefore a reference, so keep that it mind. The undefined value is not a reference
    */
-  public getData(subType: string, name: string) {
+  public getData(subType: string | number, name: string) {
     if ((this.data[subType] || {})[name]) return this.data[subType][name]
     return
   }
   /** Sets the data variable to `value` */
-  public setData(subType: string, name: string, value: object) {
+  public setData(subType: string | number, name: string, value: object) {
     if (!this.data[subType]) this.data[subType] = {}
     return this.data[subType][name] = value
   }
   /** Delete the data */
-  public delData(subType: string, name: string) {
+  public delData(subType: string | number, name: string) {
     if (!this.getData(subType, name)) return false
     delete this.data[subType][name]
     return true
   }
 
   /** Wait until the data is loaded. Resolves with the arguments the event gives or undefined if timedout */
-  public async waitData(subType: string, name: string, timeout?: number): Promise<object | undefined> {
+  public async waitData(subType: string | number, name: string, timeout?: number): Promise<object | undefined> {
     if (this.getData(subType, name)) return this.getData(subType, name)
     return new Promise((resolve) => {
       const cbFunc = (s?: string, n?: string, data?: object) => {
@@ -85,7 +85,7 @@ export default class Data extends EventEmitter {
    * @param name File name
    * @param unload Unload from memory if save is succesful
    */
-  public async save(subType: string, name: string, unload: boolean = false) {
+  public async save(subType: string | number, name: string, unload: boolean = false) {
     const data = this.getData(subType, name)
     if (!data) {
       console.error(`${name} isn't loaded and is therefore not saved`)
@@ -107,7 +107,7 @@ export default class Data extends EventEmitter {
    * @param name File name
    * @param save Save before reloading
    */
-  public async reload(subType: string, name: string, save: boolean = false) {
+  public async reload(subType: string | number, name: string, save: boolean = false) {
     if (save) await this.save(subType, name)
     if (!this.getData(subType, name)) throw new Error(`${name} cannot be reloaded as it is not loaded`)
     this.delData(subType, name)
@@ -120,7 +120,7 @@ export default class Data extends EventEmitter {
    * @param defaultData If the file doesn't exist, create it with this data
    * @param setDefaults Sets all undefined keys in the returned data that exist in `defaultData` to the value of `defaultData`
    */
-  public async load(subType: string, name: string, defaultData?: object, setDefaults = false): Promise<object> {
+  public async load(subType: string | number, name: string, defaultData?: object, setDefaults = false): Promise<object> {
     if (!this.data[subType]) this.data[subType] = {}
     if (this.getData(subType, name)) throw new Error(`${name} has already been loaded by another source`)
     this.setData(subType, name, {}) // Blocks new loads on this data type
@@ -166,19 +166,19 @@ export default class Data extends EventEmitter {
     this.autoLoads.push({name, defaultData, setDefaults})
   }
 
-  private onJoin(channel: string) {
+  private onJoin(channelId: number) {
     for (const autoLoad of this.autoLoads) {
-      if (!(this.data[channel] || {})[autoLoad.name]) {
-        this.load(channel, autoLoad.name, autoLoad.defaultData, autoLoad.setDefaults)
+      if (!(this.data[channelId] || {})[autoLoad.name]) {
+        this.load(channelId.toString(), autoLoad.name, autoLoad.defaultData, autoLoad.setDefaults)
       }
     }
   }
 
-  private onPart(channel: string) {
+  private onPart(channelId: number) {
     for (const autoLoad of this.autoLoads) {
-      if ((this.data[channel] || {})[autoLoad.name]) {
-        this.save(channel, autoLoad.name, true).then(() => {}, (err) => {
-          console.log(`[Data.autoLoad] Error unloading ${channel}`, err)
+      if ((this.data[channelId] || {})[autoLoad.name]) {
+        this.save(channelId.toString(), autoLoad.name, true).then(() => {}, (err) => {
+          console.log(`[Data.autoLoad] Error unloading ${channelId}`, err)
         })
       }
     }

@@ -37,7 +37,7 @@ export class Instance implements PluginInstance {
     this.quotes = this.lists.getList(options.id, undefined, defaultQuotes)
   }
 
-  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
+  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
     let newValue: string
     let index
     let value
@@ -48,7 +48,7 @@ export class Instance implements PluginInstance {
       case 'mod':
       case 'set':
       case 'change':
-        if (this.l.isPermitted(2, userstate.badges, (userstate['display-name'] as string).toLowerCase())) return
+        if (this.l.isPermitted(10, userstate.badges, userId)) return
         if (!params[2] || isNaN(parseInt(params[2], 10))) return 'Invalid index (param 2)'
         if (!params[3]) return 'Define the new quote value (param 3+)'
         newValue = params.slice(3).join(' ');
@@ -60,6 +60,7 @@ export class Instance implements PluginInstance {
       case 'new':
       case 'push':
       case 'create':
+        if (this.l.isPermitted(10, userstate.badges, userId)) return
         if (!params[2]) return 'Define the new quote (param 2+)'
         newValue = params.slice(2).join(' ');
         [index] = this.quotes.pushEntry(newValue)
@@ -68,6 +69,7 @@ export class Instance implements PluginInstance {
 
       case 'insert':
       case 'splice':
+        if (this.l.isPermitted(10, userstate.badges, userId)) return
         if (!params[2] || isNaN(parseInt(params[2], 10))) return 'Invalid index (param 2)'
         if (!params[3]) return 'Define the new quote (param 3+)'
         newValue = params.slice(3).join(' ');
@@ -78,6 +80,7 @@ export class Instance implements PluginInstance {
       case 'del':
       case 'delete':
       case 'remove':
+        if (this.l.isPermitted(10, userstate.badges, userId)) return
         if (!params[2] || isNaN(parseInt(params[2], 10))) return 'Invalid index (param 2)';
         [index, value]  = this.quotes.delEntry(~~params[2])
         if (index) return `Deleted at ${index}: ${value}`

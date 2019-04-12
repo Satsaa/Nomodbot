@@ -15,7 +15,7 @@ export const options: PluginOptions = {
     },
   },
   requires: [],
-  creates: [['myIQ']],
+  creates: [['myIq']],
   help: [
     'Returns your or users iq: {alias} [<user>]',
     'Get your record and the channel record: {alias} record',
@@ -24,11 +24,11 @@ export const options: PluginOptions = {
 
 interface MyIQData {
   high: {
-    user?: string,
+    userId?: number,
     value?: number,
   },
   low: {
-    user?: string,
+    userId?: number,
     value?: number,
   },
 }
@@ -39,29 +39,31 @@ export class Instance implements PluginInstance {
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
-    this.l.autoLoad('myIQ', { high: {}, low: {} }, true)
+    this.l.autoLoad('myIq', { high: {}, low: {} }, true)
   }
 
-  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
-    const data = this.l.getData(channel, 'myIQ') as MyIQData
+  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+    const data = this.l.getData(channelId, 'myIq') as MyIQData
     if (!data) return 'Data unavailable'
 
     const high = typeof data.high.value === 'number' ? data.high.value : -Infinity
     const low = typeof data.low.value === 'number' ? data.low.value : Infinity
 
     if (params[1] && params[1].toLowerCase() === 'record') {
-      return `The highest IQ is ${high} by ${data.high.user || 'God'} and the lowest IQ is ${low} by ${data.low.user || 'God'}`
+      const byHigh = data.high.userId ? await this.l.api.getDisplay(data.high.userId) : 'God'
+      const byLow = data.low.userId ? await this.l.api.getDisplay(data.low.userId) : 'God'
+      return `The highest IQ is ${high} by ${byHigh} and the lowest IQ is ${low} by ${byLow}`
     }
 
     const recipient = params[1] || userstate['display-name'] || 'Error'
     const iq = Math.round(this.l.u.randomNormal(-50, 1005, 3))
 
     if (iq > high) { // New record
-      data.high.user = recipient.toLowerCase()
+      data.high.userId = userstate['user-id']
       data.high.value = iq
       return `${recipient}'s RealIQ is ${iq} ${this.getEmote(iq)} Beat the old record by ${iq - high} IQ PogChamp`
     } else if (iq < low) { // New low record
-      data.low.user = recipient.toLowerCase()
+      data.low.userId = userstate['user-id']
       data.low.value = iq
       return `${recipient}'s RealIQ is ${iq} ${this.getEmote(iq)} Beat the old low record by ${low - iq} IQ LUL`
     } else { // No new record
@@ -69,7 +71,7 @@ export class Instance implements PluginInstance {
     }
   }
 
-  public async cooldown(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
+  public async cooldown(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
   }
 
   public getEmote(v: number) {

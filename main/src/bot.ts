@@ -5,7 +5,7 @@ import * as secretKey from './lib/secretKey'
 import {onExit} from './lib/util'
 
 export interface BotOptions {
-  masters: string[],
+  masters: number[],
 }
 
 export default class Bot {
@@ -27,10 +27,10 @@ export default class Bot {
       password: secretKey.getKey('./main/cfg/keys.json', 'twitch', 'password'),
       clientId: secretKey.getKey('./main/cfg/keys.json', 'twitch', 'client-id'),
       dataDir: './main/data/global/',
-      logInfo: false,
-      logAll: true,
+      logInfo: true,
+      // logAll: true,
     })
-    this.client.on('welcome', () => {this.client.join('#satsaa')})
+    this.client.on('welcome', () => {this.client.join(['satsaa'])})
 
     this.data = new Data(this.client, './main/data/')
     this.commander = new Commander(this.client, this.data, this.opts.masters)

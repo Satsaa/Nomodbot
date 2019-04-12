@@ -35,11 +35,12 @@ export class Instance implements PluginInstance {
     this.lists = this.l.ext.lists as ListsExtension
   }
 
-  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
+  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
     let newValue: string
     let index
     let value
-    const quotes: ReturnType<ListsExtension['getList']> = this.lists.getList(options.id, channel, [])
+    const quotes: ReturnType<ListsExtension['getList']> = this.lists.getList(options.id, channelId, [])
+    const user = userstate['display-name']
     switch (params[1].toLowerCase()) {
 
       case 'edit':
@@ -47,7 +48,7 @@ export class Instance implements PluginInstance {
       case 'mod':
       case 'set':
       case 'change':
-        if (!this.l.isPermitted(2, userstate.badges, user)) return `@${user} Unpermitted action`
+        if (!this.l.isPermitted(2, userstate.badges, userId)) return `@${user} Unpermitted action`
         if (!params[2] || isNaN(parseInt(params[2], 10))) return 'Invalid index (param 2)'
         if (!params[3]) return 'Define the new quote value (param 3+)'
         newValue = params.slice(3).join(' ');
@@ -59,7 +60,7 @@ export class Instance implements PluginInstance {
       case 'new':
       case 'push':
       case 'create':
-        if (!this.l.isPermitted(2, userstate.badges, user)) return `@${user} Unpermitted action`
+        if (!this.l.isPermitted(2, userstate.badges, userId)) return `@${user} Unpermitted action`
         if (!params[2]) return 'Define the new quote (param 2+)'
         newValue = params.slice(2).join(' ');
         [index] = quotes.pushEntry(newValue)
@@ -68,7 +69,7 @@ export class Instance implements PluginInstance {
 
       case 'insert':
       case 'splice':
-        if (!this.l.isPermitted(2, userstate.badges, user)) return `@${user} Unpermitted action`
+        if (!this.l.isPermitted(2, userstate.badges, userId)) return `@${user} Unpermitted action`
         if (!params[2] || isNaN(parseInt(params[2], 10))) return 'Invalid index (param 2)'
         if (!params[3]) return 'Define the new quote (param 3+)'
         newValue = params.slice(3).join(' ');
@@ -79,7 +80,7 @@ export class Instance implements PluginInstance {
       case 'del':
       case 'delete':
       case 'remove':
-        if (!this.l.isPermitted(2, userstate.badges, user)) return `@${user} Unpermitted action`
+        if (!this.l.isPermitted(2, userstate.badges, userId)) return `@${user} Unpermitted action`
         if (!params[2] || isNaN(parseInt(params[2], 10))) return 'Invalid index (param 2)';
         [index, value]  = quotes.delEntry(~~params[2])
         if (index) return `Deleted at ${index}: ${value}`

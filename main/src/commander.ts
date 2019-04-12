@@ -62,9 +62,9 @@ export interface PluginInstance {
   /** Execute before enabling this plugin */
   init?: () => Promise<void>
   /** An alias of this command is called */
-  call?: (channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) => Promise<string | void>,
+  call?: (channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) => Promise<string | void>,
   /** An alias of this command is called but it was on cooldown */
-  cooldown?: (channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) => void,
+  cooldown?: (channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) => void,
 }
 
 export default class Commander {
@@ -75,9 +75,9 @@ export default class Commander {
   private data: Data
   private waits: {[pluginId: string]: Array<(result: boolean) => any>}
   private pluginLib: PluginLibrary
-  private masters: string[]
+  private masters: number[]
 
-  constructor(client: TwitchClient, data: Data, masters: string[]) {
+  constructor(client: TwitchClient, data: Data, masters: number[]) {
     this.defaults = {}
     this.plugins = {}
     this.instances = {}
@@ -150,39 +150,39 @@ export default class Commander {
     }
   }
 
-  public createAlias(channel: string, alias: string, options: CommandAlias): boolean {
-    if (!(this.data.data[channel] || {}).aliases) return false
-    this.data.data[channel].aliases[alias] = {...options}; return true
+  public createAlias(channelId: number, alias: string, options: CommandAlias): boolean {
+    if (!(this.data.data[channelId] || {}).aliases) return false
+    this.data.data[channelId].aliases[alias] = {...options}; return true
   }
-  public deleteAlias(channel: string, alias: string) {
-    if (!(this.data.data[channel] || {}).aliases) return false
-    delete this.data.data[channel].aliases[alias]; return true
+  public deleteAlias(channelId: number, alias: string) {
+    if (!(this.data.data[channelId] || {}).aliases) return false
+    delete this.data.data[channelId].aliases[alias]; return true
   }
-  public enableAlias(channel: string, alias: string) {
-    if (!((this.data.data[channel] || {}).aliases || {})[alias]) return false
-    delete this.data.data[channel].aliases[alias].disabled; return true
+  public enableAlias(channelId: number, alias: string) {
+    if (!((this.data.data[channelId] || {}).aliases || {})[alias]) return false
+    delete this.data.data[channelId].aliases[alias].disabled; return true
   }
-  public disableAlias(channel: string, alias: string) {
-    if (!((this.data.data[channel] || {}).aliases || {})[alias]) return false
-    this.data.data[channel].aliases[alias].disabled = true; return true
+  public disableAlias(channelId: number, alias: string) {
+    if (!((this.data.data[channelId] || {}).aliases || {})[alias]) return false
+    this.data.data[channelId].aliases[alias].disabled = true; return true
   }
 
-  public getAlias(channel: string, alias: string): CommandAlias | void {
-    if (((this.data.data[channel] || {}).aliases || {})[alias]) {
-      return this.data.data[channel].aliases[alias]
+  public getAlias(channelId: number, alias: string): CommandAlias | void {
+    if (((this.data.data[channelId] || {}).aliases || {})[alias]) {
+      return this.data.data[channelId].aliases[alias]
     } else if (this.defaults[alias]) return this.defaults[alias]
   }
-  public getActiveAlias(channel: string, alias: string): CommandAlias | void {
-    if (((this.data.data[channel] || {}).aliases || {})[alias] && !this.data.data[channel].aliases[alias].disabled) {
-      return this.data.data[channel].aliases[alias]
+  public getActiveAlias(channelId: number, alias: string): CommandAlias | void {
+    if (((this.data.data[channelId] || {}).aliases || {})[alias] && !this.data.data[channelId].aliases[alias].disabled) {
+      return this.data.data[channelId].aliases[alias]
     } else if (this.defaults[alias] && !this.defaults[alias].disabled) return this.defaults[alias]
   }
 
   /** Determine if a user with `badges` would be permitted to call this command */
-  public isPermitted(permissions: string[] | number, badges: IrcMessage['tags']['badges'] /*  { [badge: string]: number } */, user: string) {
+  public isPermitted(permissions: string[] | number, badges: IrcMessage['tags']['badges'] /*  { [badge: string]: number } */, userId: number) {
     // Number: 0: everyone, 1: subscriber, 2: moderator, 3: broadcaster, 10: master
     if (badges === undefined) return
-    if (this.masters.includes(user)) return true
+    if (this.masters.includes(userId)) return true
     if (typeof permissions === 'number') {
       switch (permissions) {
         case 0:
@@ -274,31 +274,31 @@ export default class Commander {
     }
   }
 
-  private onPrivMessage(channel: string, user: string, userstate: IrcMessage['tags'], message: string, me: boolean, self: boolean) {
+  private onPrivMessage(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean, self: boolean) {
     if (self) return
     const words = message.split(' ')
-    const alias = this.getActiveAlias(channel, words[0])
-    if (alias) this.callCommand(channel, user, alias, userstate, message, me)
+    const alias = this.getActiveAlias(channelId, words[0])
+    if (alias) this.callCommand(channelId, userId, alias, userstate, message, me)
   }
 
-  private async callCommand(channel: string, user: string, alias: CommandAlias, userstate: IrcMessage['tags'], message: string, me: boolean) {
+  private async callCommand(channelId: number, userId: number, alias: CommandAlias, userstate: Required<IrcMessage['tags']>, message: string, me: boolean) {
     // !!! Implement the ban API
     const instance = this.instances[alias.id]
     if (!instance) return console.log(`Cannot call unloaded command: ${alias.id}`) // Command may not be loaded yet
     if (typeof instance.call !== 'function') throw new Error(`Invalid call function on command plugin instance: ${alias.id}`)
-    if (alias.permissions === undefined || this.isPermitted(alias.permissions, userstate.badges, user)) {
-      if (!this.masters.includes(user) && this.isOnCooldown(channel, user, alias)) {
-        if (typeof instance.cooldown === 'function') instance.cooldown(channel, user, userstate, message, message.split(' '), me)
+    if (alias.permissions === undefined || this.isPermitted(alias.permissions, userstate.badges, userId)) {
+      if (!this.masters.includes(userId) && this.isOnCooldown(channelId, userId, alias)) {
+        if (typeof instance.cooldown === 'function') instance.cooldown(channelId, userId, userstate, message, message.split(' '), me)
         return
       }
-      const res = await instance.call(channel, user, userstate, message, message.split(' '), me)
-      if (res) this.client.chat(channel, res)
+      const res = await instance.call(channelId, userId, userstate, message, message.split(' '), me)
+      if (res) this.client.chat(channelId, res)
     }
   }
 
   /** Determine if command is on cooldown. Assumes a message is sent if returns false */
-  private isOnCooldown(channel: string, user: string, alias: CommandAlias) {
-    const cooldowns = this.data.getData(channel, 'cooldowns')
+  private isOnCooldown(channelId: number, user: number, alias: CommandAlias) {
+    const cooldowns = this.data.getData(channelId, 'cooldowns')
     if (!cooldowns) return false
     // !!! Implement the permit API
     let res1 = 0

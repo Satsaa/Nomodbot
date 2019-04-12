@@ -24,7 +24,7 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
   }
 
-  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
+  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
     process.exit()
     if (userstate.peter) return
     return 'Exit unsuccessful?'

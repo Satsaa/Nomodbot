@@ -24,11 +24,11 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
   }
 
-  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
-    let subType = params[1]
+  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+    let subType = ~~params[1]
     let name = params[2]
     if (!params[2]) { // Channel specific with single param
-      subType = channel
+      subType = channelId
       name = params[1]
     }
     if (!this.l.getData(subType, name)) return ` \\${subType}\\${name} is not loaded`

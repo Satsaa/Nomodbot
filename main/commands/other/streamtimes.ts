@@ -25,9 +25,9 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
   }
 
-  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
+  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
     try {
-      const recent = await this.l.api.recentBroadcasts(channel)
+      const recent = await this.l.api.recentBroadcasts(channelId)
       if (typeof recent !== 'object') return 'Cannot resolve recent broadcasts'
 
       let count = 30
@@ -46,7 +46,7 @@ export class Instance implements PluginInstance {
         totalDuration += this.l.u.parseTimeStr(video.duration)
         total++
       }
-      if (total < 1) return `${await this.l.api.toDisplay(channel) || channel} usually doesn't stream :/`
+      if (total < 1) return `${await this.l.api.getDisplay(channelId) || channelId} usually doesn't stream :/`
 
       const averageDuration = totalDuration / total
       let averageAngle = meanAngleDeg(clockAngles)
@@ -58,11 +58,11 @@ export class Instance implements PluginInstance {
       if (minutes.toString().length === 1) minutes = `0${minutes}`
 
       if (total === 1) {
-        return `${await this.l.api.toDisplay(channel) || channel}'s previous stream started at ${hours}:${minutes} UTC and `
+        return `${await this.l.api.getDisplay(channelId) || channelId}'s previous stream started at ${hours}:${minutes} UTC and `
           + `lasted for ${this.l.u.timeDuration(averageDuration, 2)}`
       }
 
-      return `${await this.l.api.toDisplay(channel) || channel} usually streams at ${hours}:${minutes} UTC `
+      return `${await this.l.api.getDisplay(channelId) || channelId} usually streams at ${hours}:${minutes} UTC `
         + `for ${this.l.u.timeDuration(averageDuration, 2)} (average of ${total} previous ${this.l.u.plural(total, 'stream', true)})`
     } catch (err) {
       console.error(err)

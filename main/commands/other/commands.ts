@@ -14,7 +14,9 @@ export const options: PluginOptions = {
       userCooldown: 180,
     },
   },
-  help: ['Display enabled commands: {alias} [<userlevel> | <badge>]'],
+  help: [
+    'Display enabled commands: {alias} [<userlevel> | <badge>]',
+  ],
 }
 
 export class Instance implements PluginInstance {
@@ -25,11 +27,14 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
   }
 
-  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
-    const aliases = this.l.getActiveAliases(channel)
+  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+    const aliases = this.l.getActiveAliases(channelId)
     const aliasArray = []
+    const userLvl = isNaN(+params[1]) ? undefined : +params[1]
     for (const alias in aliases) {
-      if (!aliases[alias].hidden) aliasArray.push(alias)
+      if (userLvl !== undefined && (aliases[alias].permissions || 0) !== userLvl) continue
+      if (aliases[alias].hidden) continue
+      aliasArray.push(alias)
     }
     return aliasArray.sort().join(', ')
   }

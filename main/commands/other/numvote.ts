@@ -51,13 +51,13 @@ export class Instance implements PluginInstance {
     }
   }
 
-  public async call(channel: string, user: string, userstate: IrcMessage['tags'], message: string, params: string[], me: boolean) {
-    if (!this.voteData[channel]) this.voteData[channel] = { voters: [], votes: {}, time: this.opts.time, timeout: undefined }
+  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+    if (!this.voteData[channelId]) this.voteData[channelId] = { voters: [], votes: {}, time: this.opts.time, timeout: undefined }
 
-    const voting = this.voteData[channel]
+    const voting = this.voteData[channelId]
 
-    if (voting.voters.includes(userstate['user-id']!)) return // Single vote per user
-    voting.voters.push(userstate['user-id']!)
+    if (voting.voters.includes(userstate['user-id'])) return // Single vote per user
+    voting.voters.push(userstate['user-id'])
 
     if (!voting.votes[params[0]]) voting.votes[params[0]] = 0
     voting.votes[params[0]]++
@@ -71,7 +71,7 @@ export class Instance implements PluginInstance {
         if (voting.votes[vote] >= this.opts.minVotes) accepted[vote] = voting.votes[vote]
       }
       if (total < this.opts.minTotal || Object.keys(accepted).length < 2) {
-        this.voteData[channel] = { voters: [], votes: {}, time: this.opts.time, timeout: undefined }
+        this.voteData[channelId] = { voters: [], votes: {}, time: this.opts.time, timeout: undefined }
         return
       }
       const results = []
@@ -79,8 +79,8 @@ export class Instance implements PluginInstance {
         results.push(`${vote}: ${Math.round(accepted[vote] / total * 100)}%`)
       }
       // Votes displayed like: '| 1: 25% | 2: 45% |'
-      this.l.chat(channel, `| ${results.join(' | ')} |`)
-      this.voteData[channel] = { voters: [], votes: {}, time: this.opts.time, timeout: undefined }
+      this.l.chat(channelId, `| ${results.join(' | ')} |`)
+      this.voteData[channelId] = { voters: [], votes: {}, time: this.opts.time, timeout: undefined }
     }, voting.time)
     console.log(voting.time)
     voting.time *= this.opts.decay
