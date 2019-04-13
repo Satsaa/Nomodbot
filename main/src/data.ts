@@ -53,7 +53,7 @@ export default class Data extends EventEmitter {
     return true
   }
 
-  /** Wait until the data is loaded. Resolves with the arguments the event gives or undefined if timedout */
+  /** Wait until the data is loaded. Resolves with the data or undefined if timedout */
   public async waitData(subType: string | number, name: string, timeout?: number): Promise<object | undefined> {
     if (this.getData(subType, name)) return this.getData(subType, name)
     return new Promise((resolve) => {
@@ -159,7 +159,7 @@ export default class Data extends EventEmitter {
    * @param defaultData If the file doesn't exist, create it with this data
    * @param setDefaults Define all keys of the loaded data that exist in `defaultData` with the default value
    */
-  public autoLoad(name: string, defaultData?: object, setDefaults = false) {
+  public autoLoad(name: string, defaultData: object, setDefaults = false) {
     for (const channel in this.client.clientData.channels) { // Load for present channels
       this.load(channel, name, defaultData, setDefaults)
     }

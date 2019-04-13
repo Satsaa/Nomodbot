@@ -12,14 +12,14 @@ export const options: PluginOptions = {
 
 export interface ListsExtension {
   /**
-   * Gets a global or `channel` list instance based on `pluginId`  
+   * Gets a global or `channelId` list instance based on `listName`  
    * All functions return [usedIndex(one-based), valueOfEntry]  
    * Use safe = true to disable out of bounds to valid index conversion  
    * 
    * ALL LISTS USE ONE BASED INDEXING  
-   * NEGATIVE INDEXES RETURN THE NTH LAST INDEXES  
-   * NO INPUTTED INDEX IS INVALID  
-   * INPUT INDEX IS RESTRICTED TO VALID INDEXES
+   * NEGATIVE INDEXES RETURN THE NTH LAST ENTRY  
+   * ALL INDEXES WILL RETURN A VALID ENTRY  
+   * WITH `safe` ONLY INDEXES WITHIN THE LIST LENGTH RETURN AN ENTRY  
    * 
    * In a 10 length list  
    * `getEntry(5) => [5, entries[4]]`  
@@ -28,6 +28,7 @@ export interface ListsExtension {
    * `getEntry(0) => [1, entries[0]]`  
    * `getEntry(99) => [10, entries[9]]`  
    * 
+   * Same but with `safe` set to true
    * `getEntry(3, true) => [3, entries[2]]`  
    * `getEntry(99, true) => [falsy, undefined]`  
    * `getEntry(-2, true) => [falsy, undefined]`  

@@ -7,25 +7,30 @@ import * as util from './lib/util'
 export default class PluginLibrary {
 
   /** util library */
-  public u: typeof util
+  public readonly u: typeof util
   /** Libaries shared by plugins */
-  public ext: {[commandId: string]: {[x: string]: any}}
+  public readonly ext: {[commandId: string]: {[x: string]: any}}
 
-  public emitter: {
+  public readonly emitter: {
     readonly on: TwitchClient['on']
     readonly once: TwitchClient['once']
     readonly removeListener: TwitchClient['removeListener']
     readonly prependListener: TwitchClient['prependListener']
     readonly prependOnceListener: TwitchClient['prependOnceListener'],
   }
-  public api: TwitchClient['api']
+  public readonly api: TwitchClient['api']
 
   /**
+   * Returns the path to the file where the specified data is stored
+   */
+  public readonly getPath: Data['getPath']
+  /**
    * Returns the data or undefined if it isn't loaded.  
-   * Data will be an object and therefore a reference, so keep that it mind. The undefined value is not a reference
+   * Data will be an object and therefore a reference, so changes to that object will change it for others  
+   * The undefined value is not a reference
    */
   public readonly getData: Data['getData']
-  /** Wait until the data is loaded. Resolves with the arguments the event gives or undefined if timedout */
+  /** Wait until the data is loaded. Resolves with the data or undefined if timedout */
   public readonly waitData: Data['waitData']
   /**
    * Loads or unloads specified data for each channel when the bot joins or parts one  
@@ -105,6 +110,7 @@ export default class PluginLibrary {
     }
     this.api = this.client.api
 
+    this.getPath = this.data.getPath.bind(this.data)
     this.getData = this.data.getData.bind(this.data)
     this.waitData = this.data.waitData.bind(this.data)
     this.autoLoad = this.data.autoLoad.bind(this.data)
