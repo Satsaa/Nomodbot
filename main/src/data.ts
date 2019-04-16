@@ -46,12 +46,6 @@ export default class Data extends EventEmitter {
     if (!this.data[subType]) this.data[subType] = {}
     return this.data[subType][name] = value
   }
-  /** Delete the data */
-  public delData(subType: string | number, name: string) {
-    if (!this.getData(subType, name)) return false
-    delete this.data[subType][name]
-    return true
-  }
 
   /** Wait until the data is loaded. Resolves with the data or undefined if timedout */
   public async waitData(subType: string | number, name: string, timeout?: number): Promise<object | undefined> {
@@ -164,6 +158,13 @@ export default class Data extends EventEmitter {
       this.load(channel, name, defaultData, setDefaults)
     }
     this.autoLoads.push({name, defaultData, setDefaults})
+  }
+
+  /** Delete the data */
+  private delData(subType: string | number, name: string) {
+    if (!this.getData(subType, name)) return false
+    delete this.data[subType][name]
+    return true
   }
 
   private onJoin(channelId: number) {

@@ -14,7 +14,7 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Save all loaded files: {alias} all',
+    'Save all loaded files: {alias}',
     'Save the file in \\{channel}\\name: {alias} <name>',
     'Save the file in \\subType\\name: {alias} <subType> <name>',
   ],
@@ -29,7 +29,7 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
-    if (params[1].toLowerCase() === 'all') {
+    if (!params[1]) {
       this.l.saveAllSync()
       return 'Saved all data'
     }

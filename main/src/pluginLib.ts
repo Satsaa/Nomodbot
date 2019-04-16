@@ -39,6 +39,10 @@ export default class PluginLibrary {
    * @param defaultData If the file doesn't exist, create it with this data
    * @param setKeys Define all keys of the loaded data that exist in `defaultData` with the default value
    */
+  /**
+   * Returns the path to the file where the specified data is stored
+   */
+  public readonly setData: Data['setData']
   public readonly autoLoad: Data['autoLoad']
   /**
    * Loads a file in `Data.dataPath`/`subType`/`name`
@@ -113,6 +117,7 @@ export default class PluginLibrary {
     this.getPath = this.data.getPath.bind(this.data)
     this.getData = this.data.getData.bind(this.data)
     this.waitData = this.data.waitData.bind(this.data)
+    this.setData = this.data.setData.bind(this.data)
     this.autoLoad = this.data.autoLoad.bind(this.data)
     this.load = this.data.load.bind(this.data)
     this.reload = this.data.reload.bind(this.data)

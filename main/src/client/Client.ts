@@ -225,7 +225,7 @@ export default class TwitchClient {
     })
   }
 
-  /** Join `channels` */
+  /** Join `channels` by ids or names */
   public async join(channels: Array<number | string>): Promise<boolean>
   /** Join `channelIds` */
   public async join(channelIds: number[]): Promise<boolean>
@@ -250,7 +250,7 @@ export default class TwitchClient {
     return (await Promise.all(promises)).every(v => v.timeout === false)
   }
 
-  /** Part `channels` */
+  /** Part `channels` by ids or names */
   public async part(channels: Array<number | string>): Promise<boolean>
   /** Part `channelIds` */
   public async part(channelIds: number[]): Promise<boolean>
