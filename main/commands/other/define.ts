@@ -42,7 +42,7 @@ export class Instance implements PluginInstance {
 
     const words = params.slice(1).join(' ')
     try {
-      const data = await this.define(words, 'en', this.appId, this.appKey)
+      const data = await this.define(words, 'en-gb', this.appId, this.appKey)
       if (typeof data !== 'object' || !Array.isArray(data.results)) {
         if (typeof data === 'string') return this.l.u.cap(data.toLowerCase())
         return 'The API returned invalid data'
@@ -65,7 +65,7 @@ export class Instance implements PluginInstance {
       }
 
       if (entry.lexicalCategory) {
-        category = data.results[0].lexicalEntries[0].lexicalCategory // noun, verb etc
+        category = data.results[0].lexicalEntries[0].lexicalCategory.text // noun, verb etc
       }
 
       definition = definition || 'No definition.'
@@ -84,7 +84,7 @@ export class Instance implements PluginInstance {
       const options = {
         host: 'od-api.oxforddictionaries.com',
         port: 443,
-        path: '/api/v1/entries/' + lang + '/' + encodeURIComponent(words),
+        path: '/api/v2/entries/' + lang + '/' + encodeURIComponent(words),
         method: 'GET',
         headers: {
           accept: 'application/json',
