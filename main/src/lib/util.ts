@@ -87,8 +87,9 @@ export function containsSharedReference(obj1: object, obj2: object) {
 
 /**
  * Human compatible indexes  
- * `index` = 1 returns 0. `index` = -3 returns the 3rd largest index
- * @param index Wanted index
+ * Converts 1 based indexes to 0 based indexes and limits the result to be within 0-max  
+ * Allows using negative indexes to get -nth last indexes
+ * @param index Input index
  * @param max Maximum index. Can also use an array for max index
  */
 export function smartIndex(index: number, max: number | any[] = Infinity) {
@@ -123,15 +124,15 @@ export function MSToDHMS(ms: number) {
  * Get string telling how long until time is `ms`
  * @param ms Time in milliseconds
  * @param top How many time units to return
- * @param long Use short units (d or days)
+ * @param long Use long units (d or days)
  */
-export function timeUntill(ms: number, top = 4, long = false) { return timeDuration(MSToDHMS(ms - Date.now()), top, long) }
+export function timeUntil(ms: number, top = 4, long = false) { return timeDuration(MSToDHMS(ms - Date.now()), top, long) }
 
 /**
  * Get string telling how long since time was `ms`
  * @param ms Time in milliseconds
  * @param top How many time units to return
- * @param long Use short units (d or days)
+ * @param long Use long units (d or days)
  */
 export function timeSince(ms: number, top = 4, long = false) { return timeDuration(MSToDHMS(Date.now() - ms), top, long) }
 
@@ -139,7 +140,7 @@ export function timeSince(ms: number, top = 4, long = false) { return timeDurati
  * Get string telling how long is ms
  * @param t Time in milliseconds or time array [days,hours,minutes,seconds]
  * @param top How many time units to return
- * @param short Use short units (d or days)
+ * @param long Use long units (d or days)
  */
 export function timeDuration(t: number | number[], top = 4, long = false) {
   let exists = 0
@@ -231,8 +232,8 @@ export function insert(str: string, index: number, insert: string) { return str.
  * @param plural Plural form. Defaults to `singular + 's'`
  * @param noValue `value` wont be returned with the result
  */
-export function plural(v: string | number, singular: string, noValue?: boolean, plural?: string): string
 export function plural(v: string | number, singular: string, plural?: string, noValue?: boolean): string
+export function plural(v: string | number, singular: string, noValue?: boolean, plural?: string): string
 export function plural(v: string | number, singular: string, plural?: string | boolean, noValue: boolean | string = false) {
   if (typeof plural === 'boolean') {
     const old = noValue
@@ -244,17 +245,20 @@ export function plural(v: string | number, singular: string, plural?: string | b
 }
 
 const onExitCbs: Array<(code: number) => void> = []
-const signals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBUS', 'SIGFPE', 'SIGSEGV', 'SIGILL', 'SIGUSR1', 'SIGUSR2', 'SIGQUIT', 'uncaughtException']
+const signals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBUS', 'SIGFPE', 'SIGSEGV', 'SIGILL', 'SIGUSR1', 'SIGUSR2', 'SIGQUIT']
+const throwSignals = ['uncaughtException']
 const onExitFunc = (code: number) => {
-  onExitCbs.forEach((cb) => {cb(code)})
-  signals.forEach((signal: any) => {
-    process.removeListener(signal, onExitFunc)
-  })
+  onExitCbs.forEach(cb => cb(code))
+  signals.forEach((signal: any) => process.removeListener(signal, onExitFunc))
   process.exit(code)
 }
-signals.forEach((signal: any) => {
-  process.on(signal, onExitFunc)
-})
+const throwOnExitFunc = (error: Error) => {
+  onExitCbs.forEach(cb => cb(1))
+  signals.forEach((signal: any) => process.removeListener(signal, onExitFunc))
+  throw error
+}
+signals.forEach((signal: any) => process.on(signal, onExitFunc))
+throwSignals.forEach((signal: any) => process.on(signal, throwOnExitFunc))
 /**
  * Attempts to excecute `cb` when the script is exiting.  
  * Does process.exit(code) after callbacks are finished

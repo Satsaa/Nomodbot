@@ -67,7 +67,7 @@ export default class Data extends EventEmitter {
     for (const subType in this.data) {
       for (const name in this.data[subType]) {
         const data  = this.getData(subType, name)
-        if (data) fs.writeFileSync(`${this.dataPath}${subType}/${name}.json`, JSON.stringify(data, null, 2))
+        if (data) fs.writeFileSync(`${this.dataPath}${subType}/${name}.json`, JSON.stringify(data, null, 0))
         else console.error(`Failed to save ${subType}\\${name} because it was undefined`)
       }
     }
@@ -170,7 +170,7 @@ export default class Data extends EventEmitter {
   private onJoin(channelId: number) {
     for (const autoLoad of this.autoLoads) {
       if (!(this.data[channelId] || {})[autoLoad.name]) {
-        this.load(channelId.toString(), autoLoad.name, autoLoad.defaultData, autoLoad.setDefaults)
+        this.load(channelId, autoLoad.name, autoLoad.defaultData, autoLoad.setDefaults)
       }
     }
   }
@@ -178,7 +178,7 @@ export default class Data extends EventEmitter {
   private onPart(channelId: number) {
     for (const autoLoad of this.autoLoads) {
       if ((this.data[channelId] || {})[autoLoad.name]) {
-        this.save(channelId.toString(), autoLoad.name, true).then(() => {}, (err) => {
+        this.save(channelId, autoLoad.name, true).then(() => {}, (err) => {
           console.log(`[Data.autoLoad] Error unloading ${channelId}`, err)
         })
       }

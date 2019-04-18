@@ -177,6 +177,32 @@ export default class Commander {
       return this.data.data[channelId].aliases[alias]
     } else if (this.defaults[alias] && !this.defaults[alias].disabled) return this.defaults[alias]
   }
+  public getAliasesById(channelId: number, commandId: string) {
+    const results: CommandAlias[] = []
+    if ((this.data.data[channelId] || {}).aliases) {
+      const aliases = this.data.data[channelId].aliases as {[alias: string]: CommandAlias}
+      for (const alias in aliases) {
+        if (aliases[alias].id === commandId) results.push(aliases[alias])
+      }
+    }
+    for (const alias in this.defaults) {
+      if (this.defaults[alias].id === commandId) results.push(this.defaults[alias])
+    }
+    return results
+  }
+  public getActiveAliasesById(channelId: number, commandId: string) {
+    const results: CommandAlias[] = []
+    if ((this.data.data[channelId] || {}).aliases) {
+      const aliases = this.data.data[channelId].aliases as {[alias: string]: CommandAlias}
+      for (const alias in aliases) {
+        if (!this.defaults[alias].disabled && aliases[alias].id === commandId) results.push(aliases[alias])
+      }
+    }
+    for (const alias in this.defaults) {
+      if (!this.defaults[alias].disabled && this.defaults[alias].id === commandId) results.push(this.defaults[alias])
+    }
+    return results
+  }
 
   /** Determine if a user with `badges` would be permitted to call this command */
   public isPermitted(permissions: string[] | number, badges: IrcMessage['tags']['badges'] /*  { [badge: string]: number } */, userId: number) {

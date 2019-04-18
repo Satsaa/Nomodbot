@@ -86,8 +86,14 @@ export default class PluginLibrary {
   public readonly enableAlias: Commander['enableAlias']
   /** Disable command alias */
   public readonly disableAlias: Commander['disableAlias']
+  /** Return alias */
+  public readonly getAlias: Commander['getAlias']
   /** Return active alias */
   public readonly getActiveAlias: Commander['getActiveAlias']
+  /** Returns the aliases whose id match `commandId` */
+  public readonly getAliasesById: Commander['getAliasesById']
+  /** Returns the active aliases whose id match `commandId` */
+  public readonly getActiveAliasesById: Commander['getActiveAliasesById']
   /** Determine if a user with `badges` would be permitted to call this command */
   public readonly isPermitted: Commander['isPermitted']
 
@@ -133,7 +139,10 @@ export default class PluginLibrary {
     this.deleteAlias = this.commander.deleteAlias.bind(this.commander)
     this.enableAlias = this.commander.enableAlias.bind(this.commander)
     this.disableAlias = this.commander.disableAlias.bind(this.commander)
+    this.getAlias = this.commander.getAlias.bind(this.commander)
     this.getActiveAlias = this.commander.getActiveAlias.bind(this.commander)
+    this.getAliasesById = this.commander.getAliasesById.bind(this.commander)
+    this.getActiveAliasesById = this.commander.getActiveAliasesById.bind(this.commander)
     this.isPermitted = this.commander.isPermitted.bind(this.commander)
 
   }
@@ -194,15 +203,9 @@ export default class PluginLibrary {
     return res
   }
 
-  /** Returns the command alias options or undefined if the alias doesn't exist */
-  public getAlias(channel: string, word: string): CommandAlias | void {
-    if (((this.data.data[channel] || {}).aliases || {})[word]) {
-      return this.data.data[channel].aliases[word]
-    } else if (this.commander.defaults[word]) return this.commander.defaults[word]
-  }
   /** Returns default aliases or aliases of a channel */
   public getAliases(channel?: string): { [x: string]: CommandAlias; } {
-    if (channel)  return this.data.data[channel].aliases
+    if (channel) return this.data.data[channel].aliases
     else return this.commander.defaults
   }
   /** Returns active default aliases or active aliases of a channel  */
@@ -217,6 +220,7 @@ export default class PluginLibrary {
       // Channel aliases
       for (const alias in this.data.data[channelId].aliases) {
         if (this.data.data[channelId].aliases[alias].disabled) continue
+        // Channel aliases may and should overwrite default aliases here
         aliases[alias] = this.data.data[channelId].aliases[alias]
       }
     }

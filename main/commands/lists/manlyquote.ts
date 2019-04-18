@@ -16,7 +16,7 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Shows a random or specific manly quote: {alias} [<index>]',
+    'Show a random or specific manly quote: {alias} [<index>]',
     'Add a new manly quote: {alias} add <quote>',
     'Edit a manly quote at index: {alias} edit <index> <quote>',
     'Insert a new manly quote at index: {alias} insert <index> <quote>',

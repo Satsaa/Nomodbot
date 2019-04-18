@@ -301,7 +301,7 @@ export default class TwitchClient {
         if (!res.timeout) {
           // Emit own messages
           const botId = await this.api.getId(this.opts.username)
-          if (!botId) return this.failId('BOT ID')
+          if (!botId) return this.failHandle(undefined, 'BOT ID')
           this.emit('chat', channelId, botId, res.args[1] as Required<IrcMessage['tags']>, msg, msg.search(/^(\.|\/|\\)me/) !== -1, true)
         }
         resolve(!res.timeout)
@@ -476,12 +476,9 @@ export default class TwitchClient {
     delete this.channelCache.users[channelId][user]
   }
 
-  private failId(msg: any) {
-    console.warn(`${msg} dropped. Can't retrieve id`)
-  }
-  private failHandle(msg: IrcMessage, message: any) {
-    console.warn(message)
-    console.log(msg)
+  private failHandle(msg: undefined | IrcMessage, message: any) {
+    console.log(new Error(message))
+    if (msg) console.log(msg)
   }
 
   private async handleMessage(msg: IrcMessage) {
@@ -505,7 +502,7 @@ export default class TwitchClient {
       case '353': // :nomodbot.<prefix> 353 <you> = #<channel> :<user1> <user2> ... <userN>
         channel = msg.params[2].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failId(msg.cmd)
+        if (!channelId) return this.failHandle(msg, msg.cmd)
         for (const user of msg.params[3].split(' ')) this.userJoin(channelId, user)
         break
       case 'CAP':
@@ -513,13 +510,13 @@ export default class TwitchClient {
       case 'MODE': // :jtv MODE #<channel> +o||-o <user>
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failId(msg.cmd)
+        if (!channelId) return this.failHandle(msg, msg.cmd)
         this.mod(channelId, msg.params[2], msg.params[1] === '+o')
         break
       case 'JOIN': // :<user>!<user>@<user>.tmi.twitch.tv JOIN #<channel>
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failId(msg.cmd)
+        if (!channelId) return this.failHandle(msg, msg.cmd)
         if (msg.user === this.opts.username) {
           this.clientData.channels[channelId] = {userstate: {}, phase: false}
           this.channels[channelId] = channel
@@ -531,7 +528,7 @@ export default class TwitchClient {
       case 'PART': // :<user>!<user>@<user>.tmi.twitch.tv PART #<channel>
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failId(msg.cmd)
+        if (!channelId) return this.failHandle(msg, msg.cmd)
         if (msg.user === this.opts.username) {
           delete this.channels[channelId]
           delete this.ids[channel]
@@ -545,7 +542,7 @@ export default class TwitchClient {
         // @room-id=61365582;tmi-sent-ts=1553598835278 :tmi.twitch.tv CLEARCHAT #satsaa
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failId(msg.cmd)
+        if (!channelId) return this.failHandle(msg, msg.cmd)
         if (!msg.params[1]) this.ircLog(`Chat of ${channel} cleared`)
         else {
           this.ircLog(`${msg.params[1]} ${typeof msg.tags['ban-duration'] === 'number'
@@ -557,14 +554,14 @@ export default class TwitchClient {
           return
         }
         const userId = await this.api.getId(msg.params[1])
-        if (!userId) return this.failId(msg.cmd)
+        if (!userId) return this.failHandle(msg, msg.cmd)
         if (typeof msg.tags['ban-duration'] === 'number') this.emit('timeout', channelId, userId, msg.tags['ban-duration'] as number)
         else this.emit('ban', channelId, userId)
         break
       case 'ROOMSTATE': // <tags> :tmi.twitch.tv ROOMSTATE #<channel>
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failId(msg.cmd)
+        if (!channelId) return this.failHandle(msg, msg.cmd)
         if (msg.tags['emote-only'] === 1) { this.ircLog(`${channel} is in emote only mode`)}
         if (msg.tags['followers-only'] !== -1) { this.ircLog(`${channel} is in follower only mode (${msg.tags['followers-only']})`)}
         if (msg.tags['subs-only'] === 1) { this.ircLog(`${channel} is in subscriber only mode`)}
@@ -576,7 +573,7 @@ export default class TwitchClient {
           // @badges=;color=#008000;display-name=NoModBot;emote-sets=0,326755;mod=0;subscriber=0;user-type=
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failId(msg.cmd)
+        if (!channelId) return this.failHandle(msg, msg.cmd)
         this.clientData.channels[channelId].userstate = {...this.clientData.channels[channelId].userstate, ...(msg ? msg.tags : {})}
         this.emit('userstate', channelId,  msg.tags)
         break
@@ -588,10 +585,10 @@ export default class TwitchClient {
       case 'HOSTTARGET':
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failId(msg.cmd)
+        if (!channelId) return this.failHandle(msg, msg.cmd)
         if (msg.params[1]) {
           const targetId = await this.api.getId(msg.params[1].slice(0, -2))
-          if (!targetId) return this.failId(msg.cmd)
+          if (!targetId) return this.failHandle(msg, msg.cmd)
           this.emit('hosttarget', channelId, targetId, msg.params[2] !== undefined ? ~~msg.params[2] : null)
         } else this.emit('hosttarget', channelId, null, msg.params[2] !== undefined ? ~~msg.params[2] : null)
         // HOSTTARGET #<channel> :<targetchannel> -
@@ -601,7 +598,7 @@ export default class TwitchClient {
       case 'PRIVMSG': // @userstate :<user>!<user>@<user>.tmi.twitch.tv PRIVMSG #<channel> :<message>
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failId(msg.cmd)
+        if (!channelId) return this.failHandle(msg, msg.cmd)
         const _msg = msg.params[1].endsWith(' \u206D') ? msg.params[1].substring(0, msg.params[1].length - 2) : msg.params[1]
         this.ircLog(`[${channel}] ${msg.tags['display-name']}: ${_msg}`)
         this.api.cacheUser(msg.tags['user-id']!, msg.tags['display-name']!)
@@ -624,7 +621,7 @@ export default class TwitchClient {
       case 'CLEARMSG': // @login=<login>;target-msg-id=<target-msg-id> :tmi.twitch.tv CLEARMSG #<channel> :<message>
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failId(msg.cmd)
+        if (!channelId) return this.failHandle(msg, msg.cmd)
         this.emit('clearmsg', channelId, msg.tags['target-msg-id'], msg.tags, msg.params[1])
         break
       case 'SERVERCHANGE':
@@ -638,7 +635,7 @@ export default class TwitchClient {
       case 'USERNOTICE': // <tags> <prefix> USERNOTICE #<channel> :<message>
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failId(msg.cmd)
+        if (!channelId) return this.failHandle(msg, msg.cmd)
         this.emit('usernotice', channelId, msg.tags, msg.params[1])
         switch (msg.tags['msg-id']) {
           case 'resub':
@@ -675,12 +672,12 @@ export default class TwitchClient {
           case 'raid':
             const viewerCount = msg.tags['viewer-count'] as number | null
             let id = await this.api.getId(msg.tags.login as string)
-            if (!id) return this.failId(msg.tags['msg-id'])
+            if (!id) return this.failHandle(msg, msg.tags['msg-id'])
             this.emit('raid', channelId, id, viewerCount)
             break
           case 'ritual':
             id = await this.api.getId(msg.tags.login as string)
-            if (!id) return this.failId(msg.tags['msg-id'])
+            if (!id) return this.failHandle(msg, msg.tags['msg-id'])
             this.emit('ritual', channelId, id, msg.tags['msg-param-ritual-name'] as string, msg.params[1])
             break
           // Not actual subscriptions? Advertisement of sorts. Subtember
@@ -703,7 +700,7 @@ export default class TwitchClient {
       case 'NOTICE': // <tags> <prefix> NOTICE #<channel> :<message>
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failId(msg.cmd)
+        if (!channelId) return this.failHandle(msg, msg.cmd)
         if (msg.tags['msg-id'] === 'msg_ratelimit') this.ircLog('Rate limited')
         this.emit('notice', channelId, msg.tags, msg.params[1])
         switch (msg.tags['msg-id']) {
@@ -713,12 +710,12 @@ export default class TwitchClient {
           case 'msg_timedout':
             const length = typeof msg.params[1] === 'string' ? ~~msg.params[1].match(/([0-9]*)[a-zA-Z .]*$/)![1] : 0
             let userId = await this.api.getId(this.opts.username)
-            if (!userId) return this.failId(msg.tags['msg-id'])
+            if (!userId) return this.failHandle(msg, msg.tags['msg-id'])
             this.emit('timeout', channelId, userId, length)
             break
           case 'msg_banned':
             userId = await this.api.getId(this.opts.username)
-            if (!userId) return this.failId(msg.tags['msg-id'])
+            if (!userId) return this.failHandle(msg, msg.tags['msg-id'])
             this.emit('ban', channelId, userId)
             break
           default: // Handled in the near to infinite future

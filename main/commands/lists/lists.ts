@@ -28,7 +28,7 @@ export interface ListsExtension {
    * `getEntry(0) => [1, entries[0]]`  
    * `getEntry(99) => [10, entries[9]]`  
    * 
-   * Same but with `safe` set to true
+   * `safe` = true
    * `getEntry(3, true) => [3, entries[2]]`  
    * `getEntry(99, true) => [falsy, undefined]`  
    * `getEntry(-2, true) => [falsy, undefined]`  

@@ -16,7 +16,7 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Shows a random or specific quote: {alias} [<index>]',
+    'Show a random or specific quote: {alias} [<index>]',
     'Add a new quote: {alias} add <quote>',
     'Edit a quote at index: {alias} edit <index> <quote>',
     'Insert a new quote at index: {alias} insert <index> <quote>',
