@@ -77,13 +77,15 @@ export class Instance implements PluginInstance {
   private streams: { [channelId: number]: fs.WriteStream }
   /** File descriptors of each channel */
   private fds: { [channelId: number]: number }
-  private defaultData: LogData
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.streams = {}
     this.fds = {}
-    this.defaultData = { offset: 0, messageCount: 0, userCount: 0, firstSec: 0, lastSec: 0, users: {} }
+  }
+
+  private get defaultData(): LogData {
+    return { offset: 0, messageCount: 0, userCount: 0, firstSec: 0, lastSec: 0, users: {} }
   }
 
   public async init() {
@@ -258,6 +260,7 @@ export class Instance implements PluginInstance {
   /** Initializes the write stream. Testing for errors and retracking if necessary */
   private async initStream(channelId: number) {
     const path = this.l.getPath(channelId, 'log', 'txt')
+    await fsp.mkdir(path.replace('log.txt', ''), {recursive: true})
     const stream = fs.createWriteStream(path, { flags: 'a+'})
     stream.once('open', (fd) => {
       this.streams[channelId] = stream

@@ -68,6 +68,9 @@ export default class TwitchApi {
       if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, '{}')
       else throw err
     }
+    // !!! the saved userid/apiCache file does not save with dispaly names (login names isntead)
+    // To have uid -> display and login -> uid a third object should exist that is saved and loaded in the file (contains DISPLAY -> uid)
+    // this.userIds could be built from that like this.displays are
     this.cache = JSON.parse(fs.readFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, 'utf8')) as TwitchApi['cache']
     defaultKeys(this.cache, {queueIds: [], queueDisplays: [], userIds: {}, channels: {}})
 

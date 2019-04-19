@@ -6,3 +6,7 @@ node_modules
 tempCodeRunnerFile.js
 bin/
 tsconfig.tsbuildinfo
+main/src/tools/logConverter/log.txt
+main/src/tools/logConverter/logOut.txt
+main/src/tools/logConverter/skippedLines.txt
+main/src/tools/logConverter/ids.json
