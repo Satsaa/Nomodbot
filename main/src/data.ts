@@ -174,7 +174,7 @@ export default class Data extends EventEmitter {
 
   private onJoin(channelId: number) {
     for (const autoLoad of this.autoLoads) {
-      if (!this.data[channelId] && typeof this.data[channelId][autoLoad.name] !== 'object') {
+      if (!this.data[channelId] || typeof this.data[channelId][autoLoad.name] !== 'object') {
         this.load(channelId, autoLoad.name, autoLoad.defaultData, autoLoad.setDefaults)
       }
     }
