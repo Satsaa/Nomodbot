@@ -117,7 +117,7 @@ export default class Data extends EventEmitter {
   public async load(subType: string | number, name: string, defaultData?: object, setDefaults = false): Promise<object> {
     if (!this.data[subType]) this.data[subType] = {}
     if (this.getData(subType, name)) throw new Error(`${name} has already been loaded by another source`)
-    this.setData(subType, name, {}) // Blocks new loads on this data type
+    this.setDataAny(subType, name, true) // Blocks new loads on this data type
     const file = `${this.dataPath}${subType}/${name}.json`
     try { // Check if file is already created
       await fsp.access(file, fs.constants.F_OK)
@@ -167,9 +167,14 @@ export default class Data extends EventEmitter {
     return true
   }
 
+  private setDataAny(subType: string | number, name: string, value: any) {
+    if (!this.data[subType]) this.data[subType] = {}
+    return this.data[subType][name] = value
+  }
+
   private onJoin(channelId: number) {
     for (const autoLoad of this.autoLoads) {
-      if (!(this.data[channelId] || {})[autoLoad.name]) {
+      if (!this.data[channelId] && typeof this.data[channelId][autoLoad.name] !== 'object') {
         this.load(channelId, autoLoad.name, autoLoad.defaultData, autoLoad.setDefaults)
       }
     }
@@ -177,10 +182,12 @@ export default class Data extends EventEmitter {
 
   private onPart(channelId: number) {
     for (const autoLoad of this.autoLoads) {
-      if ((this.data[channelId] || {})[autoLoad.name]) {
+      if (this.data[channelId] && typeof this.data[channelId][autoLoad.name] === 'object') {
         this.save(channelId, autoLoad.name, true).then(() => {}, (err) => {
           console.log(`[Data.autoLoad] Error unloading ${channelId}`, err)
         })
+      } else {
+        console.warn(`Already unloaded: ${channelId}/${autoLoad.name}`)
       }
     }
   }

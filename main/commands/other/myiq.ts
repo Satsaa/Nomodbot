@@ -59,13 +59,13 @@ export class Instance implements PluginInstance {
     const iq = Math.round(this.l.u.randomNormal(-50, 1005, 3))
 
     if (iq > high) { // New record
-      data.high.userId = userstate['user-id']
       data.high.value = iq
-      return `${recipient}'s RealIQ is ${iq} ${this.getEmote(iq)} Beat the old record by ${iq - high} IQ PogChamp`
+      const byDisplay = data.high.userId ? await this.l.api.getDisplay(data.high.userId) : 'God'
+      return `${recipient}'s RealIQ is ${iq} ${this.getEmote(iq)} Beat the old record of ${low - high} IQ by ${byDisplay || 'UnknownUser'} PogChamp`
     } else if (iq < low) { // New low record
-      data.low.userId = userstate['user-id']
       data.low.value = iq
-      return `${recipient}'s RealIQ is ${iq} ${this.getEmote(iq)} Beat the old low record by ${low - iq} IQ LUL`
+      const byDisplay = data.high.userId ? await this.l.api.getDisplay(data.high.userId) : 'God'
+      return `${recipient}'s RealIQ is ${iq} ${this.getEmote(iq)} Beat the old low record of ${low - iq} IQ by ${byDisplay || 'UnknownUser'} LUL`
     } else { // No new record
       return `${recipient}'s RealIQ is ${iq} ${this.getEmote(iq)}`
     }

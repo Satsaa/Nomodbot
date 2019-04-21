@@ -42,7 +42,7 @@ export class Instance implements PluginInstance {
 
   public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
     const data = this.l.getData(channelId, 'notifies') as NotifyData
-    if (data === undefined) return 'Unavailable: required data is not present'
+    if (!data) return 'Unavailable: required data is not present'
 
     if (!params[1]) return 'Define a user (param 1)'
     if (params[1].toLowerCase() === 'delete') {

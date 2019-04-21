@@ -97,6 +97,7 @@ class List {
 
   /** Gets an array entry */
   public getEntry(index: number, safe = false): [number, any] {
+    index = Math.floor(index)
     if (safe && this.isUnsafe(index)) return [0, undefined]
     const zero = this.getIndex(index)
     return [zero + 1, this.entries[zero]]
@@ -104,6 +105,7 @@ class List {
 
   /** Removes an array entry */
   public delEntry(index: number, safe = false): [number, any] {
+    index = Math.floor(index)
     if (safe && this.isUnsafe(index)) return [0, undefined]
     const zero = this.getIndex(index)
     return this.entries.splice(zero, 1)[0]
@@ -111,6 +113,7 @@ class List {
 
   /** Sets the value of an array entry */
   public setEntry(index: number, value: any, safe = false): [number, any] {
+    index = Math.floor(index)
     if (safe && this.isUnsafe(index)) return [0, undefined]
     const zero = this.getIndex(index)
     return [zero + 1, this.entries[zero] = value]
@@ -118,6 +121,7 @@ class List {
 
   /** Inserts an array entry */
   public insertEntry(index: number, value: any, safe = false): [number, any] {
+    index = Math.floor(index)
     if (safe && this.isUnsafe(index)) return [0, undefined]
     const zero = this.getIndex(index)
     return [zero + 1, this.entries.splice(zero, 0, value)]
@@ -130,6 +134,7 @@ class List {
 
   /** Whether or not the index is within the bounds of entries */
   public isUnsafe(index: number) {
+    index = Math.floor(index)
     return index < 1 || index > this.entries.length
   }
 

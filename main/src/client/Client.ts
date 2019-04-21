@@ -225,20 +225,10 @@ export default class TwitchClient {
     })
   }
 
-  /** Join `channels` by ids or names */
-  public async join(channels: Array<number | string>): Promise<boolean>
   /** Join `channelIds` */
-  public async join(channelIds: number[]): Promise<boolean>
-  /** Join `channelNames` */
-  public async join(channelNames: string[]): Promise<boolean>
-  public async join(channels: Array<number | string>): Promise<boolean> {
-    if (channels.length === 0) return true
-    const request: {login: string[], id: number[]} = {login: [], id: []}
-    channels.forEach((v) => {
-      if (typeof v === 'string') request.login.push(v.replace('#', '').toLowerCase())
-      else request.id.push(v)
-    })
-    const res = await this.api._users(request)
+  public async join(channelIds: number[], delay = 1000): Promise<boolean> {
+    if (channelIds.length === 0) return true
+    const res = await this.api._users({id: channelIds})
     if (typeof res !== 'object') return false
 
     const promises: Array<ReturnType<typeof eventTimeout>> = []
@@ -246,30 +236,22 @@ export default class TwitchClient {
       this.api.cacheUser(~~user.id, user.display_name)
       this.send(`JOIN #${user.login}`)
       promises.push(eventTimeout(this, 'join', {timeout: this.getLatency(), matchArgs: [~~user.id]}))
+      if (delay) await u.timeout(delay)
     }
     return (await Promise.all(promises)).every(v => v.timeout === false)
   }
 
-  /** Part `channels` by ids or names */
-  public async part(channels: Array<number | string>): Promise<boolean>
   /** Part `channelIds` */
-  public async part(channelIds: number[]): Promise<boolean>
-  /** Part `channelNames` */
-  public async part(channelNames: string[]): Promise<boolean>
-  public async part(channels: Array<number | string>): Promise<boolean> {
-    if (channels.length === 0) return true
-    const request: {login: string[], id: number[]} = {login: [], id: []}
-    channels.forEach((v) => {
-      if (typeof v === 'string') request.login.push(v.replace('#', '').toLowerCase())
-      else request.id.push(v)
-    })
-    const res = await this.api._users(request)
+  public async part(channelIds: number[], delay = 0): Promise<boolean> {
+    if (channelIds.length === 0) return true
+    const res = await this.api._users({id: channelIds})
     if (typeof res !== 'object') return false
 
     const promises: Array<ReturnType<typeof eventTimeout>> = []
     for (const user of res.data) {
       this.send(`PART #${user.login}`)
       promises.push(eventTimeout(this, 'part', {timeout: this.getLatency(), matchArgs: [~~user.id]}))
+      if (delay) await u.timeout(delay)
     }
     return (await Promise.all(promises)).every(v => v.timeout === false)
   }
@@ -486,9 +468,16 @@ export default class TwitchClient {
     let channel: string
     let channelId: void | number
     if (this.opts.logAll) console.log(msg)
+    let gifterId
+    let streak
+    let tier
+    let total
+    let id
+    let userId
     switch (msg.cmd) {
       case '001': // <prefix> 001 <you> :Welcome, GLHF!
         this.ircLog('Bot is welcome')
+        this.join(Object.keys(this.clientData.channels).map(v => +v))
         this.emit('welcome')
         break
       case '002': // <prefix> 002 <you> :Your host is tmi.twitch.tv
@@ -553,7 +542,7 @@ export default class TwitchClient {
           this.emit('clear', channelId)
           return
         }
-        const userId = await this.api.getId(msg.params[1])
+        userId = await this.api.getId(msg.params[1])
         if (!userId) return this.failHandle(msg, msg.cmd)
         if (typeof msg.tags['ban-duration'] === 'number') this.emit('timeout', channelId, userId, msg.tags['ban-duration'] as number)
         else this.emit('ban', channelId, userId)
@@ -640,19 +629,19 @@ export default class TwitchClient {
         switch (msg.tags['msg-id']) {
           case 'resub':
           case 'sub':
-            const userId = +msg.tags['user-id']!
+            userId = +msg.tags['user-id']!
             if (!userId) return this.failHandle(msg, "Can't get userId of sub notice")
-            let streak = msg.tags['msg-param-months'] as number
+            streak = msg.tags['msg-param-months'] as number
             const cumulative = msg.tags['msg-param-cumulative-months'] as number | null
-            let tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
+            tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
             this.emit('sub', channelId, userId, streak, cumulative, tier as 1 | 2 | 3, false, msg.params[1])
             break
           case 'subgift':
           case 'anonsubgift':
-            let gifterId = msg.tags['msg-param-recipient-id'] as number | null
+            gifterId = msg.tags['msg-param-recipient-id'] as number | null
             const targetId = msg.tags['msg-param-recipient-id'] as number
             streak = msg.tags['msg-param-months'] as number
-            let total = msg.tags['msg-param-sender-count'] as number
+            total = msg.tags['msg-param-sender-count'] as number
             tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
             this.emit('gift', channelId, gifterId, targetId, tier as 1 | 2 | 3, total)
             this.emit('sub', channelId, targetId, streak, null, tier as 1 | 2 | 3, true, null)
@@ -671,7 +660,7 @@ export default class TwitchClient {
             break
           case 'raid':
             const viewerCount = msg.tags['viewer-count'] as number | null
-            let id = await this.api.getId(msg.tags.login as string)
+            id = await this.api.getId(msg.tags.login as string)
             if (!id) return this.failHandle(msg, msg.tags['msg-id'])
             this.emit('raid', channelId, id, viewerCount)
             break
@@ -709,7 +698,7 @@ export default class TwitchClient {
             break
           case 'msg_timedout':
             const length = typeof msg.params[1] === 'string' ? ~~msg.params[1].match(/([0-9]*)[a-zA-Z .]*$/)![1] : 0
-            let userId = await this.api.getId(this.opts.username)
+            userId = await this.api.getId(this.opts.username)
             if (!userId) return this.failHandle(msg, msg.tags['msg-id'])
             this.emit('timeout', channelId, userId, length)
             break

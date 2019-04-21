@@ -10,3 +10,4 @@ main/src/tools/logConverter/log.txt
 main/src/tools/logConverter/logOut.txt
 main/src/tools/logConverter/skippedLines.txt
 main/src/tools/logConverter/ids.json
+delet default snippets.ahk

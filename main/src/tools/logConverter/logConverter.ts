@@ -89,7 +89,7 @@ function getIds(displays: string[]): Promise<UsersResponse> {
           console.log(result.data)
           resolve(result.data)
         }).on('error', (err) => {
-          console.log(err)
+          console.error(err)
           resolve([])
         })
       } else {

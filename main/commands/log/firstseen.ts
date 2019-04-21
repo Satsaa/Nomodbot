@@ -40,7 +40,7 @@ export class Instance implements PluginInstance {
 
     if (!user.times[0]) return 'That user has not sent any messages'
 
-    if (params[1]) return `@${userstate['display-name']} You were first seen ${this.l.u.dateString(user.times[0] * 1000)}`
-    else return `${this.l.api.getDisplay(uid)} was first seen ${this.l.u.dateString(user.times[0] * 1000)}`
+    if (uid === userId) return `@${userstate['display-name']} You were first seen ${this.l.u.dateString(user.times[0] * 1000)}`
+    else return `${await this.l.api.getDisplay(uid)} was first seen ${this.l.u.dateString(user.times[0] * 1000)}`
   }
 }

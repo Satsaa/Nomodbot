@@ -245,7 +245,7 @@ export default class TwitchApi {
             const result = JSON.parse(data)
             resolve(result)
           }).on('error', (err) => {
-            console.log(err)
+            console.error(err)
             resolve(undefined)
           })
         } else resolve(`${res.statusCode}: ${util.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)

@@ -29,6 +29,8 @@ export class Instance implements PluginInstance {
 
   public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
     if (!params[1]) return await this.l.part([channelId]) ? undefined : 'Server response timeout'
-    return await this.l.part(params.slice(1)) ? undefined : 'Server response timeout'
+    const uid = await this.l.api.getId(params[1])
+    if (!uid) return 'Cannot get the user ID'
+    return await this.l.part([uid]) ? undefined : 'Server response timeout'
   }
 }

@@ -41,7 +41,7 @@ export class Instance implements PluginInstance {
     let newValue: string
     let index
     let value
-    switch (params[1].toLowerCase()) {
+    switch (params[1] ? params[1].toLowerCase() : undefined) {
 
       case 'edit':
       case 'modify':
@@ -49,8 +49,8 @@ export class Instance implements PluginInstance {
       case 'set':
       case 'change':
         if (this.l.isPermitted(10, userstate.badges, userId)) return
-        if (!params[2] || isNaN(parseInt(params[2], 10))) return 'Invalid index (param 2)'
-        if (!params[3]) return 'Define the new quote value (param 3+)'
+        if (isNaN(+params[2])) return 'Invalid index (param 2)'
+        if (!params[3]) return 'Define the new manly quote (param 3+)'
         newValue = params.slice(3).join(' ');
         [index] = this.quotes.setEntry(~~params[2], newValue)
         if (index) return `Modified entry at index ${index}`
@@ -61,7 +61,7 @@ export class Instance implements PluginInstance {
       case 'push':
       case 'create':
         if (this.l.isPermitted(10, userstate.badges, userId)) return
-        if (!params[2]) return 'Define the new quote (param 2+)'
+        if (!params[2]) return 'Define the new manly quote (param 2+)'
         newValue = params.slice(2).join(' ');
         [index] = this.quotes.pushEntry(newValue)
         if (index) return `Added new entry at index ${index}`
@@ -70,8 +70,8 @@ export class Instance implements PluginInstance {
       case 'insert':
       case 'splice':
         if (this.l.isPermitted(10, userstate.badges, userId)) return
-        if (!params[2] || isNaN(parseInt(params[2], 10))) return 'Invalid index (param 2)'
-        if (!params[3]) return 'Define the new quote (param 3+)'
+        if (isNaN(+params[2])) return 'Invalid index (param 2)'
+        if (!params[3]) return 'Define the new manly quote (param 3+)'
         newValue = params.slice(3).join(' ');
         [index] = this.quotes.insertEntry(~~params[2], newValue)
         if (index) return `Added new entry at index ${index}`
@@ -81,20 +81,20 @@ export class Instance implements PluginInstance {
       case 'delete':
       case 'remove':
         if (this.l.isPermitted(10, userstate.badges, userId)) return
-        if (!params[2] || isNaN(parseInt(params[2], 10))) return 'Invalid index (param 2)';
+        if (isNaN(+params[2])) return 'Invalid index (param 2)';
         [index, value]  = this.quotes.delEntry(~~params[2])
         if (index) return `Deleted at ${index}: ${value}`
         else return 'Invalid index'
 
       case undefined:
-        if (!this.quotes.entries.length) return 'There are no manlyquotes';
+        if (!this.quotes.entries.length) return 'There are no manly quotes';
         [index, value] = this.quotes.randomEntry()
         if (index) return `${index}: ${value}`
         else return 'Something went horribly wrong!'
 
       default:
-        if (!this.quotes.entries.length) return 'There are no manlyquotes'
-        if (params[1] && isNaN(parseInt(params[1], 10))) return 'Invalid param (param 1)';
+        if (!this.quotes.entries.length) return 'There are no manly quotes'
+        if (isNaN(+params[1])) return 'Invalid param (param 1)';
         [index, value] = this.quotes.getEntry(~~params[1])
         if (index) return `${index}: ${value}`
         else return 'Something went horribly wrong!'

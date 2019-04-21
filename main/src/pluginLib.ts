@@ -176,13 +176,13 @@ export default class PluginLibrary {
     }
   }
 
-  /** Disables the default aliases of `pluginId` */
-  public disableDefaults(pluginId: string) {
+  /** Enables the default aliases of `pluginId` even if they are by default disabled */
+  public enableDefaults(pluginId: string) {
     const aliases = this.getAliases()
     for (const alias in aliases) if (aliases[alias].id === pluginId) delete aliases[alias].disabled
   }
-  /** Enables the default aliases of `pluginId` */
-  public enableDefaults(pluginId: string) {
+  /** Disables the default aliases of `pluginId` */
+  public disableDefaults(pluginId: string) {
     const aliases = this.getAliases()
     for (const alias in aliases) if (aliases[alias].id === pluginId) aliases[alias].disabled = true
   }

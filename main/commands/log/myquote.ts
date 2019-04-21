@@ -7,7 +7,7 @@ export const options: PluginOptions = {
   type: 'command',
   id: 'myquote',
   name: 'MyQuote',
-  description: 'Shows a random chat message a user has send ion the past',
+  description: 'Shows a random chat message a user has send in the past',
   default: {
     alias: '?myquote',
     options: {

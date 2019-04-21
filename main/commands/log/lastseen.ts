@@ -43,13 +43,13 @@ export class Instance implements PluginInstance {
     const length = this.log.msgCount(channelId, uid)
     if (!length) return 'Bad length returned'
     if (length <= 1) {
-      if (params[1]) return `@${userstate['display-name']} You have not sent a message before`
+      if (uid === userId) return `@${userstate['display-name']} You have not sent a message before`
       else return `${this.l.api.getDisplay(uid)} has not sent a message before`
     }
-    const ms = this.log.getTime(channelId, uid, length - 1)
+    const ms = this.log.getTime(channelId, uid, uid === userId ? length - 1 : length)
     if (!ms) return 'Bad time returned'
 
-    if (params[1]) return `@${userstate['display-name']} You were seen ${this.l.u.timeSince(ms, 1, true)} ago`
-    else return `${this.l.api.getDisplay(uid)} was seen ${this.l.u.timeSince(ms, 1, true)} ago`
+    if (uid === userId) return `@${userstate['display-name']} You were seen ${this.l.u.timeSince(ms, 1, true)} ago`
+    else return `${await this.l.api.getDisplay(uid)} was seen ${this.l.u.timeSince(ms, 1, true)} ago`
   }
 }
