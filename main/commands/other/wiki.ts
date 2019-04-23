@@ -38,20 +38,13 @@ export class Instance implements PluginInstance {
       }
 
       if (data.type === 'disambiguation') {
-        if ((data.extract as string).endsWith('may refer to:')) {
-          return this.l.u.fitStrings(this.l.maxMsgLength,
-            [`[${data.displaytitle}]`, 2], // [title]
-            ['Disambiguation', 0], // disambiguation without examples
-            [`${data.content_urls.desktop.page.replace('https://', '')}`, 1]) // link
-        } else {
-          return this.l.u.fitStrings(Math.min(this.l.maxMsgLength, 200),
-            [`[${data.displaytitle}]`, 2], // [title]
-            ['Disambiguation', 0], // disambiguations
-            [`${data.content_urls.desktop.page.replace('https://', '')}`, 1]) // link
-        }
+        return this.l.u.fitStrings(Math.min(this.l.maxMsgLength, 200),
+          [`[${data.displaytitle}]`, 2], // [title]
+          ['Disambiguation', 0], // disambiguations
+          [`${data.content_urls.desktop.page.replace('https://', '')}`, 1]) // link
       }
 
-      return this.l.u.fitStrings(this.l.maxMsgLength,
+      return this.l.u.fitStrings(Math.min(this.l.maxMsgLength, 200),
         [`[${data.displaytitle}]`, 2], // [title]
         [data.extract, 0], // summary
         [`${data.content_urls.desktop.page.replace('https://', '')}`, 1]) // link

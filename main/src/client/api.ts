@@ -14,27 +14,29 @@ interface ApiOptions {
   dataFile?: string
 }
 
+interface ApiCache {
+  converted?: {[display: string]: number}
+  userIds: {[login: string]: number}
+  displays: {[id: number]: string}
+  channels: {[channelId: number]: {
+    recentBroadcasts: GenericCache
+  }}
+}
+
 export default class TwitchApi {
   private opts: ApiOptions
-  private cache: {
-    userIds: {[login: string]: number}
-    channels: {[channelId: number]: {
-      recentBroadcasts: GenericCache
-    }}
-  }
+  private cache: ApiCache
   private readonly channelDefault: {
     recentBroadcasts: GenericCache
   }
-  private displays: {[id: number]: string}
-
   private waitedIds: {[login: string]: Array<(value?: number | undefined) => void>}
   private waitedDisplays: {[id: number]: Array<(value?: string | undefined) => void>}
 
-  /** Bucket will be reset to this */
+  /** Bucket size maximum */
   private rlLimit: number
   /** Remaining in bucket */
   private rlRemaining: number
-  /** Bucket will reset at ms */
+  /** Bucket will reset to limit at ms */
   private rlReset: number
   /** Contains deprecation times for caches */
   private deprecate: {
@@ -47,7 +49,6 @@ export default class TwitchApi {
     this.channelDefault = {
       recentBroadcasts: {time: 0},
     }
-    this.displays = {}
 
     this.waitedIds = {}
     this.waitedDisplays = {}
@@ -68,22 +69,27 @@ export default class TwitchApi {
       if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, '{}')
       else throw err
     }
-    // !!! the saved userid/apiCache file does not save with dispaly names (login names isntead)
-    // To have uid -> display and login -> uid a third object should exist that is saved and loaded in the file (contains DISPLAY -> uid)
-    // this.userIds could be built from that like this.displays are
-    this.cache = JSON.parse(fs.readFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, 'utf8')) as TwitchApi['cache']
-    defaultKeys(this.cache, {queueIds: [], queueDisplays: [], userIds: {}, channels: {}})
-
-    for (const display in this.cache.userIds) { // Build display cache from id cache
-      this.displays[this.cache.userIds[display]] = display
+    // Cached file has combined display and user ID pairs
+    // Those will be converted to {uid: display} and {login: uid}
+    const preCache =  JSON.parse(fs.readFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, 'utf8')) as ApiCache
+    defaultKeys(preCache, {queueIds: [], queueDisplays: [], displays: {}, userIds: {}, channels: {}})
+    if (preCache.converted) {
+      for (const display in preCache.converted) {
+        const uid = preCache.converted[display]
+        preCache.displays[uid] = display
+        preCache.userIds[display.toLowerCase()] = uid
+      }
+      delete preCache.converted
     }
+    this.cache = preCache
 
     util.onExit(this.onExit.bind(this))
   }
 
-  public cacheUser(id: number, displayName: string) {
-    this.cache.userIds[displayName.toLowerCase()] = id
-    this.displays[id] = displayName
+  // !!! public cacheUser(id: number, login: string, display: string) {
+  public cacheUser(id: number, display: string) {
+    this.cache.userIds[display.toLowerCase()] = id
+    this.cache.displays[id] = display
   }
 
   /** Gets the cached user ID for `login` or fetches it from the API */
@@ -114,7 +120,7 @@ export default class TwitchApi {
   /** Gets the cached display name for `id` or fetches it from the API */
   public getDisplay(id: number): Promise<string | undefined>  {
     return new Promise(async (resolve) => {
-      if (this.displays[id]) return resolve(this.displays[id])
+      if (this.cache.displays[id]) return resolve(this.cache.displays[id])
       if (this.waitedDisplays[id]) {
         this.waitedDisplays[id].push(resolve)
         return
@@ -267,8 +273,17 @@ export default class TwitchApi {
   }
 
   private onExit() {
-    if (this.cache) fs.writeFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, JSON.stringify(this.cache))
-    else console.warn('[API] cache not saved due to it being undefined!')
+    if (this.cache) {
+      this.cache.converted = {}
+      for (const id in this.cache.displays) {
+        this.cache.converted[this.cache.displays[id]] = +id
+      }
+      delete this.cache.displays
+      delete this.cache.userIds
+      fs.writeFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, JSON.stringify(this.cache))
+    } else {
+      console.warn('[API] cache not saved due to it being undefined!')
+    }
   }
 }
 

@@ -242,7 +242,7 @@ export default class TwitchClient {
   }
 
   /** Part `channelIds` */
-  public async part(channelIds: number[], delay = 0): Promise<boolean> {
+  public async part(channelIds: number[], delay = 200): Promise<boolean> {
     if (channelIds.length === 0) return true
     const res = await this.api._users({id: channelIds})
     if (typeof res !== 'object') return false

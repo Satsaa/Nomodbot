@@ -72,6 +72,8 @@ USERNOTICE    Subs, rituals and more
 ^new chatter ritual
 
 PRIVMSG       Someone sends a message
+@badge-info=;badges=;color=#DAA520;<display-name=千本桜景厳;>emotes=;flags=;id=4814d191-0003-4e83-beb9-a21deb4995fb;mod=0;room-id=22484632;subscriber=0;tmi-sent-ts=1555873627911;turbo=0;user-id=47054454;user-type= :<jarozy>!jarozy@jarozy.tmi.twitch.tv PRIVMSG #forsen :VAVE ZULUL
+
 @userstate :<poiintxblank!poiintxblank@poiintxblank>.tmi.twitch.tv PRIVMSG #shroud :<@hunzerrr oh, yea it is>
 @...<emotes=60364:0-6/997820:26-36/1723850:40-48>;<flags>=[50-101]:,50-101:,50-101:,[105-134]:,105-134:,105-134: :streamelements!streamelements@streamelements.tmi.twitch.tv PRIVMSG #shroud :shroudW Have you heard of shroudPrime ? shroudHyp https://clips.twitch.tv/FuriousPiercingBananaPJSugar - http://bit.ly/HowToTwitchPrime
 
