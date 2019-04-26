@@ -207,6 +207,8 @@ export default class Commander {
   /** Determine if a user with `badges` would be permitted to call this command */
   public isPermitted(permissions: string[] | number, badges: IrcMessage['tags']['badges'] /*  { [badge: string]: number } */, userId: number) {
     // Number: 0: everyone, 1: subscriber, 2: moderator, 3: broadcaster, 10: master
+    // !!! Implement the permit API
+    // !!! Implement the ban API
     if (badges === undefined) return
     if (this.masters.includes(userId)) return true
     if (typeof permissions === 'number') {
@@ -300,24 +302,20 @@ export default class Commander {
     }
   }
 
-  private onPrivMessage(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean, self: boolean) {
+  private async onPrivMessage(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean, self: boolean) {
     if (self) return
     const words = message.split(' ')
-    const alias = this.getActiveAlias(channelId, words[0])
-    if (alias) this.callCommand(channelId, userId, alias, userstate, message, me)
-  }
-
-  private async callCommand(channelId: number, userId: number, alias: CommandAlias, userstate: Required<IrcMessage['tags']>, message: string, me: boolean) {
-    // !!! Implement the ban API
+    const alias = this.getActiveAlias(channelId, words[0].toLowerCase())
+    if (!alias) return
     const instance = this.instances[alias.id]
     if (!instance) return console.log(`Cannot call unloaded command: ${alias.id}`) // Command may not be loaded yet
     if (typeof instance.call !== 'function') throw new Error(`Invalid call function on command plugin instance: ${alias.id}`)
     if (alias.permissions === undefined || this.isPermitted(alias.permissions, userstate.badges, userId)) {
       if (!this.masters.includes(userId) && this.isOnCooldown(channelId, userId, alias)) {
-        if (typeof instance.cooldown === 'function') instance.cooldown(channelId, userId, userstate, message, message.split(' '), me)
+        if (typeof instance.cooldown === 'function') instance.cooldown(channelId, userId, userstate, message, words, me)
         return
       }
-      const res = await instance.call(channelId, userId, userstate, message, message.split(' '), me)
+      const res = await instance.call(channelId, userId, userstate, message, words, me)
       if (res) this.client.chat(channelId, res)
     }
   }
@@ -326,7 +324,6 @@ export default class Commander {
   private isOnCooldown(channelId: number, user: number, alias: CommandAlias) {
     const cooldowns = this.data.getData(channelId, 'cooldowns')
     if (!cooldowns) return false
-    // !!! Implement the permit API
     let res1 = 0
     let res2 = 0
     const now = Date.now()

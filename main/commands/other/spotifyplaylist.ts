@@ -1,5 +1,4 @@
 import https from 'https'
-import querystring from 'querystring'
 import { IrcMessage } from '../../src/client/parser'
 import { PluginInstance, PluginOptions } from '../../src/Commander'
 import PluginLibrary from '../../src/pluginLib'
@@ -26,6 +25,8 @@ export const options: PluginOptions = {
 
 interface SpotifyPlaylistData {
   playlist: string,
+  creator: string,
+  name: string
 }
 
 export class Instance implements PluginInstance {
@@ -63,10 +64,12 @@ export class Instance implements PluginInstance {
         const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
         if (!data) return 'Unavailable: required data is not present'
         data.playlist = inputId
+        data.creator = playlist.owner.display_name
+        data.name = playlist.name
         return `Playlist set to ${playlist.name} by ${playlist.owner.display_name}`
       } else if (params[1] && isNaN(+params[1])) { // Show playlist link when only 1 string parameter given
         if (!data.playlist) return `Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${params[0]} set <id or link>`
-        return `open.spotify.com/playlist/${data.playlist}`
+        return `${data.name && data.creator ? data.name + 'by' + data.creator : 'Paylist'}: open.spotify.com/playlist/${data.playlist}`
       } else { // Show recent track
         if (!data.playlist) return `Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${params[0]} set <id or link>`
         const pos = params[1] ? Math.floor(~~params[1] - 1) : 0

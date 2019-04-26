@@ -93,8 +93,7 @@ export class Instance implements PluginInstance {
         else return 'Something went horribly wrong!'
 
       default:
-        if (!quotes.entries.length) return 'There are no quotes'
-        if (+params[1]) return 'Invalid param (param 1)';
+        if (!quotes.entries.length) return 'There are no quotes';
         [index, value] = quotes.getEntry(~~params[1])
         if (index) return `${index}: ${value}`
         else return 'Something went horribly wrong!'

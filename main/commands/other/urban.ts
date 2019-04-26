@@ -43,7 +43,7 @@ export class Instance implements PluginInstance {
       const link = def.permalink.replace('http://', '').replace(/^[a-zA-Z0-9]*\./, '')
       const dateStr = this.l.u.dateString(Date.parse(def.written_on))
 
-      return this.l.u.fitStrings(this.l.maxMsgLength,
+      return this.l.u.fitStrings(Math.min(this.l.maxMsgLength, 200),
         [`[${this.l.u.fontify(word, 'mathSansBold')}]`, 5], // title
         [definition, 1], // definition
         [`𝗘𝘅𝗮𝗺𝗽𝗹𝗲: ${example}`, 0], // example
