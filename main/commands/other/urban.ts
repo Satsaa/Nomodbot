@@ -11,7 +11,7 @@ export const options: PluginOptions = {
   default: {
     alias: '?urban',
     options: {
-      permissions: 1,
+      permissions: 0,
       cooldown: 30,
       userCooldown: 90,
     },
@@ -34,6 +34,7 @@ export class Instance implements PluginInstance {
         if (typeof data === 'string') return data
         return 'The API returned invalid data'
       }
+      if (data.list.length === 0) return 'No definition found'
       const def = data.list[0]
       const word = this.l.u.cap(def.word)
       const definition = this.l.u.endPunctuate(def.definition).replace(/\[.*?\]/g, this.tidyBrackets.bind(this))

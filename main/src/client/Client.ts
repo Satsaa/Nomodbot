@@ -257,7 +257,7 @@ export default class TwitchClient {
   }
 
   /** Send `msg` to `channel` */
-  public chat(channelId: number, msg: string, options: {command?: boolean, cutTheLine?: boolean} = {}) {
+  public chat(channelId: number, msg: string, options: {command?: boolean} = {}) {
     return new Promise((resolve) => {
       const login = this.channels[channelId]
       if (!login) return resolve(false)
@@ -319,8 +319,20 @@ export default class TwitchClient {
     } else throw (new Error('NON STRING DATA'))
   }
 
+  // Collect info about messages
   private doc(msg: IrcMessage) {
     if (msg.cmd !== null) {
+      // tag types
+      if (!this.messageTypes.tagTypes) this.messageTypes.tagTypes = { __count__: 1 }
+      else this.messageTypes.tagTypes.__count__++
+      for (const tag in msg.tags) {
+        if (!this.messageTypes.tagTypes[tag]) this.messageTypes.tagTypes[tag] = {__count__: 1 }
+        else this.messageTypes.tagTypes[tag].__count__++
+        const tagObj = this.messageTypes.tagTypes[tag]
+        const type = typeof msg.tags[tag]
+        if (!tagObj[type]) tagObj[type] = 1
+        else tagObj[type]++
+      }
       // noticeIds
       if (msg.cmd === 'NOTICE' && typeof msg.tags['msg-id'] === 'string') {
         const tag3 = msg.tags['msg-id'].toString()
@@ -590,7 +602,7 @@ export default class TwitchClient {
         if (!channelId) return this.failHandle(msg, msg.cmd)
         const _msg = msg.params[1].endsWith(' \u206D') ? msg.params[1].substring(0, msg.params[1].length - 2) : msg.params[1]
         this.ircLog(`[${channel}] ${msg.tags['display-name']}: ${_msg}`)
-        this.api.cacheUser(msg.tags['user-id']!, msg.tags['display-name']!)
+        this.api.cacheUser(msg.tags['user-id']!, msg.tags['display-name']! + '')
         if (_msg.startsWith('ACTION ')) {
           this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as Required<IrcMessage['tags']>, _msg.slice(8, -1), true, msg.user === this.opts.username)
         } else this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as Required<IrcMessage['tags']>, _msg, false, msg.user === this.opts.username)
@@ -660,14 +672,14 @@ export default class TwitchClient {
             break
           case 'raid':
             const viewerCount = msg.tags['viewer-count'] as number | null
-            id = await this.api.getId(msg.tags.login as string)
+            id = await this.api.getId(msg.tags.login + '')
             if (!id) return this.failHandle(msg, msg.tags['msg-id'])
             this.emit('raid', channelId, id, viewerCount)
             break
           case 'ritual':
-            id = await this.api.getId(msg.tags.login as string)
+            id = await this.api.getId(msg.tags.login + '')
             if (!id) return this.failHandle(msg, msg.tags['msg-id'])
-            this.emit('ritual', channelId, id, msg.tags['msg-param-ritual-name'] as string, msg.params[1])
+            this.emit('ritual', channelId, id, msg.tags['msg-param-ritual-name'] + '', msg.params[1])
             break
           // Not actual subscriptions? Advertisement of sorts. Subtember
           case 'giftpaidupgrade':

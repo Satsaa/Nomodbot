@@ -154,10 +154,33 @@ export default class Data extends EventEmitter {
    * @param setDefaults Define all keys of the loaded data that exist in `defaultData` with the default value
    */
   public autoLoad(name: string, defaultData: object, setDefaults = false) {
+    for (const autoLoad of this.autoLoads) {
+      if (autoLoad.name === name) throw new Error('Duplicate autoLoad for the same data')
+    }
     for (const channel in this.client.clientData.channels) { // Load for present channels
       this.load(channel, name, defaultData, setDefaults)
     }
     this.autoLoads.push({name, defaultData, setDefaults})
+  }
+  /**
+   * Disables the autoLoading of specified data and unloads it  
+   * Return the removed autoLoad object
+   * @param name File name
+   * @param noUnload Whether or not the data is left in memory
+   */
+  public async unautoLoad(name: string, noUnload = false): Promise<Data['autoLoads']> {
+    for (let i = 0; i < this.autoLoads.length; i++) {
+      if (this.autoLoads[i].name === name) {
+        const returnVal = this.autoLoads.splice(i, 1)
+        const savePromises = []
+        for (const channel in this.client.clientData.channels) { // Load for present channels
+          savePromises.push(this.save(channel, name, true))
+        }
+        await Promise.all(savePromises)
+        return returnVal
+      }
+    }
+    throw new Error('Data is not loaded')
   }
 
   /** Delete the data */

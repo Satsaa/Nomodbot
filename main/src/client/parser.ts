@@ -39,6 +39,10 @@ export interface IrcMessage {
   params: string[]
 }
 
+const array = [
+
+]
+
 /**
  * Parse IRCv3 tagged messages  
  * Tries its hardest to give a result... even if `msg` is malformed

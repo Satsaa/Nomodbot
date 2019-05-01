@@ -39,7 +39,7 @@ export type PluginOptions = (Command | Controller) & {
   requiresPlugins?: string[]
 }
 
-/** Properties for aliases (e.g. !uptime) */
+/** Properties for aliases */
 export interface CommandAlias {
   /** The id of a command plugin */
   id: string
@@ -91,7 +91,7 @@ export default class Commander {
 
   public async init(): Promise<PluginOptions[]> {
     this.data.autoLoad('aliases', {})
-    this.data.autoLoad('cooldowns', {})
+    this.data.autoLoad('cooldowns', {user: {}, shared: {} as CooldownData}, true)
     const files = (await readDirRecursive(path.join(__dirname, '..', 'commands')))
       .filter(f => (f.endsWith('.ts') || f.endsWith('.js') && !f.includes('tempCodeRunnerFile')))
     if (!files || !files.length) return []
@@ -121,7 +121,7 @@ export default class Commander {
         })
       }
     })
-    optionsArray.forEach((r) => { // Check for absent required data
+    optionsArray.forEach((r) => { // Check for required data that is not loaded by any command
       if (r.requires) {
         r.requires.forEach((e) => {
           if (created.indexOf(makePath(e)) === -1) {
@@ -235,6 +235,10 @@ export default class Commander {
     return false
   }
 
+  /** !!! Resinstantiates a plugin. Reloads the file from disc */
+  public reinstantiate(pluginId: string, timeout?: number) {
+
+  }
   /** Resolves with true when plugin is loaded or with false on timeout */
   public waitPlugin(pluginId: string, timeout?: number): Promise<boolean> {
     return new Promise((resolve) => {
@@ -322,24 +326,23 @@ export default class Commander {
 
   /** Determine if command is on cooldown. Assumes a message is sent if returns false */
   private isOnCooldown(channelId: number, user: number, alias: CommandAlias) {
-    const cooldowns = this.data.getData(channelId, 'cooldowns')
+    const cooldowns = this.data.getData(channelId, 'cooldowns') as CooldownData
     if (!cooldowns) return false
     let res1 = 0
     let res2 = 0
     const now = Date.now()
     if (alias.cooldown) {
-      if (typeof cooldowns[alias.id] !== 'object') cooldowns[alias.id] = [] // Array is object
-      res1 = next(cooldowns[alias.id], alias.cooldown)
+      if (typeof cooldowns.shared[alias.id] !== 'object') cooldowns.shared[alias.id] = []
+      res1 = next(cooldowns.shared[alias.id], alias.cooldown)
     }
     if (alias.userCooldown) {
-      if (typeof cooldowns._user !== 'object') cooldowns._user = {}
-      if (typeof cooldowns._user[alias.id] !== 'object') cooldowns._user[alias.id] = {}
-      if (typeof cooldowns._user[alias.id][user] !== 'object') cooldowns._user[alias.id][user] = []
-      res2 = next(cooldowns._user[alias.id][user], alias.userCooldown)
+      if (typeof cooldowns.user[alias.id] !== 'object') cooldowns.user[alias.id] = {}
+      if (typeof cooldowns.user[alias.id][user] !== 'object') cooldowns.user[alias.id][user] = []
+      res2 = next(cooldowns.user[alias.id][user], alias.userCooldown)
     }
     if (Math.max(res1, res2) <= 0) {
-      if (alias.cooldown) cooldowns[alias.id].push(now)
-      if (alias.userCooldown) cooldowns._user[alias.id][user].push(now)
+      if (alias.cooldown) cooldowns.shared[alias.id].push(now)
+      if (alias.userCooldown) cooldowns.user[alias.id][user].push(now)
       return false
     }
     return true
@@ -371,4 +374,9 @@ export default class Commander {
       }
     }
   }
+}
+
+interface CooldownData {
+  user: { [commandId: string]: { [userId: number]: number[] } }
+  shared: { [commandId: string]: number[] }
 }

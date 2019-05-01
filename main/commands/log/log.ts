@@ -277,7 +277,7 @@ export class Instance implements PluginInstance {
     if (!data) throw new Error('Data was not loaded in time')
     if (fileSize !== data.offset) {
       if (!fileSize) {
-        console.log('Reset data because filesize was falsy')
+        console.log(`${channelId} Reset log data because log txt size was falsy`)
         this.l.setData(channelId, 'log', this.defaultData)
       } else {
         if (fileSize > data.offset) {

@@ -1,6 +1,6 @@
 const { PerformanceObserver, performance } = require('perf_hooks')
 const assert = require('assert')
-const parser = require('../bin/src/lib/parser').default
+const parser = require('../bin/src/client/parser').default
 
 
 console.log('Testing "../bin/src/lib/parser"')

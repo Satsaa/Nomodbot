@@ -1,6 +1,6 @@
 
 
-v8debug.bot.client.join(["#yassuo","#forsen","#l34um1","#nymn","#dakotaz","#drlupo","#cohhcarnage","#fextralife","#cloakzy","#timthetatman","#iwilldominate","#nightblue3","#mendokusaii","#jakenbakelive","#ashek","#highdistortion","#singsing","#kinggothalion","#joshog","#zizaran","#ephey","#tejbz","#yelo","#maddy","#kingjae","#waifugate","#tommo","#amaz","#b0aty","#moonmoon_ow","#methodjosh","#yogscast","#roshtein","#symfuhny","#drdisrespect","#xqcow","#twitchrivals","#lirik","#castro_1021","#imaqtpie","#mongraal","#greekgodx","#zai"])
+v8debug.bot.client.join([17337557,40197643,51496027,106125347,71092938,69759951,26490481,132954738,44445592,153314610,136765278,112822444,192678094,7236692,21673391,156567621,14371185,31557869,35618666,23936415,57717183,23528098,20992865,76055616,137512364,45143025,18587270,205401621,91137296,10397006], 1500)
 
 
 [When?]
