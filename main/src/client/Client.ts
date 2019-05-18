@@ -6,7 +6,7 @@ import defaultKeys from '../lib/defaultKeys'
 import eventTimeout from '../lib/eventTimeout'
 import RateLimiter, { RateLimiterOptions } from '../lib/RateLimiter'
 import * as u from '../lib/util'
-import TwitchApi from './api'
+import TwitchApi from './Api'
 import parse, { IrcMessage } from './parser'
 
 interface Events {
@@ -15,6 +15,7 @@ interface Events {
   userjoin: (channelId: number, user: string) => void
   userpart: (channelId: number, user: string) => void
   chat: (channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean, self: boolean) => void
+  whisper: (userId: number, message: string) => void
   mod: (channelId: number, user: string, mod: boolean) => void
   welcome: () => void
   clearmsg: (channelId: number, targetMsgId: IrcMessage['tags']['target-msg-id'], tags: IrcMessage['tags'], message: string) => void
@@ -25,7 +26,6 @@ interface Events {
   userstate: (channelId: number, userstate: IrcMessage['tags']) => void
   globaluserstate: (globaluserstate: IrcMessage['tags']) => void
   hosttarget: (channelId: number, hostChannelId: number | null, viewerCount: number | null) => void
-  whisper: (userId: number, message: string) => void
   pong: () => void
   usernotice: (channelId: number, tags: IrcMessage['tags'], message?: string) => void
   notice: (channelId: number, tags: IrcMessage['tags'], message: string) => void
@@ -127,7 +127,7 @@ export default class TwitchClient {
       reconnectInterval: 10000,
       minLatency: 800,
       pingInterval: 60000,
-      dupeAffix: ' \u206D',
+      dupeAffix: ' 󠀀', // 	0xE0000,
       maxMsgLength: 499,
       msgRLOpts: {
         duration: 30000,
@@ -263,7 +263,7 @@ export default class TwitchClient {
       if (!login) return resolve(false)
       if (!this.clientData.channels[channelId]) return resolve(false)
       if (msg.length > this.opts.maxMsgLength) msg = msg.slice(0, this.opts.maxMsgLength)
-      if (msg.endsWith(' \u206D')) msg = msg.substring(0, msg.length - 2) // Remove chatterino shit
+      if (msg.endsWith(this.opts.dupeAffix)) msg = msg.substring(0, msg.length - 2) // Remove chatterino shit
       msg = msg.replace(/ +(?= )/g, '') // replace multiple spaces with a single space
       if (!options.command) {
         if (!msg.match(/^(\/|\\|\.)me /)) {  // allow actions
@@ -600,7 +600,9 @@ export default class TwitchClient {
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
         if (!channelId) return this.failHandle(msg, msg.cmd)
-        const _msg = msg.params[1].endsWith(' \u206D') ? msg.params[1].substring(0, msg.params[1].length - 2) : msg.params[1]
+        const _msg = msg.params[1].endsWith(this.opts.dupeAffix)
+          ? msg.params[1].substring(0, msg.params[1].length - this.opts.dupeAffix.length)
+          : msg.params[1]
         this.ircLog(`[${channel}] ${msg.tags['display-name']}: ${_msg}`)
         this.api.cacheUser(msg.tags['user-id']!, msg.tags['display-name']! + '')
         if (_msg.startsWith('ACTION ')) {
@@ -709,10 +711,10 @@ export default class TwitchClient {
             this.ircLog('Rate limited')
             break
           case 'msg_timedout':
-            const length = typeof msg.params[1] === 'string' ? ~~msg.params[1].match(/([0-9]*)[a-zA-Z .]*$/)![1] : 0
+            const duration = typeof msg.params[1] === 'string' ? ~~msg.params[1].match(/([0-9]*)[a-zA-Z .]*$/)![1] : 0
             userId = await this.api.getId(this.opts.username)
             if (!userId) return this.failHandle(msg, msg.tags['msg-id'])
-            this.emit('timeout', channelId, userId, length)
+            this.emit('timeout', channelId, userId, duration)
             break
           case 'msg_banned':
             userId = await this.api.getId(this.opts.username)

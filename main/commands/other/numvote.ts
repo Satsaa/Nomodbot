@@ -47,7 +47,7 @@ export class Instance implements PluginInstance {
       minVotes: 3,
       minTotal: 10,
       time: 3000,
-      decay: 0.925,
+      decay: 0.94,
     }
   }
 

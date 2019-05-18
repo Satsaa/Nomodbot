@@ -86,7 +86,7 @@ export default class Commander {
     this.data = data
     this.waits = {}
     this.pluginLib = new PluginLibrary(client, data, this)
-    this.client.on('chat', this.onPrivMessage.bind(this))
+    this.client.on('chat', this.onChat.bind(this))
   }
 
   public async init(): Promise<PluginOptions[]> {
@@ -95,7 +95,7 @@ export default class Commander {
     const files = (await readDirRecursive(path.join(__dirname, '..', 'commands')))
       .filter(f => (f.endsWith('.ts') || f.endsWith('.js') && !f.includes('tempCodeRunnerFile')))
     if (!files || !files.length) return []
-    const optionsArr = files.map(file => this.handleOptions(file))
+    const optionsArr = files.map(file => this.handleFile(file))
     this.findConflicts(optionsArr, files)
     return optionsArr
   }
@@ -235,19 +235,15 @@ export default class Commander {
     return false
   }
 
-  /** !!! Resinstantiates a plugin. Reloads the file from disc */
-  public reinstantiate(pluginId: string, timeout?: number) {
-
-  }
   /** Resolves with true when plugin is loaded or with false on timeout */
-  public waitPlugin(pluginId: string, timeout?: number): Promise<boolean> {
+  public waitPlugin(pluginId: string/* , timeout?: number */): Promise<boolean> {
     return new Promise((resolve) => {
       if (this.instances[pluginId]) return resolve(true)
       if (!this.waits[pluginId]) this.waits[pluginId] = [resolve]
       else this.waits[pluginId].push(resolve)
-      if (timeout !== undefined) {
-        setTimeout(resolve, timeout, false)
-      }
+      // if (timeout !== undefined) {
+      //   setTimeout(resolve, timeout, false)
+      // }
     })
   }
   /** Resolves waitPlugin promises */
@@ -258,7 +254,7 @@ export default class Commander {
     return true
   }
 
-  private handleOptions(file: string) {
+  private handleFile(file: string) {
     const plugin: {options: PluginOptions, Instance: new() => PluginInstance} = require(file)
     const options = plugin.options
     if (options) {
@@ -306,7 +302,7 @@ export default class Commander {
     }
   }
 
-  private async onPrivMessage(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean, self: boolean) {
+  private async onChat(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean, self: boolean) {
     if (self) return
     const words = message.split(' ')
     const alias = this.getActiveAlias(channelId, words[0].toLowerCase())
@@ -325,7 +321,7 @@ export default class Commander {
   }
 
   /** Determine if command is on cooldown. Assumes a message is sent if returns false */
-  private isOnCooldown(channelId: number, user: number, alias: CommandAlias) {
+  private isOnCooldown(channelId: number, userId: number, alias: CommandAlias) {
     const cooldowns = this.data.getData(channelId, 'cooldowns') as CooldownData
     if (!cooldowns) return false
     let res1 = 0
@@ -337,12 +333,12 @@ export default class Commander {
     }
     if (alias.userCooldown) {
       if (typeof cooldowns.user[alias.id] !== 'object') cooldowns.user[alias.id] = {}
-      if (typeof cooldowns.user[alias.id][user] !== 'object') cooldowns.user[alias.id][user] = []
-      res2 = next(cooldowns.user[alias.id][user], alias.userCooldown)
+      if (typeof cooldowns.user[alias.id][userId] !== 'object') cooldowns.user[alias.id][userId] = []
+      res2 = next(cooldowns.user[alias.id][userId], alias.userCooldown)
     }
     if (Math.max(res1, res2) <= 0) {
       if (alias.cooldown) cooldowns.shared[alias.id].push(now)
-      if (alias.userCooldown) cooldowns.user[alias.id][user].push(now)
+      if (alias.userCooldown) cooldowns.user[alias.id][userId].push(now)
       return false
     }
     return true

@@ -1,4 +1,12 @@
-# Commands
+# Source
+
+## Per alias data
+
+Data should be possible to be stored in aliases  
+Useful for the response api and many other things  
+Data has to be passed somehow. Maybe as a command call parameter  
+
+# Command Plugins
 
 ## afk
 !afk (message...)
@@ -11,6 +19,7 @@ Notify afk users with a custom message
 - Don't notify a user that already received a notify?
 
 ## circle
+!circle [outer]
 !circle [inner] [outer] (outerN...)
 
 Shows a message that visually shows an emote surrounded by 6 other emotes
@@ -31,27 +40,51 @@ Shows a message with 3 random emotes and gives points based on that
 - 3x same emote = ~ 10 x EmoteWeight x bet
 - Subscriber emotes give extra points (rare) (requires subscription of bot)
 
-## Category
-!category
+## Schedule
+!schedule (now | next)  
+!schedule set [calendarLink]  
 
-Shows current category duuh
+Shows the current or an upcoming event of the linked calendar app  
+Could support timed messages (periodically spam the upcoming event etc)  
 
-# Plugins
+## Plugins
+!plugins (type...)
 
-## plugin.requires
+Lists plugins  
 
-## Plugin for creating custom options for commands
+## Combo
+!combo enable|disable
+!combo STRING minCount
 
-Plugin files can export an object that defined options (and their types)  
-The export is to be named "options"? Rename current "options" export to "plugin"  
-Actually name it "commandOptions"  
+Emote combo announcements
+- Only send the combo when the combo ends (different emote is sent or timeout)
+
+# Controller Plugins
+
+## Custom options for plugins
+
+Plugins can pass an object that defines special options and their types  
+Use the extension api to pass the options  
+The settings can be called by the plugin through the extension api (similar to the list controller)  
+An option can be channel specific or global?  
 The "accepts" key might have a value like: `"string", "number", "positive", "boolean", (v) => boolean`
 <pre>
 {
-  optionName: {
-    info: "controls this and that",
-    accepts: "number"
-             (v) => {v !== 42}
+  global: {
+    optionName: {
+      name: "Doodat"
+      info: "controls this and that",
+      accepts: "positive"
+    }
+  },
+  channel: {
+    optionName...
   }
 }
 </pre>
+
+## Timed functions for plugins
+
+Allows creating timed messages via the extension api  
+Timers should be paused when chat is not active  
+A command should be added for getting the list of plugins supporting timed messages  

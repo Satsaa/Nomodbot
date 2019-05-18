@@ -43,7 +43,6 @@ export class Instance implements PluginInstance {
         const date = new Date(video.created_at)
         clockAngles.push(date.getUTCHours() * 15 + date.getUTCMinutes() * (15 / 60))
         totalDuration += this.l.u.parseTimeStr(video.duration)
-        totalDuration += this.l.u.parseTimeStr(video.duration)
         total++
       }
       if (total < 1) return `${await this.l.api.getDisplay(channelId) || channelId} usually doesn't stream :/`
@@ -63,7 +62,7 @@ export class Instance implements PluginInstance {
       }
 
       return `${await this.l.api.getDisplay(channelId) || channelId} usually streams at ${hours}:${minutes} UTC `
-        + `for ${this.l.u.timeDuration(averageDuration, 2)} (average of ${total} previous ${this.l.u.plural(total, 'stream', true)})`
+        + `for ${this.l.u.timeDuration(averageDuration, 2)} (previous ${this.l.u.plural(total, 'stream', 'streams')})`
     } catch (err) {
       console.error(err)
       return 'Catastrophic error!'
