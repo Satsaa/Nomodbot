@@ -1,13 +1,9 @@
 
 node_modules
 .vscode/
-*/cfg/*
-*/data/*
+cfg/
+data/
 tempCodeRunnerFile.js
 bin/
 tsconfig.tsbuildinfo
-main/src/tools/logConverter/log.txt
-main/src/tools/logConverter/logOut.txt
-main/src/tools/logConverter/skippedLines.txt
-main/src/tools/logConverter/ids.json
 delet default snippets.ahk
