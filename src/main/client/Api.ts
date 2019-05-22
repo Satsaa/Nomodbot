@@ -1,37 +1,50 @@
 import fs from 'fs'
+import { promises as fsp } from 'fs'
 import https from 'https'
 import path from 'path'
 import deepClone from '../lib/deepClone'
 import defaultKeys from '../lib/defaultKeys'
 import * as util from '../lib/util'
 
+interface GenericCache {
+  /** Time of update */
+  time: number
+  /** Previous cached result */
+  res?: {[x: string]: any}
+}
+
+interface GenericOptions {
+  /** An update will be done if possible, otherwise returns the previous cached result */
+  preferUpdate?: boolean
+  /** An update will be done if possible, otherwise returns undefined  */
+  requireUpdate?: boolean
+  /** An update will be done if possible if the cache is older than this (ms) */
+  maxAge?: number
+  /** Cached result will be returned although it may be undefined */
+  noUpdate?: boolean
+}
+
 interface ApiOptions {
   /** Client id which will be used to make requests */
   clientId: string,
-  /** Cache data will be loaded from and saved in this directory */
-  dataDir: string
-  /** Cache data will be loaded from and saved with this file name */
-  dataFile?: string
-}
-
-interface ApiCache {
-  converted?: {[display: string]: number}
-  userIds: {[login: string]: number}
-  displays: {[id: number]: string}
-  topStreams: GenericCache,
-  channels: {[channelId: number]: {
-    recentBroadcasts: GenericCache
-  }}
+  /** Bot data root folder path */
+  dataRoot: string
 }
 
 export default class TwitchApi {
   private opts: ApiOptions
-  private cache: ApiCache
-  private readonly channelDefault: {
+  private channelCaches: {
+    [channelId: number]: {
+      recentBroadcasts: GenericCache
+    }
+  }
+  private ids: {[login: string]: number}
+  private logins: {[uid: number]: string}
+  private displays: {[uid: number]: string}
+  /** Default blueprint for channels' cache entries */
+  private readonly channelCacheDefault: {
     recentBroadcasts: GenericCache
   }
-  private waitedIds: {[login: string]: Array<(value?: number | undefined) => void>}
-  private waitedDisplays: {[id: number]: Array<(value?: string | undefined) => void>}
 
   /** Bucket size maximum */
   private rlLimit: number
@@ -42,18 +55,16 @@ export default class TwitchApi {
   /** Contains deprecation times for caches */
   private deprecate: {
     recentBroadcasts: number
-    topStreams: number
   }
 
   constructor(options: ApiOptions) { // apiDataFile
-    this.opts = {...{dataFile: 'apiCache.json'}, ...options}
+    this.opts = options
 
-    this.channelDefault = {
+    this.channelCaches = {}
+
+    this.channelCacheDefault = {
       recentBroadcasts: {time: 0},
     }
-
-    this.waitedIds = {}
-    this.waitedDisplays = {}
 
     this.rlLimit = 30
     this.rlRemaining = 30
@@ -62,170 +73,152 @@ export default class TwitchApi {
     /** Default min cache update timings */
     this.deprecate = {
       recentBroadcasts: 30 * 60 * 1000, // 30 min
-      topStreams: 30 * 60 * 1000, // 30 min
     }
 
-    fs.mkdirSync(path.dirname(this.opts.dataDir), {recursive: true})
+    // Prepare cache file
+    fs.mkdirSync(path.dirname(this.opts.dataRoot), {recursive: true})
     try {
-      fs.accessSync(`${this.opts.dataDir}/${this.opts.dataFile}`, fs.constants.R_OK | fs.constants.W_OK)
+      fs.accessSync(`${this.opts.dataRoot}/global/apiCache.json`, fs.constants.R_OK | fs.constants.W_OK)
     } catch (err) {
-      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, '{}')
+      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataRoot}/global/apiCache.json`, '{}')
       else throw err
     }
-    // Cached file has combined display and user ID pairs
-    // Those will be converted to {uid: display} and {login: uid}
-    const preCache =  JSON.parse(fs.readFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, 'utf8')) as ApiCache
-    defaultKeys(preCache, {queueIds: [], queueDisplays: [], displays: {}, userIds: {}, channels: {}})
-    if (preCache.converted) {
-      for (const display in preCache.converted) {
-        const uid = preCache.converted[display]
-        preCache.displays[uid] = display
-        preCache.userIds[display.toLowerCase()] = uid
-      }
-      delete preCache.converted
+
+    // Cached file has uid, login, display tuples
+    // Those will be converted to {uid: display} and {login: uid} and vice versa
+    this.ids = {}
+    this.logins = {}
+    this.displays = {}
+    const userFile =  JSON.parse(fs.readFileSync(`${this.opts.dataRoot}/global/apiCache.json`, 'utf8')) as Array<[number, string, string]>
+    for (const user of userFile) {
+      const [id, login, display] = user
+      this.cacheUser(id, login, display)
     }
-    this.cache = preCache
 
     util.onExit(this.onExit.bind(this))
   }
 
-  // !!! public cacheUser(id: number, login: string, display: string) {
-  public cacheUser(id: number, display: string) {
-    this.cache.userIds[display.toLowerCase()] = id
-    this.cache.displays[id] = display
+  // Caches a id, login, display tuple for later use
+  public cacheUser(id: number, login: string, display: string) {
+    this.ids[login] = id
+    this.logins[id] = login
+    this.displays[id] = display
   }
 
   /** Gets the cached user ID for `login` or fetches it from the API */
-  public getId(login: string): Promise<number | undefined> {
-    return new Promise(async (resolve) => {
-      login = login.replace('#', '').toLowerCase()
-      if (this.cache.userIds[login]) return resolve(this.cache.userIds[login])
-      if (this.waitedIds[login]) {
-        this.waitedIds[login].push(resolve)
-        return
-      }
-      this.waitedIds[login] = [resolve]
-      // Fetch data
+  public async getId(login: string, onlyCached = false): Promise<number | undefined> {
+    if (this.ids[login]) return this.ids[login]
+    else {
+      if (onlyCached) return
+
       const res = await this._users({login})
-      let returnVal: undefined | number
-      if (typeof res === 'object') { // Success! Add new values to cache and return requested value
-        for (const user of res.data) {
-          if (user.login === login) returnVal = ~~user.id
-          this.cacheUser(~~user.id, user.display_name)
-        }
-      }
-      // Resolve all promises for this request
-      for (const resolve of this.waitedIds[login]) resolve(returnVal)
-      delete this.waitedIds[login]
-    })
+      if (typeof res === 'object' && res.data[0]) {
+        this.cacheUser(~~res.data[0].id, res.data[0].login, res.data[0].display_name)
+        return this.ids[login] // now defined by cacheUser
+      } else return
+    }
+  }
+
+  /** Gets the cached login name for `id` or fetches it from the API */
+  public async getLogin(id: number, onlyCached = false): Promise<string | undefined> {
+    if (this.logins[id]) return this.logins[id]
+    else {
+      if (onlyCached) return
+
+      const res = await this._users({id})
+      if (typeof res === 'object' && res.data[0]) {
+        this.cacheUser(~~res.data[0].id, res.data[0].login, res.data[0].display_name)
+        return this.logins[id] // now defined by cacheUser
+      } else return
+    }
   }
 
   /** Gets the cached display name for `id` or fetches it from the API */
-  public getDisplay(id: number): Promise<string | undefined>  {
-    return new Promise(async (resolve) => {
-      if (this.cache.displays[id]) return resolve(this.cache.displays[id])
-      if (this.waitedDisplays[id]) {
-        this.waitedDisplays[id].push(resolve)
-        return
-      }
-      this.waitedDisplays[id] = [resolve]
-      // Fetch data
+  public async getDisplay(id: number, onlyCached = false): Promise<string | undefined>  {
+    if (this.displays[id]) return this.displays[id]
+    else {
+      if (onlyCached) return
+
       const res = await this._users({id})
-      let returnVal: undefined | string
-      if (typeof res === 'object') { // Success! Add new values to cache and return requested value
-        for (const user of res.data) {
-          if (+user.id === id) returnVal = user.display_name
-          this.cacheUser(~~user.id, user.display_name)
-        }
-      }
-      // Resolve all promises for this request
-      for (const resolve of this.waitedDisplays[id]) resolve(returnVal)
-      delete this.waitedDisplays[id]
-    })
+      if (typeof res === 'object' && res.data[0]) {
+        this.cacheUser(~~res.data[0].id, res.data[0].login, res.data[0].display_name)
+        return this.displays[id] // now defined by cacheUser
+      } else return
+    }
   }
 
-  /** Gets the cached display name by user `name` or fetches it from the API */
-  public async toDisplay(name: string) {
-    const uid = await this.getId(name)
-    if (uid) return this.getDisplay(uid)
-    return
-  }
-
-  /** https://dev.twitch.tv/docs/api/reference/#get-users */
+  /** Typed function for https://dev.twitch.tv/docs/api/reference/#get-users */
   public _users(options: UsersOptions) {
     return this.get('/helix/users?', options) as Promise<UsersResponse | undefined | string>
   }
 
-  /** Gets the top 100 streams */
-  public async topStreams(generic: GenericOptions = {}): Promise<string | StreamsResponse | undefined> {
-    if (this.cache.topStreams) {
-      const cache = this.handleGeneric(this.cache.topStreams, this.deprecate.topStreams, generic) as StreamsResponse | undefined
-      if (cache) return cache
-    } else this.cache.topStreams = {time: 0}
-
-    const res = await this._streams({first: 100})
-    if (typeof res === 'object') {
-      this.cache.topStreams = {time: Date.now(), res}
-      return deepClone(res)
-    }
-    return res
-  }
-  /** https://dev.twitch.tv/docs/api/reference/#get-streams */
+  /** Typed function for https://dev.twitch.tv/docs/api/reference/#get-streams */
   public _streams(options: StreamsOptions) {
     return this.get('/helix/streams?', options) as Promise<StreamsResponse | undefined | string>
   }
 
-  /** Gets the follow status of `user` towards `channel` from the API */
-  public async getFollow(user: string | number, channel: string | number): Promise<FollowsResponse | undefined | string> {
-    if (typeof user === 'string' || typeof channel === 'string') {
-      const usersOpts: UsersOptions = {login: []}
-      if (typeof user === 'string') (usersOpts.login as string[]).push(user)
-      if (typeof channel === 'string') {
-        channel = channel.replace('#', '');
-        (usersOpts.login as string[]).push(channel)
-      }
-      const res = await this._users(usersOpts)
-      if (typeof res !== 'object') return res
-      for (const resUser of res.data) {
-        if (typeof user === 'string' && resUser.login === user.toLowerCase()) user = resUser.id
-        if (typeof channel === 'string' && resUser.login === channel.toLowerCase()) channel = resUser.id
-      }
+  /** Gets the follow status of `userId` towards `channelId` from the API */
+  public async getFollow(userId: number, channelId: number): Promise<FollowsResponse['data'][number] | undefined | string> {
+    const res = await this._follows({from_id: userId, to_id: channelId})
+    if (typeof res === 'object') {
+      return res.data[0]
     }
-    if (typeof user === 'string' || typeof channel === 'string') {
-      console.warn('user or channel was a string. Both should have been converted to numbers (ids) and that conversion failed')
-      return
-    }
-    return this._follows({from_id: user, to_id: channel})
+    return res
   }
   public _follows(options: FollowsOptions) {
     return this.get('/helix/follows?', options) as Promise<FollowsResponse | undefined | string>
   }
 
-  /** Gets the most recent videos of `channel` of the type 'broadcast' */
-  public async recentBroadcasts(channel: string | number, generic: GenericOptions = {}): Promise<string | VideosResponse | undefined> {
-    if (typeof channel === 'string') channel = channel.replace('#', '')
-    const channelId = (typeof channel === 'number' ? channel : await this.getId(channel))
-    if (!channelId) return
+  /** Gets the most recent videos of `channelId` of the type 'broadcast' */
+  public async recentBroadcasts(channelId: number, generic: GenericOptions = {}): Promise<string | VideosResponse | undefined> {
 
-    if (typeof this.cache.channels[channelId] !== 'object') this.cache.channels[channelId] = deepClone(this.channelDefault)
-    else defaultKeys(this.cache.channels[channelId], this.channelDefault)
+    if (!this.channelCaches[channelId]) this.loadChannelCache(channelId)
+    const channelCache = this.channelCaches[channelId].recentBroadcasts
 
-    const channelData = this.cache.channels[channelId]
-    if (channelData && channelData.recentBroadcasts) {
-      const cache = this.handleGeneric(channelData.recentBroadcasts, this.deprecate.recentBroadcasts, generic) as VideosResponse | undefined
-      if (cache) return cache
-    }
+    const cached = this.handleGeneric(channelCache, this.deprecate.recentBroadcasts, generic) as VideosResponse | undefined
+    if (cached) return cached
+
     const res = await this._videos({user_id: channelId, first: 100})
     if (typeof res === 'object') {
-      if (channelData) channelData.recentBroadcasts = {time: Date.now(), res}
+      channelCache.res = res
+      channelCache.time = Date.now()
       return deepClone(res)
     }
     return res
   }
 
-  /** https://dev.twitch.tv/docs/api/reference/#get-videos */
+  /** Typed function for https://dev.twitch.tv/docs/api/reference/#get-videos */
   public _videos(options: VideosOptions) {
     return this.get('/helix/videos?', options) as Promise<VideosResponse | undefined | string>
+  }
+
+  /** Reads the channel cache of `channelId` to memory */
+  public async loadChannelCache(channelId: number): Promise<boolean> {
+    if (this.channelCaches[channelId]) return false // Block unneeded loads
+    this.channelCaches[channelId] = deepClone(this.channelCacheDefault) // Blocks multiple loads
+    const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`
+    const dir = `${this.opts.dataRoot}/${channelId}/`
+    try {
+      await fsp.mkdir(dir, { recursive: true })
+      const cache = JSON.parse(await fsp.readFile(path, 'utf8'))
+      this.channelCaches[channelId] = cache
+      defaultKeys(cache, this.channelCacheDefault) // Make sure source file has all required keys
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        defaultKeys(this.channelCaches[channelId], this.channelCacheDefault)
+      } else throw err
+    }
+    return true
+  }
+  /** Saves and removes channel cache of `channelId` from memory */
+  public async unloadChannelCache(channelId: number): Promise<boolean> {
+    if (!this.channelCaches[channelId]) return false // Block unneeded unloads
+    const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`
+    const dir = `${this.opts.dataRoot}/${channelId}/`
+    await fsp.mkdir(dir, { recursive: true })
+    await fsp.writeFile(path, JSON.stringify(this.channelCaches[channelId], null, '\t'))
+    delete this.channelCaches[channelId]
+    return true
   }
 
   private get(path: string, params: {[param: string]: any}): Promise<object | string | undefined> {
@@ -275,9 +268,15 @@ export default class TwitchApi {
     })
   }
 
-  /** Returns the cached data or undefined if an update is necessary */
+  /**
+   * Returns `cache.res` or undefined if an update is expected
+   * @param cache `GenericCache` object
+   * @param deprecate Maximum age of `cache` before updating
+   * @param generic `GenericOptions` object
+   */
   private handleGeneric(cache: GenericCache, deprecate: number, generic: GenericOptions): object | void {
     if (!cache) return
+    if (!cache.res) return
     if (generic.noUpdate) return cache.res
     if (generic.requireUpdate) return // Must update
     const now = Date.now()
@@ -289,36 +288,32 @@ export default class TwitchApi {
   }
 
   private onExit() {
-    if (this.cache) {
-      this.cache.converted = {}
-      for (const id in this.cache.displays) {
-        this.cache.converted[this.cache.displays[id]] = +id
+    // Save user conversion data
+    // convert to tuples
+    const saveData: Array<[number, string, string]> = []
+    let failed = 0
+    for (const _id in this.logins) {
+      const id = ~~_id
+      const login = this.logins[id]
+      const display = this.displays[id]
+      if (id && login && display) {
+        saveData.push([id, login, display])
+      } else {
+        failed++
       }
-      delete this.cache.displays
-      delete this.cache.userIds
-      fs.writeFileSync(`${this.opts.dataDir}/${this.opts.dataFile}`, JSON.stringify(this.cache))
-    } else {
-      console.warn('[API] cache not saved due to it being undefined!')
+    }
+    if (failed) console.log(`[TWITCHAPI] Skipped ${failed} ${util.plural(failed, 'users')} on apiUsers.json save`)
+    // Folders must be created at this points
+    fs.writeFileSync(`${this.opts.dataRoot}/global/apiUsers.json`, JSON.stringify(saveData, null, '\t'))
+
+    // Save loaded channel caches
+    for (const channelId in this.channelCaches) {
+      const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`
+      const dir = `${this.opts.dataRoot}/${channelId}/`
+      fs.mkdirSync(dir, { recursive: true })
+      fs.writeFileSync(path, JSON.stringify(this.channelCaches[channelId], null, '\t'))
     }
   }
-}
-
-interface GenericCache {
-  /** Time of update */
-  time: number
-  /** Previous cached result */
-  res?: {[x: string]: any}
-}
-
-interface GenericOptions {
-  /** An update will be done if possible, otherwise returns the previous cached result */
-  preferUpdate?: boolean
-  /** An update will be done if possible, otherwise returns undefined  */
-  requireUpdate?: boolean
-  /** An update will be done if possible if the cache is older than this (ms) */
-  maxAge?: number
-  /** Cached result will be returned although it may be undefined */
-  noUpdate?: boolean
 }
 
 interface UsersOptions {

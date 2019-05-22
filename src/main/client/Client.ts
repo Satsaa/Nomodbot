@@ -170,7 +170,7 @@ export default class TwitchClient {
     this.rateLimiter = new RateLimiter(this.opts.msgRLOpts)
     this.whisperRateLimiter = new RateLimiter(this.opts.whisperRLOpts)
 
-    this.api = new TwitchApi({clientId: this.opts.clientId, dataDir: this.opts.dataDir, dataFile: this.opts.apiDataFile})
+    this.api = new TwitchApi({clientId: this.opts.clientId, dataRoot: this.opts.dataDir})
 
     // Match rateLimiter's options length with times lengths
     // Make sure the times arrays are big enough
@@ -233,7 +233,7 @@ export default class TwitchClient {
 
     const promises: Array<ReturnType<typeof eventTimeout>> = []
     for (const user of res.data) {
-      this.api.cacheUser(~~user.id, user.display_name)
+      this.api.cacheUser(~~user.id, user.login, user.display_name)
       this.send(`JOIN #${user.login}`)
       promises.push(eventTimeout(this, 'join', {timeout: this.getLatency(), matchArgs: [~~user.id]}))
       if (delay) await u.timeout(delay)
@@ -256,7 +256,7 @@ export default class TwitchClient {
     return (await Promise.all(promises)).every(v => v.timeout === false)
   }
 
-  /** Send `msg` to `channel` */
+  /** Send `msg` to `channelId` */
   public chat(channelId: number, msg: string, options: {command?: boolean} = {}) {
     return new Promise((resolve) => {
       const login = this.channels[channelId]
@@ -291,10 +291,15 @@ export default class TwitchClient {
     })
   }
 
-  /** Whisper `msg` to `user` */
-  public whisper(user: string, msg: string) {
-    this.whisperRateLimiter.queue(() => {
-      this.send(`PRIVMSG #${this.opts.username} :/w ${user} ${msg}`)
+  /** Whisper `msg` to `userId` */
+  public whisper(userId: number, msg: string) {
+    return new Promise(async (resolve) => {
+      const login = await this.api.getLogin(userId)
+      if (!login) return resolve(false)
+      this.whisperRateLimiter.queue(() => {
+        this.send(`PRIVMSG #${this.opts.username} :/w ${userId} ${msg}`)
+        resolve(true)
+      })
     })
   }
 
@@ -322,17 +327,8 @@ export default class TwitchClient {
   // Collect info about messages
   private doc(msg: IrcMessage) {
     if (msg.cmd !== null) {
-      // tag types
-      if (!this.messageTypes.tagTypes) this.messageTypes.tagTypes = { __count__: 1 }
-      else this.messageTypes.tagTypes.__count__++
-      for (const tag in msg.tags) {
-        if (!this.messageTypes.tagTypes[tag]) this.messageTypes.tagTypes[tag] = {__count__: 1 }
-        else this.messageTypes.tagTypes[tag].__count__++
-        const tagObj = this.messageTypes.tagTypes[tag]
-        const type = typeof msg.tags[tag]
-        if (!tagObj[type]) tagObj[type] = 1
-        else tagObj[type]++
-      }
+      // tag types. Types are now in a predefined list
+
       // noticeIds
       if (msg.cmd === 'NOTICE' && typeof msg.tags['msg-id'] === 'string') {
         const tag3 = msg.tags['msg-id'].toString()
@@ -418,6 +414,7 @@ export default class TwitchClient {
     return Math.max(this.latency, this.opts.minLatency)
   }
 
+  /** Starts the ping loop */
   private async pingLoop() {
     setTimeout(this.pingLoop.bind(this), this.opts.pingInterval * u.randomFloat(0.9, 1.0))
     if (!this.ws || this.ws.readyState !== 1) return
@@ -428,6 +425,7 @@ export default class TwitchClient {
     } else this.setLatency(Date.now() - start)
   }
 
+  /** Tries to reconnect until succeeding */
   private async reconnect(interval: number = this.opts.reconnectInterval): Promise<void> {
     if (this.reconnecting) return
     console.log(`Reconnecting in ${u.plural(Math.round(interval / 1000), 'second')}`)
@@ -442,10 +440,12 @@ export default class TwitchClient {
     this.reconnecting = false
   }
 
+  /** Log in console if logging irc messages is enabled */
   private ircLog(msg: any) {
     if (this.opts.logInfo) console.log(msg)
   }
 
+  /** Handle mod gain/losing in `channelId` */
   private async mod(channelId: number, user: string, mod: boolean) {
     if (!this.channelCache.mods[channelId]) this.channelCache.mods[channelId] = {}
     if (mod) {
@@ -455,6 +455,7 @@ export default class TwitchClient {
     this.ircLog(`${user} ${mod ? 'gains' : 'loses'} moderator in ${await this.api.getDisplay(channelId)}`)
   }
 
+  /** Handle a `user` joining 'channelId' */
   private async userJoin(channelId: number, user: string) {
     if (!this.channelCache.users[channelId]) this.channelCache.users[channelId] = {}
     if (this.channelCache.users[channelId][user]) return // Already joined
@@ -462,6 +463,7 @@ export default class TwitchClient {
     this.emit('userjoin', channelId, user)
     this.channelCache.users[channelId][user] = true
   }
+  /** Handle a `user` parting 'channelId' */
   private async userPart(channelId: number, user: string) {
     if (!this.channelCache.users[channelId]) this.channelCache.users[channelId] = {}
     if (!this.channelCache.users[channelId][user]) return // Not joined
@@ -470,11 +472,13 @@ export default class TwitchClient {
     delete this.channelCache.users[channelId][user]
   }
 
+  /** Announce a handled failure of message handling */
   private failHandle(msg: undefined | IrcMessage, message: any) {
     console.log(new Error(message))
     if (msg) console.log(msg)
   }
 
+  /** Handle an IRCv3 message */
   private async handleMessage(msg: IrcMessage) {
     if (msg === null) return
     let channel: string
@@ -522,6 +526,7 @@ export default class TwitchClient {
           this.clientData.channels[channelId] = {userstate: {}, phase: false}
           this.channels[channelId] = channel
           this.ids[channel] = channelId
+          this.api.loadChannelCache(channelId)
           this.emit('join', channelId)
         }
         this.userJoin(channelId, msg.user || 'undefined')
@@ -533,6 +538,7 @@ export default class TwitchClient {
         if (msg.user === this.opts.username) {
           delete this.channels[channelId]
           delete this.ids[channel]
+          this.api.unloadChannelCache(channelId)
           this.emit('part', channelId)
           delete this.clientData.channels[channelId]
         }
@@ -556,7 +562,7 @@ export default class TwitchClient {
         }
         userId = await this.api.getId(msg.params[1])
         if (!userId) return this.failHandle(msg, msg.cmd)
-        if (typeof msg.tags['ban-duration'] === 'number') this.emit('timeout', channelId, userId, msg.tags['ban-duration'] as number)
+        if (typeof msg.tags['ban-duration'] === 'number') this.emit('timeout', channelId, userId, msg.tags['ban-duration'])
         else this.emit('ban', channelId, userId)
         break
       case 'ROOMSTATE': // <tags> :tmi.twitch.tv ROOMSTATE #<channel>
@@ -604,7 +610,7 @@ export default class TwitchClient {
           ? msg.params[1].substring(0, msg.params[1].length - this.opts.dupeAffix.length)
           : msg.params[1]
         this.ircLog(`[${channel}] ${msg.tags['display-name']}: ${_msg}`)
-        this.api.cacheUser(msg.tags['user-id']!, msg.tags['display-name']! + '')
+        this.api.cacheUser(msg.tags['user-id']!, msg.user!, msg.tags['display-name']! + '')
         if (_msg.startsWith('ACTION ')) {
           this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as Required<IrcMessage['tags']>, _msg.slice(8, -1), true, msg.user === this.opts.username)
         } else this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as Required<IrcMessage['tags']>, _msg, false, msg.user === this.opts.username)
@@ -646,13 +652,13 @@ export default class TwitchClient {
             userId = +msg.tags['user-id']!
             if (!userId) return this.failHandle(msg, "Can't get userId of sub notice")
             streak = msg.tags['msg-param-months'] as number
-            const cumulative = msg.tags['msg-param-cumulative-months'] as number | null
+            const cumulative = msg.tags['msg-param-cumulative-months'] as number || null
             tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
             this.emit('sub', channelId, userId, streak, cumulative, tier as 1 | 2 | 3, false, msg.params[1])
             break
           case 'subgift':
           case 'anonsubgift':
-            gifterId = msg.tags['msg-param-recipient-id'] as number | null
+            gifterId = msg.tags['msg-param-origin-id'] as number || null
             const targetId = msg.tags['msg-param-recipient-id'] as number
             streak = msg.tags['msg-param-months'] as number
             total = msg.tags['msg-param-sender-count'] as number
@@ -662,7 +668,7 @@ export default class TwitchClient {
             break
           case 'submysterygift':
           case 'anonsubmysterygift':
-            gifterId =  msg.tags['msg-param-recipient-id'] as number | null
+            gifterId =  msg.tags['msg-param-origin-id'] as number || null
             total = msg.tags['msg-param-mass-gift-count'] as number
             tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
             this.emit('massgift', channelId, gifterId, total , tier as 1 | 2 | 3)
@@ -673,7 +679,7 @@ export default class TwitchClient {
             this.emit('raid', channelId, null, null)
             break
           case 'raid':
-            const viewerCount = msg.tags['viewer-count'] as number | null
+            const viewerCount = msg.tags['viewer-count'] as number || null
             id = await this.api.getId(msg.tags.login + '')
             if (!id) return this.failHandle(msg, msg.tags['msg-id'])
             this.emit('raid', channelId, id, viewerCount)
@@ -734,7 +740,7 @@ export default class TwitchClient {
               'bad_timeout_duration', 'bad_timeout_global_mod', 'bad_timeout_self', 'bad_timeout_staff', 'unban_success', 'usage_unban',
               'bad_unban_no_ban', 'usage_unhost', 'not_hosting', 'whisper_invalid_login', 'whisper_invalid_self', 'unrecognized_cmd',
               'no_permission', 'whisper_limit_per_min', 'whisper_limit_per_sec', 'whisper_restricted_recipient', 'host_target_went_offline']
-              .includes(msg.tags['msg-id'] as string)) this.ircLog(`${channel}: ${msg.params[1]}`)
+              .includes(msg.tags['msg-id'])) this.ircLog(`${channel}: ${msg.params[1]}`)
             else {
               console.warn('COULDN\'T HANDLE THIS INCREDIBLE NOTICE:')
               console.log(msg)

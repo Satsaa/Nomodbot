@@ -3,6 +3,7 @@ node_modules
 .vscode/
 cfg/
 data/
+_data/
 tempCodeRunnerFile.js
 bin/
 tsconfig.tsbuildinfo

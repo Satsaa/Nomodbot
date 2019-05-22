@@ -22,8 +22,9 @@
 export interface IrcMessage {
   raw: string,
   tags: {
-    [x: string]: string | number | true,
-    // @ts-ignore // Restrictive indexes FeelsWeirdMan
+    // The most elegant solution
+    [x: string]: string,
+    // @ts-ignore
     badges?: { [badge: string]: number },
     // @ts-ignore
     emotes?: { [emote: string]: {start: number, end: number} },
@@ -31,6 +32,32 @@ export interface IrcMessage {
     'display-name'?: string,
     // @ts-ignore
     'user-id'?: number,
+    // @ts-ignore
+    'emote-only'?: number,
+    // @ts-ignore
+    'followers-only'?: number,
+    // @ts-ignore
+    'subs-only'?: number,
+    // @ts-ignore
+    'slow'?: number,
+    // @ts-ignore
+    'ban-duration'?: number,
+    // @ts-ignore
+    'msg-param-months'?: number,
+    // @ts-ignore
+    'msg-param-cumulative-months'?: number,
+    // @ts-ignore
+    'msg-param-sub-plan'?: number,
+    // @ts-ignore
+    'msg-param-origin-id'?: number,
+    // @ts-ignore
+    'msg-param-recipient-id'?: number,
+    // @ts-ignore
+    'msg-param-sender-count'?: number,
+    // @ts-ignore
+    'msg-param-mass-gift-count'?: number,
+    // @ts-ignore
+    'viewer-count'?: number,
   },
   prefix: string | null,
   nick: string | null,
@@ -39,9 +66,53 @@ export interface IrcMessage {
   params: string[]
 }
 
-const array = [
+const conversions: {[tag: string]: (v: string) => any} = {
+  'emotes': emotes,
+  'badges': badges,
+  'user-id': num,
+  'emote-only': num,
+  'followers-only': num,
+  'subs-only': num,
+  'slow': num,
+  'ban-duration': num,
+  'msg-param-months': num,
+  'msg-param-cumulative-months': num,
+  'msg-param-sub-plan': num,
+  'msg-param-origin-id': num,
+  'msg-param-recipient-id': num,
+  'msg-param-sender-count': num,
+  'msg-param-mass-gift-count': num,
+  'viewer-count': num,
+}
 
-]
+function num(v: string) {
+  return ~~v
+}
+
+function emotes(v: string) { // emotes=25:0-4/354:6-10/1:12-13
+  if (typeof v === 'string' && v !== '') {
+    const emotes: { [emote: string]: {start: number, end: number} } = {}
+    const splitted = v.split('/')
+    splitted.forEach((fullEmote) => {
+      const emote: string[] = fullEmote.split(':')
+      const area = emote[1].split('-')
+      emotes[emote[0]] = {start: ~~area[0], end: ~~area[1]}
+    })
+    return emotes
+  } else return {}
+}
+
+function badges(v: string) {
+  if (typeof v === 'string' && v !== '') {
+    const badges: {[badge: string]: number} = {}
+    const splitted = v.split(',')
+    splitted.forEach((fullBadge) => {
+      const badge = fullBadge.split('/')
+      badges[badge[0]] = ~~badge[1]
+    })
+    return badges
+  } else return {}
+}
 
 /**
  * Parse IRCv3 tagged messages  
@@ -80,41 +151,21 @@ export default function parse(msg: string): IrcMessage | null {
       const minIndex = Math.min(nextEquals, nextSpace, nextSemiColon)
       const semiMinIndex = Math.min(nextSpace, nextSemiColon)
 
-      let val: string | number | true = msg.slice(minIndex + 1, semiMinIndex)
+      let val: string = msg.slice(minIndex + 1, semiMinIndex)
 
       // Unescape characters: ' ' '/' ';' '\n' '\r'
       if (val.indexOf('\\') !== -1) {
         val = val.replace(/\\s/g, ' ').replace(/\\:/g, ';').replace(/\\\\/g, '\\').replace(/\\n/g, '\n').replace(/\\r/g, '\r')
-      } else if (val.length === 0) val = nextEquals > semiMinIndex ? true : val
-      else {
-        const prev = val
-        val = +val
-        if (isNaN(val)) val = prev
       }
 
       const tag = msg.slice(i, minIndex)
-      if (tag === 'badges') { // badges=moderator/1,subscriber/1
-        if (typeof val === 'string' && val !== '') {
-          const badges: {[badge: string]: number} = {}
-          const splitted = val.split(',')
-          splitted.forEach((fullBadge) => {
-            const badge = fullBadge.split('/')
-            badges[badge[0]] = ~~badge[1]
-          })
-          result.tags.badges = badges
-        } else result.tags.badges = {}
-      } else if (tag === 'emotes') { // emotes=25:0-4/354:6-10/1:12-13
-        if (typeof val === 'string' && val !== '') {
-          const emotes: { [emote: string]: {start: number, end: number} } = {}
-          const splitted = val.split('/')
-          splitted.forEach((fullEmote) => {
-            const emote: string[] = fullEmote.split(':')
-            const area = emote[1].split('-')
-            emotes[emote[0]] = {start: ~~area[0], end: ~~area[1]}
-          })
-          result.tags.emotes = emotes
-        } else result.tags.emotes = {}
-      } else result.tags[tag] = val // Normal tag
+
+      // Convert specific tags to other formats
+      if (conversions[tag]) {
+        val = conversions[tag](val)
+      }
+
+      result.tags[tag] = val // Normal tag
       i = semiMinIndex + 1
     }
   }
