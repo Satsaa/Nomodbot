@@ -6,7 +6,7 @@
  * @param defaultObj 
  * @param checkObj 
  */
-export default (mutatedObj: object, defaultObj: object) => {
+export default <M extends object | any[], D extends M>(mutatedObj: M, defaultObj: Partial<D>) => {
 
   const references: any[] = [] // Avoid circular reasoning
 
