@@ -141,7 +141,7 @@ export default class TwitchApi {
     if (typeof user === 'string') {
       const id = await this.getId(user)
       if (!id) return
-      user = id
+      return this.displays[id]
     }
     const id = user
 
@@ -162,6 +162,7 @@ export default class TwitchApi {
    * @returns Object containing inputted `logins` with the correspoding result
    */
   public async getIds(logins: string[], onlyCached = false): Promise<{[login: string]: number | undefined}> {
+    logins = logins.map(v => v.toLowerCase())
     // Create return object which removes duplicates as a side effect
     const res: {[login: string]: number | undefined} = {}
     for (const login of logins) {
@@ -169,19 +170,28 @@ export default class TwitchApi {
     }
     logins = Object.keys(res) // Now has no duplicates
 
-    const hundreds: string[][] = []
-    for (let i = 0; i < logins.length / 100; i++) {
-      hundreds.push(logins.slice(i * 100, i * 100 + 100))
+    const notInCache = []
+    for (const login of logins) {
+      if (this.ids[login]) {
+        res[login] = this.ids[login]
+      } else notInCache.push(login)
     }
 
-    let first = true
-    for (const hundred of hundreds) {
-      if (!first) await util.timeout(1000)
-      first = false
-      const users = await this._users({login: hundred})
-      if (typeof users === 'object') {
-        for (const user of users.data) {
-          res[user.login] = ~~user.id
+    if (!onlyCached) {
+      const hundreds: string[][] = []
+      for (let i = 0; i < notInCache.length / 100; i++) {
+        hundreds.push(notInCache.slice(i * 100, i * 100 + 100))
+      }
+
+      let first = true
+      for (const hundred of hundreds) {
+        if (!first) await util.timeout(1000)
+        first = false
+        const users = await this._users({login: hundred})
+        if (typeof users === 'object') {
+          for (const user of users.data) {
+            res[user.login] = ~~user.id
+          }
         }
       }
     }
@@ -202,19 +212,28 @@ export default class TwitchApi {
     }
     ids = Object.keys(res).map(v => ~~v) // Now has no duplicates
 
-    const hundreds: number[][] = []
-    for (let i = 0; i < ids.length / 100; i++) {
-      hundreds.push(ids.slice(i * 100, i * 100 + 100))
+    const notInCache = []
+    for (const id of ids) {
+      if (this.logins[id]) {
+        res[id] = this.logins[id]
+      } else notInCache.push(id)
     }
 
-    let first = true
-    for (const hundred of hundreds) {
-      if (!first) await util.timeout(1000)
-      first = false
-      const users = await this._users({id: hundred})
-      if (typeof users === 'object') {
-        for (const user of users.data) {
-          res[~~user.id] = user.login
+    if (!onlyCached) {
+      const hundreds: number[][] = []
+      for (let i = 0; i < notInCache.length / 100; i++) {
+        hundreds.push(notInCache.slice(i * 100, i * 100 + 100))
+      }
+
+      let first = true
+      for (const hundred of hundreds) {
+        if (!first) await util.timeout(1000)
+        first = false
+        const users = await this._users({id: hundred})
+        if (typeof users === 'object') {
+          for (const user of users.data) {
+            res[~~user.id] = user.login
+          }
         }
       }
     }
@@ -242,6 +261,7 @@ export default class TwitchApi {
   public async getDisplays(users: number[] | string[], onlyCached = false): Promise<{[user: string]: string | undefined}> {
     if (typeof users[0] === 'string') { // Using logins
       let logins = users as string[]
+      logins = logins.map(v => v.toLowerCase())
       // Create return object which removes duplicates as a side effect
       const res: {[login: string]: string | undefined} = {}
       for (const login of logins) {
@@ -249,19 +269,28 @@ export default class TwitchApi {
       }
       logins = Object.keys(res) // Now has no duplicates
 
-      const hundreds: string[][] = []
-      for (let i = 0; i < logins.length / 100; i++) {
-        hundreds.push(logins.slice(i * 100, i * 100 + 100))
+      const notInCache = []
+      for (const login of logins) {
+        if (this.ids[login]) {
+          res[login] = this.displays[this.ids[login]]
+        } else notInCache.push(login)
       }
 
-      let first = true
-      for (const hundred of hundreds) {
-        if (!first) await util.timeout(1000)
-        first = false
-        const users = await this._users({login: hundred})
-        if (typeof users === 'object') {
-          for (const user of users.data) {
-            res[user.login] = user.display_name
+      if (!onlyCached) {
+        const hundreds: string[][] = []
+        for (let i = 0; i < notInCache.length / 100; i++) {
+          hundreds.push(notInCache.slice(i * 100, i * 100 + 100))
+        }
+
+        let first = true
+        for (const hundred of hundreds) {
+          if (!first) await util.timeout(1000)
+          first = false
+          const users = await this._users({login: hundred})
+          if (typeof users === 'object') {
+            for (const user of users.data) {
+              res[user.login] = user.display_name
+            }
           }
         }
       }
@@ -276,19 +305,28 @@ export default class TwitchApi {
       }
       ids = Object.keys(res).map(v => ~~v) // Now has no duplicates
 
-      const hundreds: number[][] = []
-      for (let i = 0; i < ids.length / 100; i++) {
-        hundreds.push(ids.slice(i * 100, i * 100 + 100))
+      const notInCache = []
+      for (const id of ids) {
+        if (this.displays[id]) {
+          res[id] = this.displays[id]
+        } else notInCache.push(id)
       }
 
-      let first = true
-      for (const hundred of hundreds) {
-        if (!first) await util.timeout(1000)
-        first = false
-        const users = await this._users({id: hundred})
-        if (typeof users === 'object') {
-          for (const user of users.data) {
-            res[~~user.id] = user.display_name
+      if (!onlyCached) {
+        const hundreds: number[][] = []
+        for (let i = 0; i < notInCache.length / 100; i++) {
+          hundreds.push(notInCache.slice(i * 100, i * 100 + 100))
+        }
+
+        let first = true
+        for (const hundred of hundreds) {
+          if (!first) await util.timeout(1000)
+          first = false
+          const users = await this._users({id: hundred})
+          if (typeof users === 'object') {
+            for (const user of users.data) {
+              res[~~user.id] = user.display_name
+            }
           }
         }
       }
