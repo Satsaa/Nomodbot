@@ -12,12 +12,15 @@ export default class Data extends EventEmitter {
   public dataPath: string
   private client: TwitchClient
   private autoLoads: Array<{name: string, defaultData?: object, setDefaults?: boolean}>
+  private nameBlacklist: string[]
 
-  constructor(client: TwitchClient, dataPath: string) {
+  constructor(client: TwitchClient, dataRoot: string, blacklist = ['']) {
     super()
-    this.dataPath = dataPath.endsWith('/') ? dataPath : dataPath + '/'
+    this.dataPath = dataRoot
 
-    if (!fs.existsSync(dataPath)) fs.mkdirSync(dataPath)
+    if (!fs.existsSync(dataRoot)) fs.mkdirSync(dataRoot)
+
+    this.nameBlacklist = blacklist
 
     this.client = client
     this.client.on('join', this.onJoin.bind(this))
@@ -30,7 +33,7 @@ export default class Data extends EventEmitter {
 
   /** Returns the path to the data file */
   public getPath(subType: string | number, name: string, fileType: string = 'json') {
-    return `${this.dataPath}${subType}/${name}.${fileType}`
+    return `${this.dataPath}/${subType}/${name}.${fileType}`
   }
 
   /**
@@ -67,7 +70,7 @@ export default class Data extends EventEmitter {
     for (const subType in this.data) {
       for (const name in this.data[subType]) {
         const data  = this.getData(subType, name)
-        if (data) fs.writeFileSync(`${this.dataPath}${subType}/${name}.json`, JSON.stringify(data, null, 0))
+        if (data) fs.writeFileSync(`${this.dataPath}/${subType}/${name}.json`, JSON.stringify(data, null, 0))
         else console.error(`Failed to save ${subType}\\${name} because it was undefined`)
       }
     }
@@ -86,7 +89,7 @@ export default class Data extends EventEmitter {
       return false
     }
     try {
-      await fsp.writeFile(`${this.dataPath}${subType}/${name}.json`, JSON.stringify(data, null, 2))
+      await fsp.writeFile(`${this.dataPath}/${subType}/${name}.json`, JSON.stringify(data, null, 2))
       if (unload) this.delData(subType, name)
       return true
     } catch (err) {
@@ -116,9 +119,11 @@ export default class Data extends EventEmitter {
    */
   public async load(subType: string | number, name: string, defaultData?: object, setDefaults = false): Promise<object> {
     if (!this.data[subType]) this.data[subType] = {}
+    if ((subType + '').length === 0 || name.length === 0) throw new Error('subType and name must not be zero-length')
+    if (this.nameBlacklist.includes(name)) throw new Error(`${name} is preserved for internal functions`)
     if (this.getData(subType, name)) throw new Error(`${name} has already been loaded by another source`)
     this.setDataAny(subType, name, true) // Blocks new loads on this data type
-    const file = `${this.dataPath}${subType}/${name}.json`
+    const file = `${this.dataPath}/${subType}/${name}.json`
     try { // Check if file is already created
       await fsp.access(file, fs.constants.F_OK)
     } catch (err) {
