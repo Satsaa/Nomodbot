@@ -83,7 +83,7 @@ export interface PluginInstance {
   call?: (channelId: number, userstate: IrcMessage['tags'], params: string[], me: boolean, alias: Readonly<CommandAlias>) => Promise<string | void>,
   /** An alias of this command is called but it was on cooldown */
   cooldown?: (channelId: number, userstate: IrcMessage['tags'], params: string[], me: boolean, alias: Readonly<CommandAlias>) => void,
-  /** This plugin is being unloaded (this function is not called when the bot is shutting down) */
+  /** This plugin is being unloaded (not when the bot is shutting down). Creates are unloaded automatically after this */
   unload?: () => Promise<void>
 }
 
@@ -249,19 +249,49 @@ export default class Commander {
 
   /** Reloads `pluginId` if possible */
   public async reloadPlugin(pluginId: string) {
-    const res1 = await this.unloadPlugin(pluginId)
-    const res2 = await this.loadPlugin(pluginId)
-    if (res1 && res2) return true
-    return false
+    await this.unloadPlugin(pluginId, 5000)
+    return this.loadPlugin(pluginId)
   }
 
   /** Unloads `pluginId` if possible */
-  public async unloadPlugin(pluginId: string) {
+  public async unloadPlugin(pluginId: string, timeout?: number) {
     if (!this.paths[pluginId]) return false
     if (!this.plugins[pluginId].unloadable) return false
-    const res = await this.waitPlugin(pluginId, 5000) // Plugin must be loaded before unloading
+    const res = await this.waitPlugin(pluginId, timeout) // Plugin must be loaded before unloading
     if (!res) return false // Timeout
+
+    const creates = this.plugins[pluginId].creates
+    // Check that other plugins dont require parts of this plugin
+    for (const pid in this.plugins) {
+      // Test if this plugin is vital
+      if ((this.plugins[pid].requirePlugins || []).includes(pluginId)) return false
+      // Test if this plugin's created data is vital
+      if (creates) {
+        for (const create of creates) {
+          const createString = create.join()
+          for (const require of (this.plugins[pid].requireDatas || [])) {
+            const requireString = require.join()
+            if (createString === requireString) return false
+          }
+        }
+      }
+    }
+
     if (this.instances[pluginId].unload) await this.instances[pluginId].unload!()
+
+    // Unload data
+    const unloads: Array<Promise<any>> = []
+    if (creates) {
+      for (const create of creates) {
+        if (create.length === 1) { // Channel data
+          unloads.push(this.data.unautoLoad(create[0]))
+        } else { // 2 length, thus non channel data
+          unloads.push(this.data.save(create[0], create[1], true))
+        }
+      }
+    }
+    await Promise.all(unloads)
+
     delete this.plugins[pluginId]
     delete this.instances[pluginId]
     return true
@@ -377,7 +407,7 @@ export default class Commander {
       ucd = next(cooldowns.user[alias.target][userId], alias.userCooldown)
     }
     if (Math.max(cd, ucd) <= 0) {
-      // Add new entry to cooldown handler
+      // Add new entry to cooldowns
       if (alias.cooldown) cooldowns.shared[alias.target].push(now)
       if (alias.userCooldown) cooldowns.user[alias.target][userId].push(now)
       return false
