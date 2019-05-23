@@ -100,6 +100,7 @@ export default class TwitchApi {
 
   // Caches a id, login, display tuple for later use
   public cacheUser(id: number, login: string, display: string) {
+    login = login.toLowerCase()
     this.ids[login] = id
     this.logins[id] = login
     this.displays[id] = display
@@ -113,7 +114,6 @@ export default class TwitchApi {
 
       const res = await this._users({login})
       if (typeof res === 'object' && res.data[0]) {
-        this.cacheUser(~~res.data[0].id, res.data[0].login, res.data[0].display_name)
         return this.ids[login] // now defined by cacheUser
       } else return
     }
@@ -127,29 +127,188 @@ export default class TwitchApi {
 
       const res = await this._users({id})
       if (typeof res === 'object' && res.data[0]) {
-        this.cacheUser(~~res.data[0].id, res.data[0].login, res.data[0].display_name)
         return this.logins[id] // now defined by cacheUser
       } else return
     }
   }
 
   /** Gets the cached display name for `id` or fetches it from the API */
-  public async getDisplay(id: number, onlyCached = false): Promise<string | undefined>  {
+  public async getDisplay(id: number, onlyCached?: boolean): Promise<string | undefined>
+  /** Gets the cached display name for `login` or fetches it from the API */
+  public async getDisplay(login: string, onlyCached?: boolean): Promise<string | undefined>
+  /** Gets the cached display name for `user` or fetches it from the API */
+  public async getDisplay(user: number | string, onlyCached = false): Promise<string | undefined> {
+    if (typeof user === 'string') {
+      const id = await this.getId(user)
+      if (!id) return
+      user = id
+    }
+    const id = user
+
     if (this.displays[id]) return this.displays[id]
     else {
       if (onlyCached) return
 
       const res = await this._users({id})
       if (typeof res === 'object' && res.data[0]) {
-        this.cacheUser(~~res.data[0].id, res.data[0].login, res.data[0].display_name)
         return this.displays[id] // now defined by cacheUser
       } else return
     }
   }
 
-  /** Typed function for https://dev.twitch.tv/docs/api/reference/#get-users */
-  public _users(options: UsersOptions) {
-    return this.get('/helix/users?', options) as Promise<UsersResponse | undefined | string>
+  /**
+   * Gets the user IDs for `logins`  
+   * Each from cache if available or otherwise from the API  
+   * @returns Object containing inputted `logins` with the correspoding result
+   */
+  public async getIds(logins: string[], onlyCached = false): Promise<{[login: string]: number | undefined}> {
+    // Create return object which removes duplicates as a side effect
+    const res: {[login: string]: number | undefined} = {}
+    for (const login of logins) {
+      res[login] = undefined
+    }
+    logins = Object.keys(res) // Now has no duplicates
+
+    const hundreds: string[][] = []
+    for (let i = 0; i < logins.length / 100; i++) {
+      hundreds.push(logins.slice(i * 100, i * 100 + 100))
+    }
+
+    let first = true
+    for (const hundred of hundreds) {
+      if (!first) await util.timeout(1000)
+      first = false
+      const users = await this._users({login: hundred})
+      if (typeof users === 'object') {
+        for (const user of users.data) {
+          res[user.login] = ~~user.id
+        }
+      }
+    }
+
+    return res
+  }
+
+  /**
+   * Gets the login names for `ids`  
+   * Each from cache if available or otherwise from the API  
+   * @returns Object containing inputted `ids` with the correspoding result
+   */
+  public async getLogins(ids: number[], onlyCached = false): Promise<{[id: number]: string | undefined}> {
+    // Create return object which removes duplicates as a side effect
+    const res: {[id: number]: string | undefined} = {}
+    for (const id of ids) {
+      res[id] = undefined
+    }
+    ids = Object.keys(res).map(v => ~~v) // Now has no duplicates
+
+    const hundreds: number[][] = []
+    for (let i = 0; i < ids.length / 100; i++) {
+      hundreds.push(ids.slice(i * 100, i * 100 + 100))
+    }
+
+    let first = true
+    for (const hundred of hundreds) {
+      if (!first) await util.timeout(1000)
+      first = false
+      const users = await this._users({id: hundred})
+      if (typeof users === 'object') {
+        for (const user of users.data) {
+          res[~~user.id] = user.login
+        }
+      }
+    }
+
+    return res
+  }
+
+  /**
+   * Gets the display names for `ids`  
+   * Each from cache if available or otherwise from the API  
+   * @returns Object containing inputted `ids` with the correspoding result
+   */
+  public getDisplays(ids: number[], onlyCached?: boolean): Promise<{[id: number]: string | undefined}>
+  /**
+   * Gets the display names for `logins`  
+   * Each from cache if available or otherwise from the API  
+   * @returns Object containing inputted `logins` with the correspoding result
+   */
+  public getDisplays(logins: string[], onlyCached?: boolean): Promise<{[login: string]: string | undefined}>
+  /**
+   * Gets the display names for `users`  
+   * Each from cache if available or otherwise from the API  
+   * @returns Object containing inputted `users` with the correspoding result
+   */
+  public async getDisplays(users: number[] | string[], onlyCached = false): Promise<{[user: string]: string | undefined}> {
+    if (typeof users[0] === 'string') { // Using logins
+      let logins = users as string[]
+      // Create return object which removes duplicates as a side effect
+      const res: {[login: string]: string | undefined} = {}
+      for (const login of logins) {
+        res[login] = undefined
+      }
+      logins = Object.keys(res) // Now has no duplicates
+
+      const hundreds: string[][] = []
+      for (let i = 0; i < logins.length / 100; i++) {
+        hundreds.push(logins.slice(i * 100, i * 100 + 100))
+      }
+
+      let first = true
+      for (const hundred of hundreds) {
+        if (!first) await util.timeout(1000)
+        first = false
+        const users = await this._users({login: hundred})
+        if (typeof users === 'object') {
+          for (const user of users.data) {
+            res[user.login] = user.display_name
+          }
+        }
+      }
+
+      return res
+    } else { // Using ids or empty array
+      let ids = users as number[]
+      // Create return object which removes duplicates as a side effect
+      const res: {[id: number]: string | undefined} = {}
+      for (const id of ids) {
+        res[id] = undefined
+      }
+      ids = Object.keys(res).map(v => ~~v) // Now has no duplicates
+
+      const hundreds: number[][] = []
+      for (let i = 0; i < ids.length / 100; i++) {
+        hundreds.push(ids.slice(i * 100, i * 100 + 100))
+      }
+
+      let first = true
+      for (const hundred of hundreds) {
+        if (!first) await util.timeout(1000)
+        first = false
+        const users = await this._users({id: hundred})
+        if (typeof users === 'object') {
+          for (const user of users.data) {
+            res[~~user.id] = user.display_name
+          }
+        }
+      }
+
+      return res
+    }
+  }
+
+  /**
+   * Typed function for https://dev.twitch.tv/docs/api/reference/#get-users  
+   * Also caches the received user ids, logins and display names
+   */
+  public async _users(options: UsersOptions) {
+    const res = await this.get('/helix/users?', options) as UsersResponse | undefined | string
+    if (typeof res === 'object') {
+      for (const user of res.data) {
+        this.cacheUser(~~user.id, user.login, user.display_name)
+      }
+    }
+    return res
   }
 
   /** Typed function for https://dev.twitch.tv/docs/api/reference/#get-streams */
