@@ -249,6 +249,7 @@ export default class TwitchApi {
   public getDisplays(ids: number[], onlyCached?: boolean): Promise<{[id: number]: string | undefined}>
   /**
    * Gets the display names for `logins`  
+   * `logins` are converted to lowercase and it is reflected in the result  
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `logins` with the correspoding result
    */

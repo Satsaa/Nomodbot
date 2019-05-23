@@ -5,8 +5,8 @@ import { LogExtension} from './log'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'lastseen',
-  name: 'LastSeen',
+  name: 'lastseen',
+  title: 'LastSeen',
   description: 'Shows when a user sent their last message',
   default: {
     alias: ['?seen', '?lastseen'],
@@ -18,7 +18,7 @@ export const options: PluginOptions = {
   help: [
     'Show when you or user sent their last message: {alias} [<user>]',
   ],
-  requiresPlugins: ['log'],
+  requirePlugins: ['log'],
 }
 
 export class Instance implements PluginInstance {

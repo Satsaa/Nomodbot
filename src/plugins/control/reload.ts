@@ -4,8 +4,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'reload',
-  name: 'Reload',
+  name: 'reload',
+  title: 'Reload',
   description: 'Reloads a file',
   default: {
     alias: '$reload',

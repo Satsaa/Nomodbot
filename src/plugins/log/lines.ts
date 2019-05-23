@@ -5,8 +5,8 @@ import { LogExtension} from './log'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'lines',
-  name: 'Lines',
+  name: 'lines',
+  title: 'Lines',
   description: 'Shows how many messages a user has sent',
   default: {
     alias: '?lines',
@@ -18,7 +18,7 @@ export const options: PluginOptions = {
   help: [
     'Show the total amount of messages sent by you or user: {alias} [<user>]',
   ],
-  requiresPlugins: ['log'],
+  requirePlugins: ['log'],
 }
 
 export class Instance implements PluginInstance {

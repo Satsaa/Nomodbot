@@ -5,8 +5,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'spotifyplaylist',
-  name: 'SpotifyPlaylist',
+  name: 'spotifyplaylist',
+  title: 'SpotifyPlaylist',
   description: 'Shows the first or nth song on a spotify playlist. An automatically updating playlist can be used for live song names',
   default: {
     alias: ['!song', '?song'],
@@ -43,7 +43,7 @@ export class Instance implements PluginInstance {
     this.clientSecret = this.l.getKey('spotify', 'client_secret')
     this.accessToken = undefined
     if (typeof this.clientId !== 'string' || typeof this.clientSecret !== 'string') {
-      this.l.disableDefaults(options.id)
+      this.l.disableDefaults(options.name)
       console.log('[SPOTIFYPLAYLIST] Disabled due to the lack of API keys for spotify')
     } else {
       this.tokenLoop()

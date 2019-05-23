@@ -4,8 +4,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'numvote',
-  name: 'Numeric Votes',
+  name: 'numvote',
+  title: 'Numeric Votes',
   description: 'Shows a message to the target user when they type',
   default: {
     alias: ['0', '1', '2', '3'],

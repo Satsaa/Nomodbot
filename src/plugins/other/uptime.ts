@@ -4,8 +4,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'uptime',
-  name: 'Uptime',
+  name: 'uptime',
+  title: 'Uptime',
   description: 'Tells how long a channel has been live or offline',
   default: {
     alias: ['?uptime', '?downtime'],

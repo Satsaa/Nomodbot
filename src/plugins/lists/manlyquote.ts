@@ -5,8 +5,8 @@ import { ListsExtension } from './lists'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'manlyquote',
-  name: 'ManlyQuote',
+  name: 'manlyquote',
+  title: 'ManlyQuote',
   description: 'Spreads some manliness',
   default: {
     alias: '?manlyquote',
@@ -22,7 +22,7 @@ export const options: PluginOptions = {
     'Insert a new manly quote at index: {alias} insert <index> <quote>',
     'Delete a manly quote at index: {alias} delete <index>',
   ],
-  requiresPlugins: ['lists'],
+  requirePlugins: ['lists'],
 }
 
 export class Instance implements PluginInstance {
@@ -34,7 +34,7 @@ export class Instance implements PluginInstance {
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.lists = this.l.ext.lists as ListsExtension
-    this.quotes = this.lists.getList(options.id, undefined, defaultQuotes)
+    this.quotes = this.lists.getList(options.name, undefined, defaultQuotes)
   }
 
   public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {

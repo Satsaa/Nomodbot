@@ -5,8 +5,8 @@ import { LogExtension} from './log'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'totallines',
-  name: 'TotalLines',
+  name: 'totallines',
+  title: 'TotalLines',
   description: 'Shows the total amount of messages sent in the current channel',
   default: {
     alias: '?totallines',
@@ -18,7 +18,7 @@ export const options: PluginOptions = {
   help: [
     'Show the total messages sent in {channel}: {alias}',
   ],
-  requiresPlugins: ['log'],
+  requirePlugins: ['log'],
 }
 
 export class Instance implements PluginInstance {

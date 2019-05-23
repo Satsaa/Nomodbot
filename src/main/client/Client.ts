@@ -12,27 +12,27 @@ import parse, { IrcMessage } from './parser'
 interface Events {
   join: (channelId: number) => void
   part: (channelId: number) => void
+  welcome: () => void
   userjoin: (channelId: number, user: string) => void
   userpart: (channelId: number, user: string) => void
+  mod: (channelId: number, user: string, mod: boolean) => void
   chat: (channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean, self: boolean) => void
   whisper: (userId: number, message: string) => void
-  mod: (channelId: number, user: string, mod: boolean) => void
-  welcome: () => void
-  clearmsg: (channelId: number, targetMsgId: IrcMessage['tags']['target-msg-id'], tags: IrcMessage['tags'], message: string) => void
-  clear: (channelId: number) => void
+  hosttarget: (channelId: number, hostChannelId: number | null, viewerCount: number | null) => void
   timeout: (channelId: number, userId: number, duration: number) => void
+  clearmsg: (channelId: number, targetMsgId: IrcMessage['tags']['target-msg-id'], tags: IrcMessage['tags'], message: string) => void
   ban: (channelId: number, userId: number) => void
+  clear: (channelId: number) => void
   roomstate: (channelId: number, roomstate: IrcMessage['tags']) => void
   userstate: (channelId: number, userstate: IrcMessage['tags']) => void
-  globaluserstate: (globaluserstate: IrcMessage['tags']) => void
-  hosttarget: (channelId: number, hostChannelId: number | null, viewerCount: number | null) => void
-  pong: () => void
+  // globaluserstate: (globaluserstate: IrcMessage['tags']) => void
+  // pong: () => void
   usernotice: (channelId: number, tags: IrcMessage['tags'], message?: string) => void
   notice: (channelId: number, tags: IrcMessage['tags'], message: string) => void
 
   // usernotice
   sub: (channelId: number, userId: number, streak: number, cumulative: number | null, tier: 1 | 2 | 3, gifted: boolean , message: string | null) => void
-  gift: (channelId: number, gifterId: number | null, targetId: number, tier: 1 | 2 | 3, total: number) => void
+  subgift: (channelId: number, gifterId: number | null, targetId: number, tier: 1 | 2 | 3, total: number) => void
   massgift: (channelId: number, gifterId: number | null, count: number, tier: 1 | 2 | 3) => void
   raid: (channelId: number, targetId: number | null, viewerCount: number | null) => void
   ritual: (channelId: number, userId: number, ritualName: string, message: string) => void
@@ -586,7 +586,6 @@ export default class TwitchClient {
         break
       case 'GLOBALUSERSTATE': // <tags> <prefix> GLOBALUSERSTATE
         this.globaluserstate = {...this.globaluserstate, ...msg.tags}
-        this.emit('globaluserstate', msg.tags)
         // badges=;color=#008000;display-name=NoModBot;emote-sets=0,326755;user-id=266132990;user-type= <prefix> GLOBALUSERSTATE
         break
       case 'HOSTTARGET':
@@ -622,7 +621,6 @@ export default class TwitchClient {
         this.send('PONG')
         break
       case 'PONG':
-        this.emit('pong')
         break
       case 'RECONNECT':
         this.reconnect()
@@ -663,7 +661,7 @@ export default class TwitchClient {
             streak = msg.tags['msg-param-months'] as number
             total = msg.tags['msg-param-sender-count'] as number
             tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
-            this.emit('gift', channelId, gifterId, targetId, tier as 1 | 2 | 3, total)
+            this.emit('subgift', channelId, gifterId, targetId, tier as 1 | 2 | 3, total)
             this.emit('sub', channelId, targetId, streak, null, tier as 1 | 2 | 3, true, null)
             break
           case 'submysterygift':

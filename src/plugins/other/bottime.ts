@@ -5,8 +5,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'bottime',
-  name: 'Bottime',
+  name: 'bottime',
+  title: 'Bottime',
   description: 'Display how long the bot has been running',
   default: {
     alias: '?bottime',

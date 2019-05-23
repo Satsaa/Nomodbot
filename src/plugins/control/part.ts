@@ -4,8 +4,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'part',
-  name: 'Part',
+  name: 'part',
+  title: 'Part',
   description: 'Leaves a channel',
   default: {
     alias: '$part',

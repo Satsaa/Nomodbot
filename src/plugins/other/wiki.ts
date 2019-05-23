@@ -5,8 +5,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'wiki',
-  name: 'Wiki',
+  name: 'wiki',
+  title: 'Wiki',
   description: 'Gets summaries of subjects from Wikipedia',
   default: {
     alias: '?wiki',

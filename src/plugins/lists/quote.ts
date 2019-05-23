@@ -5,8 +5,8 @@ import { ListsExtension } from './lists'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'quote',
-  name: 'Quote',
+  name: 'quote',
+  title: 'Quote',
   description: 'Create quotes for channels',
   default: {
     alias: '?quote',
@@ -22,7 +22,7 @@ export const options: PluginOptions = {
     'Insert a new quote at index: {alias} insert <index> <quote>',
     'Delete a quote at index: {alias} delete <index>',
   ],
-  requiresPlugins: ['lists'],
+  requirePlugins: ['lists'],
 }
 
 export class Instance implements PluginInstance {
@@ -39,7 +39,7 @@ export class Instance implements PluginInstance {
     let newValue: string
     let index
     let value
-    const quotes: ReturnType<ListsExtension['getList']> = this.lists.getList(options.id, channelId, [])
+    const quotes: ReturnType<ListsExtension['getList']> = this.lists.getList(options.name, channelId, [])
     const user = userstate['display-name']
     switch (params[1] ? params[1].toLowerCase() : undefined) {
 

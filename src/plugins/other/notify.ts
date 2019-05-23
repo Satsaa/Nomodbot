@@ -4,8 +4,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'notify',
-  name: 'Notify',
+  name: 'notify',
+  title: 'Notify',
   description: 'Shows a message to the target user when they type',
   default: {
     alias: '?notify',

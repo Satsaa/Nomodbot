@@ -4,8 +4,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'exit',
-  name: 'Exit',
+  name: 'exit',
+  title: 'Exit',
   description: 'Exits the process',
   default: {
     alias: '$exit',

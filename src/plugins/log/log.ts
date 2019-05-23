@@ -6,8 +6,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'controller',
-  id: 'log',
-  name: 'Log',
+  name: 'log',
+  title: 'Log',
   description: 'Logs the chat',
   creates: [['log']],
 }
@@ -106,7 +106,7 @@ export class Instance implements PluginInstance {
       getOffset: this.getOffset.bind(this),
       getTime: this.getTime.bind(this),
     }
-    this.l.extend(options.id, extensions)
+    this.l.extend(options.name, extensions)
 
     this.l.u.onExit(this.onExit.bind(this))
   }
@@ -238,8 +238,8 @@ export class Instance implements PluginInstance {
   }
 
   private async onChat(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean) {
-    if (!this.streams[channelId]) return console.warn(`[${options.name}] {${channelId}} Message dropped: writeStream not ready`)
-    if (!this.l.getData(channelId, 'log')) return console.warn(`[${options.name}] {${channelId}} Message dropped: writeStream not ready`)
+    if (!this.streams[channelId]) return console.warn(`[${options.title}] {${channelId}} Message dropped: writeStream not ready`)
+    if (!this.l.getData(channelId, 'log')) return console.warn(`[${options.title}] {${channelId}} Message dropped: writeStream not ready`)
     this.track(channelId, Date.now(), me ? ACTION : CHAT, userId, message)
   }
 

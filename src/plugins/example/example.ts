@@ -4,8 +4,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'example',
-  name: 'Example',
+  name: 'example',
+  title: 'Example',
   description: 'Is an example',
   default: {
     alias: '!example',
@@ -16,7 +16,7 @@ export const options: PluginOptions = {
       userCooldown: 60,
     },
   },
-  requires: [],
+  requireDatas: [],
   creates: [['fake', 'file']],
   help: [
     'Is an example: {alias} required <variable> [optional] [<optVar>] this | that <multiword...>',

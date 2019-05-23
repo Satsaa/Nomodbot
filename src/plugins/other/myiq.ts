@@ -4,8 +4,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'myiq',
-  name: 'MyIQ',
+  name: 'myiq',
+  title: 'MyIQ',
   description: 'Performs a quick study on the target and returns their RealIQ',
   default: {
     alias: '?myiq',
@@ -14,7 +14,7 @@ export const options: PluginOptions = {
       userCooldown: 60,
     },
   },
-  requires: [],
+  requireDatas: [],
   creates: [['myIq']],
   help: [
     'Returns your or users iq: {alias} [<user>]',

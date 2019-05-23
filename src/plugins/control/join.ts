@@ -4,8 +4,8 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'join',
-  name: 'Join',
+  name: 'join',
+  title: 'Join',
   description: 'Joins a channel',
   default: {
     alias: '$join',

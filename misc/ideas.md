@@ -1,10 +1,5 @@
 # Source
 
-## Per alias data
-
-Data should be possible to be stored in aliases  
-Useful for the response api and many other things  
-Data has to be passed somehow. Maybe as a command call parameter  
 
 # Command Plugins
 
