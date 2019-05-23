@@ -5,7 +5,7 @@ import { LogExtension} from './log'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'totallines',
+  id: 'totallines',
   title: 'TotalLines',
   description: 'Shows the total amount of messages sent in the current channel',
   default: {

@@ -5,7 +5,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'spotifyplaylist',
+  id: 'spotifyplaylist',
   title: 'SpotifyPlaylist',
   description: 'Shows the first or nth song on a spotify playlist. An automatically updating playlist can be used for live song names',
   default: {
@@ -43,7 +43,7 @@ export class Instance implements PluginInstance {
     this.clientSecret = this.l.getKey('spotify', 'client_secret')
     this.accessToken = undefined
     if (typeof this.clientId !== 'string' || typeof this.clientSecret !== 'string') {
-      this.l.disableDefaults(options.name)
+      this.l.disableDefaults(options.id)
       console.log('[SPOTIFYPLAYLIST] Disabled due to the lack of API keys for spotify')
     } else {
       this.tokenLoop()
@@ -56,7 +56,7 @@ export class Instance implements PluginInstance {
     const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
     if (!data) return 'Unavailable: required data is not present'
     try {
-      if (params[1] === 'del' || params[1] === 'delete' || params[1] === 'remove'){
+      if (params[1] === 'del' || params[1] === 'delete' || params[1] === 'remove') {
         if (!this.l.isPermitted(3, userstate.badges, userId)) return 'You are not permitted to do this operation'
         const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
         if (!data) return 'Unavailable: required data is not present'
@@ -64,7 +64,7 @@ export class Instance implements PluginInstance {
         return 'Deleted succesfully'
       } else if (params[2]) { // Set track id
         if (!this.l.isPermitted(3, userstate.badges, userId)) return 'You are not permitted to do this operation'
-        const inputId = (params[2].replace(/\/+$/,'').match(/[a-zA-Z0-9]*$/) || [])[0]
+        const inputId = (params[2].replace(/\/+$/, '').match(/[a-zA-Z0-9]*$/) || [])[0]
         if (!inputId) return 'Invalid id'
         const playlist = await this.getPlaylist(inputId)
         if (typeof playlist !== 'object') return 'Invalid playlist'

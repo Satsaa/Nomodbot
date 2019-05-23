@@ -4,7 +4,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'echo',
+  id: 'echo',
   title: 'Echo',
   description: 'Echoes the message sent by a user',
   default: {

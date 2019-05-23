@@ -5,7 +5,7 @@ import { ListsExtension } from './lists'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'manlyquote',
+  id: 'manlyquote',
   title: 'ManlyQuote',
   description: 'Spreads some manliness',
   default: {
@@ -34,7 +34,7 @@ export class Instance implements PluginInstance {
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.lists = this.l.ext.lists as ListsExtension
-    this.quotes = this.lists.getList(options.name, undefined, defaultQuotes)
+    this.quotes = this.lists.getList(options.id, undefined, defaultQuotes)
   }
 
   public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {

@@ -5,7 +5,7 @@ import { ACTION, CHAT, LogExtension} from './log'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'myquote',
+  id: 'myquote',
   title: 'MyQuote',
   description: 'Shows a random chat message a user has send in the past',
   default: {

@@ -4,7 +4,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'streamtimes',
+  id: 'streamtimes',
   title: 'StreamTimes',
   description: 'Tells when the channel usually goes live and how long they stream',
   default: {

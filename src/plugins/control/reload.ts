@@ -4,7 +4,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'reload',
+  id: 'reload',
   title: 'Reload',
   description: 'Reloads a file',
   default: {

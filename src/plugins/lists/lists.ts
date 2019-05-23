@@ -4,7 +4,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'controller',
-  name: 'lists',
+  id: 'lists',
   title: 'Lists',
   description: 'Used to make and handle arrays of data. Like a list of quotes',
   creates: [['global', 'listData']],
@@ -70,7 +70,7 @@ export class Instance implements PluginInstance {
         }
       },
     }
-    this.l.extend(options.name, extensions)
+    this.l.extend(options.id, extensions)
   }
 }
 

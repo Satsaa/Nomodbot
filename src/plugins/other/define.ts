@@ -5,7 +5,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'define',
+  id: 'define',
   title: 'Define',
   description: 'Gets the definition of a term from Oxford Dictionary',
   default: {
@@ -31,7 +31,7 @@ export class Instance implements PluginInstance {
     this.appId = this.l.getKey('oxfordDictionary', 'app_id')
     this.appKey = this.l.getKey('oxfordDictionary', 'app_key')
     if (typeof this.appId !== 'string' || typeof this.appKey !== 'string') {
-      this.l.disableDefaults(options.name)
+      this.l.disableDefaults(options.id)
       console.error('[define] Disabled due to the lack of API keys for Oxford Dictionary')
     }
   }

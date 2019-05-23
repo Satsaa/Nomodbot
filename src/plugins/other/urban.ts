@@ -5,7 +5,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'urban',
+  id: 'urban',
   title: 'Urban',
   description: 'Gets the Urban Disctionary definition of something',
   default: {

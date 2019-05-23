@@ -206,15 +206,15 @@ export default class PluginLibrary {
   /** Returns default aliases or aliases of a channel */
   public getAliases(channel?: string): { [x: string]: CommandAlias; } {
     if (channel) return this.data.data[channel].aliases
-    else return this.commander.defaults
+    else return this.commander.defaultAliases
   }
   /** Returns active default aliases or active aliases of a channel  */
   public getActiveAliases(channelId?: number): { [x: string]: CommandAlias; } {
     const aliases: { [x: string]: CommandAlias; } = {}
     // Default aliases
-    for (const alias in this.commander.defaults) {
-      if (this.commander.defaults[alias].disabled) continue
-      aliases[alias] = this.commander.defaults[alias]
+    for (const alias in this.commander.defaultAliases) {
+      if (this.commander.defaultAliases[alias].disabled) continue
+      aliases[alias] = this.commander.defaultAliases[alias]
     }
     if (channelId) {
       // Channel aliases

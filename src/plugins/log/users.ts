@@ -5,7 +5,7 @@ import { LogExtension} from './log'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'users',
+  id: 'users',
   title: 'Users',
   description: 'Shows how many users have chatted in the current channel',
   default: {

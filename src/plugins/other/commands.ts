@@ -4,7 +4,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'commands',
+  id: 'commands',
   title: 'Commands',
   description: 'Displays enabled commands',
   default: {

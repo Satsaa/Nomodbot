@@ -16,7 +16,6 @@
       "forin": false,
       "max-line-length": false,
       "no-console": false,
-      "typeof-compare": true,
       "member-access": [true, "check-accessor"],
       "member-ordering": [true, {"order": "fields-first", "alphabetize": false}],
       "binary-expression-operand-order": true,

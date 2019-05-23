@@ -6,7 +6,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'controller',
-  name: 'log',
+  id: 'log',
   title: 'Log',
   description: 'Logs the chat',
   creates: [['log']],
@@ -106,7 +106,7 @@ export class Instance implements PluginInstance {
       getOffset: this.getOffset.bind(this),
       getTime: this.getTime.bind(this),
     }
-    this.l.extend(options.name, extensions)
+    this.l.extend(options.id, extensions)
 
     this.l.u.onExit(this.onExit.bind(this))
   }

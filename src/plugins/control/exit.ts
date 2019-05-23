@@ -4,7 +4,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'exit',
+  id: 'exit',
   title: 'Exit',
   description: 'Exits the process',
   default: {

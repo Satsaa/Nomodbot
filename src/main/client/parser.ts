@@ -27,6 +27,8 @@ export interface IrcMessage {
     // @ts-ignore
     badges?: { [badge: string]: number },
     // @ts-ignore
+    'badge-info'?: { [badge: string]: number },
+    // @ts-ignore
     emotes?: { [emote: string]: {start: number, end: number} },
     // @ts-ignore
     'display-name'?: string,
@@ -69,6 +71,7 @@ export interface IrcMessage {
 const conversions: {[tag: string]: (v: string) => any} = {
   'emotes': emotes,
   'badges': badges,
+  'badge-info': badges,
   'user-id': num,
   'emote-only': num,
   'followers-only': num,

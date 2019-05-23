@@ -4,7 +4,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'save',
+  id: 'save',
   title: 'Save',
   description: 'Saves a file',
   default: {

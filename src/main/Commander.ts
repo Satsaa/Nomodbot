@@ -23,8 +23,8 @@ interface Controller {
 
 export type PluginOptions = (Command | Controller) & {
   type: string,
-  /** Unique name for identifying this plugin */
-  name: string
+  /** Unique id for identifying this plugin */
+  id: string
   title: string
   description: string
   /**
@@ -46,7 +46,7 @@ export type PluginOptions = (Command | Controller) & {
 
 /** Properties for aliases */
 export interface CommandAlias {
-  /** The unique name of a command plugin */
+  /** The unique iq of a command plugin */
   target: string
   disabled?: true
   /** 
@@ -61,35 +61,47 @@ export interface CommandAlias {
   userCooldown?: number | {duration?: number, delay?: number, limit?: number}
   /** Marks the alias as hidden (e.g. hidden commands are not shown with !commands) */
   hidden?: true
-  /** Whether or not this alias is an immutable default alias created by a plugin */
-  default?: true
   /** Custom data that the command plugin can handle */
   data?: any
+  /** List of user ids that can use this alias without checking permissions */
+  whitelist?: number[]
+  /** List of user ids that may not use this alias at all */
+  blacklist?: number[]
+}
+
+/** isPermitted helper type */
+interface AliasLike {
+  permissions: string[] | number,
+  whitelist?: number[],
+  blacklist?: number[]
 }
 
 export interface PluginInstance {
-  /** Execute before enabling this plugin */
+  /** This plugin is being loaded, execute before enabling this plugin */
   init?: () => Promise<void>
-  /** An alias of this command is called */
-  call?: (channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) => Promise<string | void>,
+  /** An alias of this command plugin is called */
+  call?: (channelId: number, userstate: IrcMessage['tags'], params: string[], me: boolean, alias: Readonly<CommandAlias>) => Promise<string | void>,
   /** An alias of this command is called but it was on cooldown */
-  cooldown?: (channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) => void,
+  cooldown?: (channelId: number, userstate: IrcMessage['tags'], params: string[], me: boolean, alias: Readonly<CommandAlias>) => void,
   /** This plugin is being unloaded (this function is not called when the bot is shutting down) */
-  unload?: () => void
+  unload?: () => Promise<void>
 }
 
 export default class Commander {
-  public defaults: {[alias: string]: CommandAlias}
+  public defaultAliases: {[alias: string]: Readonly<CommandAlias>}
+  public paths: {[pluginId: string]: string}
   public plugins: {[pluginId: string]: PluginOptions}
   public instances: {[pluginId: string]: PluginInstance}
   private client: TwitchClient
   private data: Data
   private waits: {[pluginId: string]: Array<(result: boolean) => any>}
   private pluginLib: PluginLibrary
+  /** Big bois with big privileges */
   private masters: number[]
 
   constructor(client: TwitchClient, data: Data, masters: number[]) {
-    this.defaults = {}
+    this.defaultAliases = {}
+    this.paths = {}
     this.plugins = {}
     this.instances = {}
     this.masters = masters
@@ -100,39 +112,44 @@ export default class Commander {
     this.client.on('chat', this.onChat.bind(this))
   }
 
-  public async init(): Promise<PluginOptions[]> {
+  public async init(): Promise<void> {
     this.data.autoLoad('aliases', {})
     this.data.autoLoad('cooldowns', {user: {}, shared: {} as CooldownData}, true)
     const files = (await readDirRecursive(path.join(__dirname, '..', 'commands')))
       .filter(f => (f.endsWith('.ts') || f.endsWith('.js') && !f.includes('tempCodeRunnerFile')))
-    if (!files || !files.length) return []
-    const optionsArr = files.map(file => this.handleFile(file))
+    const optionsArr = files.map(file => this.loadFromPath(file))
     this.findConflicts(optionsArr, files)
-    return optionsArr
+    await Promise.all(optionsArr)
+    return
   }
 
   /** Check for duplicate data type creations and if a plugin requires data that no present plugin creates */
   public findConflicts(optionsArray: PluginOptions[], files: string[]) {
     const messages: string[] = [] // Error messages
     const created: string[] = [] // Created data types
-    const names: string[] = [] // Corresponding plugin name for created entries
-    const ids: string[] = [] // Ids of plugin options
-    optionsArray.forEach((c, i) => { // Fill ids
-      if (ids.includes(c.name)) messages.push(`${c.name} id is duplicated in ${path.basename(files[i])} and ${path.basename(files[ids.indexOf(c.name)])}`)
-      ids.push(c.name)
+    const titles: string[] = [] // Corresponding plugin title for created entries
+    const ids: string[] = [] // Ids of plugins
+    // Fill ids
+    optionsArray.forEach((c, i) => {
+      if (ids.includes(c.id)) {
+        messages.push(`${c.id}'s id is duplicated in ${path.basename(files[i])} and ${path.basename(files[ids.indexOf(c.id)])}`)
+      }
+      ids.push(c.id)
     })
-    optionsArray.forEach((c) => { // Check for id duplicates
+    // Check for id duplicates
+    optionsArray.forEach((c) => {
       if (c.creates) {
         c.creates.forEach((e) => {
           if (created.includes(makePath(e))) {
-            messages.push(`${c.title} duplicates ${makePath(e)} from ${names[created.indexOf(makePath(e))]}`)
+            messages.push(`${c.title} duplicates ${makePath(e)} from ${titles[created.indexOf(makePath(e))]}`)
           }
-          names.push(c.title)
+          titles.push(c.title)
           created.push(makePath(e))
         })
       }
     })
-    optionsArray.forEach((r) => { // Check for required data that is not loaded by any command
+    // Check for required data that is not loaded by any command
+    optionsArray.forEach((r) => {
       if (r.requireDatas) {
         r.requireDatas.forEach((e) => {
           if (created.indexOf(makePath(e)) === -1) {
@@ -141,12 +158,13 @@ export default class Commander {
         })
       }
     })
-    optionsArray.forEach((c) => { // Check for self requirement
+    // Check for self requirement
+    optionsArray.forEach((c) => {
       if (c.creates) {
         c.creates.forEach((cr) => {
           if (c.requireDatas) {
             c.requireDatas.forEach((re) => {
-              if (makePath(cr) === makePath(re)) messages.push(`${c.name} requires data that it creates`)
+              if (makePath(cr) === makePath(re)) messages.push(`${c.id} requires data that it creates`)
             })
           }
         })
@@ -169,61 +187,34 @@ export default class Commander {
     if (!(this.data.data[channelId] || {}).aliases) return false
     delete this.data.data[channelId].aliases[alias]; return true
   }
-  public enableAlias(channelId: number, alias: string) {
-    if (!((this.data.data[channelId] || {}).aliases || {})[alias]) return false
-    delete this.data.data[channelId].aliases[alias].disabled; return true
-  }
-  public disableAlias(channelId: number, alias: string) {
-    if (!((this.data.data[channelId] || {}).aliases || {})[alias]) return false
-    this.data.data[channelId].aliases[alias].disabled = true; return true
-  }
 
   public getAlias(channelId: number, alias: string): CommandAlias | void {
     if (((this.data.data[channelId] || {}).aliases || {})[alias]) {
       return this.data.data[channelId].aliases[alias]
-    } else if (this.defaults[alias]) return this.defaults[alias]
+    }
   }
-  public getActiveAlias(channelId: number, alias: string): CommandAlias | void {
-    if (((this.data.data[channelId] || {}).aliases || {})[alias] && !this.data.data[channelId].aliases[alias].disabled) {
-      return this.data.data[channelId].aliases[alias]
-    } else if (this.defaults[alias] && !this.defaults[alias].disabled) return this.defaults[alias]
+  public getGlobalAlias(alias: string): Readonly<CommandAlias> | undefined {
+    return this.defaultAliases[alias]
   }
-  public getAliasesById(channelId: number, commandId: string) {
-    const results: CommandAlias[] = []
+
+  public getAliases(channelId: number): {[alias: string]: CommandAlias} | void {
     if ((this.data.data[channelId] || {}).aliases) {
-      const aliases = this.data.data[channelId].aliases as {[alias: string]: CommandAlias}
-      for (const alias in aliases) {
-        if (aliases[alias].target === commandId) results.push(aliases[alias])
-      }
+      return this.data.data[channelId].aliases
     }
-    for (const alias in this.defaults) {
-      if (this.defaults[alias].target === commandId) results.push(this.defaults[alias])
-    }
-    return results
   }
-  public getActiveAliasesById(channelId: number, commandId: string) {
-    const results: CommandAlias[] = []
-    if ((this.data.data[channelId] || {}).aliases) {
-      const aliases = this.data.data[channelId].aliases as {[alias: string]: CommandAlias}
-      for (const alias in aliases) {
-        if (!this.defaults[alias].disabled && aliases[alias].target === commandId) results.push(aliases[alias])
-      }
-    }
-    for (const alias in this.defaults) {
-      if (!this.defaults[alias].disabled && this.defaults[alias].target === commandId) results.push(this.defaults[alias])
-    }
-    return results
+  public getGlobalAliases(): {[alias: string]: Readonly<CommandAlias>} {
+    return this.defaultAliases
   }
 
   /** Determine if a user with `badges` would be permitted to call this command */
-  public isPermitted(permissions: string[] | number, badges: IrcMessage['tags']['badges'] /*  { [badge: string]: number } */, userId: number) {
+  public isPermitted<T extends AliasLike>(aliasLike: T, badges: IrcMessage['tags']['badges'], userId: number) {
     // Number: 0: everyone, 1: subscriber, 2: moderator, 3: broadcaster, 10: master
-    // !!! Implement the permit API
-    // !!! Implement the ban API
-    if (badges === undefined) return
+    if (aliasLike.blacklist && aliasLike.blacklist.includes(userId)) return false
+    if (aliasLike.whitelist && aliasLike.whitelist.includes(userId)) return true
     if (this.masters.includes(userId)) return true
-    if (typeof permissions === 'number') {
-      switch (permissions) {
+    if (badges === undefined) return
+    if (typeof aliasLike.permissions === 'number') {
+      switch (aliasLike.permissions) {
         case 0:
           return true
         case 1:
@@ -235,26 +226,62 @@ export default class Commander {
         case 10:
           break
         default:
-          console.warn(`Unknown permission level: ${permissions}`)
+          console.warn(`Unknown permission level: ${aliasLike.permissions}`)
           return true
       }
     } else {
       for (const badge in badges) {
-        if (permissions.includes(badge)) return true
+        if (aliasLike.permissions.includes(badge)) return true
       }
     }
+    this.isPermitted({permissions: 10}, {mod: 1}, 99)
     return false
   }
 
+  /** Loads `pluginId` if possible */
+  public async loadPlugin(pluginId: string) {
+    if (!this.paths[pluginId]) return false
+    this.loadFromPath(this.paths[pluginId])
+    const res = await this.waitPlugin(pluginId, 5000)
+    if (!res) return false // Timeout
+    return true
+  }
+
+  /** Reloads `pluginId` if possible */
+  public async reloadPlugin(pluginId: string) {
+    const res1 = await this.unloadPlugin(pluginId)
+    const res2 = await this.loadPlugin(pluginId)
+    if (res1 && res2) return true
+    return false
+  }
+
+  /** Unloads `pluginId` if possible */
+  public async unloadPlugin(pluginId: string) {
+    if (!this.paths[pluginId]) return false
+    if (!this.plugins[pluginId].unloadable) return false
+    const res = await this.waitPlugin(pluginId, 5000) // Plugin must be loaded before unloading
+    if (!res) return false // Timeout
+    if (this.instances[pluginId].unload) await this.instances[pluginId].unload!()
+    delete this.plugins[pluginId]
+    delete this.instances[pluginId]
+    return true
+  }
+
   /** Resolves with true when plugin is loaded or with false on timeout */
-  public waitPlugin(pluginId: string/* , timeout?: number */): Promise<boolean> {
+  public waitPlugin(pluginId: string, timeout?: number): Promise<boolean> {
     return new Promise((resolve) => {
       if (this.instances[pluginId]) return resolve(true)
       if (!this.waits[pluginId]) this.waits[pluginId] = [resolve]
       else this.waits[pluginId].push(resolve)
-      // if (timeout !== undefined) {
-      //   setTimeout(resolve, timeout, false)
-      // }
+      if (timeout !== undefined) {
+        setTimeout(() => {
+          // Resolve only if not resolved yet and remove from wait list
+          if (this.waits[pluginId].includes(resolve)) {
+            this.waits[pluginId].splice(this.waits[pluginId].indexOf(resolve), 1)
+            resolve()
+          }
+        }, timeout, false)
+      }
     })
   }
   /** Resolves waitPlugin promises */
@@ -265,20 +292,22 @@ export default class Commander {
     return true
   }
 
-  private handleFile(file: string) {
-    const plugin: {options: PluginOptions, Instance: new() => PluginInstance} = require(file)
+  private loadFromPath(path: string) {
+    delete require.cache[require.resolve(path)] // Delete cache entry if it exists
+    const plugin: {options: PluginOptions, Instance: new() => PluginInstance} = require(path)
     const options = plugin.options
     if (options) {
       const type = options.type // Cant use options in default case
-      this.plugins[options.name] = options
+      this.paths[options.id] = path
+      this.plugins[options.id] = options
       switch (options.type) {
         case 'command':
           if (Array.isArray(options.default.alias)) {
             options.default.alias.forEach((alias) => {
-              this.defaults[alias] = {...options.default.options, target: options.name}
+              this.defaultAliases[alias] = {...options.default.options, target: options.id}
             })
           } else {
-            this.defaults[options.default.alias] = {...options.default.options, target: options.name}
+            this.defaultAliases[options.default.alias] = {...options.default.options, target: options.id}
           }
           break
         case 'controller':
@@ -288,7 +317,7 @@ export default class Commander {
       }
       this.instantiatePlugin(options, plugin.Instance) // Maybe this should be awaited?
       return options
-    } else throw console.error('Plugin lacks options export: ' + file)
+    } else throw console.error('Plugin lacks options export: ' + path)
   }
 
   private async instantiatePlugin(options: PluginOptions, instantiator: new(pluginLib: PluginLibrary) => PluginInstance) {
@@ -298,7 +327,7 @@ export default class Commander {
     if (options.requireDatas && options.requireDatas.map(v => typeof v === 'string').length === 3) {
       res = await Promise.all(options.requireDatas.map(v => this.data.waitData(v[0], v[1], v[2] || 3000)))
       if (res.some(v => v === undefined)) { // A wait promise timedout
-        console.log(`${options.name} instantiation still waiting for data.`)
+        console.log(`${options.id} instantiation still waiting for data.`)
         await Promise.all(options.requireDatas.map(v => this.data.waitData(v[0], v[1])))
       }
     }
@@ -306,27 +335,27 @@ export default class Commander {
     const instance = new instantiator(this.pluginLib)
     if (typeof instance.init === 'function') await instance.init()
     // console.log(`Instantiated ${options.id}`)
-    this.instances[options.name] = instance
-    this.resolveWaits(options.name)
-    if (options.type === 'command' && typeof this.instances[options.name].call !== 'function') {
-      throw new Error(`Invalid call function on command plugin instance: ${this.plugins[options.name].name}`)
+    this.instances[options.id] = instance
+    this.resolveWaits(options.id)
+    if (options.type === 'command' && typeof this.instances[options.id].call !== 'function') {
+      throw new Error(`Invalid call function on command plugin instance: ${this.plugins[options.id].id}`)
     }
   }
 
   private async onChat(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean, self: boolean) {
-    if (self) return
+    if (self) return // Bot shouldn't call commands
     const words = message.split(' ')
-    const alias = this.getActiveAlias(channelId, words[0].toLowerCase())
-    if (!alias) return
+    const alias = this.getAlias(channelId, words[0].toLowerCase()) || this.getGlobalAlias(words[0].toLowerCase())
+    if (!alias || alias.disabled) return
     const instance = this.instances[alias.target]
     if (!instance) return console.log(`Cannot call unloaded command: ${alias.target}`) // Command may not be loaded yet
-    if (typeof instance.call !== 'function') throw new Error(`Invalid call function on command plugin instance: ${alias.target}`)
-    if (alias.permissions === undefined || this.isPermitted(alias.permissions, userstate.badges, userId)) {
+    if (!instance.call) throw new Error(`No call function on command plugin: ${alias.target}`)
+    if (!alias.permissions || this.isPermitted({permissions: alias.permissions}, userstate.badges, userId)) {
       if (!this.masters.includes(userId) && this.isOnCooldown(channelId, userId, alias)) {
-        if (typeof instance.cooldown === 'function') instance.cooldown(channelId, userId, userstate, message, words, me)
+        if (instance.cooldown) instance.cooldown(channelId, userstate, words, me, alias)
         return
       }
-      const res = await instance.call(channelId, userId, userstate, message, words, me)
+      const res = await instance.call(channelId, userstate, words, me, alias)
       if (res) this.client.chat(channelId, res)
     }
   }
@@ -335,19 +364,20 @@ export default class Commander {
   private isOnCooldown(channelId: number, userId: number, alias: CommandAlias) {
     const cooldowns = this.data.getData(channelId, 'cooldowns') as CooldownData
     if (!cooldowns) return false
-    let res1 = 0
-    let res2 = 0
+    let cd = 0
+    let ucd = 0
     const now = Date.now()
     if (alias.cooldown) {
       if (typeof cooldowns.shared[alias.target] !== 'object') cooldowns.shared[alias.target] = []
-      res1 = next(cooldowns.shared[alias.target], alias.cooldown)
+      cd = next(cooldowns.shared[alias.target], alias.cooldown)
     }
     if (alias.userCooldown) {
       if (typeof cooldowns.user[alias.target] !== 'object') cooldowns.user[alias.target] = {}
       if (typeof cooldowns.user[alias.target][userId] !== 'object') cooldowns.user[alias.target][userId] = []
-      res2 = next(cooldowns.user[alias.target][userId], alias.userCooldown)
+      ucd = next(cooldowns.user[alias.target][userId], alias.userCooldown)
     }
-    if (Math.max(res1, res2) <= 0) {
+    if (Math.max(cd, ucd) <= 0) {
+      // Add new entry to cooldown handler
       if (alias.cooldown) cooldowns.shared[alias.target].push(now)
       if (alias.userCooldown) cooldowns.user[alias.target][userId].push(now)
       return false

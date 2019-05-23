@@ -5,7 +5,7 @@ import { ListsExtension } from './lists'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'quote',
+  id: 'quote',
   title: 'Quote',
   description: 'Create quotes for channels',
   default: {
@@ -39,7 +39,7 @@ export class Instance implements PluginInstance {
     let newValue: string
     let index
     let value
-    const quotes: ReturnType<ListsExtension['getList']> = this.lists.getList(options.name, channelId, [])
+    const quotes: ReturnType<ListsExtension['getList']> = this.lists.getList(options.id, channelId, [])
     const user = userstate['display-name']
     switch (params[1] ? params[1].toLowerCase() : undefined) {
 

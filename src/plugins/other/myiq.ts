@@ -4,7 +4,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'myiq',
+  id: 'myiq',
   title: 'MyIQ',
   description: 'Performs a quick study on the target and returns their RealIQ',
   default: {

@@ -5,7 +5,7 @@ import { LogExtension} from './log'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'firstseen',
+  id: 'firstseen',
   title: 'FirstSeen',
   description: 'Shows when a user sent their first message',
   default: {

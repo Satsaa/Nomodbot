@@ -4,7 +4,7 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  name: 'evaluate',
+  id: 'evaluate',
   title: 'Evaluate',
   description: 'Evaluates a string and executes it',
   default: {
