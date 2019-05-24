@@ -1,5 +1,5 @@
-import { IrcMessage } from '../../main/client/parser'
-import { PluginInstance, PluginOptions } from '../../main/Commander'
+import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 import { LogExtension} from './log'
 
@@ -31,7 +31,7 @@ export class Instance implements PluginInstance {
     this.log = this.l.ext.log as LogExtension
   }
 
-  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     const uid = params[1] ? await this.l.api.getId(params[1]) : userId
     if (!uid) return "That user doesn't exist"
 
@@ -42,6 +42,6 @@ export class Instance implements PluginInstance {
 
     return params[1]
       ? `${await this.l.api.getDisplay(uid) || 'UID:' + uid} has sent ${this.l.u.plural(res, 'message')}`
-      : `@${userstate['display-name']} You have sent ${this.l.u.plural(res, 'message')}`
+      : `@${tags['display-name']} You have sent ${this.l.u.plural(res, 'message')}`
   }
 }

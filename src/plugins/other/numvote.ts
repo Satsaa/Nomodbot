@@ -1,5 +1,5 @@
-import { IrcMessage } from '../../main/client/parser'
-import { PluginInstance, PluginOptions } from '../../main/Commander'
+import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -51,13 +51,13 @@ export class Instance implements PluginInstance {
     }
   }
 
-  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     if (!this.voteData[channelId]) this.voteData[channelId] = { voters: [], votes: {}, time: this.opts.time, timeout: undefined }
 
     const voting = this.voteData[channelId]
 
-    if (voting.voters.includes(userstate['user-id'])) return // Single vote per user
-    voting.voters.push(userstate['user-id'])
+    if (voting.voters.includes(tags['user-id'])) return // Single vote per user
+    voting.voters.push(tags['user-id'])
 
     if (!voting.votes[params[0]]) voting.votes[params[0]] = 0
     voting.votes[params[0]]++

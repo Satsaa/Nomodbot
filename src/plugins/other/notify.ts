@@ -1,5 +1,5 @@
-import { IrcMessage } from '../../main/client/parser'
-import { PluginInstance, PluginOptions } from '../../main/Commander'
+import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -40,7 +40,7 @@ export class Instance implements PluginInstance {
     this.l.emitter.on('chat', this.onChat.bind(this))
   }
 
-  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     const data = this.l.getData(channelId, 'notifies') as NotifyData
     if (!data) return 'Unavailable: required data is not present'
 
@@ -79,13 +79,13 @@ export class Instance implements PluginInstance {
     }
   }
 
-  private async onChat(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean) {
+  private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean) {
     const data = this.l.getData(channelId, 'notifies') as NotifyData
     if (data === undefined) return
     if (data[userId]) {
       for (const notify of data[userId]) {
         const fromDisplay = await this.l.api.getDisplay(notify.fromId)
-        this.l.chat(channelId, `${fromDisplay || 'error'} -> ${userstate['display-name']} ${this.l.u.timeSince(notify.time, 1, false)} ago: ${notify.msg}`)
+        this.l.chat(channelId, `${fromDisplay || 'error'} -> ${tags['display-name']} ${this.l.u.timeSince(notify.time, 1, false)} ago: ${notify.msg}`)
       }
       delete data[userId]
     }

@@ -1,5 +1,5 @@
-import { IrcMessage } from '../../main/client/parser'
-import { PluginInstance, PluginOptions } from '../../main/Commander'
+import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -28,7 +28,7 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
   }
 
-  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     if (!params[1]) {
       this.l.saveAllSync()
       return 'Saved all data'

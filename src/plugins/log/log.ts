@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { promises as fsp } from 'fs'
-import { IrcMessage } from '../../main/client/parser'
-import { PluginInstance, PluginOptions } from '../../main/Commander'
+import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -237,7 +237,7 @@ export class Instance implements PluginInstance {
     return undefined
   }
 
-  private async onChat(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean) {
+  private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean) {
     if (!this.streams[channelId]) return console.warn(`[${options.title}] {${channelId}} Message dropped: writeStream not ready`)
     if (!this.l.getData(channelId, 'log')) return console.warn(`[${options.title}] {${channelId}} Message dropped: writeStream not ready`)
     this.track(channelId, Date.now(), me ? ACTION : CHAT, userId, message)

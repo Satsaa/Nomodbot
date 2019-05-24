@@ -1,5 +1,5 @@
-import { IrcMessage } from '../../main/client/parser'
-import { PluginInstance, PluginOptions } from '../../main/Commander'
+import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -11,13 +11,17 @@ export const options: PluginOptions = {
     alias: '!example',
     options: {
       disabled: true,
-      permissions: 10,
+      permissions: 0,
       cooldown: 30,
-      userCooldown: 60,
     },
   },
-  requireDatas: [],
-  creates: [['fake', 'file']],
+  creates: [
+    ['folder', 'file'],
+    ['channelFile'],
+  ],
+  // requireDatas: ['never','loaded'],
+  // requirePlugins: ['notaplugin'],
+  unloadable: true,
   help: [
     'Is an example: {alias} required <variable> [optional] [<optVar>] this | that <multiword...>',
     'nother example',
@@ -32,7 +36,20 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
   }
 
-  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+  public async init() {
+    // Command was on cooldown
+  }
+
+  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     return 'example message'
+  }
+
+  public cooldown(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+    // Command was on cooldown
+  }
+
+  public async unload() {
+    // Remove referecens (on events etc)
+    // No need to unload creates here
   }
 }

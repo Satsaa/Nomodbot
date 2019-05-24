@@ -1,5 +1,5 @@
-import { IrcMessage } from '../../main/client/parser'
-import { PluginInstance, PluginOptions } from '../../main/Commander'
+import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -42,7 +42,7 @@ export class Instance implements PluginInstance {
     this.l.autoLoad('myIq', { high: {}, low: {} }, true)
   }
 
-  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     const data = this.l.getData(channelId, 'myIq') as MyIQData
     if (!data) return 'Data unavailable'
 
@@ -55,7 +55,7 @@ export class Instance implements PluginInstance {
       return `The highest IQ is ${high} by ${byHigh} and the lowest IQ is ${low} by ${byLow}`
     }
 
-    const recipient = params[1] || userstate['display-name'] || 'Error'
+    const recipient = params[1] || tags['display-name'] || 'Error'
     const iq = Math.round(this.l.u.randomNormal(-50, 1005, 3))
 
     if (iq > high) { // New record
@@ -69,9 +69,6 @@ export class Instance implements PluginInstance {
     } else { // No new record
       return `${recipient}'s RealIQ is ${iq} ${this.getEmote(iq)}`
     }
-  }
-
-  public async cooldown(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
   }
 
   public getEmote(v: number) {

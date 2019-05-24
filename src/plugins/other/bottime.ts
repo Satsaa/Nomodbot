@@ -1,5 +1,5 @@
-import { IrcMessage } from '../../main/client/parser'
-import { PluginInstance, PluginOptions } from '../../main/Commander'
+import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import * as u from '../../main/lib/util'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -26,7 +26,7 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
   }
 
-  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     return `The bot has been running for ${u.plural(Math.floor(process.uptime()), 'second')}`
   }
 }

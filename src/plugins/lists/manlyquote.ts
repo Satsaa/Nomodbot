@@ -1,5 +1,5 @@
-import { IrcMessage } from '../../main/client/parser'
-import { PluginInstance, PluginOptions } from '../../main/Commander'
+import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 import { ListsExtension } from './lists'
 
@@ -37,7 +37,7 @@ export class Instance implements PluginInstance {
     this.quotes = this.lists.getList(options.id, undefined, defaultQuotes)
   }
 
-  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     let newValue: string
     let index
     let value
@@ -48,7 +48,7 @@ export class Instance implements PluginInstance {
       case 'mod':
       case 'set':
       case 'change':
-        if (this.l.isPermitted(10, userstate.badges, userId)) return
+        if (!this.l.isPermitted({permissions: 10}, tags.badges, userId)) return 'Unpermitted action'
         if (isNaN(+params[2])) return 'Invalid index (param 2)'
         if (!params[3]) return 'Define the new manly quote (param 3+)'
         newValue = params.slice(3).join(' ');
@@ -60,7 +60,7 @@ export class Instance implements PluginInstance {
       case 'new':
       case 'push':
       case 'create':
-        if (this.l.isPermitted(10, userstate.badges, userId)) return
+        if (!this.l.isPermitted({permissions: 10}, tags.badges, userId)) return 'Unpermitted action'
         if (!params[2]) return 'Define the new manly quote (param 2+)'
         newValue = params.slice(2).join(' ');
         [index] = this.quotes.pushEntry(newValue)
@@ -69,7 +69,7 @@ export class Instance implements PluginInstance {
 
       case 'insert':
       case 'splice':
-        if (this.l.isPermitted(10, userstate.badges, userId)) return
+        if (!this.l.isPermitted({permissions: 10}, tags.badges, userId)) return 'Unpermitted action'
         if (isNaN(+params[2])) return 'Invalid index (param 2)'
         if (!params[3]) return 'Define the new manly quote (param 3+)'
         newValue = params.slice(3).join(' ');
@@ -80,7 +80,7 @@ export class Instance implements PluginInstance {
       case 'del':
       case 'delete':
       case 'remove':
-        if (this.l.isPermitted(10, userstate.badges, userId)) return
+        if (!this.l.isPermitted({permissions: 10}, tags.badges, userId)) return 'Unpermitted action'
         if (isNaN(+params[2])) return 'Invalid index (param 2)';
         [index, value]  = this.quotes.delEntry(~~params[2])
         if (index) return `Deleted at ${index}: ${value}`

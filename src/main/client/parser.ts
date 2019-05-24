@@ -210,3 +210,13 @@ export default function parse(msg: string): IrcMessage | null {
 
   return result
 }
+
+export interface PRIVMSG {
+  raw: string,
+  tags: Required<Pick<IrcMessage['tags'], 'badge-info' | 'badges' | 'color' | 'display-name' | 'emotes' | 'flags' | 'id' | 'mod' | 'room-id' | 'subscriber' | 'tmi-sent-ts' | 'turbo' | 'user-id' | 'user-type'>> & Partial<Pick<IrcMessage['tags'], 'bits'>>
+  prefix: string,
+  nick: string,
+  user: string,
+  cmd: 'PRIVMSG',
+  params: [string, string]
+}

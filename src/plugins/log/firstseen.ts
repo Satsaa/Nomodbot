@@ -1,5 +1,5 @@
-import { IrcMessage } from '../../main/client/parser'
-import { PluginInstance, PluginOptions } from '../../main/Commander'
+import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 import { LogExtension} from './log'
 
@@ -31,7 +31,7 @@ export class Instance implements PluginInstance {
     this.log = this.l.ext.log as LogExtension
   }
 
-  public async call(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, params: string[], me: boolean) {
+  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     const uid = params[1] ? await this.l.api.getId(params[1]) : userId
     if (!uid) return "That user doesn't exist"
 
@@ -40,7 +40,7 @@ export class Instance implements PluginInstance {
 
     if (!user.times[0]) return 'That user has not sent any messages'
 
-    if (uid === userId) return `@${userstate['display-name']} You were first seen ${this.l.u.dateString(user.times[0] * 1000)}`
+    if (uid === userId) return `@${tags['display-name']} You were first seen ${this.l.u.dateString(user.times[0] * 1000)}`
     else return `${await this.l.api.getDisplay(uid)} was first seen ${this.l.u.dateString(user.times[0] * 1000)}`
   }
 }

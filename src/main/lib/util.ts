@@ -104,6 +104,31 @@ export function smartIndex(index: number, max: number | any[] = Infinity) {
 }
 
 /**
+ * Removes strictly equal duplicates from `array`
+ * @param array Target array
+ * @param table You are being forced to enable this for known string or number arrays
+ */
+export function uniquify<T extends any[]>(array: T, table: T extends (number[] | string[]) ? true : false): T {
+  const result: any[] = []
+  if (table) {
+    const seen: {[x: string]: true} = {}
+
+    for (const element of array) {
+      if (!seen[element]) result.push(element) // Big -> small
+      else seen[element] = true
+    }
+  } else {
+    const seen: any[] = []
+
+    for (const element of array) {
+      if (!seen.includes(element)) result.push(element)
+      seen.push(element)
+    }
+  }
+  return result as T
+}
+
+/**
  * Converts `ms` to an array of time units
  * @param ms Time in milliseconds
  * @returns [`days`,`hours`,`minutes`,`seconds`]

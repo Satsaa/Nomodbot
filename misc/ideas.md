@@ -3,6 +3,12 @@
 
 # Command Plugins
 
+## Crime count
+!crimes
+
+Tells and tracks the amount of times a user has been timedout
+- Logger can track timeouts
+
 ## afk
 !afk (message...)
 
@@ -12,17 +18,6 @@ Notify afk users with a custom message
 - Like: *mentioner* *afkuser* is afk(: *message*)
 - Should not notify if already done so recently (minimum lines between notifies? or time)
 - Don't notify a user that already received a notify?
-
-## circle
-!circle [outer]
-!circle [inner] [outer] (outerN...)
-
-Shows a message that visually shows an emote surrounded by 6 other emotes
-- *inner* and *outer* are expected to be emotes but may be text
-- Emote only is possible but need ffz, bttv and subscriber emote data to allow those emotes
-- If more than one *outer* emote is defined, switch between them in the order inputted
-- Expects 1, 2, 3 or 6 outer emotes for symmetry
-- If 4, 5 or >6 outer emotes are given, only use the first 3 or 6 emotes
 
 ## slots
 !slots (bet)

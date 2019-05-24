@@ -1,7 +1,8 @@
 import * as path from 'path'
 import TwitchClient from './client/Client'
-import { IrcMessage } from './client/parser'
+import { IrcMessage, PRIVMSG } from './client/parser'
 import Data from './Data'
+import * as util from './lib/util'
 import { readDirRecursive } from './lib/util'
 import PluginLibrary from './pluginLib'
 
@@ -23,7 +24,7 @@ interface Controller {
 
 export type PluginOptions = (Command | Controller) & {
   type: string,
-  /** Unique id for identifying this plugin */
+  /** Unique id for identifying this plugin (lower case) */
   id: string
   title: string
   description: string
@@ -52,7 +53,7 @@ export interface CommandAlias {
   /** 
    * Controls who can use this command. Either an array of permitted badge names or a number.  
    * Number: 0: everyone, 1: subscriber, 2: moderator, 3: broadcaster, 10: master
-   * Some badges: prime, admin, bits, broadcaster, global_mod, moderator, subscriber, staff, turbo
+   * Some badges: moderator, subscriber, prime, admin, bits, broadcaster, global_mod, staff, turbo
    */
   permissions?: string[] | number,
   /** Cooldowns are in seconds. This can either be a number or ratelimiter options object */
@@ -76,19 +77,30 @@ interface AliasLike {
   blacklist?: number[]
 }
 
+export interface Extra {
+  /** Used alias */
+  alias: Readonly<CommandAlias>,
+  /** Full* chat message *Action headers are not included */
+  message: string,
+  /** Message was an action (/me) */
+  me: boolean,
+  /** Remaining cooldown when trying to trigger command */
+  cooldown: number,
+}
+
 export interface PluginInstance {
   /** This plugin is being loaded, execute before enabling this plugin */
   init?: () => Promise<void>
   /** An alias of this command plugin is called */
-  call?: (channelId: number, userstate: IrcMessage['tags'], params: string[], me: boolean, alias: Readonly<CommandAlias>) => Promise<string | void>,
+  call?: (channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) => Promise<string | void>,
   /** An alias of this command is called but it was on cooldown */
-  cooldown?: (channelId: number, userstate: IrcMessage['tags'], params: string[], me: boolean, alias: Readonly<CommandAlias>) => void,
+  cooldown?: (channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) => void,
   /** This plugin is being unloaded (not when the bot is shutting down). Creates are unloaded automatically after this */
   unload?: () => Promise<void>
 }
 
 export default class Commander {
-  public defaultAliases: {[alias: string]: Readonly<CommandAlias>}
+  public defaultAliases: {[alias: string]: CommandAlias}
   public paths: {[pluginId: string]: string}
   public plugins: {[pluginId: string]: PluginOptions}
   public instances: {[pluginId: string]: PluginInstance}
@@ -206,15 +218,15 @@ export default class Commander {
     return this.defaultAliases
   }
 
-  /** Determine if a user with `badges` would be permitted to call this command */
-  public isPermitted<T extends AliasLike>(aliasLike: T, badges: IrcMessage['tags']['badges'], userId: number) {
+  /** Determine if `userId` with `badges` would be permitted to call this command */
+  public isPermitted(alias: AliasLike, badges: IrcMessage['tags']['badges'], userId: number) {
     // Number: 0: everyone, 1: subscriber, 2: moderator, 3: broadcaster, 10: master
-    if (aliasLike.blacklist && aliasLike.blacklist.includes(userId)) return false
-    if (aliasLike.whitelist && aliasLike.whitelist.includes(userId)) return true
+    if (alias.blacklist && alias.blacklist.includes(userId)) return false
+    if (alias.whitelist && alias.whitelist.includes(userId)) return true
     if (this.masters.includes(userId)) return true
     if (badges === undefined) return
-    if (typeof aliasLike.permissions === 'number') {
-      switch (aliasLike.permissions) {
+    if (typeof alias.permissions === 'number') {
+      switch (alias.permissions) {
         case 0:
           return true
         case 1:
@@ -226,16 +238,62 @@ export default class Commander {
         case 10:
           break
         default:
-          console.warn(`Unknown permission level: ${aliasLike.permissions}`)
+          console.warn(`Unknown permission level: ${alias.permissions}`)
           return true
       }
     } else {
       for (const badge in badges) {
-        if (aliasLike.permissions.includes(badge)) return true
+        if (alias.permissions.includes(badge)) return true
       }
     }
     this.isPermitted({permissions: 10}, {mod: 1}, 99)
     return false
+  }
+
+  /** Determine the remaining cooldown of `alias` in `channelId` for `userId` */
+  public getCooldown(channelId: number, userId: number, alias: CommandAlias): number {
+    const cooldowns = this.data.getData(channelId, 'cooldowns') as CooldownData
+    if (!cooldowns) return 0
+    let cd = 0
+    let ucd = 0
+    const now = Date.now()
+    if (alias.cooldown) {
+      if (typeof cooldowns.shared[alias.target] !== 'object') cooldowns.shared[alias.target] = []
+      cd = next(cooldowns.shared[alias.target], alias.cooldown)
+    }
+    if (alias.userCooldown) {
+      if (typeof cooldowns.user[alias.target] !== 'object') cooldowns.user[alias.target] = {}
+      if (typeof cooldowns.user[alias.target][userId] !== 'object') cooldowns.user[alias.target][userId] = []
+      ucd = next(cooldowns.user[alias.target][userId], alias.userCooldown)
+    }
+    return Math.max(cd, ucd)
+
+    function next(times: number[], opts: number | {duration?: number, delay?: number, limit?: number}) {
+      if (typeof opts === 'number') opts = {duration: opts, delay: 0, limit: 1}
+      else {
+        if (typeof opts.delay === 'undefined') opts.delay =  0
+        if (typeof opts.duration === 'undefined') opts.duration =  30000
+        if (typeof opts.limit === 'undefined') opts.limit =  1
+      }
+      const duration = opts.duration! * 1000
+
+      // Remove times older than duration
+      for (let i = 0; i < times.length; i++) {
+        if (times[i] < now - duration) { // time is expired
+          times.shift()
+          i--
+        } else break
+      }
+      // Calculate next time
+      if (times.length < opts.limit!) { // Limit is not reached calculate needed wait for delay
+        return times.length ? (times[times.length - 1] + opts.delay!) - now : 0
+      } else {
+        const exceeds = times.length - opts.limit!
+        const delayTest = (times[times.length - 1] + opts.delay!) - now // test only for delay
+        const limitTest = (times[exceeds + 0] + duration) - now // test all but delay
+        return Math.max(delayTest, limitTest)
+      }
+    }
   }
 
   /** Loads `pluginId` if possible */
@@ -254,27 +312,50 @@ export default class Commander {
   }
 
   /** Unloads `pluginId` if possible */
-  public async unloadPlugin(pluginId: string, timeout?: number) {
-    if (!this.paths[pluginId]) return false
-    if (!this.plugins[pluginId].unloadable) return false
+  public async unloadPlugin(pluginId: string, timeout?: number): Promise<AdvancedResult<any>> {
+    if (!this.paths[pluginId]) {
+      return {success: false, code: 'MISSING', message: 'Plugin path missing. The plugin has never been loaded'}
+    }
+    if (!this.plugins[pluginId].unloadable) {
+      return {success: false, code: 'UNSUPPORTED', message: 'Plugin does not support unloading'}
+    }
     const res = await this.waitPlugin(pluginId, timeout) // Plugin must be loaded before unloading
-    if (!res) return false // Timeout
+    if (!res) {
+      if (typeof timeout === 'number') return {success: false, code: 'TIMEOUT', message: 'Plugin wait timeout'}
+      else return {success: false, code: 'TIMEOUT', message: 'Plugin is not loaded'}
+    }
 
     const creates = this.plugins[pluginId].creates
+    const reqPlugin: string[] = []
+    const reqData: string[] = []
     // Check that other plugins dont require parts of this plugin
     for (const pid in this.plugins) {
       // Test if this plugin is vital
-      if ((this.plugins[pid].requirePlugins || []).includes(pluginId)) return false
+      if ((this.plugins[pid].requirePlugins || []).includes(pluginId)) {
+        reqPlugin.push(pid)
+      }
       // Test if this plugin's created data is vital
       if (creates) {
         for (const create of creates) {
           const createString = create.join()
           for (const require of (this.plugins[pid].requireDatas || [])) {
             const requireString = require.join()
-            if (createString === requireString) return false
+            if (createString === requireString) {
+              reqData.push(pid)
+            }
           }
         }
       }
+    }
+
+    util.uniquify(reqPlugin, true)
+    util.uniquify(reqData, true)
+    if (reqPlugin.length && reqData.length) {
+      return {success: false, code: 'REQUIRED', message: `Other plugins require this plugin (${reqPlugin}) and data created by this plugin (${reqData})`}
+    } else if (reqPlugin.length) {
+      return {success: false, code: 'REQUIREDPLUGIN', message: `Other plugins require this plugin (${reqPlugin})`}
+    } else if (reqData.length) {
+      return {success: false, code: 'REQUIREDDATA', message: `Other plugins require data created by this plugin (${reqData})`}
     }
 
     if (this.instances[pluginId].unload) await this.instances[pluginId].unload!()
@@ -294,7 +375,7 @@ export default class Commander {
 
     delete this.plugins[pluginId]
     delete this.instances[pluginId]
-    return true
+    return {success: true}
   }
 
   /** Resolves with true when plugin is loaded or with false on timeout */
@@ -314,6 +395,7 @@ export default class Commander {
       }
     })
   }
+
   /** Resolves waitPlugin promises */
   private resolveWaits(pluginId: string): boolean {
     if (!this.waits[pluginId] || !this.waits[pluginId].length) return false
@@ -372,72 +454,39 @@ export default class Commander {
     }
   }
 
-  private async onChat(channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean, self: boolean) {
-    if (self) return // Bot shouldn't call commands
-    const words = message.split(' ')
-    const alias = this.getAlias(channelId, words[0].toLowerCase()) || this.getGlobalAlias(words[0].toLowerCase())
+  private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean, self: boolean) {
+    if (self) return // Bot shouldn't trigger commands
+    const params = message.split(' ')
+    const alias = this.getAlias(channelId, params[0].toLowerCase()) || this.getGlobalAlias(params[0].toLowerCase())
     if (!alias || alias.disabled) return
     const instance = this.instances[alias.target]
-    if (!instance) return console.log(`Cannot call unloaded command: ${alias.target}`) // Command may not be loaded yet
+    // Make sure the plugin is loaded
+    if (!instance) return console.log(`Cannot call unloaded command: ${alias.target}`)
     if (!instance.call) throw new Error(`No call function on command plugin: ${alias.target}`)
-    if (!alias.permissions || this.isPermitted({permissions: alias.permissions}, userstate.badges, userId)) {
-      if (!this.masters.includes(userId) && this.isOnCooldown(channelId, userId, alias)) {
-        if (instance.cooldown) instance.cooldown(channelId, userstate, words, me, alias)
-        return
-      }
-      const res = await instance.call(channelId, userstate, words, me, alias)
-      if (res) this.client.chat(channelId, res)
-    }
-  }
-
-  /** Determine if command is on cooldown. Assumes a message is sent if returns false */
-  private isOnCooldown(channelId: number, userId: number, alias: CommandAlias) {
-    const cooldowns = this.data.getData(channelId, 'cooldowns') as CooldownData
-    if (!cooldowns) return false
-    let cd = 0
-    let ucd = 0
-    const now = Date.now()
-    if (alias.cooldown) {
-      if (typeof cooldowns.shared[alias.target] !== 'object') cooldowns.shared[alias.target] = []
-      cd = next(cooldowns.shared[alias.target], alias.cooldown)
-    }
-    if (alias.userCooldown) {
-      if (typeof cooldowns.user[alias.target] !== 'object') cooldowns.user[alias.target] = {}
-      if (typeof cooldowns.user[alias.target][userId] !== 'object') cooldowns.user[alias.target][userId] = []
-      ucd = next(cooldowns.user[alias.target][userId], alias.userCooldown)
-    }
-    if (Math.max(cd, ucd) <= 0) {
-      // Add new entry to cooldowns
-      if (alias.cooldown) cooldowns.shared[alias.target].push(now)
-      if (alias.userCooldown) cooldowns.user[alias.target][userId].push(now)
-      return false
-    }
-    return true
-
-    function next(times: number[], opts: number | {duration?: number, delay?: number, limit?: number}) {
-      if (typeof opts === 'number') opts = {duration: opts, delay: 0, limit: 1}
-      else {
-        if (typeof opts.delay === 'undefined') opts.delay =  0
-        if (typeof opts.duration === 'undefined') opts.duration =  30000
-        if (typeof opts.limit === 'undefined') opts.limit =  1
-      }
-      const duration = opts.duration! * 1000
-
-      // Remove times older than duration
-      for (let i = 0; i < times.length; i++) {
-        if (times[i] < now - duration) { // time is expired
-          times.shift()
-          i--
-        } else break
-      }
-      // Calculate next time
-      if (times.length < opts.limit!) { // Limit is not reached calculate needed wait for delay
-        return times.length ? (times[times.length - 1] + opts.delay!) - now : 0
+    // Check permissions (master users always have permissions)
+    if (!alias.permissions || this.isPermitted({permissions: alias.permissions}, tags.badges, userId)) {
+      if (this.masters.includes(userId)) {
+        // Master users don't care about cooldowns
+        const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown: 0 })
+        if (res) this.client.chat(channelId, res)
       } else {
-        const exceeds = times.length - opts.limit!
-        const delayTest = (times[times.length - 1] + opts.delay!) - now // test only for delay
-        const limitTest = (times[exceeds + 0] + duration) - now // test all but delay
-        return Math.max(delayTest, limitTest)
+        const cooldown = this.getCooldown(channelId, userId, alias)
+        if (cooldown <= 0) {
+          // Passing
+          const cooldowns = this.data.getData(channelId, 'cooldowns') as CooldownData
+          if (cooldowns) {
+            // Add entries to cooldowns
+            if (alias.cooldown) cooldowns.shared[alias.target].push(Date.now())
+            if (alias.userCooldown) cooldowns.user[alias.target][userId].push(Date.now())
+          }
+          const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown })
+          if (res) this.client.chat(channelId, res)
+        } else {
+          // On cooldown
+          if (instance.cooldown) { instance.cooldown(channelId, userId, tags, params, { alias, message, me, cooldown })
+          }
+          return
+        }
       }
     }
   }

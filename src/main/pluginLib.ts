@@ -7,31 +7,31 @@ import * as util from './lib/util'
 export default class PluginLibrary {
 
   /** util library */
-  public readonly u: typeof util
+  public u: typeof util
   /** Libaries shared by plugins */
-  public readonly ext: {[commandId: string]: {[x: string]: any}}
+  public ext: {[commandId: string]: {[x: string]: any}}
 
-  public readonly emitter: {
-    readonly on: TwitchClient['on']
-    readonly once: TwitchClient['once']
-    readonly removeListener: TwitchClient['removeListener']
-    readonly prependListener: TwitchClient['prependListener']
-    readonly prependOnceListener: TwitchClient['prependOnceListener'],
+  public emitter: {
+    on: TwitchClient['on']
+    once: TwitchClient['once']
+    removeListener: TwitchClient['removeListener']
+    prependListener: TwitchClient['prependListener']
+    prependOnceListener: TwitchClient['prependOnceListener'],
   }
-  public readonly api: TwitchClient['api']
+  public api: TwitchClient['api']
 
   /**
    * Returns the path to the file where the specified data is stored
    */
-  public readonly getPath: Data['getPath']
+  public getPath: Data['getPath']
   /**
    * Returns the data or undefined if it isn't loaded.  
    * Data will be an object and therefore a reference, so changes to that object will change it for others  
    * The undefined value is not a reference
    */
-  public readonly getData: Data['getData']
+  public getData: Data['getData']
   /** Wait until the data is loaded. Resolves with the data or undefined if timedout */
-  public readonly waitData: Data['waitData']
+  public waitData: Data['waitData']
   /**
    * Loads or unloads specified data for each channel when the bot joins or parts one  
    * Also loads for each channel that the bot has already joined
@@ -42,8 +42,8 @@ export default class PluginLibrary {
   /**
    * Returns the path to the file where the specified data is stored
    */
-  public readonly setData: Data['setData']
-  public readonly autoLoad: Data['autoLoad']
+  public setData: Data['setData']
+  public autoLoad: Data['autoLoad']
   /**
    * Loads a file in `Data.dataPath`/`subType`/`name`
    * @param subType E.g. 'default', 'global'. Use autoLoad for channel specific data.
@@ -51,55 +51,59 @@ export default class PluginLibrary {
    * @param defaultData If the file doesn't exist, create it with this data
    * @param setDefaults Sets all undefined keys in the returned data that exist in `defaultData` to the value of `defaultData`
    */
-  public readonly load: Data['load']
+  public load: Data['load']
   /**
    * Reloads a file in `Data.dataPath`/`subType`/`name`
    * @param subType E.g. 'default', 'global'.
    * @param name File name
    * @param save Save before reloading
    */
-  public readonly reload: Data['reload']
+  public reload: Data['reload']
   /**
    * Saves a file in `Data.dataPath`/`subType`/`name`
    * @param subType E.g. 'default', 'global'
    * @param name File name
    * @param unload Unload from memory if save is succesful
    */
-  public readonly saveData: Data['save']
+  public saveData: Data['save']
   /** Saves all loaded data types synchronously */
-  public readonly saveAllSync: Data['saveAllSync']
+  public saveAllSync: Data['saveAllSync']
 
-  /** Whisper `msg` to `channel` */
-  public readonly chat: TwitchClient['chat']
-  /** Whisper `msg` to `user` */
-  public readonly whisper: TwitchClient['whisper']
-  /** Join `channels` */
-  public readonly join: TwitchClient['join']
-  /** Leave `channels` */
-  public readonly part: TwitchClient['part']
+  /** Whisper `msg` to `channelId` */
+  public chat: TwitchClient['chat']
+  /** Whisper `msg` to `userId` */
+  public whisper: TwitchClient['whisper']
+  /** Join `channelIds` */
+  public join: TwitchClient['join']
+  /** Leave `channelIds` */
+  public part: TwitchClient['part']
 
-  /** Create command alias */
-  public readonly createAlias: Commander['createAlias']
-  /** Delete command alias */
-  public readonly deleteAlias: Commander['deleteAlias']
-  /** Enable command alias */
-  public readonly enableAlias: Commander['enableAlias']
-  /** Disable command alias */
-  public readonly disableAlias: Commander['disableAlias']
-  /** Return alias */
-  public readonly getAlias: Commander['getAlias']
-  /** Return active alias */
-  public readonly getActiveAlias: Commander['getActiveAlias']
-  /** Returns the aliases whose id match `commandId` */
-  public readonly getAliasesById: Commander['getAliasesById']
-  /** Returns the active aliases whose id match `commandId` */
-  public readonly getActiveAliasesById: Commander['getActiveAliasesById']
-  /** Determine if a user with `badges` would be permitted to call this command */
-  public readonly isPermitted: Commander['isPermitted']
+  /** Create a command alias in `channelId` */
+  public createAlias: Commander['createAlias']
+  /** Delete a command alias in `channelId` */
+  public deleteAlias: Commander['deleteAlias']
+  /** Return alias of `channelId` */
+  public getAlias: Commander['getAlias']
+  /** Return global alias */
+  public getGlobalAlias: Commander['getGlobalAlias']
+  /** Returns all aliases of `channelId` */
+  public getAliases: Commander['getAliases']
+  /** Returns all global aliases */
+  public getGlobalAliases: Commander['getGlobalAliases']
+  /** Determine if `userId` with `badges` would be permitted to call this command */
+  public isPermitted: Commander['isPermitted']
+  /** Determine the remaining cooldown of `alias` in `channelId` for `userId` */
+  public getCooldown: Commander['getCooldown']
+  /** Reloads `pluginId` if possible */
+  public reloadPlugin: Commander['reloadPlugin']
+  /** Loads `pluginId` if possible */
+  public loadPlugin: Commander['loadPlugin']
+  /** Unloads `pluginId` if possible */
+  public unloadPlugin: Commander['unloadPlugin']
 
-  private readonly commander: Commander
-  private readonly data: Data
-  private readonly client: TwitchClient
+  private commander: Commander
+  private data: Data
+  private client: TwitchClient
 
   constructor(client: TwitchClient, data: Data, commander: Commander) {
     this.commander = commander
@@ -137,14 +141,15 @@ export default class PluginLibrary {
 
     this.createAlias = this.commander.createAlias.bind(this.commander)
     this.deleteAlias = this.commander.deleteAlias.bind(this.commander)
-    this.enableAlias = this.commander.enableAlias.bind(this.commander)
-    this.disableAlias = this.commander.disableAlias.bind(this.commander)
     this.getAlias = this.commander.getAlias.bind(this.commander)
-    this.getActiveAlias = this.commander.getActiveAlias.bind(this.commander)
-    this.getAliasesById = this.commander.getAliasesById.bind(this.commander)
-    this.getActiveAliasesById = this.commander.getActiveAliasesById.bind(this.commander)
+    this.getGlobalAlias = this.commander.getGlobalAlias.bind(this.commander)
+    this.getAliases = this.commander.getAliases.bind(this.commander)
+    this.getGlobalAliases = this.commander.getGlobalAliases.bind(this.commander)
     this.isPermitted = this.commander.isPermitted.bind(this.commander)
-
+    this.getCooldown = this.commander.getCooldown.bind(this.commander)
+    this.reloadPlugin = this.commander.reloadPlugin.bind(this.commander)
+    this.loadPlugin = this.commander.loadPlugin.bind(this.commander)
+    this.unloadPlugin = this.commander.unloadPlugin.bind(this.commander)
   }
 
   /** Maximum message length for chat */
@@ -158,7 +163,7 @@ export default class PluginLibrary {
   }
 
   /** Websocket is ready */
-  public connected() {
+  public get connected() {
     return this.client.ws ? this.client.ws.readyState === 1 : false
   }
 
@@ -176,15 +181,27 @@ export default class PluginLibrary {
     }
   }
 
-  /** Enables the default aliases of `pluginId` even if they are by default disabled */
+  /** Enables the default aliases of `pluginId` if they are by default enabled */
   public enableDefaults(pluginId: string) {
-    const aliases = this.getAliases()
-    for (const alias in aliases) if (aliases[alias].target === pluginId) delete aliases[alias].disabled
+    for (const aliasKey in this.commander.defaultAliases) {
+      const alias = this.commander.defaultAliases[aliasKey]
+      if (alias.target === pluginId) {
+        const options = this.commander.plugins[pluginId]
+        if (options.type === 'command') {
+          if (!options.default.options.disabled) {
+            delete alias.disabled
+          }
+        }
+      }
+    }
   }
   /** Disables the default aliases of `pluginId` */
   public disableDefaults(pluginId: string) {
-    const aliases = this.getAliases()
-    for (const alias in aliases) if (aliases[alias].target === pluginId) aliases[alias].disabled = true
+    for (const alias in this.commander.defaultAliases) {
+      if (this.commander.defaultAliases[alias].target === pluginId) {
+        this.commander.defaultAliases[alias].disabled = true
+      }
+    }
   }
   /**
    * Gets a key from the config/keys.json file.  
@@ -194,7 +211,7 @@ export default class PluginLibrary {
     return secretKey.getKey('./main/cfg/keys.json', ...keys)
   }
 
-  /** Returns the emotes in `message` as strings */
+  /** Returns the emotes in `message` as an array of emote strings */
   public getEmotes(emotes: {[emote: string]: {start: number, end: number}}, message: string): string[] {
     const res = []
     for (const emote in emotes) {
@@ -203,19 +220,32 @@ export default class PluginLibrary {
     return res
   }
 
-  /** Returns default aliases or aliases of a channel */
-  public getAliases(channel?: string): { [x: string]: CommandAlias; } {
-    if (channel) return this.data.data[channel].aliases
-    else return this.commander.defaultAliases
+  /** Returns the instance of a plugin or undefined if it doesn't exist */
+  public getInstance(pluginId: string): PluginInstance | undefined {
+    return this.commander.instances[pluginId]
   }
-  /** Returns active default aliases or active aliases of a channel  */
-  public getActiveAliases(channelId?: number): { [x: string]: CommandAlias; } {
-    const aliases: { [x: string]: CommandAlias; } = {}
-    // Default aliases
-    for (const alias in this.commander.defaultAliases) {
-      if (this.commander.defaultAliases[alias].disabled) continue
-      aliases[alias] = this.commander.defaultAliases[alias]
-    }
+
+  /** Returns the options export of a plugin or undefined if the plugin doesn't exist */
+  public getPlugin(pluginId: string): PluginOptions | undefined {
+    return this.commander.plugins[pluginId]
+  }
+
+  /** Returns active default aliases or active aliases of `channelId` */
+  public getEnabledAliases(channelId: number): {[alias: string]: CommandAlias} {
+    return this._getEnabledAliases(channelId)
+  }
+  /** Returns active default aliases */
+  public getEnabledGlobalAliases(): {[x: string]: Readonly<CommandAlias>} {
+    return this._getEnabledAliases()
+  }
+
+  /** Returns active aliases of `channelId` */
+  private _getEnabledAliases(channelId: number): {[alias: string]: CommandAlias}
+  /** Returns active default aliases */
+  private _getEnabledAliases(): {[x: string]: Readonly<CommandAlias>}
+  /** Returns active default aliases or active aliases of `channelId` */
+  private _getEnabledAliases(channelId?: number): {[alias: string]: CommandAlias} {
+    const aliases: { [alias: string]: CommandAlias; } = {}
     if (channelId) {
       // Channel aliases
       for (const alias in this.data.data[channelId].aliases) {
@@ -223,15 +253,13 @@ export default class PluginLibrary {
         // Channel aliases may and should overwrite default aliases here
         aliases[alias] = this.data.data[channelId].aliases[alias]
       }
+    } else {
+      // Default aliases
+      for (const alias in this.commander.defaultAliases) {
+        if (this.commander.defaultAliases[alias].disabled) continue
+        aliases[alias] = this.commander.defaultAliases[alias]
+      }
     }
     return aliases
-  }
-  /** Returns the instance of a plugin or undefined if it doesn't exist */
-  public getInstance(pluginId: string): PluginInstance | undefined {
-    return this.commander.instances[pluginId]
-  }
-  /** Returns the options export of a plugin or undefined if the plugin doesn't exist */
-  public getPlugin(pluginId: string): PluginOptions | undefined {
-    return this.commander.plugins[pluginId]
   }
 }

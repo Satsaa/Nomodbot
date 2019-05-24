@@ -7,7 +7,7 @@ import eventTimeout from '../lib/eventTimeout'
 import RateLimiter, { RateLimiterOptions } from '../lib/RateLimiter'
 import * as u from '../lib/util'
 import TwitchApi from './Api'
-import parse, { IrcMessage } from './parser'
+import parse, { IrcMessage, PRIVMSG } from './parser'
 
 interface Events {
   join: (channelId: number) => void
@@ -16,7 +16,7 @@ interface Events {
   userjoin: (channelId: number, user: string) => void
   userpart: (channelId: number, user: string) => void
   mod: (channelId: number, user: string, mod: boolean) => void
-  chat: (channelId: number, userId: number, userstate: Required<IrcMessage['tags']>, message: string, me: boolean, self: boolean) => void
+  chat: (channelId: number, userId: number, userstate: PRIVMSG['tags'], message: string, me: boolean, self: boolean) => void
   whisper: (userId: number, message: string) => void
   hosttarget: (channelId: number, hostChannelId: number | null, viewerCount: number | null) => void
   timeout: (channelId: number, userId: number, duration: number) => void
@@ -25,8 +25,6 @@ interface Events {
   clear: (channelId: number) => void
   roomstate: (channelId: number, roomstate: IrcMessage['tags']) => void
   userstate: (channelId: number, userstate: IrcMessage['tags']) => void
-  // globaluserstate: (globaluserstate: IrcMessage['tags']) => void
-  // pong: () => void
   usernotice: (channelId: number, tags: IrcMessage['tags'], message?: string) => void
   notice: (channelId: number, tags: IrcMessage['tags'], message: string) => void
 
@@ -284,7 +282,7 @@ export default class TwitchClient {
           // Emit own messages
           const botId = await this.api.getId(this.opts.username)
           if (!botId) return this.failHandle(undefined, 'BOT ID')
-          this.emit('chat', channelId, botId, res.args[1] as Required<IrcMessage['tags']>, msg, msg.search(/^(\.|\/|\\)me/) !== -1, true)
+          this.emit('chat', channelId, botId, res.args[1] as PRIVMSG['tags'], msg, msg.search(/^(\.|\/|\\)me/) !== -1, true)
         }
         resolve(!res.timeout)
       })
@@ -611,8 +609,8 @@ export default class TwitchClient {
         this.ircLog(`[${channel}] ${msg.tags['display-name']}: ${_msg}`)
         this.api.cacheUser(msg.tags['user-id']!, msg.user!, msg.tags['display-name']! + '')
         if (_msg.startsWith('ACTION ')) {
-          this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as Required<IrcMessage['tags']>, _msg.slice(8, -1), true, msg.user === this.opts.username)
-        } else this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as Required<IrcMessage['tags']>, _msg, false, msg.user === this.opts.username)
+          this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as PRIVMSG['tags'], _msg.slice(8, -1), true, msg.user === this.opts.username)
+        } else this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as PRIVMSG['tags'], _msg, false, msg.user === this.opts.username)
         break
       case 'WHISPER': // @userstate :<user>!<user>@<user>.tmi.twitch.tv WHISPER <you> :<message>
         this.emit('whisper', msg.tags['user-id'] as number, msg.params[1])
