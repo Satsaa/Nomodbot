@@ -1,5 +1,10 @@
 # Source
 
+## Data loaders and unloaders
+
+Options for loader and unloader functions
+Run loader on the loaded data
+Run unloader on a clone of the data before unloading
 
 # Command Plugins
 

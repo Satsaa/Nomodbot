@@ -32,24 +32,24 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    const uid = params[1] ? await this.l.api.getId(params[1]) : userId
-    if (!uid) return "That user doesn't exist"
+    const targetId = params[1] ? await this.l.api.getId(params[1]) : userId
+    if (!targetId) return "That user doesn't exist"
 
-    const user = this.log.getUser(channelId, uid)
+    const user = this.log.getUser(channelId, targetId)
     if (!user) return 'That user has not been seen here before'
 
     if (!user.time) return 'That user has not sent any messages'
 
-    const length = this.log.msgCount(channelId, uid)
+    const length = this.log.msgCount(channelId, targetId)
     if (!length) return 'Bad length returned'
     if (length <= 1) {
-      if (uid === userId) return `@${tags['display-name']} You have not sent a message before`
-      else return `${this.l.api.getDisplay(uid)} has not sent a message before`
+      if (targetId === userId) return `@${tags['display-name']} You have not sent a message before`
+      else return `${this.l.api.getDisplay(targetId)} has not sent a message before`
     }
-    const ms = this.log.getTime(channelId, uid, uid === userId ? length - 1 : length)
+    const ms = this.log.getTime(channelId, targetId, length)
     if (!ms) return 'Bad time returned'
 
-    if (uid === userId) return `@${tags['display-name']} You were seen ${this.l.u.timeSince(ms, 1, true)} ago`
-    else return `${await this.l.api.getDisplay(uid)} was seen ${this.l.u.timeSince(ms, 1, true)} ago`
+    if (targetId === userId) return `@${tags['display-name']} You were seen ${this.l.u.timeSince(ms, 1, true)} ago`
+    else return `${await this.l.api.getDisplay(targetId)} was seen ${this.l.u.timeSince(ms, 1, true)} ago`
   }
 }

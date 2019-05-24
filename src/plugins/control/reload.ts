@@ -27,7 +27,9 @@ export class Instance implements PluginInstance {
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     let subType = ~~params[1]
     let name = params[2]
-    if (!params[2]) { // Channel specific with single param
+    if (!params[2]) {
+      if (!params[2]) return 'Define atleast a file name (params 1)'
+      // Channel specific with single param
       subType = channelId
       name = params[1]
     }

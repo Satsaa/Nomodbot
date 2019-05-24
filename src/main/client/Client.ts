@@ -27,6 +27,7 @@ interface Events {
   userstate: (channelId: number, userstate: IrcMessage['tags']) => void
   usernotice: (channelId: number, tags: IrcMessage['tags'], message?: string) => void
   notice: (channelId: number, tags: IrcMessage['tags'], message: string) => void
+  pong: () => void
 
   // usernotice
   sub: (channelId: number, userId: number, streak: number, cumulative: number | null, tier: 1 | 2 | 3, gifted: boolean , message: string | null) => void
@@ -49,8 +50,8 @@ export interface TwitchClientOptions {
   server?: string
   secure?: boolean
   port?: number
-  /** Client data will be loaded from and saved in this directory */
-  dataDir: string
+  /** Client data will be loaded from and saved in this directory's "global" folder */
+  dataRoot: string
   /** Client data will be loaded from and saved with this file name */
   dataFile?: string
   /** API cache data will be loaded from and saved with this file name */
@@ -87,15 +88,12 @@ export default class TwitchClient {
   /** Ratelimited partial twitch API */
   public api: TwitchApi
 
-  public on: TwitchClient['emitter']['on']
-  public once: TwitchClient['emitter']['once']
-  public prependListener: TwitchClient['emitter']['prependListener']
-  public prependOnceListener: TwitchClient['emitter']['prependOnceListener']
-  public removeListener: TwitchClient['emitter']['removeListener']
-  public emit: TwitchClient['emitter']['emit']
-
-  /** Emitter for usernotices */
-  private emitter: StrictEventEmitter<EventEmitter, Events>
+  public on: StrictEventEmitter<EventEmitter, Events>['on']
+  public once: StrictEventEmitter<EventEmitter, Events>['once']
+  public prependListener: StrictEventEmitter<EventEmitter, Events>['prependListener']
+  public prependOnceListener: StrictEventEmitter<EventEmitter, Events>['prependOnceListener']
+  public removeListener: StrictEventEmitter<EventEmitter, Events>['removeListener']
+  public emit: StrictEventEmitter<EventEmitter, Events>['emit']
 
   private rateLimiter: RateLimiter
   private whisperRateLimiter: RateLimiter
@@ -145,30 +143,30 @@ export default class TwitchClient {
     this.channelCache = {mods: {}, users: {}}
     this.clientData = {global: {whisperTimes: [], msgTimes: []} , channels: {}}
 
-    fs.mkdirSync(this.opts.dataDir, {recursive: true})
+    fs.mkdirSync(this.opts.dataRoot, {recursive: true})
     try {
-      fs.accessSync(`${this.opts.dataDir}//${this.opts.dataFile}`, fs.constants.R_OK | fs.constants.W_OK)
+      fs.accessSync(`${this.opts.dataRoot}/global/${this.opts.dataFile}`, fs.constants.R_OK | fs.constants.W_OK)
     } catch (err) {
-      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataDir}//${this.opts.dataFile}`, '{}')
+      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataRoot}/global/${this.opts.dataFile}`, '{}')
       else throw err
     }
-    fs.accessSync(`${this.opts.dataDir}//${this.opts.dataFile}`)
-    defaultKeys(this.clientData, JSON.parse(fs.readFileSync(`${this.opts.dataDir}//${this.opts.dataFile}`, 'utf8')))
+    fs.accessSync(`${this.opts.dataRoot}/global/${this.opts.dataFile}`)
+    defaultKeys(this.clientData, JSON.parse(fs.readFileSync(`${this.opts.dataRoot}/global/${this.opts.dataFile}`, 'utf8')))
     u.onExit(this.onExit.bind(this))
 
     // Do this isntead of using "extends" so event typings work
-    this.emitter = new EventEmitter()
-    this.on = this.emitter.on
-    this.once = this.emitter.once
-    this.prependListener = this.emitter.prependListener
-    this.prependOnceListener = this.emitter.prependOnceListener
-    this.removeListener = this.emitter.removeListener
-    this.emit = this.emitter.emit
+    const emitter = new EventEmitter()
+    this.on = emitter.on
+    this.once = emitter.once
+    this.prependListener = emitter.prependListener
+    this.prependOnceListener = emitter.prependOnceListener
+    this.removeListener = emitter.removeListener
+    this.emit = emitter.emit
 
     this.rateLimiter = new RateLimiter(this.opts.msgRLOpts)
     this.whisperRateLimiter = new RateLimiter(this.opts.whisperRLOpts)
 
-    this.api = new TwitchApi({clientId: this.opts.clientId, dataRoot: this.opts.dataDir})
+    this.api = new TwitchApi({clientId: this.opts.clientId, dataRoot: this.opts.dataRoot})
 
     // Match rateLimiter's options length with times lengths
     // Make sure the times arrays are big enough
@@ -272,6 +270,7 @@ export default class TwitchClient {
       }
       // It is not possible to know if nmb has been unmodded before sending a message. (pubsub may tell this? Still would be too late?)
       // Being over basic limits and losing mod will cause the bot to be disconnected and muted for 30 or so minutes (not good)
+      // 0 delay but normal limits per 30 sec could be safe for moderated channels !!!
       this.rateLimiter.queue(async () => {
         this.clientData.channels[channelId].phase = !this.clientData.channels[channelId].phase
         if (this.clientData.channels[channelId].phase) msg += this.opts.dupeAffix
@@ -395,7 +394,7 @@ export default class TwitchClient {
       return
     }
     try {
-      fs.writeFileSync(`${this.opts.dataDir}//${this.opts.dataFile}`, JSON.stringify(this.clientData, replacer, 2))
+      fs.writeFileSync(`${this.opts.dataRoot}/global/${this.opts.dataFile}`, JSON.stringify(this.clientData, replacer, 2))
     } catch (err) {
       console.log('[Client] Could not save clientData:', err)
       console.warn('[Client] clientData:', JSON.stringify(this.clientData, null, 2))
@@ -419,6 +418,7 @@ export default class TwitchClient {
     this.ws.send('PING')
     const start = Date.now()
     if ((await eventTimeout(this, 'pong', {timeout: this.getLatency() * 2})).timeout) {
+      console.log('Reconnecting because of ping timeout')
       this.reconnect()
     } else this.setLatency(Date.now() - start)
   }
@@ -619,6 +619,7 @@ export default class TwitchClient {
         this.send('PONG')
         break
       case 'PONG':
+        this.emit('pong')
         break
       case 'RECONNECT':
         this.reconnect()

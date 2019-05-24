@@ -15,7 +15,6 @@ export const options: PluginOptions = {
   },
   help: [
     'Evaluate a string, execute it and return the result: {alias} <evalString>',
-    'Evaluate a string and execute it: {alias} noreturn <evalString>',
   ],
 }
 
@@ -29,18 +28,24 @@ export class Instance implements PluginInstance {
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     try {
-      if (params[1] && params[1].toLowerCase() === 'noreturn') {
-        if (!params[2]) return 'Define the evaluation string (params 2+)'
-        // tslint:disable-next-line: no-eval
-        eval(params.slice(2).join(' '))
-        return 'Success'
-      }
       if (!params[1]) return 'Define the evaluation string (params 1+)'
       // tslint:disable-next-line: no-eval
-      return eval(params.slice(1).join(' ')).toString()
+      let result = eval(params.slice(1).join(' '))
+
+      if (typeof result === 'object' && typeof result.then === 'function') { // Thenable
+        result = await result
+      }
+
+      if (typeof result === 'object' && typeof result.message === 'string') { // Messageful
+        return result.message
+      }
+
+      return result + ''
     } catch (err) {
       console.error(err)
       return 'Catastrophic error!'
     }
   }
 }
+
+export const test = 99999

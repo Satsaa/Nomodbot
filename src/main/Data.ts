@@ -12,15 +12,16 @@ export default class Data extends EventEmitter {
   public dataPath: string
   private client: TwitchClient
   private autoLoads: Array<{name: string, defaultData?: object, setDefaults?: boolean}>
-  private nameBlacklist: string[]
+  /** Reserved data names. No data can be loaded or autoloaded with one of these names */
+  private reserved: string[]
 
-  constructor(client: TwitchClient, dataRoot: string, blacklist = ['']) {
+  constructor(client: TwitchClient, dataRoot: string, reserved = ['']) {
     super()
     this.dataPath = dataRoot
 
     if (!fs.existsSync(dataRoot)) fs.mkdirSync(dataRoot)
 
-    this.nameBlacklist = blacklist
+    this.reserved = reserved
 
     this.client = client
     this.client.on('join', this.onJoin.bind(this))
@@ -120,7 +121,7 @@ export default class Data extends EventEmitter {
   public async load(subType: string | number, name: string, defaultData?: object, setDefaults = false): Promise<object> {
     if (!this.data[subType]) this.data[subType] = {}
     if ((subType + '').length === 0 || name.length === 0) throw new Error('subType and name must not be zero-length')
-    if (this.nameBlacklist.includes(name)) throw new Error(`${name} is preserved for internal functions`)
+    if (this.reserved.includes(name)) throw new Error(`${name} is reserved for internal functions`)
     if (this.getData(subType, name)) throw new Error(`${name} has already been loaded by another source`)
     this.setDataAny(subType, name, true) // Blocks new loads on this data type
     const file = `${this.dataPath}/${subType}/${name}.json`
@@ -159,6 +160,7 @@ export default class Data extends EventEmitter {
    * @param setDefaults Define all keys of the loaded data that exist in `defaultData` with the default value
    */
   public autoLoad(name: string, defaultData: object, setDefaults = false) {
+    if (this.reserved.includes(name)) throw new Error(`${name} is reserved for internal functions`)
     for (const autoLoad of this.autoLoads) {
       if (autoLoad.name === name) throw new Error('Duplicate autoLoad for the same data')
     }

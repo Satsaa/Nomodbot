@@ -21,7 +21,7 @@ export const options: PluginOptions = {
   ],
   // requireDatas: ['never','loaded'],
   // requirePlugins: ['notaplugin'],
-  unloadable: true,
+  noUnload: true, // Blocks unloading
   help: [
     'Is an example: {alias} required <variable> [optional] [<optVar>] this | that <multiword...>',
     'nother example',

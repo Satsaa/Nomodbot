@@ -1,6 +1,17 @@
 import { EventEmitter } from 'events'
 import matchKeys, { MatchKeysOptions } from './matchKeys'
 
+interface Options {
+  timeout?: number,
+  matchArgs?: any[],
+  matchOptions?: MatchKeysOptions,
+}
+
+interface EventEmitterLike {
+  removeListener: EventEmitter['removeListener'],
+  on: EventEmitter['on'],
+}
+
 /**
  * Resolve on event or on timeout
  * @param emitter Emitter instance
@@ -10,13 +21,7 @@ import matchKeys, { MatchKeysOptions } from './matchKeys'
  * @param options.matchArgs Resolve only if the event returns atleast these arguments and the values match
  * @returns Object containing timeout boolean and args array arguments passed by the event
  */
-export default function timeoutEvent(
-  emitter: {[x: string]: any, removeListener: EventEmitter['removeListener'], on: EventEmitter['on']}, event: string, options: {
-    timeout?: number,
-    matchArgs?: any[],
-    matchOptions?: MatchKeysOptions,
-  } = {}): Promise<{timeout: boolean, args: any[]}> {
-
+export default function timeoutEvent(emitter: EventEmitterLike, event: string, options: Options = {}): Promise<{timeout: boolean, args: any[]}> {
   return new Promise((resolve) => {
     const cbFunc = (...args: any[]) => {
       if (options.matchArgs) {

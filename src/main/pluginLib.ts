@@ -181,6 +181,11 @@ export default class PluginLibrary {
     }
   }
 
+  /** Throws if conflicts are found */
+  public findConflicts() {
+    this.commander.findConflicts(Object.values(this.commander.plugins), Object.values(this.commander.paths))
+  }
+
   /** Enables the default aliases of `pluginId` if they are by default enabled */
   public enableDefaults(pluginId: string) {
     for (const aliasKey in this.commander.defaultAliases) {
@@ -203,12 +208,13 @@ export default class PluginLibrary {
       }
     }
   }
+
   /**
    * Gets a key from the config/keys.json file.  
    * `keys` is a path to a key (e.g. 'myService', 'oauth' would result in FILE.myService.oauth key value being returned)
    */
   public getKey(...keys: string[]) {
-    return secretKey.getKey('./main/cfg/keys.json', ...keys)
+    return secretKey.getKey('./cfg/keys.json', ...keys)
   }
 
   /** Returns the emotes in `message` as an array of emote strings */
@@ -245,21 +251,21 @@ export default class PluginLibrary {
   private _getEnabledAliases(): {[x: string]: Readonly<CommandAlias>}
   /** Returns active default aliases or active aliases of `channelId` */
   private _getEnabledAliases(channelId?: number): {[alias: string]: CommandAlias} {
-    const aliases: { [alias: string]: CommandAlias; } = {}
+    const result: { [alias: string]: CommandAlias; } = {}
     if (channelId) {
       // Channel aliases
       for (const alias in this.data.data[channelId].aliases) {
         if (this.data.data[channelId].aliases[alias].disabled) continue
         // Channel aliases may and should overwrite default aliases here
-        aliases[alias] = this.data.data[channelId].aliases[alias]
+        result[alias] = this.data.data[channelId].aliases[alias]
       }
     } else {
       // Default aliases
       for (const alias in this.commander.defaultAliases) {
         if (this.commander.defaultAliases[alias].disabled) continue
-        aliases[alias] = this.commander.defaultAliases[alias]
+        result[alias] = this.commander.defaultAliases[alias]
       }
     }
-    return aliases
+    return result
   }
 }

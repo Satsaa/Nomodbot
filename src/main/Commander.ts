@@ -39,10 +39,11 @@ export type PluginOptions = (Command | Controller) & {
   /** Plugin is instantiated after these plugins are loaded */
   requirePlugins?: string[]
   /**
-   * Whether or not this plugin can be unloaded safely  
-   * The `PluginInstance.unload` function can be used for cleanup actions
+   * Whether or not this plugin cannot be unloaded safely  
+   * The `PluginInstance.unload` function can be used for cleanup actions  
+   * Although data types in `creates` are unloaded automatically
    */
-  unloadable?: true
+  noUnload?: true
 }
 
 /** Properties for aliases */
@@ -124,15 +125,19 @@ export default class Commander {
     this.client.on('chat', this.onChat.bind(this))
   }
 
-  public async init(): Promise<void> {
+  /**
+   * Loads all plugins in the plugin folder and it's subfolders  
+   * @returns List of loaded plugin ids
+   */
+  public async init(): Promise<string[]> {
     this.data.autoLoad('aliases', {})
     this.data.autoLoad('cooldowns', {user: {}, shared: {} as CooldownData}, true)
-    const files = (await readDirRecursive(path.join(__dirname, '..', 'commands')))
+    const files = (await readDirRecursive(path.join(__dirname, '..', 'plugins')))
       .filter(f => (f.endsWith('.ts') || f.endsWith('.js') && !f.includes('tempCodeRunnerFile')))
     const optionsArr = files.map(file => this.loadFromPath(file))
     this.findConflicts(optionsArr, files)
     await Promise.all(optionsArr)
-    return
+    return optionsArr.map(v => v.id)
   }
 
   /** Check for duplicate data type creations and if a plugin requires data that no present plugin creates */
@@ -297,27 +302,28 @@ export default class Commander {
   }
 
   /** Loads `pluginId` if possible */
-  public async loadPlugin(pluginId: string) {
-    if (!this.paths[pluginId]) return false
+  public async loadPlugin(pluginId: string): Promise<AdvancedResult> {
+    if (!this.paths[pluginId]) return {success: false, code: 'MISSING', message: 'Plugin path missing. The plugin has never been loaded?'}
     this.loadFromPath(this.paths[pluginId])
     const res = await this.waitPlugin(pluginId, 5000)
-    if (!res) return false // Timeout
-    return true
+    if (!res) return {success: false, code: 'TIMEOUT', message: 'Plugin wait timeout'}
+    return  {success: true}
   }
 
   /** Reloads `pluginId` if possible */
-  public async reloadPlugin(pluginId: string) {
-    await this.unloadPlugin(pluginId, 5000)
+  public async reloadPlugin(pluginId: string): Promise<AdvancedResult> {
+    const unloadRes = await this.unloadPlugin(pluginId, 5000)
+    if (!unloadRes.success) return unloadRes
     return this.loadPlugin(pluginId)
   }
 
   /** Unloads `pluginId` if possible */
-  public async unloadPlugin(pluginId: string, timeout?: number): Promise<AdvancedResult<any>> {
+  public async unloadPlugin(pluginId: string, timeout?: number): Promise<AdvancedResult> {
     if (!this.paths[pluginId]) {
-      return {success: false, code: 'MISSING', message: 'Plugin path missing. The plugin has never been loaded'}
+      return {success: false, code: 'MISSING', message: 'Plugin path missing. The plugin has never been loaded?'}
     }
-    if (!this.plugins[pluginId].unloadable) {
-      return {success: false, code: 'UNSUPPORTED', message: 'Plugin does not support unloading'}
+    if (this.plugins[pluginId].noUnload) {
+      return {success: false, code: 'UNSUPPORTED', message: 'Plugin explicitly does not support unloading'}
     }
     const res = await this.waitPlugin(pluginId, timeout) // Plugin must be loaded before unloading
     if (!res) {
@@ -351,11 +357,11 @@ export default class Commander {
     util.uniquify(reqPlugin, true)
     util.uniquify(reqData, true)
     if (reqPlugin.length && reqData.length) {
-      return {success: false, code: 'REQUIRED', message: `Other plugins require this plugin (${reqPlugin}) and data created by this plugin (${reqData})`}
+      return {success: false, code: 'REQUIRED', message: `Other plugins require this plugin (${reqPlugin.join(', ')}) and data created by this plugin (${reqData.join(', ')})`}
     } else if (reqPlugin.length) {
-      return {success: false, code: 'REQUIREDPLUGIN', message: `Other plugins require this plugin (${reqPlugin})`}
+      return {success: false, code: 'REQUIREDPLUGIN', message: `Other plugins require this plugin (${reqPlugin.join(', ')})`}
     } else if (reqData.length) {
-      return {success: false, code: 'REQUIREDDATA', message: `Other plugins require data created by this plugin (${reqData})`}
+      return {success: false, code: 'REQUIREDDATA', message: `Other plugins require data created by this plugin (${reqData.join(', ')})`}
     }
 
     if (this.instances[pluginId].unload) await this.instances[pluginId].unload!()

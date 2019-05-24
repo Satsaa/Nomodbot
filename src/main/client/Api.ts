@@ -78,9 +78,9 @@ export default class TwitchApi {
     // Prepare cache file
     fs.mkdirSync(path.dirname(this.opts.dataRoot), {recursive: true})
     try {
-      fs.accessSync(`${this.opts.dataRoot}/global/apiCache.json`, fs.constants.R_OK | fs.constants.W_OK)
+      fs.accessSync(`${this.opts.dataRoot}/global/apiUsers.json`, fs.constants.R_OK | fs.constants.W_OK)
     } catch (err) {
-      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataRoot}/global/apiCache.json`, '{}')
+      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataRoot}/global/apiUsers.json`, '[]')
       else throw err
     }
 
@@ -89,7 +89,7 @@ export default class TwitchApi {
     this.ids = {}
     this.logins = {}
     this.displays = {}
-    const userFile =  JSON.parse(fs.readFileSync(`${this.opts.dataRoot}/global/apiCache.json`, 'utf8')) as Array<[number, string, string]>
+    const userFile =  JSON.parse(fs.readFileSync(`${this.opts.dataRoot}/global/apiUsers.json`, 'utf8')) as Array<[number, string, string]>
     for (const user of userFile) {
       const [id, login, display] = user
       this.cacheUser(id, login, display)

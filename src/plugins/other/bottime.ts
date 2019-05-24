@@ -1,6 +1,5 @@
 import { IrcMessage, PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
-import * as u from '../../main/lib/util'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -27,6 +26,7 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    return `The bot has been running for ${u.plural(Math.floor(process.uptime()), 'second')}`
+    const ms = process.uptime() * 1000
+    return `The bot has been running for ${this.l.u.timeDuration(ms, 2)}`
   }
 }
