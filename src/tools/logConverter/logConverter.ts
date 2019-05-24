@@ -1,6 +1,6 @@
 import fs from 'fs'
 import https from 'https'
-import * as secretKey from '../../lib/secretKey'
+import * as secretKey from '../../main/lib/secretKey'
 
 const input = './src/main/tools/logConverter/log.txt'
 const output =  './src/main/tools/logConverter/output.json'

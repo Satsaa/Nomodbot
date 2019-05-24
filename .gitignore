@@ -3,7 +3,10 @@ node_modules
 .vscode/
 cfg/
 data/
-tempCodeRunnerFile.js
 bin/
+tempCodeRunnerFile.js
 tsconfig.tsbuildinfo
 delet default snippets.ahk
+
+src/tools/logConverter/*
+!src/tools/logConverter/logConverter.ts
