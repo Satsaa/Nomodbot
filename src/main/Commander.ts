@@ -343,9 +343,9 @@ export default class Commander {
       // Test if this plugin's created data is vital
       if (creates) {
         for (const create of creates) {
-          const createString = create.join()
+          const createString = create.join('/')
           for (const require of (this.plugins[pid].requireDatas || [])) {
-            const requireString = require.join()
+            const requireString = require.join('/')
             if (createString === requireString) {
               reqData.push(pid)
             }

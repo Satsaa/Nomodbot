@@ -36,6 +36,7 @@ export class Instance implements PluginInstance {
   private clientId?: string
   private clientSecret?: string
   private accessToken?: string
+  private timeout?: NodeJS.Timeout
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
@@ -95,6 +96,13 @@ export class Instance implements PluginInstance {
     }
   }
 
+  public async unload() {
+    if (this.timeout) {
+      clearTimeout(this.timeout)
+      this.timeout.unref()
+    }
+  }
+
   private getPlaylist(playlist: string): Promise<{[x: string]: any} | string> {
     return new Promise((resolve) => {
       const options = {
@@ -143,21 +151,21 @@ export class Instance implements PluginInstance {
           const result = JSON.parse(data)
           console.log('[SPOTIFYPLAYLIST] Refreshed access token')
           this.accessToken = result.access_token
-          setTimeout(this.tokenLoop.bind(this), result.expires_in * 1000 - 5000)
+          this.timeout = setTimeout(this.tokenLoop.bind(this), result.expires_in * 1000 - 5000)
         }).on('error', (err) => {
           console.log('[SPOTIFYPLAYLIST] Error when requesting access token', res)
-          setTimeout(this.tokenLoop.bind(this), 10 * 1000)
+          this.timeout = setTimeout(this.tokenLoop.bind(this), 10 * 1000)
         })
       } else {
         console.log('[SPOTIFYPLAYLIST] Unexpected response when requesting access token', res)
-        setTimeout(this.tokenLoop.bind(this), 60 * 1000)
+        this.timeout = setTimeout(this.tokenLoop.bind(this), 60 * 1000)
       }
     })
 
     request.on('error', (err) => {
       console.log('[SPOTIFYPLAYLIST] Error when requesting access token')
       console.error(err)
-      setTimeout(this.tokenLoop.bind(this), 10 * 1000)
+      this.timeout = setTimeout(this.tokenLoop.bind(this), 10 * 1000)
     })
 
     request.write('grant_type=client_credentials')

@@ -13,7 +13,9 @@ export const options: PluginOptions = {
       permissions: 10,
     },
   },
-  help: ['Exit the process: {alias}'],
+  help: [
+    'Exit the process: {alias}',
+  ],
 }
 
 export class Instance implements PluginInstance {

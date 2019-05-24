@@ -51,7 +51,6 @@ export class Instance implements PluginInstance {
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.lists = { channels: {}, globals: {} }
-
   }
 
   public async init(): Promise<void> {
@@ -71,6 +70,10 @@ export class Instance implements PluginInstance {
       },
     }
     this.l.extend(options.id, extensions)
+  }
+
+  public async unload() {
+    this.l.unextend(options.id)
   }
 }
 

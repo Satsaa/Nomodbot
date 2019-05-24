@@ -31,13 +31,14 @@ interface NotifyData {
 export class Instance implements PluginInstance {
 
   private l: PluginLibrary
+  private listener: any
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
     this.l.autoLoad('notifies', {})
 
-    this.l.emitter.on('chat', this.onChat.bind(this))
+    this.l.emitter.on('chat', this.listener = this.onChat.bind(this))
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
@@ -77,6 +78,10 @@ export class Instance implements PluginInstance {
       })
       return `${params[1]} now has ${this.l.u.plural(data[target].length, 'notify', 'notifies')}`
     }
+  }
+
+  public async unload() {
+    this.l.emitter.removeListener('chat', this.listener)
   }
 
   private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean) {

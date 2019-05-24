@@ -13,7 +13,9 @@ export const options: PluginOptions = {
       permissions: 10,
     },
   },
-  help: ['Reload the file in \\subType | {channel}\\name: {alias} [subType] <name>'],
+  help: [
+    'Reload the file in \\subType | {channel}\\name: {alias} [subType] <name>',
+  ],
 }
 
 export class Instance implements PluginInstance {

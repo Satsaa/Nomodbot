@@ -196,6 +196,10 @@ export default class TwitchClient {
     }, 10 * 1000)
   }
 
+  public get joinedChannels(): number[] {
+    return Object.keys(this.channels).map(v => ~~v)
+  }
+
   public async connect() {
     if (this.ws && this.ws.readyState !== 1) return
     console.log('attempting to connect')
@@ -385,6 +389,8 @@ export default class TwitchClient {
     console.log(`Connection closed: ${event.code}, ${event.reason}`)
     this.emit('ws_close', this.ws)
     this.ws = undefined
+    this.ids = {}
+    this.channels = {}
     this.reconnect()
   }
 

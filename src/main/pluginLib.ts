@@ -162,22 +162,36 @@ export default class PluginLibrary {
     return this.client.opts.dupeAffix
   }
 
+  /** The list of joined channelsIds */
+  public get joinedChannels() {
+    return this.client.joinedChannels
+  }
+
   /** Websocket is ready */
   public get connected() {
     return this.client.ws ? this.client.ws.readyState === 1 : false
   }
 
-  /** Add keys to pluginLib.ext[pluginId] */
-  public extend(pluginId: string, method: string, value: any): void
-  /** Set the pluginLib.ext[pluginId] key */
+  /** Set pluginLib.ext[pluginId][sub] */
+  public extend(pluginId: string, sub: string, value: any): void
+  /** Set pluginLib.ext[pluginId] */
   public extend(pluginId: string, value: {[key: string]: any}): void
 
-  public extend(pluginId: string, method: string | {[key: string]: any}, value?: any) {
-    if (typeof method === 'object') {
-      this.ext[pluginId] = method
+  public extend(pluginId: string, sub: string | {[key: string]: any}, value?: any) {
+    if (typeof sub === 'object') {
+      this.ext[pluginId] = sub
     } else {
       if (!this.ext[pluginId]) this.ext[pluginId] = {}
-      this.ext[pluginId][method] = value
+      this.ext[pluginId][sub] = value
+    }
+  }
+
+  /** Deletes an extension */
+  public unextend(pluginId: string, sub?: string) {
+    if (sub) {
+      if (typeof this.ext[pluginId] === 'object') delete this.ext[pluginId][sub]
+    } else {
+      delete this.ext[pluginId]
     }
   }
 

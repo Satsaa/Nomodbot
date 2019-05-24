@@ -13,7 +13,9 @@ export const options: PluginOptions = {
       permissions: 10,
     },
   },
-  help: ['Join channels: {alias} <channels...>'],
+  help: [
+    'Join channels: {alias} <channels...>',
+  ],
 }
 
 export class Instance implements PluginInstance {

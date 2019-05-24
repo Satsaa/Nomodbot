@@ -40,7 +40,7 @@ export const BAN = 'b'
 export const SUB = 's'
 export const GIFT = 'g'
 export const MASSGIFT = 'mg'
-export type TYPES = typeof CHAT |  typeof ACTION | typeof TIMEOUT | typeof BAN | typeof SUB | typeof GIFT | typeof MASSGIFT
+export type TYPES = typeof CHAT | typeof ACTION | typeof TIMEOUT | typeof BAN | typeof SUB | typeof GIFT | typeof MASSGIFT
 
 export interface LogExtension {
   /**
@@ -78,6 +78,10 @@ export class Instance implements PluginInstance {
   /** File descriptors of each channel */
   private fds: { [channelId: number]: number }
 
+  private chatListener: any
+  private joinListener: any
+  private partListener: any
+
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.streams = {}
@@ -90,9 +94,14 @@ export class Instance implements PluginInstance {
 
   public async init() {
     this.l.autoLoad('log', this.defaultData, true)
-    this.l.emitter.on('chat', this.onChat.bind(this))
-    this.l.emitter.on('join', this.onJoin.bind(this))
-    this.l.emitter.on('part', this.onPart.bind(this))
+
+    this.l.emitter.on('chat', this.chatListener = this.onChat.bind(this))
+    this.l.emitter.on('join', this.joinListener = this.onJoin.bind(this))
+    this.l.emitter.on('part', this.partListener = this.onPart.bind(this))
+    // Join existing channels
+    for (const channelId of this.l.joinedChannels) {
+      this.onJoin(channelId)
+    }
 
     const extensions: LogExtension = {
       getMsg: this.getMsg.bind(this),
@@ -109,6 +118,17 @@ export class Instance implements PluginInstance {
     this.l.extend(options.id, extensions)
 
     this.l.u.onExit(this.onExit.bind(this))
+  }
+
+  public async unload() {
+    this.l.emitter.removeListener('chat', this.chatListener)
+    this.l.emitter.removeListener('join', this.joinListener)
+    this.l.emitter.removeListener('part', this.partListener)
+
+    this.l.unextend(options.id)
+
+    this.onExit()
+    return
   }
 
   public async validate(channelId: number, userId: number) {
@@ -251,9 +271,9 @@ export class Instance implements PluginInstance {
     if (this.streams[channelId]) this.endStream(channelId)
   }
 
-  private onExit(code: number) {
+  private onExit(code?: number) {
     for (const id in this.streams) {
-      this.streams[id].end()
+      this.streams[id].destroy()
     }
   }
 
