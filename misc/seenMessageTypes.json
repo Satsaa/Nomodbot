@@ -132,34 +132,34 @@
       "badge-info": 568
     },
     "JOIN": {
-      "__count__": 153010,
+      "__count__": 153011,
       "_paramlengths_": {
-        "1": 61751
+        "1": 61752
       },
       "_prefix_": {
-        "prefix": 61440,
-        "user": 61440,
-        "nick": 61440
+        "prefix": 61441,
+        "user": 61441,
+        "nick": 61441
       }
     },
     "USERSTATE": {
-      "__count__": 4682,
-      "badges": 4682,
-      "color": 4682,
-      "display-name": 4682,
-      "emote-sets": 4682,
-      "mod": 4682,
-      "subscriber": 4682,
-      "user-type": 4682,
+      "__count__": 4685,
+      "badges": 4685,
+      "color": 4685,
+      "display-name": 4685,
+      "emote-sets": 4685,
+      "mod": 4685,
+      "subscriber": 4685,
+      "user-type": 4685,
       "_paramlengths_": {
-        "1": 4373
+        "1": 4376
       },
       "_prefix_": {
-        "prefix": 4328,
+        "prefix": 4331,
         "user": 1,
         "nick": 1
       },
-      "badge-info": 2282
+      "badge-info": 2285
     },
     "ROOMSTATE": {
       "__count__": 1758,
@@ -192,31 +192,31 @@
       }
     },
     "PRIVMSG": {
-      "__count__": 2273873,
-      "badges": 2273873,
-      "color": 2273873,
-      "display-name": 2273873,
-      "emotes": 2273873,
-      "flags": 2273873,
-      "id": 2273873,
-      "mod": 2273873,
-      "room-id": 2273873,
-      "subscriber": 2273873,
-      "tmi-sent-ts": 2273873,
-      "turbo": 2273873,
-      "user-id": 2273873,
-      "user-type": 2273873,
+      "__count__": 2273876,
+      "badges": 2273876,
+      "color": 2273876,
+      "display-name": 2273876,
+      "emotes": 2273876,
+      "flags": 2273876,
+      "id": 2273876,
+      "mod": 2273876,
+      "room-id": 2273876,
+      "subscriber": 2273876,
+      "tmi-sent-ts": 2273876,
+      "turbo": 2273876,
+      "user-id": 2273876,
+      "user-type": 2273876,
       "emote-only": 288559,
       "bits": 913,
       "_paramlengths_": {
-        "2": 145557
+        "2": 145560
       },
       "_prefix_": {
-        "prefix": 144383,
-        "user": 144383,
-        "nick": 144383
+        "prefix": 144386,
+        "user": 144386,
+        "nick": 144386
       },
-      "badge-info": 135326
+      "badge-info": 135329
     },
     "CLEARCHAT": {
       "__count__": 26311,
@@ -312,9 +312,9 @@
       }
     },
     "PONG": {
-      "__count__": 22214,
+      "__count__": 22218,
       "_paramlengths_": {
-        "1": 21824
+        "1": 21828
       },
       "_prefix_": {
         "prefix": 1,

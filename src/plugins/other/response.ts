@@ -71,6 +71,7 @@ export class Instance implements PluginInstance {
       const varRegex = /(\$\([^\$()]+\)|\$\{[^\${)]+\})/g
       let match = varRegex.exec(messageLc)
       while (match !== null) {
+        // Fill alias data
         data.push(message.slice(toDataIndex, match.index))
         data.push(messageLc.slice(match.index, match.index + match[0].length))
         toDataIndex = match.index + match[0].length
@@ -81,9 +82,7 @@ export class Instance implements PluginInstance {
         if (variable) {
           const pureVar = variable.slice(2, -1)
           if (pureVar.startsWith('param')) {
-            if (isNaN(+pureVar.slice(5)) || +pureVar.slice(5) < 1 || +pureVar.slice(5) !== Math.floor(+pureVar.slice(5))) {
-              unknowns.push(pureVar)
-            }
+            if (isNaN(+pureVar.slice(5)) || +pureVar.slice(5) < 1 || +pureVar.slice(5) !== Math.floor(+pureVar.slice(5))) unknowns.push(pureVar)
           } else if (!this.variables.includes(pureVar)) unknowns.push(pureVar)
         }
         match = varRegex.exec(messageLc)
@@ -95,7 +94,7 @@ export class Instance implements PluginInstance {
 
       console.log(data)
 
-      this.l.createAlias(channelId, alias, {target: options.id, permissions: 0, data})
+      this.l.createAlias(channelId, alias, {target: options.id, cooldown: 30, userCooldown: 60, data})
       return `Response created: ${alias}`
     }
   }
