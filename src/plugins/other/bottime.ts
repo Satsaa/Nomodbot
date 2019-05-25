@@ -1,4 +1,4 @@
-import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -11,10 +11,12 @@ export const options: PluginOptions = {
     alias: '?bottime',
     options: {
       cooldown: 10,
-      usercooldown: 30,
+      userCooldown: 30,
     },
   },
-  help: ['Display bot uptime: {alias}'],
+  help: [
+    'Display bot uptime: {alias}',
+  ],
 }
 
 export class Instance implements PluginInstance {

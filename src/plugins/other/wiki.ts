@@ -1,5 +1,5 @@
 import https from 'https'
-import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -15,7 +15,9 @@ export const options: PluginOptions = {
       userCooldown: 90,
     },
   },
-  help: ['Get the Wikipedia summary of a subject: {command} <subject...>'],
+  help: [
+    'Get the Wikipedia summary of a subject: {command} <subject...>',
+  ],
 }
 
 export class Instance implements PluginInstance {
@@ -59,8 +61,8 @@ export class Instance implements PluginInstance {
     let redirects = 0
     return get.bind(this)(subject)
 
-    function get(this: Instance, subject: string) {
-      return new Promise((resolve, reject) => {
+    function get(this: Instance, subject: string): Promise<any> {
+      return new Promise((resolve) => {
         const options = {
           host: 'en.wikipedia.org',
           path: '/api/rest_v1/page/summary/' + encodeURIComponent(subject),
@@ -77,11 +79,11 @@ export class Instance implements PluginInstance {
             }).on('end', () => {
               const result = JSON.parse(data)
               resolve(result)
-            }).on('error', reject)
+            }).on('error', (err) => {throw err})
           } else if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400) {
             redirects++
             if (redirects > 3) resolve('Too many redirects')
-            else if (res.headers.location) get.bind(this)(res.headers.location).then(resolve, reject)
+            else if (res.headers.location) get.bind(this)(res.headers.location).then(resolve)
             else resolve(`${res.statusCode}: ${this.l.u.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
           } else resolve(`${res.statusCode}: ${this.l.u.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
         })

@@ -1,4 +1,4 @@
-import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 

@@ -1,4 +1,4 @@
-import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -11,10 +11,12 @@ export const options: PluginOptions = {
     alias: '?echo',
     options: {
       cooldown: 10,
-      usercooldown: 30,
+      userCooldown: 30,
     },
   },
-  help: ['Reply with echo: {alias} <echo...>'],
+  help: [
+    'Reply with echo: {alias} <echo...>',
+  ],
 }
 
 export class Instance implements PluginInstance {

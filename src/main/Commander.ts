@@ -11,7 +11,7 @@ interface Command {
   default: {
     /** Default command alias(es) (e.g. !command) */
     alias: string | string[],
-    options: Pick<CommandAlias, Exclude<keyof CommandAlias, 'target'>>,
+    options: Omit<CommandAlias, 'target'>,
   }
   /** Usage instructions */
   help: Array<string | ((message: string) => string)>,
@@ -301,12 +301,41 @@ export default class Commander {
     }
   }
 
+  public loadFromPath(path: string) {
+    path = require.resolve(path)
+    delete require.cache[path] // Delete cache entry
+    const plugin: {options: PluginOptions, Instance: new() => PluginInstance} = require(path)
+    const options = plugin.options
+    if (options) {
+      const type = options.type // Cant use options in default case
+      this.paths[options.id] = path
+      this.plugins[options.id] = options
+      switch (options.type) {
+        case 'command':
+          if (Array.isArray(options.default.alias)) {
+            options.default.alias.forEach((alias) => {
+              this.defaultAliases[alias] = {...options.default.options, target: options.id}
+            })
+          } else {
+            this.defaultAliases[options.default.alias] = {...options.default.options, target: options.id}
+          }
+          break
+        case 'controller':
+          break
+        default:
+          throw new Error('Unknown plugin type: ' + type)
+      }
+      this.instantiatePlugin(options, plugin.Instance) // Maybe this should be awaited? !!!
+      return options
+    } else throw console.error('Plugin lacks options export: ' + path)
+  }
+
   /** Loads `pluginId` if possible */
-  public async loadPlugin(pluginId: string): Promise<AdvancedResult> {
+  public async loadPlugin(pluginId: string, timeout = 5000): Promise<AdvancedResult> {
     if (!this.paths[pluginId]) return {success: false, code: 'MISSING', message: 'Plugin path missing. The plugin has never been loaded?'}
     this.loadFromPath(this.paths[pluginId])
-    const res = await this.waitPlugin(pluginId, 5000)
-    if (!res) return {success: false, code: 'TIMEOUT', message: 'Plugin wait timeout'}
+    const res = await this.waitPlugin(pluginId, timeout)
+    if (!res) return {success: false, code: 'TIMEOUT', message: 'Plugin wait timeout. The plugin may still finish loading later'}
     return  {success: true}
   }
 
@@ -328,7 +357,7 @@ export default class Commander {
     const res = await this.waitPlugin(pluginId, timeout) // Plugin must be loaded before unloading
     if (!res) {
       if (typeof timeout === 'number') return {success: false, code: 'TIMEOUT', message: 'Plugin wait timeout'}
-      else return {success: false, code: 'TIMEOUT', message: 'Plugin is not loaded'}
+      else return {success: false, code: 'UNLOADED', message: 'Plugin is not loaded'}
     }
 
     const creates = this.plugins[pluginId].creates
@@ -408,34 +437,6 @@ export default class Commander {
     this.waits[pluginId].forEach(resolveWait => resolveWait(true))
     this.waits[pluginId] = []
     return true
-  }
-
-  private loadFromPath(path: string) {
-    delete require.cache[require.resolve(path)] // Delete cache entry if it exists
-    const plugin: {options: PluginOptions, Instance: new() => PluginInstance} = require(path)
-    const options = plugin.options
-    if (options) {
-      const type = options.type // Cant use options in default case
-      this.paths[options.id] = path
-      this.plugins[options.id] = options
-      switch (options.type) {
-        case 'command':
-          if (Array.isArray(options.default.alias)) {
-            options.default.alias.forEach((alias) => {
-              this.defaultAliases[alias] = {...options.default.options, target: options.id}
-            })
-          } else {
-            this.defaultAliases[options.default.alias] = {...options.default.options, target: options.id}
-          }
-          break
-        case 'controller':
-          break
-        default:
-          throw new Error('Unknown plugin type: ' + type)
-      }
-      this.instantiatePlugin(options, plugin.Instance) // Maybe this should be awaited?
-      return options
-    } else throw console.error('Plugin lacks options export: ' + path)
   }
 
   private async instantiatePlugin(options: PluginOptions, instantiator: new(pluginLib: PluginLibrary) => PluginInstance) {

@@ -106,15 +106,15 @@ export function smartIndex(index: number, max: number | any[] = Infinity) {
 /**
  * Creates and returns a shallow copy of `array` without duplicate entries
  * @param array Target array
- * @param table You are being forced to enable this for known string or number arrays
+ * @param table You are being forced to enable this for some arrays
  */
-export function uniquify<T extends any[]>(array: T, table: T extends (number[] | string[]) ? true : false): T {
+export function uniquify<T extends any[]>(array: T, table: T extends (boolean[] | number[] | string[]) ? true : false): T {
   const result: any[] = []
   if (table) {
     const seen: {[x: string]: true} = {}
     for (const element of array) {
       if (!seen[element]) result.push(element) // Big -> small
-      else seen[element] = true
+      seen[element] = true
     }
   } else {
     const seen: any[] = []

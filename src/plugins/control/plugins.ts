@@ -4,18 +4,18 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'commands',
-  title: 'Commands',
-  description: 'Displays enabled commands',
+  id: 'plugins',
+  title: 'Plugins',
+  description: 'Displays enabled plugins',
   default: {
-    alias: ['?commands', '$aliases'],
+    alias: '$plugins',
     options: {
       cooldown: 30,
       userCooldown: 180,
     },
   },
   help: [
-    'Display enabled commands: {alias} [<userlevel> | <badge>]',
+    'Display enabled plugins: {alias} [<type>]',
   ],
 }
 
@@ -28,14 +28,14 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    const aliases = {...this.l.getEnabledAliases(channelId), ...this.l.getEnabledGlobalAliases()}
-    const aliasArray = []
-    const userLvl = isNaN(+params[1]) ? undefined : +params[1]
-    for (const alias in aliases) {
-      if (userLvl !== undefined && (aliases[alias].permissions || 0) !== userLvl) continue
-      if (aliases[alias].hidden) continue
-      aliasArray.push(alias)
+    let pluginOpts = this.l.getPlugins()
+    const availableTypes = this.l.u.uniquify(pluginOpts.map(v => v.type), true)
+    if (params[1]) {
+      const type = params[1].toLowerCase()
+      pluginOpts = pluginOpts.filter(v => v.type === type)
     }
-    return aliasArray.sort().join(', ')
+    if (pluginOpts.length === 0) return `No plugins of that type. Available types: ${availableTypes.join(', ')}`
+    const plugins = pluginOpts.map(v => v.id)
+    return plugins.join(', ')
   }
 }

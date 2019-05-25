@@ -1,5 +1,5 @@
 import https from 'https'
-import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -16,7 +16,9 @@ export const options: PluginOptions = {
       userCooldown: 30,
     },
   },
-  help: ['Get the definition of term: {alias} <term...>'],
+  help: [
+    'Get the definition of term: {alias} <term...>',
+  ],
 }
 
 export class Instance implements PluginInstance {

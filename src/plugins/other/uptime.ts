@@ -1,4 +1,4 @@
-import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -14,7 +14,9 @@ export const options: PluginOptions = {
       userCooldown: 30,
     },
   },
-  help: ['Tell how long {channel} has been live or offline: {alias}'],
+  help: [
+    'Tell how long {channel} has been live or offline: {alias}',
+  ],
 }
 
 export class Instance implements PluginInstance {

@@ -1,4 +1,4 @@
-import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -13,6 +13,7 @@ export const options: PluginOptions = {
       disabled: true,
       permissions: 0,
       cooldown: 30,
+      userCooldown: 60,
     },
   },
   creates: [

@@ -1,4 +1,4 @@
-import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 import { LogExtension} from './log'
@@ -12,7 +12,6 @@ export const options: PluginOptions = {
     alias: '?totallines',
     options: {
       cooldown: 30,
-      usercooldown: 30,
     },
   },
   help: [

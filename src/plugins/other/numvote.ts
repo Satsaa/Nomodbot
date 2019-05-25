@@ -1,4 +1,4 @@
-import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -13,7 +13,9 @@ export const options: PluginOptions = {
       hidden: true,
     },
   },
-  help: ['This command is counted as a vote'],
+  help: [
+    'This command is counted as a vote',
+  ],
 }
 
 export class Instance implements PluginInstance {

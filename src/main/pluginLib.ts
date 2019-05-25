@@ -176,7 +176,7 @@ export default class PluginLibrary {
   public extend(pluginId: string, sub: string, value: any): void
   /** Set pluginLib.ext[pluginId] */
   public extend(pluginId: string, value: {[key: string]: any}): void
-
+  /** Extend pluginLib.ext */
   public extend(pluginId: string, sub: string | {[key: string]: any}, value?: any) {
     if (typeof sub === 'object') {
       this.ext[pluginId] = sub
@@ -198,6 +198,11 @@ export default class PluginLibrary {
   /** Throws if conflicts are found */
   public findConflicts() {
     this.commander.findConflicts(Object.values(this.commander.plugins), Object.values(this.commander.paths))
+  }
+
+  /** Loads a new plugin from ./bin/plugins/`path`.js */
+  public loadFromPath(path: string) {
+    this.commander.loadFromPath(`./bin/plugins/${path}.js`)
   }
 
   /** Enables the default aliases of `pluginId` if they are by default enabled */
@@ -248,6 +253,11 @@ export default class PluginLibrary {
   /** Returns the options export of a plugin or undefined if the plugin doesn't exist */
   public getPlugin(pluginId: string): PluginOptions | undefined {
     return this.commander.plugins[pluginId]
+  }
+
+  /** Returns the options exports of enabled plugins */
+  public getPlugins(): PluginOptions[] {
+    return Object.values(this.commander.plugins)
   }
 
   /** Returns active default aliases or active aliases of `channelId` */

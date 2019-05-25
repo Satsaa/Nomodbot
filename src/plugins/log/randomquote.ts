@@ -1,4 +1,4 @@
-import { IrcMessage, PRIVMSG } from '../../main/client/parser'
+import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 import { ACTION, CHAT, LogExtension} from './log'
@@ -12,7 +12,7 @@ export const options: PluginOptions = {
     alias: ['?randomquote', '?rq'],
     options: {
       cooldown: 10,
-      usercooldown: 30,
+      userCooldown: 30,
     },
   },
   help: [
@@ -33,16 +33,17 @@ export class Instance implements PluginInstance {
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     if (params[1]) { // User specific message
-      let uid: number = userId
+      let userIndex: number | undefined = userId
       let index = 0
       if (isNaN(+params[1])) {
-        uid = (await this.l.api.getId(params[1])) || userId
-        const count = this.log.msgCount(channelId, uid)
+        userIndex = await this.l.api.getId(params[1])
+        if (!userIndex) return 'That user doesn\t exists'
+        const count = this.log.msgCount(channelId, userIndex)
         if (typeof count === 'undefined') return 'Log data is unavailable at the moment'
         index = isNaN(+params[2]) ?  this.l.u.randomInt(0, count) : +params[2]
       } else index = +params[1]
 
-      const res = await this.log.getSmartIndexMsg(channelId, uid, index)
+      const res = await this.log.getSmartIndexMsg(channelId, userIndex, index)
       if (!res) return 'That user has no logged messages'
       if (res.type === CHAT || res.type === ACTION) {
         return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`
