@@ -35,7 +35,7 @@ export = [
           if (!this.l.isPermitted(alias, userId, tags.badges, {ignoreWhiteList: true})) return `You are not permitted to use ${aliasName}`
           const uid = await this.l.api.getId(params[1])
           if (!uid) return 'No user with that name'
-          if (!this.l.isMater(userId)) {
+          if (!this.l.isMaster(userId)) {
             if (uid === channelId) return 'You cannot blacklist the broadcaster'
             if (this.l.isMod(channelId, params[1])) return 'You cannot blacklist a moderator'
           }
@@ -50,7 +50,7 @@ export = [
           if (!this.l.isPermitted(globalAlias, userId, tags.badges, {ignoreWhiteList: true})) return `You are not permitted to use ${aliasName}`
           const uid = await this.l.api.getId(params[1])
           if (!uid) return 'No user with that name'
-          if (!this.l.isMater(userId)) {
+          if (!this.l.isMaster(userId)) {
             if (uid === channelId) return 'You cannot blacklist the broadcaster'
             if (this.l.isMod(channelId, params[1])) return 'You cannot blacklist a moderator'
           }

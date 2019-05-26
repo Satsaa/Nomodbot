@@ -1,5 +1,5 @@
 import TwitchClient from './client/Client'
-import Commander, { CommandAlias, PluginInstance, PluginOptions } from './Commander'
+import Commander, { CommandAlias, DefaultCommandAlias, PluginInstance, PluginOptions } from './Commander'
 import Data from './Data'
 import * as secretKey from './lib/secretKey'
 import * as util from './lib/util'
@@ -214,35 +214,8 @@ export default class PluginLibrary {
     return this.commander.loadFromPath(`../plugins/${path}.js`)
   }
 
-  /** Enables the default aliases of `pluginId` if they are by default enabled */
-  public enableDefaults(pluginId: string) {
-    for (const aliasKey in this.commander.defaultAliases) {
-      const alias = this.commander.defaultAliases[aliasKey]
-      if (alias.target === pluginId) {
-        const options = this.commander.plugins[pluginId]
-        if (options.type === 'command') {
-          if (!options.default.options.disabled) {
-            delete alias.disabled
-          }
-        }
-      }
-    }
-  }
-  /** Disables the default aliases of `pluginId` */
-  public disableDefaults(pluginId: string) {
-    for (const alias in this.commander.defaultAliases) {
-      if (this.commander.defaultAliases[alias].target === pluginId) {
-        this.commander.defaultAliases[alias].disabled = true
-      }
-    }
-  }
-
   /**
-   * Converts alias permissions to a string  
-   * @example
-   * (6) => 'moderator'
-   * (2) => 'subscriber'
-   * (0) => undefined
+   * Converts alias permissions to a string
    */
   public permissionString(permissions: number | undefined) {
     if (permissions) {
@@ -265,7 +238,7 @@ export default class PluginLibrary {
   }
 
   /** Whether or not `userId` is a master user */
-  public isMater(userId: number) {
+  public isMaster(userId: number) {
     return this.commander.masters.includes(userId)
   }
 
@@ -312,14 +285,14 @@ export default class PluginLibrary {
     return this._getEnabledAliases(channelId)
   }
   /** Returns active default aliases */
-  public getEnabledGlobalAliases(): {[x: string]: DeepReadonly<CommandAlias>} {
+  public getEnabledGlobalAliases(): {[x: string]: DefaultCommandAlias} {
     return this._getEnabledAliases()
   }
 
   /** Returns active aliases of `channelId` */
   private _getEnabledAliases(channelId: number): {[alias: string]: CommandAlias}
   /** Returns active default aliases */
-  private _getEnabledAliases(): {[x: string]: DeepReadonly<CommandAlias>}
+  private _getEnabledAliases(): {[x: string]: DefaultCommandAlias}
   /** Returns active default aliases or active aliases of `channelId` */
   private _getEnabledAliases(channelId?: number): {[alias: string]: CommandAlias} {
     const result: { [alias: string]: CommandAlias; } = {}

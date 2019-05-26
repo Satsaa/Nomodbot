@@ -60,6 +60,9 @@ export interface CommandAlias {
   blacklist?: number[]
 }
 
+/** Properties for default aliases */
+export interface DefaultCommandAlias extends Readonly<Omit<CommandAlias, 'blacklist' | 'whitelist'>> {}
+
 interface Command {
   type: 'command',
   default: {
@@ -75,7 +78,7 @@ interface IsPermittedOptions {
   ignoreWhiteList?: boolean
 }
 
-type Source =  {options: PluginOptions, Instance: new() => PluginInstance} | Array<{options: PluginOptions, Instance: new() => PluginInstance}>
+type Source = {options: PluginOptions, Instance: new() => PluginInstance} | Array<{options: PluginOptions, Instance: new() => PluginInstance}>
 
 /** isPermitted helper type */
 type AliasLike = DeepReadonly<{
@@ -86,7 +89,7 @@ type AliasLike = DeepReadonly<{
 
 export interface Extra {
   /** Used alias */
-  alias: DeepReadonly<CommandAlias>,
+  alias: DefaultCommandAlias,
   /** Full* chat message *Action headers are not included */
   message: string,
   /** Message was an action (/me) */
@@ -112,7 +115,7 @@ export interface PluginInstance {
 }
 
 export default class Commander {
-  public defaultAliases: {[alias: string]: CommandAlias}
+  public defaultAliases: {[alias: string]: DefaultCommandAlias}
   public paths: {[pluginId: string]: string}
   public plugins: {[pluginId: string]: PluginOptions}
   public instances: {[pluginId: string]: PluginInstance}
@@ -207,7 +210,7 @@ export default class Commander {
     }
   }
 
-  public createAlias(channelId: number, alias: string, options: DeepReadonly<CommandAlias>): boolean {
+  public createAlias(channelId: number, alias: string, options: DefaultCommandAlias): boolean {
     alias = alias.toLowerCase()
     if (!(this.data.data[channelId] || {}).aliases) return false
     this.data.data[channelId].aliases[alias] = deepClone(options); return true
@@ -224,7 +227,7 @@ export default class Commander {
       return this.data.data[channelId].aliases[alias]
     }
   }
-  public getGlobalAlias(alias: string): DeepReadonly<CommandAlias> | undefined {
+  public getGlobalAlias(alias: string): DefaultCommandAlias | undefined {
     alias = alias.toLowerCase()
     return this.defaultAliases[alias]
   }
@@ -234,7 +237,7 @@ export default class Commander {
       return this.data.data[channelId].aliases
     }
   }
-  public getGlobalAliases(): {[alias: string]: DeepReadonly<CommandAlias>} {
+  public getGlobalAliases(): {[alias: string]: DefaultCommandAlias} {
     return this.defaultAliases
   }
 
@@ -246,9 +249,9 @@ export default class Commander {
     }
     return res
   }
-  public getGlobalAliasesById(pluginId: string): {[alias: string]: DeepReadonly<CommandAlias>} {
+  public getGlobalAliasesById(pluginId: string): {[alias: string]: DefaultCommandAlias} {
     const aliases = this.getGlobalAliases()
-    const res: {[alias: string]: DeepReadonly<CommandAlias>} = {}
+    const res: {[alias: string]: DefaultCommandAlias} = {}
     for (const alias in aliases) {
       if (aliases[alias].target === pluginId) res[alias] = aliases[alias]
     }
@@ -293,7 +296,7 @@ export default class Commander {
   }
 
   /** Determine the remaining cooldown of `alias` in `channelId` for `userId` */
-  public getCooldown(channelId: number, userId: number, alias: DeepReadonly<CommandAlias>): number {
+  public getCooldown(channelId: number, userId: number, alias: DefaultCommandAlias): number {
     const cooldowns = this.data.getData(channelId, 'cooldowns') as CooldownData
     if (!cooldowns) return 0
     let cd = 0
