@@ -524,7 +524,7 @@ export default class Commander {
     if (!instance) return console.log(`Cannot call unloaded command: ${alias.target}`)
     if (!instance.call) throw new Error(`No call function on command plugin: ${alias.target}`)
     // Check permissions (master users always have permissions)
-    if (!alias.permissions || this.isPermitted({permissions: alias.permissions}, userId, tags.badges)) {
+    if (this.isPermitted(alias, userId, tags.badges)) {
       if (this.masters.includes(userId)) {
         // Master users don't care about cooldowns
         const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown: 0 })
