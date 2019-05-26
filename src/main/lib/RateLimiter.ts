@@ -1,3 +1,4 @@
+import deepClone from './deepClone'
 
 export interface RateLimiterOptions {
   /** Max age of an entry */
@@ -27,7 +28,8 @@ export default class RateLimiter {
      * Lowest defined queueSize is selected.
      * @param queueSize Maximum queued entries at once
      */
-  constructor(options: Readonly<RateLimiterOptions | RateLimiterOptions[]>) {
+  constructor(options: DeepReadonly<RateLimiterOptions | RateLimiterOptions[]>) {
+    options = deepClone(options)
     const opts = (Array.isArray(options)) ? options : [options]
     this.opts = []
     this.times = []

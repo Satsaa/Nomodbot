@@ -10,15 +10,18 @@ export default class Data extends EventEmitter {
   public data: {[subType: string]: {[name: string]: {[x: string]: any}}}
 
   public dataPath: string
-  private client: TwitchClient
-  private autoLoads: Array<{name: string, defaultData?: object, setDefaults?: boolean}>
   /** Reserved data names. No data can be loaded or autoloaded with one of these names */
   private reserved: string[]
+  private client: TwitchClient
+  /** Loading data to these files are blocked and throws */
+  private blocks: {[subType: string]: {[name: string]: true}}
+  private autoLoads: Array<{name: string, defaultData?: object, setDefaults?: boolean}>
 
   constructor(client: TwitchClient, dataRoot: string, reserved = ['']) {
     super()
-    this.dataPath = dataRoot
+    this.data = {}
 
+    this.dataPath = dataRoot
     if (!fs.existsSync(dataRoot)) fs.mkdirSync(dataRoot)
 
     this.reserved = reserved
@@ -27,8 +30,7 @@ export default class Data extends EventEmitter {
     this.client.on('join', this.onJoin.bind(this))
     this.client.on('part', this.onPart.bind(this))
 
-    this.data = {}
-
+    this.blocks = {}
     this.autoLoads = []
   }
 
@@ -71,8 +73,8 @@ export default class Data extends EventEmitter {
     for (const subType in this.data) {
       for (const name in this.data[subType]) {
         const data  = this.getData(subType, name)
-        if (data) fs.writeFileSync(`${this.dataPath}/${subType}/${name}.json`, JSON.stringify(data, null, 0))
-        else console.error(`Failed to save ${subType}\\${name} because it was undefined`)
+        if (typeof data === 'object') fs.writeFileSync(`${this.dataPath}/${subType}/${name}.json`, JSON.stringify(data, null, 0))
+        else console.error(new Error(`Failed to save ${subType}\\${name} because it's type was ${typeof data}`))
       }
     }
   }
@@ -85,8 +87,8 @@ export default class Data extends EventEmitter {
    */
   public async save(subType: string | number, name: string, unload: boolean = false) {
     const data = this.getData(subType, name)
-    if (!data) {
-      console.error(`${name} isn't loaded and is therefore not saved`)
+    if (typeof data !== 'object') {
+      console.error(new Error(`Failed to save ${subType}\\${name} because it's type was ${typeof data}`))
       return false
     }
     try {
@@ -123,7 +125,7 @@ export default class Data extends EventEmitter {
     if ((subType + '').length === 0 || name.length === 0) throw new Error('subType and name must not be zero-length')
     if (this.reserved.includes(name)) throw new Error(`${name} is reserved for internal functions`)
     if (this.getData(subType, name)) throw new Error(`${name} has already been loaded by another source`)
-    this.setDataAny(subType, name, true) // Blocks new loads on this data type
+    this.blockLoad(subType, name)
     const file = `${this.dataPath}/${subType}/${name}.json`
     try { // Check if file is already created
       await fsp.access(file, fs.constants.F_OK)
@@ -144,9 +146,14 @@ export default class Data extends EventEmitter {
       } else throw new Error('Cannot load file that doesn\'t exist. Define defaultData if you want to create it if needed')
     }
     let data
-    try { data = JSON.parse(await fsp.readFile(file, 'utf8'))
-    } catch (err) { throw new Error(`${file} is corrupted: ${err.name}`) }
+    try {
+      data = JSON.parse(await fsp.readFile(file, 'utf8'))
+    } catch (err) {
+      throw new Error(`${file} is corrupted: ${err.name}`)
+    }
+    if (typeof data !== 'object') throw new Error(`Wrong data type in file: ${typeof data}`)
     if (setDefaults) defaultKeys(data, defaultData || {})
+    if (typeof data !== 'object') throw new Error(`Data became corrupted: ${typeof data}`)
     const result = this.setData(subType, name, data)
     this.emit('load', subType, name, result)
     return result
@@ -192,14 +199,19 @@ export default class Data extends EventEmitter {
 
   /** Delete the data */
   private delData(subType: string | number, name: string) {
-    if (!this.getData(subType, name)) return false
-    delete this.data[subType][name]
-    return true
+    this.blockLoad(subType, name, true)
+    if (this.data[subType]) delete this.data[subType][name]
   }
 
-  private setDataAny(subType: string | number, name: string, value: any) {
-    if (!this.data[subType]) this.data[subType] = {}
-    return this.data[subType][name] = value
+  /** Blocks or unblocks the loading of a data type. Attempting to load a blocked data type will throw as a duplicate */
+  private blockLoad(subType: string | number, name: string, unblock = false) {
+    if (unblock) {
+      if (!this.blocks[subType]) return
+      delete this.blocks[subType][name]
+    } else {
+      if (!this.blocks[subType]) this.blocks[subType] = {}
+      this.blocks[subType][name] = true
+    }
   }
 
   private onJoin(channelId: number) {

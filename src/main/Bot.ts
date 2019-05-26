@@ -1,6 +1,7 @@
 import Client from './client/Client'
 import Commander from './Commander'
 import Data from './Data'
+import deepClone from './lib/deepClone'
 import * as secretKey from './lib/secretKey'
 import { onExit } from './lib/util'
 
@@ -20,7 +21,7 @@ export default class Bot {
     onExit(this.onExit.bind(this))
     this.opts = {
       masters: [],
-      ...options,
+      ...deepClone(options),
     }
     this.client = new Client({
       username: secretKey.getKey('./cfg/keys.json', 'twitch', 'username'),

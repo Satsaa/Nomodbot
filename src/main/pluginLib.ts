@@ -229,6 +229,33 @@ export default class PluginLibrary {
   }
 
   /**
+   * Converts alias permissions to a string  
+   * @example
+   * (6) => 'moderator'
+   * (2) => 'subscriber'
+   * (0) => undefined
+   */
+  public permissionString(permissions: number | undefined) {
+    if (permissions) {
+      switch (permissions) {
+        case 0:
+          return
+        case 2:
+          return 'subscriber'
+        case 4:
+          return 'vip'
+        case 6:
+          return 'moderator'
+        case 8:
+          return 'broadcaster'
+        case 10:
+          return 'master'
+      }
+    }
+    return
+  }
+
+  /**
    * Gets a key from the config/keys.json file.  
    * `keys` is a path to a key (e.g. 'myService', 'oauth' would result in FILE.myService.oauth key value being returned)
    */
@@ -265,14 +292,14 @@ export default class PluginLibrary {
     return this._getEnabledAliases(channelId)
   }
   /** Returns active default aliases */
-  public getEnabledGlobalAliases(): {[x: string]: Readonly<CommandAlias>} {
+  public getEnabledGlobalAliases(): {[x: string]: DeepReadonly<CommandAlias>} {
     return this._getEnabledAliases()
   }
 
   /** Returns active aliases of `channelId` */
   private _getEnabledAliases(channelId: number): {[alias: string]: CommandAlias}
   /** Returns active default aliases */
-  private _getEnabledAliases(): {[x: string]: Readonly<CommandAlias>}
+  private _getEnabledAliases(): {[x: string]: DeepReadonly<CommandAlias>}
   /** Returns active default aliases or active aliases of `channelId` */
   private _getEnabledAliases(channelId?: number): {[alias: string]: CommandAlias} {
     const result: { [alias: string]: CommandAlias; } = {}

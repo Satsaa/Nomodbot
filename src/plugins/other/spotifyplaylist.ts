@@ -58,13 +58,13 @@ export class Instance implements PluginInstance {
     if (!data) return 'Unavailable: required data is not present'
     try {
       if (params[1] === 'del' || params[1] === 'delete' || params[1] === 'remove') {
-        if (!this.l.isPermitted({permissions: 3}, tags.badges, userId)) return 'You are not permitted to do this operation'
+        if (!this.l.isPermitted({permissions: 8}, userId, tags.badges)) return 'You are not permitted to do this operation'
         const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
         if (!data) return 'Unavailable: required data is not present'
         this.l.setData(channelId, 'spotifyPlaylist', {})
         return 'Deleted succesfully'
       } else if (params[2]) { // Set track id
-        if (!this.l.isPermitted({permissions: 3}, tags.badges, userId)) return 'You are not permitted to do this operation'
+        if (!this.l.isPermitted({permissions: 8}, userId, tags.badges)) return 'You are not permitted to do this operation'
         const inputId = (params[2].replace(/\/+$/, '').match(/[a-zA-Z0-9]*$/) || [])[0]
         if (!inputId) return 'Invalid id'
         const playlist = await this.getPlaylist(inputId)

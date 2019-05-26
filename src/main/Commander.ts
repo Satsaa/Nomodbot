@@ -2,20 +2,10 @@ import * as path from 'path'
 import TwitchClient from './client/Client'
 import { IrcMessage, PRIVMSG } from './client/parser'
 import Data from './Data'
+import deepClone from './lib/deepClone'
 import * as util from './lib/util'
 import { readDirRecursive } from './lib/util'
 import PluginLibrary from './pluginLib'
-
-interface Command {
-  type: 'command',
-  default: {
-    /** Default command alias(es) (e.g. !command) */
-    alias: string | string[],
-    options: Omit<CommandAlias, 'target'>,
-  }
-  /** Usage instructions */
-  help: Array<string | ((message: string) => string)>,
-}
 
 /** Controls a data type or something like that */
 interface Controller {
@@ -52,11 +42,10 @@ export interface CommandAlias {
   target: string
   disabled?: true
   /** 
-   * Controls who can use this command. Either an array of permitted badge names or a number.  
-   * Number: 0: everyone, 1: subscriber, 2: moderator, 3: broadcaster, 10: master
-   * Some badges: moderator, subscriber, prime, admin, bits, broadcaster, global_mod, staff, turbo
+   * Controls who can use this command    
+   * Number: 0: everyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
    */
-  permissions?: string[] | number,
+  permissions?: number,
   /** Cooldowns are in seconds. This can either be a number or ratelimiter options object */
   cooldown?: number | {duration?: number, delay?: number, limit?: number}
   /** Cooldowns are in seconds. This can either be a number or ratelimiter options object */
@@ -71,22 +60,44 @@ export interface CommandAlias {
   blacklist?: number[]
 }
 
+interface Command {
+  type: 'command',
+  default: {
+    /** Default command alias(es) (e.g. !command) */
+    alias: string | string[],
+    options: Omit<CommandAlias, 'target' | 'whitelist' | 'blacklist'>,
+  }
+  /** Usage instructions */
+  help: Array<string | ((message: string) => string)>,
+}
+
+interface IsPermittedOptions {
+  ignoreWhiteList?: boolean
+}
+
+type Source =  {options: PluginOptions, Instance: new() => PluginInstance} | Array<{options: PluginOptions, Instance: new() => PluginInstance}>
+
 /** isPermitted helper type */
-interface AliasLike {
-  permissions: string[] | number,
+type AliasLike = DeepReadonly<{
+  permissions?: string[] | number,
   whitelist?: number[],
   blacklist?: number[]
-}
+}>
 
 export interface Extra {
   /** Used alias */
-  alias: Readonly<CommandAlias>,
+  alias: DeepReadonly<CommandAlias>,
   /** Full* chat message *Action headers are not included */
   message: string,
   /** Message was an action (/me) */
   me: boolean,
   /** Remaining cooldown when trying to trigger command */
   cooldown: number,
+}
+
+interface CooldownData {
+  user: { [commandId: string]: { [userId: number]: number[] } }
+  shared: { [commandId: string]: number[] }
 }
 
 export interface PluginInstance {
@@ -134,7 +145,7 @@ export default class Commander {
     this.data.autoLoad('cooldowns', {user: {}, shared: {} as CooldownData}, true)
     const files = (await readDirRecursive(path.join(__dirname, '..', 'plugins')))
       .filter(f => (f.endsWith('.ts') || f.endsWith('.js') && !f.includes('tempCodeRunnerFile')))
-    const optionsArr = files.map(file => this.loadFromPath(file))
+    const optionsArr = files.map(file => this.loadFromPath(file)).flat()
     this.findConflicts(optionsArr, files)
     await Promise.all(optionsArr)
     return optionsArr.map(v => v.id)
@@ -196,9 +207,9 @@ export default class Commander {
     }
   }
 
-  public createAlias(channelId: number, alias: string, options: CommandAlias): boolean {
+  public createAlias(channelId: number, alias: string, options: DeepReadonly<CommandAlias>): boolean {
     if (!(this.data.data[channelId] || {}).aliases) return false
-    this.data.data[channelId].aliases[alias] = {...options}; return true
+    this.data.data[channelId].aliases[alias] = deepClone(options); return true
   }
   public deleteAlias(channelId: number, alias: string) {
     if (!(this.data.data[channelId] || {}).aliases) return false
@@ -210,7 +221,7 @@ export default class Commander {
       return this.data.data[channelId].aliases[alias]
     }
   }
-  public getGlobalAlias(alias: string): Readonly<CommandAlias> | undefined {
+  public getGlobalAlias(alias: string): DeepReadonly<CommandAlias> | undefined {
     return this.defaultAliases[alias]
   }
 
@@ -219,44 +230,49 @@ export default class Commander {
       return this.data.data[channelId].aliases
     }
   }
-  public getGlobalAliases(): {[alias: string]: Readonly<CommandAlias>} {
+  public getGlobalAliases(): {[alias: string]: DeepReadonly<CommandAlias>} {
     return this.defaultAliases
   }
 
   /** Determine if `userId` with `badges` would be permitted to call this command */
-  public isPermitted(alias: AliasLike, badges: IrcMessage['tags']['badges'], userId: number) {
-    // Number: 0: everyone, 1: subscriber, 2: moderator, 3: broadcaster, 10: master
+  public isPermitted(alias: AliasLike, userId: number, badges: IrcMessage['tags']['badges'], options: IsPermittedOptions = {}) {
+    // Number: 0: everyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
     if (alias.blacklist && alias.blacklist.includes(userId)) return false
-    if (alias.whitelist && alias.whitelist.includes(userId)) return true
-    if (this.masters.includes(userId)) return true
+    if (!options.ignoreWhiteList && alias.whitelist && alias.whitelist.includes(userId)) return true
+    if (this.masters.includes(userId)) return true // Master
     if (badges === undefined) return
     if (typeof alias.permissions === 'number') {
+      // Numbered permissions
       switch (alias.permissions) {
-        case 0:
+        // Fallthrough switch
+        case 0: // anyone
           return true
-        case 1:
+        case 2: // subscriber
           if (badges.subscriber) return true
-        case 2:
+        case 4: // vip
+          if (badges.vip) return true
+        case 6: // moderator
           if (badges.moderator) return true
-        case 3:
+        case 8: // broadcaster
           if (badges.broadcaster) return true
-        case 10:
-          break
+        case 10: // Master
+          // Checked above
         default:
           console.warn(`Unknown permission level: ${alias.permissions}`)
           return true
       }
     } else {
+      if (typeof alias.permissions === 'undefined') return true
+      // Badged permissions
       for (const badge in badges) {
         if (alias.permissions.includes(badge)) return true
       }
     }
-    this.isPermitted({permissions: 10}, {mod: 1}, 99)
     return false
   }
 
   /** Determine the remaining cooldown of `alias` in `channelId` for `userId` */
-  public getCooldown(channelId: number, userId: number, alias: CommandAlias): number {
+  public getCooldown(channelId: number, userId: number, alias: DeepReadonly<CommandAlias>): number {
     const cooldowns = this.data.getData(channelId, 'cooldowns') as CooldownData
     if (!cooldowns) return 0
     let cd = 0
@@ -304,30 +320,41 @@ export default class Commander {
   public loadFromPath(path: string) {
     path = require.resolve(path)
     delete require.cache[path] // Delete cache entry
-    const plugin: {options: PluginOptions, Instance: new() => PluginInstance} = require(path)
-    const options = plugin.options
-    if (options) {
-      const type = options.type // Cant use options in default case
-      this.paths[options.id] = path
-      this.plugins[options.id] = options
-      switch (options.type) {
-        case 'command':
-          if (Array.isArray(options.default.alias)) {
-            options.default.alias.forEach((alias) => {
-              this.defaultAliases[alias] = {...options.default.options, target: options.id}
-            })
-          } else {
-            this.defaultAliases[options.default.alias] = {...options.default.options, target: options.id}
-          }
-          break
-        case 'controller':
-          break
-        default:
-          throw new Error('Unknown plugin type: ' + type)
-      }
-      this.instantiatePlugin(options, plugin.Instance) // Maybe this should be awaited? !!!
-      return options
-    } else throw console.error('Plugin lacks options export: ' + path)
+    const source: Source = require(path)
+
+    // Check if multi plugin file
+    if (Array.isArray(source)) {
+      return source.map(source => handle.bind(this)(path, source))
+    } else {
+      return [handle.bind(this)(path, source)]
+    }
+
+    function handle(this: Commander, path: string, plugin: {options: PluginOptions, Instance: new() => PluginInstance}) {
+      const _plugin: {options: PluginOptions, Instance: new() => PluginInstance} = plugin
+      const options = _plugin.options
+      if (options) {
+        const type = options.type // Cant use options in default case
+        this.paths[options.id] = path
+        this.plugins[options.id] = options
+        switch (options.type) {
+          case 'command':
+            if (Array.isArray(options.default.alias)) {
+              options.default.alias.forEach((alias) => {
+                this.defaultAliases[alias] = {...deepClone(options.default.options), target: options.id}
+              })
+            } else {
+              this.defaultAliases[options.default.alias] = {...deepClone(options.default.options), target: options.id}
+            }
+            break
+          case 'controller':
+            break
+          default:
+            throw new Error('Unknown plugin type: ' + type)
+        }
+        this.instantiatePlugin(options, _plugin.Instance) // Maybe this should be awaited? !!!
+        return options
+      } else throw console.error('Plugin lacks options export: ' + path)
+    }
   }
 
   /** Loads `pluginId` if possible */
@@ -471,7 +498,7 @@ export default class Commander {
     if (!instance) return console.log(`Cannot call unloaded command: ${alias.target}`)
     if (!instance.call) throw new Error(`No call function on command plugin: ${alias.target}`)
     // Check permissions (master users always have permissions)
-    if (!alias.permissions || this.isPermitted({permissions: alias.permissions}, tags.badges, userId)) {
+    if (!alias.permissions || this.isPermitted({permissions: alias.permissions}, userId, tags.badges)) {
       if (this.masters.includes(userId)) {
         // Master users don't care about cooldowns
         const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown: 0 })
@@ -497,9 +524,4 @@ export default class Commander {
       }
     }
   }
-}
-
-interface CooldownData {
-  user: { [commandId: string]: { [userId: number]: number[] } }
-  shared: { [commandId: string]: number[] }
 }

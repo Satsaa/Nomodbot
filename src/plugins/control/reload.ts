@@ -10,7 +10,7 @@ export const options: PluginOptions = {
   default: {
     alias: '$reload',
     options: {
-      permissions: 10,
+      permissions: 60,
     },
   },
   help: [

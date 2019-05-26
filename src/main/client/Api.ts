@@ -42,9 +42,9 @@ export default class TwitchApi {
   private logins: {[uid: number]: string}
   private displays: {[uid: number]: string}
   /** Default blueprint for channels' cache entries */
-  private readonly channelCacheDefault: {
+  private readonly channelCacheDefault: DeepReadonly<{
     recentBroadcasts: GenericCache
-  }
+  }>
 
   /** Bucket size maximum */
   private rlLimit: number
@@ -108,6 +108,7 @@ export default class TwitchApi {
 
   /** Gets the cached user ID for `login` or fetches it from the API */
   public async getId(login: string, onlyCached = false): Promise<number | undefined> {
+    login = login.toLowerCase()
     if (this.ids[login]) return this.ids[login]
     else {
       if (onlyCached) return
@@ -139,6 +140,7 @@ export default class TwitchApi {
   /** Gets the cached display name for `user` or fetches it from the API */
   public async getDisplay(user: number | string, onlyCached = false): Promise<string | undefined> {
     if (typeof user === 'string') {
+      user = user.toLowerCase()
       const id = await this.getId(user)
       if (!id) return
       return this.displays[id]

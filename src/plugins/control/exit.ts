@@ -10,7 +10,7 @@ export const options: PluginOptions = {
   default: {
     alias: '$exit',
     options: {
-      permissions: 10,
+      permissions: 60,
     },
   },
   help: [

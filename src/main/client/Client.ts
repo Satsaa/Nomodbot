@@ -2,6 +2,7 @@ import { EventEmitter } from 'events'
 import * as fs from 'fs'
 import StrictEventEmitter from 'strict-event-emitter-types'
 import WebSocket from 'ws'
+import deepClone from '../lib/deepClone'
 import defaultKeys from '../lib/defaultKeys'
 import eventTimeout from '../lib/eventTimeout'
 import RateLimiter, { RateLimiterOptions } from '../lib/RateLimiter'
@@ -65,8 +66,8 @@ export interface TwitchClientOptions {
   pingInterval?: number
   dupeAffix?: string
   maxMsgLength?: number
-  readonly msgRLOpts?: Readonly<RateLimiterOptions>
-  readonly whisperRLOpts?: Readonly<RateLimiterOptions | RateLimiterOptions[]>
+  readonly msgRLOpts?: DeepReadonly<RateLimiterOptions>
+  readonly whisperRLOpts?: DeepReadonly<RateLimiterOptions | RateLimiterOptions[]>
 }
 
 /**
@@ -136,7 +137,7 @@ export default class TwitchClient {
         limit: 34,
         delay: 1050,
       },
-      ...options,
+      ...deepClone(options),
     }
 
     this.globaluserstate = {}

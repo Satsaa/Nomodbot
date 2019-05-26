@@ -6,11 +6,11 @@ export const options: PluginOptions = {
   type: 'command',
   id: 'response',
   title: 'Response',
-  description: 'Create aliases that show a custom message',
+  description: 'Creates aliases that show a custom message',
   default: {
     alias: '?response',
     options: {
-      permissions: 2,
+      permissions: 6,
     },
   },
   help: [

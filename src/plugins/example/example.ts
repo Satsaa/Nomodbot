@@ -2,6 +2,27 @@ import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
+/*
+A plugin file usually has 1 plugin, but you can have multiple if you export an array like:
+
+export = [
+  {
+    options: {
+      ...
+    } as PluginOptions,
+
+    Instance: class implements PluginInstance {
+      ...
+    },
+  },
+  {
+    options: {...} as PluginOptions,
+    Instance: class implements PluginInstance {...},
+  },
+]
+
+*/
+
 export const options: PluginOptions = {
   type: 'command',
   id: 'example',
