@@ -12,7 +12,7 @@ export const options: PluginOptions = {
     alias: '?wiki',
     options: {
       cooldown: 30,
-      userCooldown: 90,
+      userCooldown: 60,
     },
   },
   help: [

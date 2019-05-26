@@ -58,12 +58,12 @@ export class Instance implements PluginInstance {
           const options = this.l.loadFromPath(params[2])
           const names = options.map(v => v.id)
           const all = await Promise.all(options.map(v => this.l.waitPlugin(v.id), 5000))
-          let result = ''
+          const results: string[] = []
           if (all.every(v => v)) return `Loaded ${names.join(', ')}`
           names.forEach((v, i) => {
-            result += `${v} (${all[i] ? 'loaded' : 'timeout'})`
+            results.push(`${v} (${all[i] ? 'loaded' : 'timeout'})`)
           })
-          return result
+          return results.join(', ')
         } catch (err) {
           console.error(err)
           return `An error occurred: ${err.code}`

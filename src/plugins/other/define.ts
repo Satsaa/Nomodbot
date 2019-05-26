@@ -11,7 +11,6 @@ export const options: PluginOptions = {
   default: {
     alias: '?define',
     options: {
-      permissions: 0,
       cooldown: 10,
       userCooldown: 30,
     },

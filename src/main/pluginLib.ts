@@ -78,7 +78,7 @@ export default class PluginLibrary {
   /** Leave `channelIds` */
   public part: TwitchClient['part']
 
-  /** Create a command alias in `channelId` */
+  /** Create a command alias in `channelId`. Will overwrite existing aliases */
   public createAlias: Commander['createAlias']
   /** Delete a command alias in `channelId` */
   public deleteAlias: Commander['deleteAlias']
@@ -262,6 +262,17 @@ export default class PluginLibrary {
       }
     }
     return
+  }
+
+  /** Whether or not `userId` is a master user */
+  public isMater(userId: number) {
+    return this.commander.masters.includes(userId)
+  }
+
+  /** Whether or not `user` (LOGIN) is a KNOWN mod in `channelId` (ID) */
+  public isMod(channelId: number, user: string) {
+    if (!this.client.channelCache.mods[channelId]) return false
+    return !!this.client.channelCache.mods[channelId][user.toLocaleLowerCase()]
   }
 
   /**

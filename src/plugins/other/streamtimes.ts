@@ -10,8 +10,8 @@ export const options: PluginOptions = {
   default: {
     alias: ['?stream', '?streams', '?streamtime', '?streamtimes'],
     options: {
-      cooldown: 30,
-      userCooldown: 60,
+      cooldown: 10,
+      userCooldown: 30,
     },
   },
   help: [

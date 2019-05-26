@@ -6,73 +6,17 @@ export = [
   {
     options: {
       type: 'command',
-      id: 'permit',
-      title: 'Permit',
-      description: 'Gives a user permissions to use a command',
+      id: 'blacklist',
+      title: 'Blacklist',
+      description: 'Forbids a user from using a command',
       default: {
-        alias: ['?permit', '?whitelist'],
+        alias: ['?blacklist'],
         options: {
           permissions: 6,
         },
       },
       help: [
-        'Give user permissions to use command: {alias} <user> <command>',
-      ],
-    } as PluginOptions,
-
-    Instance: class implements PluginInstance {
-
-      private l: PluginLibrary
-
-      constructor(pluginLib: PluginLibrary) {
-        this.l = pluginLib
-      }
-
-      public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-        const aliasName = params[2].toLowerCase()
-        const alias = this.l.getAlias(channelId, aliasName)
-        if (alias) { // Channel alias
-          if (!this.l.isPermitted(alias, userId, tags.badges, {ignoreWhiteList: true})) return `You are not permitted to give permissions for ${aliasName}`
-          const uid = await this.l.api.getId(params[1])
-          if (!uid) return 'No user with that name'
-          if (!alias.whitelist) alias.whitelist = []
-          if (alias.blacklist && alias.blacklist.includes(uid)) return `${params[2]} is blacklisted from using ${aliasName}`
-          if (alias.whitelist.includes(uid)) return `${params[1]} is already whitelisted for ${aliasName}`
-          alias.whitelist.push(uid)
-          return `Gave ${params[1]} permission to use ${aliasName}`
-        }
-        const globalAlias = this.l.getGlobalAlias(aliasName)
-        if (globalAlias) { // Global alias. Create copy
-          if (!this.l.isPermitted(globalAlias, userId, tags.badges, {ignoreWhiteList: true})) return `You are not permitted to give permissions for ${aliasName}`
-          const uid = await this.l.api.getId(params[1])
-          if (!uid) return 'No user with that name'
-          // Because no channel alias was found we can create a new alias and delete it later if errors were found
-          this.l.createAlias(channelId, aliasName, globalAlias)
-          const alias = this.l.getAlias(channelId, aliasName)
-          if (!alias) return 'Failed to create new alias?'
-          if (!alias.whitelist) alias.whitelist = []
-          alias.whitelist.push(uid)
-          return `Gave ${params[1]} permission to use ${aliasName}`
-        }
-        return 'No command with that name'
-      }
-    },
-  },
-
-  {
-    options: {
-      type: 'command',
-      id: 'unpermit',
-      title: 'Unpermit',
-      description: 'Removes a user\'s additional permissions to use a command',
-      default: {
-        alias: ['?unpermit', '?unwhitelist'],
-        options: {
-          permissions: 6,
-        },
-      },
-      help: [
-        'Remove user\'s additional permissions to use command: {alias} <user> <command>',
+        'Forbid a user from using a command: {alias} <user> <command>',
       ],
     } as PluginOptions,
 
@@ -91,15 +35,79 @@ export = [
           if (!this.l.isPermitted(alias, userId, tags.badges, {ignoreWhiteList: true})) return `You are not permitted to use ${aliasName}`
           const uid = await this.l.api.getId(params[1])
           if (!uid) return 'No user with that name'
-          if (!alias.whitelist) return `${params[1]} doesn't have additional permissions to use ${aliasName}`
-          if (!alias.whitelist.includes(uid)) return `${params[1]} doesn't have additional permissions to use ${aliasName}`
-          alias.whitelist = alias.whitelist.filter(listUid => listUid !== uid)
-          return `Removed ${params[1]}'s additional permissions to use command ${aliasName}`
+          if (!this.l.isMater(userId)) {
+            if (uid === channelId) return 'You cannot blacklist the broadcaster'
+            if (this.l.isMod(channelId, params[1])) return 'You cannot blacklist a moderator'
+          }
+
+          if (alias.blacklist && alias.blacklist.includes(uid)) return `${params[2]} is already blacklisted from using ${aliasName}`
+          if (!alias.blacklist) alias.blacklist = []
+          alias.blacklist.push(uid)
+          return `Blacklisted ${params[1]} from using ${aliasName}`
         }
         const globalAlias = this.l.getGlobalAlias(aliasName)
         if (globalAlias) { // Global alias. Create copy
           if (!this.l.isPermitted(globalAlias, userId, tags.badges, {ignoreWhiteList: true})) return `You are not permitted to use ${aliasName}`
-          return `${params[1]} doesn't have additional permissions to use ${aliasName}`
+          const uid = await this.l.api.getId(params[1])
+          if (!uid) return 'No user with that name'
+          if (!this.l.isMater(userId)) {
+            if (uid === channelId) return 'You cannot blacklist the broadcaster'
+            if (this.l.isMod(channelId, params[1])) return 'You cannot blacklist a moderator'
+          }
+
+          // Because no channel alias was found we can create a new alias and delete it later if errors were found
+          this.l.createAlias(channelId, aliasName, globalAlias)
+          const alias = this.l.getAlias(channelId, aliasName)
+          if (!alias) return 'Failed to create new alias?'
+          if (!alias.blacklist) alias.blacklist = []
+          alias.blacklist.push(uid)
+          return `Blacklisted ${params[1]} from using ${aliasName}`
+        }
+        return 'No command with that name'
+      }
+    },
+  },
+
+  {
+    options: {
+      type: 'command',
+      id: 'unblacklist',
+      title: 'Unblacklist',
+      description: 'Removes a user from a command\'s blacklist',
+      default: {
+        alias: ['?unblacklist'],
+        options: {
+          permissions: 6,
+        },
+      },
+      help: [
+        'Remove user from command\'s blacklist: {alias} <user> <command>',
+      ],
+    } as PluginOptions,
+
+    Instance: class implements PluginInstance {
+
+      private l: PluginLibrary
+
+      constructor(pluginLib: PluginLibrary) {
+        this.l = pluginLib
+      }
+
+      public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+        const aliasName = params[2].toLowerCase()
+        const alias = this.l.getAlias(channelId, aliasName)
+        if (alias) { // Channel alias
+          if (!this.l.isPermitted(alias, userId, tags.badges, {ignoreWhiteList: true})) return `You are not permitted to use ${aliasName}`
+          const uid = await this.l.api.getId(params[1])
+          if (!uid) return 'No user with that name'
+          if (!alias.blacklist || !alias.blacklist.includes(uid)) return `${params[1]} is not blacklisted from using ${aliasName}`
+          alias.blacklist = alias.blacklist.filter(v => v !== uid)
+          return `Removed ${params[1]} from ${aliasName}'s blacklist`
+        }
+        const globalAlias = this.l.getGlobalAlias(aliasName)
+        if (globalAlias) { // Global aliases cant have white- or blacklists
+          if (!this.l.isPermitted(globalAlias, userId, tags.badges, {ignoreWhiteList: true})) return `You are not permitted to use ${aliasName}`
+          return `${params[1]} is not blacklisted from using ${aliasName}`
         }
         return 'No command with that name'
       }

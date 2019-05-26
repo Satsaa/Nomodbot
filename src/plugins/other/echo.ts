@@ -10,6 +10,7 @@ export const options: PluginOptions = {
   default: {
     alias: '?echo',
     options: {
+      permissions: 2, // Safety
       cooldown: 10,
       userCooldown: 30,
     },

@@ -10,8 +10,8 @@ export const options: PluginOptions = {
   default: {
     alias: '?myiq',
     options: {
-      cooldown: {limit: 3, duration: 30},
-      userCooldown: 60,
+      cooldown: 10,
+      userCooldown: 30,
     },
   },
   requireDatas: [],

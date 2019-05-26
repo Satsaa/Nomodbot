@@ -11,7 +11,7 @@ export const options: PluginOptions = {
     alias: ['?commands', '$aliases'],
     options: {
       cooldown: 30,
-      userCooldown: 180,
+      userCooldown: 60,
     },
   },
   help: [

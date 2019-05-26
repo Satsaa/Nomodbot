@@ -11,9 +11,8 @@ export const options: PluginOptions = {
   default: {
     alias: '?urban',
     options: {
-      permissions: 0,
       cooldown: 30,
-      userCooldown: 90,
+      userCooldown: 60,
     },
   },
   help: ['Get the urban definition of search: {alias} <search...>'],

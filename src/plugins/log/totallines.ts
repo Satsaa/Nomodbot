@@ -11,7 +11,8 @@ export const options: PluginOptions = {
   default: {
     alias: '?totallines',
     options: {
-      cooldown: 30,
+      cooldown: 10,
+      userCooldown: 30,
     },
   },
   help: [

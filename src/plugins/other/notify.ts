@@ -10,7 +10,7 @@ export const options: PluginOptions = {
   default: {
     alias: '?notify',
     options: {
-      userCooldown: 90,
+      userCooldown: 60,
     },
   },
   creates: [['notifies']],

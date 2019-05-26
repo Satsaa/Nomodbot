@@ -116,12 +116,12 @@ export default class Commander {
   public paths: {[pluginId: string]: string}
   public plugins: {[pluginId: string]: PluginOptions}
   public instances: {[pluginId: string]: PluginInstance}
+  /** Big bois with big privileges */
+  public masters: number[]
   private client: TwitchClient
   private data: Data
   private waits: {[pluginId: string]: Array<(result: boolean) => any>}
   private pluginLib: PluginLibrary
-  /** Big bois with big privileges */
-  private masters: number[]
 
   constructor(client: TwitchClient, data: Data, masters: number[]) {
     this.defaultAliases = {}
@@ -208,20 +208,24 @@ export default class Commander {
   }
 
   public createAlias(channelId: number, alias: string, options: DeepReadonly<CommandAlias>): boolean {
+    alias = alias.toLowerCase()
     if (!(this.data.data[channelId] || {}).aliases) return false
     this.data.data[channelId].aliases[alias] = deepClone(options); return true
   }
   public deleteAlias(channelId: number, alias: string) {
+    alias = alias.toLowerCase()
     if (!(this.data.data[channelId] || {}).aliases) return false
     delete this.data.data[channelId].aliases[alias]; return true
   }
 
   public getAlias(channelId: number, alias: string): CommandAlias | void {
+    alias = alias.toLowerCase()
     if (((this.data.data[channelId] || {}).aliases || {})[alias]) {
       return this.data.data[channelId].aliases[alias]
     }
   }
   public getGlobalAlias(alias: string): DeepReadonly<CommandAlias> | undefined {
+    alias = alias.toLowerCase()
     return this.defaultAliases[alias]
   }
 

@@ -15,7 +15,9 @@ export const options: PluginOptions = {
   },
   help: [
     'Respond with message: {alias} [<args...>]',
-    'Create a response: {alias} add <message...>',
+    'Create a response: {alias} add <command> <message...>',
+    'Edit or create a response: {alias} edit <command> <message...>',
+    'Get the raw response string: {alias} get <command>',
   ],
 }
 
@@ -56,11 +58,35 @@ export class Instance implements PluginInstance {
       }
       return result
     } else { // Control alias (no data key)
-      if (!params[1]) return 'Define a command name (param 1)'
-      if (!params[2]) return 'Define a message (params 2+)'
+      let overwrite = false
+      switch ((params[1] || '').toLowerCase()) {
+        case 'add':
+        case 'create':
+        case 'new':
+          break
+        case 'edit':
+        case 'modify':
+        case 'overwrite':
+          overwrite = true
+          break
+        case 'raw':
+        case 'get':
+        case 'inspect':
+          if (!params[2]) return 'Define a command name (param 2)'
+          const alias = this.l.getAlias(channelId, params[2]) || this.l.getGlobalAlias(params[2])
+          if (!alias) {
+            return 'Cannot find a command with that name'
+          }
+          if (alias.target !== options.id || !alias.data || !Array.isArray(alias.data)) return 'That command is not a valid response command'
+          return alias.data.join('')
+        default:
+          return 'Define an action (param 1)'
+      }
+      if (!params[2]) return 'Define a command name (param 2)'
+      if (!params[3]) return 'Define a message (params 3+)'
 
-      const alias = params[1].toLowerCase()
-      const message = params.slice(2).join(' ')
+      const alias = params[2].toLowerCase()
+      const message = params.slice(3).join(' ')
       const messageLc = message.toLowerCase()
       const variables: string[] = []
 
@@ -94,7 +120,9 @@ export class Instance implements PluginInstance {
 
       console.log(data)
 
-      this.l.createAlias(channelId, alias, {target: options.id, cooldown: 30, userCooldown: 60, data})
+      if (!overwrite && (this.l.getAlias(channelId, alias) || this.l.getGlobalAlias(alias))) return 'There is already a command with that name'
+
+      this.l.createAlias(channelId, alias, {target: options.id, cooldown: 10, userCooldown: 30, data})
       return `Response created: ${alias}`
     }
   }
