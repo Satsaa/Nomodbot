@@ -35,7 +35,7 @@ export class Instance implements PluginInstance {
       pluginOpts = pluginOpts.filter(v => v.type === type)
     }
     if (pluginOpts.length === 0) return `No plugins of that type. Available types: ${availableTypes.join(', ')}`
-    const plugins = pluginOpts.map(v => v.id)
+    const plugins = pluginOpts.map(v => v.id).sort()
     return plugins.join(', ')
   }
 }

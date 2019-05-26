@@ -1,0 +1,84 @@
+import { PRIVMSG } from '../../main/client/parser'
+import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
+import PluginLibrary from '../../main/pluginLib'
+
+import { exec as _exec} from 'child_process'
+import util from 'util'
+const exec = util.promisify(_exec)
+
+export const options: PluginOptions = {
+  type: 'command',
+  id: 'plugin',
+  title: 'Plugin',
+  description: 'Control states of plugins',
+  default: {
+    alias: '$plugin',
+    options: {
+      permissions: 10,
+    },
+  },
+  help: [
+    'Load plugin: {alias} load <plugin>',
+    'Reload plugin: {alias} reload <plugin>',
+    'Unload plugin: {alias} unload <plugin>',
+    'Load new plugin from path: {alias} path <path>',
+  ],
+}
+
+export class Instance implements PluginInstance {
+
+  private l: PluginLibrary
+
+  constructor(pluginLib: PluginLibrary) {
+    this.l = pluginLib
+  }
+
+  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+    if (!params[1]) return 'Define an action (param 1)'
+    if (!params[2]) return `Define a ${params[1].toLowerCase() === 'path' ? 'path' : 'plugin'} (param 2)`
+    let resMsg
+    switch (params[1].toLowerCase()) {
+      case 'load':
+        if (!await this.compile()) return 'An error occurred during compilation'
+        resMsg = (await this.l.loadPlugin(params[2])).message
+        return resMsg || `Loaded ${params[2]} succesfully`
+
+      case 'reload':
+        if (!await this.compile()) return 'An error occurred during compilation'
+        resMsg = (await this.l.reloadPlugin(params[2])).message
+        return resMsg || `Reloaded ${params[2]} succesfully`
+
+      case 'unload':
+        resMsg = (await this.l.unloadPlugin(params[2])).message
+        return resMsg || `Unloaded ${params[2]} succesfully`
+
+      case 'path':
+        try {
+          if (!await this.compile()) return 'An error occurred during compilation'
+          const options = this.l.loadFromPath(params[2])
+          const names = options.map(v => v.id)
+          const all = await Promise.all(options.map(v => this.l.waitPlugin(v.id), 5000))
+          let result = ''
+          if (all.every(v => v)) return `Loaded ${names.join(', ')}`
+          names.forEach((v, i) => {
+            result += `${v} (${all[i] ? 'loaded' : 'timeout'})`
+          })
+          return result
+        } catch (err) {
+          console.error(err)
+          return `An error occurred: ${err.code}`
+        }
+      default:
+        return 'Unknown action'
+    }
+  }
+
+  private async compile() {
+    try {
+      await exec('tsc')
+      return true
+    } catch (err) {
+      return false
+    }
+  }
+}

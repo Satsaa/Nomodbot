@@ -90,6 +90,10 @@ export default class PluginLibrary {
   public getAliases: Commander['getAliases']
   /** Returns all global aliases */
   public getGlobalAliases: Commander['getGlobalAliases']
+  /** Returns all aliases of `pluginId` of `channelId` */
+  public getAliasesById: Commander['getAliasesById']
+  /** Returns all global aliases of `pluginId` */
+  public getGlobalAliasesById: Commander['getGlobalAliasesById']
   /** Determine if `userId` with `badges` would be permitted to call this command */
   public isPermitted: Commander['isPermitted']
   /** Determine the remaining cooldown of `alias` in `channelId` for `userId` */
@@ -100,6 +104,8 @@ export default class PluginLibrary {
   public loadPlugin: Commander['loadPlugin']
   /** Unloads `pluginId` if possible */
   public unloadPlugin: Commander['unloadPlugin']
+  /** Wait until `pluginId` is loaded */
+  public waitPlugin: Commander['waitPlugin']
 
   private commander: Commander
   private data: Data
@@ -145,11 +151,14 @@ export default class PluginLibrary {
     this.getGlobalAlias = this.commander.getGlobalAlias.bind(this.commander)
     this.getAliases = this.commander.getAliases.bind(this.commander)
     this.getGlobalAliases = this.commander.getGlobalAliases.bind(this.commander)
+    this.getAliasesById = this.commander.getAliasesById.bind(this.commander)
+    this.getGlobalAliasesById = this.commander.getGlobalAliasesById.bind(this.commander)
     this.isPermitted = this.commander.isPermitted.bind(this.commander)
     this.getCooldown = this.commander.getCooldown.bind(this.commander)
     this.reloadPlugin = this.commander.reloadPlugin.bind(this.commander)
     this.loadPlugin = this.commander.loadPlugin.bind(this.commander)
     this.unloadPlugin = this.commander.unloadPlugin.bind(this.commander)
+    this.waitPlugin = this.commander.waitPlugin.bind(this.commander)
   }
 
   /** Maximum message length for chat */
@@ -202,7 +211,7 @@ export default class PluginLibrary {
 
   /** Loads a new plugin from ./bin/plugins/`path`.js */
   public loadFromPath(path: string) {
-    this.commander.loadFromPath(`./bin/plugins/${path}.js`)
+    return this.commander.loadFromPath(`../plugins/${path}.js`)
   }
 
   /** Enables the default aliases of `pluginId` if they are by default enabled */

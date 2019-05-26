@@ -234,6 +234,23 @@ export default class Commander {
     return this.defaultAliases
   }
 
+  public getAliasesById(channelId: number, pluginId: string): {[alias: string]: CommandAlias} {
+    const aliases = this.getAliases(channelId) || {}
+    const res: {[alias: string]: CommandAlias} = {}
+    for (const alias in aliases) {
+      if (aliases[alias].target === pluginId) res[alias] = aliases[alias]
+    }
+    return res
+  }
+  public getGlobalAliasesById(pluginId: string): {[alias: string]: DeepReadonly<CommandAlias>} {
+    const aliases = this.getGlobalAliases()
+    const res: {[alias: string]: DeepReadonly<CommandAlias>} = {}
+    for (const alias in aliases) {
+      if (aliases[alias].target === pluginId) res[alias] = aliases[alias]
+    }
+    return res
+  }
+
   /** Determine if `userId` with `badges` would be permitted to call this command */
   public isPermitted(alias: AliasLike, userId: number, badges: IrcMessage['tags']['badges'], options: IsPermittedOptions = {}) {
     // Number: 0: everyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
@@ -421,6 +438,11 @@ export default class Commander {
     }
 
     if (this.instances[pluginId].unload) await this.instances[pluginId].unload!()
+
+    // Disable default aliases
+    for (const alias of Object.keys(this.getGlobalAliasesById(pluginId))) {
+      delete this.defaultAliases[alias]
+    }
 
     // Unload data
     const unloads: Array<Promise<any>> = []

@@ -66,7 +66,7 @@ export = [
       title: 'Unpermit',
       description: 'Removes a user\'s additional permissions to use a command',
       default: {
-        alias: ['?permit', '?whitelist'],
+        alias: ['?unpermit', '?unwhitelist'],
         options: {
           permissions: 6,
         },
