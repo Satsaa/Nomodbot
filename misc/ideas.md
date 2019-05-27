@@ -1,3 +1,4 @@
+
 # Source
 
 ## Data loaders and unloaders
@@ -7,6 +8,25 @@ Run loader on the loaded data
 Run unloader on a clone of the data before unloading
 
 # Command Plugins
+
+## Blacklist
+Add functionality
+
+Allow higher than mods to blacklist mods
+Solves mod blacklisting mod issue
+- userlvl: userlvl of blacklisted at the time
+
+Allow expiry dates
+- expires?: ms
+
+## Permit / whitelist
+Add functionality
+
+Allow expiry dates
+- expires?: ms
+
+Allow specific use counts
+- uses?: ms
 
 ## Streamdays
 !days !streamdays
@@ -50,17 +70,13 @@ Shows a message with 3 random emotes and gives points based on that
 Shows the current or an upcoming event of the linked calendar app  
 Could support timed messages (periodically spam the upcoming event etc)  
 
-## Plugins
-!plugins (type...)
-
-Lists plugins  
-
 ## Combo
 !combo enable|disable
-!combo STRING minCount
+!combo minimum (count)
 
 Emote combo announcements
 - Only send the combo when the combo ends (different emote is sent or timeout)
+- Track combo records
 
 # Controller Plugins
 

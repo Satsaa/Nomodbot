@@ -1,5 +1,5 @@
 import TwitchClient from './client/Client'
-import Commander, { CommandAlias, DefaultCommandAlias, PluginInstance, PluginOptions } from './Commander'
+import Commander, { CommandAlias, DefaultCommandAlias, PluginInstance, PluginOptions, userlvls } from './Commander'
 import Data from './Data'
 import * as secretKey from './lib/secretKey'
 import * as util from './lib/util'
@@ -215,22 +215,22 @@ export default class PluginLibrary {
   }
 
   /**
-   * Converts alias permissions to a string
+   * Converts userlvl to a string
    */
-  public permissionString(permissions: number | undefined) {
-    if (permissions) {
-      switch (permissions) {
-        case 0:
+  public userlvlString(userlvl: number | undefined) {
+    if (userlvl) {
+      switch (userlvl) {
+        case userlvls.any:
           return
-        case 2:
+        case userlvls.sub:
           return 'subscriber'
-        case 4:
+        case userlvls.vip:
           return 'vip'
-        case 6:
+        case userlvls.mod:
           return 'moderator'
-        case 8:
+        case userlvls.streamer:
           return 'broadcaster'
-        case 10:
+        case userlvls.master:
           return 'master'
       }
     }

@@ -1,5 +1,5 @@
 import { PRIVMSG } from '../../main/client/parser'
-import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
+import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 import { ListsExtension } from './lists'
 
@@ -48,7 +48,7 @@ export class Instance implements PluginInstance {
       case 'mod':
       case 'set':
       case 'change':
-        if (!this.l.isPermitted({permissions: 6}, userId, tags.badges)) return `@${user} Unpermitted action`
+        if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return `@${user} Unpermitted action`
         if (isNaN(+params[2])) return 'Invalid index (param 2)'
         if (!params[3]) return 'Define the new quote (param 3+)'
         newValue = params.slice(3).join(' ');
@@ -60,7 +60,7 @@ export class Instance implements PluginInstance {
       case 'new':
       case 'push':
       case 'create':
-        if (!this.l.isPermitted({permissions: 6}, userId, tags.badges)) return `@${user} Unpermitted action`
+        if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return `@${user} Unpermitted action`
         if (!params[2]) return 'Define the new quote (param 2+)'
         newValue = params.slice(2).join(' ');
         [index] = quotes.pushEntry(newValue)
@@ -69,7 +69,7 @@ export class Instance implements PluginInstance {
 
       case 'insert':
       case 'splice':
-        if (!this.l.isPermitted({permissions: 6}, userId, tags.badges)) return `@${user} Unpermitted action`
+        if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return `@${user} Unpermitted action`
         if (isNaN(+params[2])) return 'Invalid index (param 2)'
         if (!params[3]) return 'Define the new quote (param 3+)'
         newValue = params.slice(3).join(' ');
@@ -80,7 +80,7 @@ export class Instance implements PluginInstance {
       case 'del':
       case 'delete':
       case 'remove':
-        if (!this.l.isPermitted({permissions: 6}, userId, tags.badges)) return `@${user} Unpermitted action`
+        if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return `@${user} Unpermitted action`
         if (isNaN(+params[2])) return 'Invalid index (param 2)';
         [index, value]  = quotes.delEntry(~~params[2])
         if (index) return `Deleted at ${index}: ${value}`

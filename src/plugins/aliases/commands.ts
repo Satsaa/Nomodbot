@@ -1,5 +1,5 @@
 import { PRIVMSG } from '../../main/client/parser'
-import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
+import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -32,7 +32,7 @@ export class Instance implements PluginInstance {
     const aliasArray = []
     const userLvl = isNaN(+params[1]) ? undefined : +params[1]
     for (const alias in aliases) {
-      if (userLvl !== undefined && (aliases[alias].permissions || 0) !== userLvl) continue
+      if (userLvl !== undefined && (aliases[alias].userlvl || userlvls.any) !== userLvl) continue
       if (aliases[alias].hidden) continue
       aliasArray.push(alias)
     }

@@ -1,5 +1,5 @@
 import { PRIVMSG } from '../../main/client/parser'
-import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
+import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
 /*
@@ -32,7 +32,7 @@ export const options: PluginOptions = {
     alias: '!example',
     options: {
       disabled: true,
-      permissions: 0,
+      userlvl: userlvls.any,
       cooldown: 30,
       userCooldown: 60,
     },

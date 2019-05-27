@@ -62,10 +62,10 @@ export interface CommandAlias {
   target: string
   disabled?: true
   /** 
-   * Controls who can use this command    
-   * Number: 0: everyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
+   * Controls who can use this command  
+   * Number: 0: anyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
    */
-  permissions?: number,
+  userlvl?: userlvls,
   /** Cooldowns are in seconds. This can either be a number or ratelimiter options object */
   cooldown?: number | {duration?: number, delay?: number, limit?: number}
   /** Cooldowns are in seconds. This can either be a number or ratelimiter options object */
@@ -89,9 +89,19 @@ type Source = MaybeArray<{options: PluginOptions, Instance: new() => PluginInsta
 
 /** isPermitted helper type */
 interface CommandAliasLike {
-  permissions?: string[] | number,
+  userlvl?: userlvls,
   whitelist?: number[],
   blacklist?: number[]
+}
+
+/** userlvls */
+export enum userlvls {
+  any = 0,
+  sub = 2,
+  vip = 4,
+  mod = 6,
+  streamer = 8,
+  master = 10,
 }
 
 export interface Extra {
@@ -265,41 +275,32 @@ export default class Commander {
     return res
   }
 
-  /** Determine if `userId` with `badges` would be permitted to call this command */
+  /** Determine if `userId` with `badges` would be permitted to call this alias */
   public isPermitted(alias: CommandAliasLike, userId: number, badges: IrcMessage['tags']['badges'], options: IsPermittedOptions = {}) {
-    // Number: 0: everyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
+    // Number: 0: anyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
     if (alias.blacklist && alias.blacklist.includes(userId)) return false
     if (!options.ignoreWhiteList && alias.whitelist && alias.whitelist.includes(userId)) return true
     if (this.masters.includes(userId)) return true // Master
     if (badges === undefined) return
-    if (typeof alias.permissions === 'number') {
-      // Numbered permissions
-      switch (alias.permissions) {
+    if (typeof alias.userlvl === 'undefined') return true
+    switch (alias.userlvl) {
         // Fallthrough switch
-        case 0: // anyone
-          return true
-        case 2: // subscriber
-          if (badges.subscriber) return true
-        case 4: // vip
-          if (badges.vip) return true
-        case 6: // moderator
-          if (badges.moderator) return true
-        case 8: // broadcaster
-          if (badges.broadcaster) return true
-        case 10: // Master
-          // Handled above
-        default:
-          console.warn(`Unknown permission level: ${alias.permissions}`)
-          return true
-      }
-    } else {
-      if (typeof alias.permissions === 'undefined') return true
-      // Badged permissions
-      for (const badge in badges) {
-        if (alias.permissions.includes(badge)) return true
-      }
+      case userlvls.any:
+        return true
+      case userlvls.sub:
+        if (badges.subscriber) return true
+      case userlvls.vip:
+        if (badges.vip) return true
+      case userlvls.mod:
+        if (badges.moderator) return true
+      case userlvls.streamer:
+        if (badges.broadcaster) return true
+      case userlvls.master:
+        // Handled above
+      default:
+        console.warn(`Unknown permission level: ${alias.userlvl}`)
+        return true
     }
-    return false
   }
 
   /** Determine the remaining cooldown of `alias` in `channelId` for `userId` */

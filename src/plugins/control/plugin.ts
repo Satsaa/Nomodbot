@@ -1,5 +1,5 @@
 import { PRIVMSG } from '../../main/client/parser'
-import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
+import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
 import { exec as _exec} from 'child_process'
@@ -14,7 +14,7 @@ export const options: PluginOptions = {
   default: {
     alias: '$plugin',
     options: {
-      permissions: 10,
+      userlvl: userlvls.master,
     },
   },
   help: [

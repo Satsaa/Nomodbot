@@ -1,5 +1,5 @@
 import { PRIVMSG } from '../../main/client/parser'
-import { Extra, PluginInstance, PluginOptions } from '../../main/Commander'
+import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export = [
@@ -12,7 +12,7 @@ export = [
       default: {
         alias: ['?blacklist'],
         options: {
-          permissions: 6,
+          userlvl: userlvls.mod,
         },
       },
       help: [
@@ -77,7 +77,7 @@ export = [
       default: {
         alias: ['?unblacklist'],
         options: {
-          permissions: 6,
+          userlvl: userlvls.mod,
         },
       },
       help: [
