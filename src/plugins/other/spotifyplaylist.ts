@@ -18,8 +18,8 @@ export const options: PluginOptions = {
   creates: [['spotifyPlaylist']],
   help: [
     'Show the first or nth song on the playlist: {alias} [<n>]',
-    'Show a link to the playlist: {alias} <STRING>',
-    'Set the playlist: {alias} <STRING> <playlist ID or link>',
+    'Show a link to the playlist: {alias} <anything>',
+    'Set the playlist: {alias} <anything> <playlist ID or link>',
     'Delete the playlist: {alias} del',
   ],
 }
@@ -44,7 +44,6 @@ export class Instance implements PluginInstance {
     this.clientSecret = this.l.getKey('spotify', 'client_secret')
     this.accessToken = undefined
     if (typeof this.clientId !== 'string' || typeof this.clientSecret !== 'string') {
-      this.l.disableDefaults(options.id)
       console.log('[SPOTIFYPLAYLIST] Disabled due to the lack of API keys for spotify')
     } else {
       this.tokenLoop()
@@ -53,20 +52,24 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+    if (typeof this.clientId !== 'string' || typeof this.clientSecret !== 'string') return 'This command disabled due to lack of API keys'
     if (!this.accessToken) return 'Cannot handle requests at this time'
     const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
     if (!data) return 'Unavailable: required data is not present'
     try {
       if (params[1] === 'del' || params[1] === 'delete' || params[1] === 'remove') {
+        // Delete the playlist data
         if (!this.l.isPermitted({permissions: 8}, userId, tags.badges)) return 'You are not permitted to do this operation'
         const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
         if (!data) return 'Unavailable: required data is not present'
         this.l.setData(channelId, 'spotifyPlaylist', {})
         return 'Deleted succesfully'
-      } else if (params[2]) { // Set track id
+
+      } else if (params[2]) {
+        // Set track id
         if (!this.l.isPermitted({permissions: 8}, userId, tags.badges)) return 'You are not permitted to do this operation'
         const inputId = (params[2].replace(/\/+$/, '').match(/[a-zA-Z0-9]*$/) || [])[0]
-        if (!inputId) return 'Invalid id'
+        if (!inputId) return 'Invalid input'
         const playlist = await this.getPlaylist(inputId)
         if (typeof playlist !== 'object') return 'Invalid playlist'
         if (playlist.type !== 'playlist') return 'Only playlists are supported'
@@ -76,18 +79,21 @@ export class Instance implements PluginInstance {
         data.creator = playlist.owner.display_name
         data.name = playlist.name
         return `Playlist set to ${playlist.name} by ${playlist.owner.display_name}`
-      } else if (params[1] && isNaN(+params[1])) { // Show playlist link when only 1 string parameter given
+
+      } else if (params[1] && isNaN(+params[1])) {
+        // Show playlist link when only 1 string parameter given
         if (!data.playlist) return `Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${params[0]} set <id or link>`
         return `${data.name && data.creator ? data.name + ' by ' + data.creator : 'Paylist'}: open.spotify.com/playlist/${data.playlist}`
-      } else { // Show recent track
+
+      } else {
+        // Show recent track
         if (!data.playlist) return `Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${params[0]} set <id or link>`
         const pos = params[1] ? Math.floor(~~params[1] - 1) : 0
         const playlist = await this.getPlaylist(data.playlist)
         if (typeof playlist === 'string') return 'Invalid playlist'
         const track = playlist.tracks.items[pos].track
         if (!track) return 'No track found at that position'
-        // Remove feat stuff from track name
-        const noFeat = track.name.replace(/ ?(\(with|\(feat).*\)/, '')
+        const noFeat = track.name.replace(/ ?(\(with|\(feat).*\)/, '') // Remove feat stuff from track name
         return `"${noFeat}" by ${this.l.u.commaPunctuate(track.artists.map((i: any) => i.name))}`
       }
     } catch (err) {

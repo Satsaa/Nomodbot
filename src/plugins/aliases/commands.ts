@@ -28,7 +28,7 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    const aliases = {...this.l.getEnabledAliases(channelId), ...this.l.getEnabledGlobalAliases()}
+    const aliases = { ...this.l.getEnabledGlobalAliases(), ...this.l.getEnabledAliases(channelId) }
     const aliasArray = []
     const userLvl = isNaN(+params[1]) ? undefined : +params[1]
     for (const alias in aliases) {

@@ -7,7 +7,9 @@ import * as util from './lib/util'
 import { readDirRecursive } from './lib/util'
 import PluginLibrary from './pluginLib'
 
-export type PluginOptions = (Command | Controller) & {
+export type PluginOptions = (Command | Controller) & PluginBase
+
+interface PluginBase {
   type: string,
   /** Unique id for identifying this plugin (lower case) */
   id: string
@@ -128,8 +130,8 @@ export default class Commander {
   public masters: number[]
   private client: TwitchClient
   private data: Data
-  private waits: {[pluginId: string]: Array<(result: boolean) => any>}
   private pluginLib: PluginLibrary
+  private waits: {[pluginId: string]: Array<(result: boolean) => any>}
 
   constructor(client: TwitchClient, data: Data, masters: number[]) {
     this.defaultAliases = {}
@@ -139,8 +141,8 @@ export default class Commander {
     this.masters = masters
     this.client = client
     this.data = data
-    this.waits = {}
     this.pluginLib = new PluginLibrary(client, data, this)
+    this.waits = {}
     this.client.on('chat', this.onChat.bind(this))
   }
 
@@ -551,7 +553,8 @@ export default class Commander {
           if (res) this.client.chat(channelId, res)
         } else {
           // On cooldown
-          if (instance.cooldown) { instance.cooldown(channelId, userId, tags, params, { alias, message, me, cooldown })
+          if (instance.cooldown) {
+            instance.cooldown(channelId, userId, tags, params, { alias, message, me, cooldown })
           }
           return
         }

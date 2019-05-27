@@ -32,13 +32,12 @@ export class Instance implements PluginInstance {
     this.appId = this.l.getKey('oxfordDictionary', 'app_id')
     this.appKey = this.l.getKey('oxfordDictionary', 'app_key')
     if (typeof this.appId !== 'string' || typeof this.appKey !== 'string') {
-      this.l.disableDefaults(options.id)
       console.error('[define] Disabled due to the lack of API keys for Oxford Dictionary')
     }
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    if (!this.appId || !this.appKey) return
+    if (typeof this.appId !== 'string' || typeof this.appKey !== 'string') return 'This command disabled due to lack of API keys'
     if (!params[1]) return 'Define something to search (param 1)'
 
     const words = params.slice(1).join(' ')

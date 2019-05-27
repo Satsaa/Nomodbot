@@ -265,6 +265,26 @@ export default class PluginLibrary {
     return res
   }
 
+  /**
+   * Returns a copy of the help strings for `alias` based on it's `target` and `help` properties
+   * @param alias Command alias
+   * @param fallback If enabled, help strings of the default group will be returned when `alias`' help property points to an undefined group
+   */
+  public getHelp(alias: CommandAlias, fallback = false): string[] | void {
+    const plugin = this.getPlugin(alias.target)
+    if (!plugin || plugin.type !== 'command') return
+    // Ungrouped help format
+    if (Array.isArray(plugin.help)) {
+      if (!fallback && alias.help && alias.help !== 'default') return
+      return plugin.help.map(v => v)
+    }
+    // Grouped/object help format
+    const group = alias.help || 'default'
+    if (plugin.help[group]) return plugin.help[group].map(v => v)
+
+    if (fallback) return plugin.help.default.map(v => v)
+  }
+
   /** Returns the instance of a plugin or undefined if it doesn't exist */
   public getInstance(pluginId: string): PluginInstance | undefined {
     return this.commander.instances[pluginId]

@@ -80,7 +80,7 @@ export class Instance implements PluginInstance {
           if (!params[2]) return 'Define a command name (param 2)'
           const alias = this.l.getAlias(channelId, params[2]) || this.l.getGlobalAlias(params[2])
           if (!alias) {
-            return 'Cannot find a command with that name'
+            return 'No command with that name'
           }
           if (alias.target !== options.id || !alias.data || !Array.isArray(alias.data)) return 'That command is not a valid response command'
           return alias.data.join('')
