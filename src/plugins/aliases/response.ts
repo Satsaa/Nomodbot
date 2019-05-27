@@ -13,12 +13,16 @@ export const options: PluginOptions = {
       permissions: 6,
     },
   },
-  help: [
-    'Respond with message: {alias} [<args...>]',
-    'Create a response: {alias} add <command> <message...>',
-    'Edit or create a response: {alias} edit <command> <message...>',
-    'Get the raw response string: {alias} get <command>',
-  ],
+  help: {
+    default: [
+      'Create a response: {alias} add <command> <message...>',
+      'Edit or create a response: {alias} edit <command> <message...>',
+      'Get the raw response string: {alias} get <command>',
+    ],
+    response: [
+      'Respond with message: {alias} [<args...>]',
+    ],
+  },
 }
 
 export class Instance implements PluginInstance {
@@ -59,7 +63,8 @@ export class Instance implements PluginInstance {
       return result
     } else { // Control alias (no data key)
       let overwrite = false
-      switch ((params[1] || '').toLowerCase()) {
+      if (!params[1]) return 'Define an action (param 1)'
+      switch (params[1].toLowerCase()) {
         case 'add':
         case 'create':
         case 'new':
@@ -80,7 +85,7 @@ export class Instance implements PluginInstance {
           if (alias.target !== options.id || !alias.data || !Array.isArray(alias.data)) return 'That command is not a valid response command'
           return alias.data.join('')
         default:
-          return 'Define an action (param 1)'
+          return 'Invalid action (param 1)'
       }
       if (!params[2]) return 'Define a command name (param 2)'
       if (!params[3]) return 'Define a message (params 3+)'
@@ -91,7 +96,6 @@ export class Instance implements PluginInstance {
       const variables: string[] = []
 
       let data: string[] = []
-
       const unknowns = []
       let toDataIndex = 0
       const varRegex = /(\$\([^\$()]+\)|\$\{[^\${)]+\})/g
@@ -122,7 +126,7 @@ export class Instance implements PluginInstance {
 
       if (!overwrite && (this.l.getAlias(channelId, alias) || this.l.getGlobalAlias(alias))) return 'There is already a command with that name'
 
-      this.l.createAlias(channelId, alias, {target: options.id, cooldown: 10, userCooldown: 30, data})
+      this.l.createAlias(channelId, alias, {target: options.id, cooldown: 10, userCooldown: 30, help: 'response' , data})
       return `Response created: ${alias}`
     }
   }

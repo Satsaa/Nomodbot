@@ -7,11 +7,6 @@ import * as util from './lib/util'
 import { readDirRecursive } from './lib/util'
 import PluginLibrary from './pluginLib'
 
-/** Controls a data type or something like that */
-interface Controller {
-  type: 'controller',
-}
-
 export type PluginOptions = (Command | Controller) & {
   type: string,
   /** Unique id for identifying this plugin (lower case) */
@@ -36,6 +31,29 @@ export type PluginOptions = (Command | Controller) & {
   noUnload?: true
 }
 
+/** Controls a data type or something like that */
+interface Controller {
+  type: 'controller',
+}
+
+interface Command {
+  type: 'command',
+  default: {
+    /** Default command alias(es) (e.g. !command) */
+    alias: string | string[],
+    options: Omit<CommandAlias, 'target' | 'whitelist' | 'blacklist'>,
+  }
+  /**
+   * Help strings (usage instructions)  
+   * Object form allows aliases to use specific groups of help strings with their `help` key
+   */
+  help: string[] | {[group: string]: string[], default: string[]},
+}
+
+interface IsPermittedOptions {
+  ignoreWhiteList?: boolean
+}
+
 /** Properties for aliases */
 export interface CommandAlias {
   /** The unique iq of a command plugin */
@@ -54,6 +72,8 @@ export interface CommandAlias {
   hidden?: true
   /** Custom data that the command plugin can handle */
   data?: any
+  /** Group of help strings. Defaults to 'default'. Applicable to plugins with object format help strings */
+  help?: string
   /** List of user ids that can use this alias without checking permissions */
   whitelist?: number[]
   /** List of user ids that may not use this alias at all */
@@ -63,29 +83,14 @@ export interface CommandAlias {
 /** Properties for default aliases */
 export interface DefaultCommandAlias extends Readonly<Omit<CommandAlias, 'blacklist' | 'whitelist'>> {}
 
-interface Command {
-  type: 'command',
-  default: {
-    /** Default command alias(es) (e.g. !command) */
-    alias: string | string[],
-    options: Omit<CommandAlias, 'target' | 'whitelist' | 'blacklist'>,
-  }
-  /** Usage instructions */
-  help: Array<string | ((message: string) => string)>,
-}
-
-interface IsPermittedOptions {
-  ignoreWhiteList?: boolean
-}
-
-type Source = {options: PluginOptions, Instance: new() => PluginInstance} | Array<{options: PluginOptions, Instance: new() => PluginInstance}>
+type Source = MaybeArray<{options: PluginOptions, Instance: new() => PluginInstance}>
 
 /** isPermitted helper type */
-type AliasLike = DeepReadonly<{
+interface CommandAliasLike {
   permissions?: string[] | number,
   whitelist?: number[],
   blacklist?: number[]
-}>
+}
 
 export interface Extra {
   /** Used alias */
@@ -210,7 +215,7 @@ export default class Commander {
     }
   }
 
-  public createAlias(channelId: number, alias: string, options: DefaultCommandAlias): boolean {
+  public createAlias(channelId: number, alias: string, options: DeepReadonly<CommandAlias>): boolean {
     alias = alias.toLowerCase()
     if (!(this.data.data[channelId] || {}).aliases) return false
     this.data.data[channelId].aliases[alias] = deepClone(options); return true
@@ -259,7 +264,7 @@ export default class Commander {
   }
 
   /** Determine if `userId` with `badges` would be permitted to call this command */
-  public isPermitted(alias: AliasLike, userId: number, badges: IrcMessage['tags']['badges'], options: IsPermittedOptions = {}) {
+  public isPermitted(alias: CommandAliasLike, userId: number, badges: IrcMessage['tags']['badges'], options: IsPermittedOptions = {}) {
     // Number: 0: everyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
     if (alias.blacklist && alias.blacklist.includes(userId)) return false
     if (!options.ignoreWhiteList && alias.whitelist && alias.whitelist.includes(userId)) return true
@@ -280,7 +285,7 @@ export default class Commander {
         case 8: // broadcaster
           if (badges.broadcaster) return true
         case 10: // Master
-          // Checked above
+          // Handled above
         default:
           console.warn(`Unknown permission level: ${alias.permissions}`)
           return true
@@ -364,10 +369,10 @@ export default class Commander {
           case 'command':
             if (Array.isArray(options.default.alias)) {
               options.default.alias.forEach((alias) => {
-                this.defaultAliases[alias] = {...deepClone(options.default.options), target: options.id}
+                this.defaultAliases[alias] = {...deepClone(options.default.options), ...{target: options.id}}
               })
             } else {
-              this.defaultAliases[options.default.alias] = {...deepClone(options.default.options), target: options.id}
+              this.defaultAliases[options.default.alias] = {...deepClone(options.default.options), ...{target: options.id}}
             }
             break
           case 'controller':
