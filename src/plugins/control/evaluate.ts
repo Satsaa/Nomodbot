@@ -43,7 +43,7 @@ export class Instance implements PluginInstance {
       return result + ''
     } catch (err) {
       console.error(err)
-      return 'Catastrophic error!'
+      return 'Catastrophic error'
     }
   }
 }

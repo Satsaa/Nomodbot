@@ -33,23 +33,22 @@ export class Instance implements PluginInstance {
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     const targetId = params[1] ? await this.l.api.getId(params[1]) : userId
-    if (!targetId) return "That user doesn't exist"
+    if (!targetId) return 'Cannot find a user with that name'
+    const display = params[1] ? await this.l.api.getDisplay(targetId) : tags['display-name']
 
-    const user = this.log.getUser(channelId, targetId)
-    if (!user) return 'That user has not been seen here before'
+    if (!this.log.getData) return 'Log data unavailable'
 
-    if (!user.time) return 'That user has not sent any messages'
+    if (!this.log.getUser(channelId, targetId)) return `${targetId === userId ? 'You have' : `${display} has`} not been seen here before`
 
     const length = this.log.msgCount(channelId, targetId)
     if (!length) return 'Bad length returned'
-    if (length <= 1) {
-      if (targetId === userId) return `@${tags['display-name']} You have not sent a message before`
-      else return `${this.l.api.getDisplay(targetId)} has not sent a message before`
-    }
+    if (length <= 1) return `${targetId === userId ? 'You have' : `${display} has`} no logged messages`
+
     const ms = this.log.getTime(channelId, targetId, length)
     if (!ms) return 'Bad time returned'
 
-    if (targetId === userId) return `@${tags['display-name']} You were seen ${this.l.u.timeSince(ms, 1, true)} ago`
-    else return `${await this.l.api.getDisplay(targetId)} was seen ${this.l.u.timeSince(ms, 1, true)} ago`
+    const since = this.l.u.timeSince(ms, 1, true)
+    if (targetId === userId) return `You were seen ${since} ago`
+    else return `${display} was seen ${since} ago`
   }
 }

@@ -98,7 +98,7 @@ export class Instance implements PluginInstance {
       }
     } catch (err) {
       console.error(err)
-      return 'Catastrophic error!'
+      return 'Catastrophic error'
     }
   }
 

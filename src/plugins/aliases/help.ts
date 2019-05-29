@@ -31,7 +31,7 @@ export class Instance implements PluginInstance {
     if (!params[1]) return 'Define a command (param 1)'
     const input = params[1].toLowerCase()
     const alias = this.l.getAlias(channelId, input) || this.l.getGlobalAlias(input)
-    if (!alias) return 'No command with that name'
+    if (!alias) return 'Cannot find that command'
 
     const helps = this.l.getHelp(alias, true)
     if (!helps || !helps.length) return `${params[1]} has no usage instructions`

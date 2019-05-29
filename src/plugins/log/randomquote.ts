@@ -37,9 +37,9 @@ export class Instance implements PluginInstance {
       let index = 0
       if (isNaN(+params[1])) {
         userIndex = await this.l.api.getId(params[1])
-        if (!userIndex) return 'That user doesn\t exists'
+        if (!userIndex) return 'Cannot find a user with that name'
         const count = this.log.msgCount(channelId, userIndex)
-        if (typeof count === 'undefined') return 'Log data is unavailable at the moment'
+        if (typeof count === 'undefined') return 'Log data unavailable'
         index = isNaN(+params[2]) ?  this.l.u.randomInt(0, count) : +params[2]
       } else index = +params[1]
 
@@ -51,7 +51,7 @@ export class Instance implements PluginInstance {
       return `Logger returned an invalid type: ${res.type}`
     } else { // Any message
       const data = this.log.getData(channelId)
-      if (!data) return 'Log data is unavailable at the moment'
+      if (!data) return 'Log data unavailable'
 
       const randomI = this.l.u.randomInt(0, data.messageCount - 1)
       let currentI = 0
@@ -72,7 +72,6 @@ export class Instance implements PluginInstance {
         } else currentI += length
       }
       if (currentI) {
-        console.log(new Error('No message chosen'))
         return 'No message chosen?'
       }
       return 'There are no logged messages'

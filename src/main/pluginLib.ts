@@ -78,7 +78,11 @@ export default class PluginLibrary {
   /** Leave `channelIds` */
   public part: TwitchClient['part']
 
-  /** Create a command alias in `channelId`. Will overwrite existing aliases */
+  /**
+   * Create a command alias in `channelId`  
+   * This will overwrite any existing aliases
+   * @returns Created alias
+   */
   public createAlias: Commander['createAlias']
   /** Delete a command alias in `channelId` */
   public deleteAlias: Commander['deleteAlias']

@@ -48,9 +48,9 @@ export class Instance implements PluginInstance {
       case 'mod':
       case 'set':
       case 'change':
-        if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'Unpermitted action'
+        if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
         if (isNaN(+params[2])) return 'Invalid index (param 2)'
-        if (!params[3]) return 'Define the new manly quote (param 3+)'
+        if (!params[3]) return 'Define the new manly quote (params 3+)'
         newValue = params.slice(3).join(' ');
         [index] = this.quotes.setEntry(~~params[2], newValue)
         if (index) return `Modified entry at index ${index}`
@@ -60,8 +60,8 @@ export class Instance implements PluginInstance {
       case 'new':
       case 'push':
       case 'create':
-        if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'Unpermitted action'
-        if (!params[2]) return 'Define the new manly quote (param 2+)'
+        if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
+        if (!params[2]) return 'Define the new manly quote (params 2+)'
         newValue = params.slice(2).join(' ');
         [index] = this.quotes.pushEntry(newValue)
         if (index) return `Added new entry at index ${index}`
@@ -69,9 +69,9 @@ export class Instance implements PluginInstance {
 
       case 'insert':
       case 'splice':
-        if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'Unpermitted action'
+        if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
         if (isNaN(+params[2])) return 'Invalid index (param 2)'
-        if (!params[3]) return 'Define the new manly quote (param 3+)'
+        if (!params[3]) return 'Define the new manly quote (params 3+)'
         newValue = params.slice(3).join(' ');
         [index] = this.quotes.insertEntry(~~params[2], newValue)
         if (index) return `Added new entry at index ${index}`
@@ -80,7 +80,7 @@ export class Instance implements PluginInstance {
       case 'del':
       case 'delete':
       case 'remove':
-        if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'Unpermitted action'
+        if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
         if (isNaN(+params[2])) return 'Invalid index (param 2)';
         [index, value]  = this.quotes.delEntry(~~params[2])
         if (index) return `Deleted at ${index}: ${value}`

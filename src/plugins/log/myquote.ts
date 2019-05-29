@@ -39,7 +39,7 @@ export class Instance implements PluginInstance {
       if (isNaN(+params[1])) {
         uid = (await this.l.api.getId(params[1])) || userId
         const count = this.log.msgCount(channelId, uid) || 0
-        if (typeof count === 'undefined') return 'Log data is unavailable at the moment'
+        if (typeof count === 'undefined') return 'Log data unavailable'
         index = isNaN(+params[2]) ?  this.l.u.randomInt(0, count) : +params[2]
       } else {
         index = +params[1]

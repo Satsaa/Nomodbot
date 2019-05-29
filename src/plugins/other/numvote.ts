@@ -14,7 +14,7 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'This command is counted as a vote',
+    'Cast a vote for alias: {alias}',
   ],
 }
 

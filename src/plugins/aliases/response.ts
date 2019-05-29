@@ -63,7 +63,7 @@ export class Instance implements PluginInstance {
       return result
     } else { // Control alias (no data key)
       let overwrite = false
-      if (!params[1]) return 'Define an action (param 1)'
+      if (!params[1]) return 'Define an action (param 2)'
       switch (params[1].toLowerCase()) {
         case 'add':
         case 'create':
@@ -80,7 +80,7 @@ export class Instance implements PluginInstance {
           if (!params[2]) return 'Define a command name (param 2)'
           const alias = this.l.getAlias(channelId, params[2]) || this.l.getGlobalAlias(params[2])
           if (!alias) {
-            return 'No command with that name'
+            return 'Cannot find that command'
           }
           if (alias.target !== options.id || !alias.data || !Array.isArray(alias.data)) return 'That command is not a valid response command'
           return alias.data.join('')
@@ -124,7 +124,7 @@ export class Instance implements PluginInstance {
 
       console.log(data)
 
-      if (!overwrite && (this.l.getAlias(channelId, alias) || this.l.getGlobalAlias(alias))) return 'There is already a command with that name'
+      if (!overwrite && (this.l.getAlias(channelId, alias) || this.l.getGlobalAlias(alias))) return 'That command already exists'
 
       this.l.createAlias(channelId, alias, {target: options.id, cooldown: 10, userCooldown: 30, help: 'response' , data})
       return `Response created: ${alias}`

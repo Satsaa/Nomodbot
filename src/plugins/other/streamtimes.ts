@@ -15,7 +15,7 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Tell when {channel} usually goes live and how long they stream (average of 30 or count): {alias} [<count>]',
+    'Tell when {channel} usually goes live and how long they stream (average of count): {alias} [<count>]',
   ],
 }
 
@@ -67,7 +67,7 @@ export class Instance implements PluginInstance {
         + `for ${this.l.u.timeDuration(averageDuration, 2)} (previous ${this.l.u.plural(total, 'stream', 'streams')})`
     } catch (err) {
       console.error(err)
-      return 'Catastrophic error!'
+      return 'Catastrophic error'
     }
   }
 }

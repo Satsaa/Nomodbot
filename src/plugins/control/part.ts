@@ -30,7 +30,7 @@ export class Instance implements PluginInstance {
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     if (!params[1]) return await this.l.part([channelId]) ? undefined : 'Server response timeout'
     const uid = await this.l.api.getId(params[1])
-    if (!uid) return 'Cannot get the user ID'
+    if (!uid) return 'Cannot find that user'
     return await this.l.part([uid]) ? undefined : 'Server response timeout'
   }
 }

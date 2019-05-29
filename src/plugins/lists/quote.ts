@@ -40,7 +40,6 @@ export class Instance implements PluginInstance {
     let index
     let value
     const quotes: ReturnType<ListsExtension['getList']> = this.lists.getList(options.id, channelId, [])
-    const user = tags['display-name']
     switch (params[1] ? params[1].toLowerCase() : undefined) {
 
       case 'edit':
@@ -48,9 +47,9 @@ export class Instance implements PluginInstance {
       case 'mod':
       case 'set':
       case 'change':
-        if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return `@${user} Unpermitted action`
+        if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return 'You are not permitted to edit quotes'
         if (isNaN(+params[2])) return 'Invalid index (param 2)'
-        if (!params[3]) return 'Define the new quote (param 3+)'
+        if (!params[3]) return 'Define the new quote (params 3+)'
         newValue = params.slice(3).join(' ');
         [index] = quotes.setEntry(~~params[2], newValue)
         if (index) return `Modified entry at index ${index}`
@@ -60,8 +59,8 @@ export class Instance implements PluginInstance {
       case 'new':
       case 'push':
       case 'create':
-        if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return `@${user} Unpermitted action`
-        if (!params[2]) return 'Define the new quote (param 2+)'
+        if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return 'You are not permitted to edit quotes'
+        if (!params[2]) return 'Define the new quote (params 3+)'
         newValue = params.slice(2).join(' ');
         [index] = quotes.pushEntry(newValue)
         if (index) return `Added new entry at index ${index}`
@@ -69,9 +68,9 @@ export class Instance implements PluginInstance {
 
       case 'insert':
       case 'splice':
-        if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return `@${user} Unpermitted action`
+        if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return 'You are not permitted to edit quotes'
         if (isNaN(+params[2])) return 'Invalid index (param 2)'
-        if (!params[3]) return 'Define the new quote (param 3+)'
+        if (!params[3]) return 'Define the new quote (params 3+)'
         newValue = params.slice(3).join(' ');
         [index] = quotes.insertEntry(~~params[2], newValue)
         if (index) return `Added new entry at index ${index}`
@@ -80,7 +79,7 @@ export class Instance implements PluginInstance {
       case 'del':
       case 'delete':
       case 'remove':
-        if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return `@${user} Unpermitted action`
+        if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return 'You are not permitted to edit quotes'
         if (isNaN(+params[2])) return 'Invalid index (param 2)';
         [index, value]  = quotes.delEntry(~~params[2])
         if (index) return `Deleted at ${index}: ${value}`

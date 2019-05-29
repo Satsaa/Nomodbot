@@ -33,7 +33,7 @@ export class Instance implements PluginInstance {
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     const uid = params[1] ? await this.l.api.getId(params[1]) : userId
-    if (!uid) return "That user doesn't exist"
+    if (!uid) return 'Cannot find that user'
 
     if (!this.log.getUser(channelId, uid)) return 'That user has not been seen here before'
 

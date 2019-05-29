@@ -33,7 +33,7 @@ export class Instance implements PluginInstance {
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     const data = this.log.getData(channelId)
-    if (!data) return 'Log data is unavailable at the moment'
+    if (!data) return 'Log data unavailable'
     return `A total of ${this.l.u.plural(data.messageCount, 'message')} has been sent`
   }
 }

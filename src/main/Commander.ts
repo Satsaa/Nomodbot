@@ -227,15 +227,17 @@ export default class Commander {
     }
   }
 
-  public createAlias(channelId: number, alias: string, options: DeepReadonly<CommandAlias>): boolean {
+  public createAlias(channelId: number, alias: string, options: DeepReadonly<CommandAlias>): CommandAlias | undefined {
     alias = alias.toLowerCase()
-    if (!(this.data.data[channelId] || {}).aliases) return false
-    this.data.data[channelId].aliases[alias] = deepClone(options); return true
+    if (!(this.data.data[channelId] || {}).aliases) return undefined
+    this.data.data[channelId].aliases[alias] = deepClone(options)
+    return this.data.data[channelId].aliases[alias]
   }
-  public deleteAlias(channelId: number, alias: string) {
+  public deleteAlias(channelId: number, alias: string): boolean {
     alias = alias.toLowerCase()
     if (!(this.data.data[channelId] || {}).aliases) return false
-    delete this.data.data[channelId].aliases[alias]; return true
+    delete this.data.data[channelId].aliases[alias]
+    return true
   }
 
   public getAlias(channelId: number, alias: string): CommandAlias | void {

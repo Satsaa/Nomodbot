@@ -29,12 +29,14 @@ export = [
       }
 
       public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+        if (!params[1]) return 'Define a user (param 1)'
+        if (!params[2]) return 'Define a command name (param 2)'
         const aliasName = params[2].toLowerCase()
         const alias = this.l.getAlias(channelId, aliasName)
         if (alias) { // Channel alias
-          if (!this.l.isPermitted(alias, userId, tags.badges, {ignoreWhiteList: true})) return `You are not permitted to use ${aliasName}`
+          if (!this.l.isPermitted(alias, userId, tags.badges, {ignoreWhiteList: true})) return 'You cannot edit the blacklist of a command you are not permitted to use'
           const uid = await this.l.api.getId(params[1])
-          if (!uid) return 'No user with that name'
+          if (!uid) return 'Cannot find that user'
           if (!this.l.isMaster(userId)) {
             if (uid === channelId) return 'You cannot blacklist the broadcaster'
             if (this.l.isMod(channelId, params[1])) return 'You cannot blacklist a moderator'
@@ -47,9 +49,9 @@ export = [
         }
         const globalAlias = this.l.getGlobalAlias(aliasName)
         if (globalAlias) { // Global alias. Create copy
-          if (!this.l.isPermitted(globalAlias, userId, tags.badges, {ignoreWhiteList: true})) return `You are not permitted to use ${aliasName}`
+          if (!this.l.isPermitted(globalAlias, userId, tags.badges, {ignoreWhiteList: true})) return 'You cannot edit the blacklist of a command you are not permitted to use'
           const uid = await this.l.api.getId(params[1])
-          if (!uid) return 'No user with that name'
+          if (!uid) return 'Cannot find that user'
           if (!this.l.isMaster(userId)) {
             if (uid === channelId) return 'You cannot blacklist the broadcaster'
             if (this.l.isMod(channelId, params[1])) return 'You cannot blacklist a moderator'
@@ -63,7 +65,7 @@ export = [
           alias.blacklist.push(uid)
           return `Blacklisted ${params[1]} from using ${aliasName}`
         }
-        return 'No command with that name'
+        return 'Cannot find that command'
       }
     },
   },
@@ -81,7 +83,7 @@ export = [
         },
       },
       help: [
-        'Remove user from command\'s blacklist: {alias} <user> <command>',
+        'Remove user from the blacklist of command: {alias} <user> <command>',
       ],
     } as PluginOptions,
 
@@ -94,22 +96,24 @@ export = [
       }
 
       public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+        if (!params[1]) return 'Define a user (param 1)'
+        if (!params[2]) return 'Define a command (param 2)'
         const aliasName = params[2].toLowerCase()
         const alias = this.l.getAlias(channelId, aliasName)
         if (alias) { // Channel alias
-          if (!this.l.isPermitted(alias, userId, tags.badges, {ignoreWhiteList: true})) return `You are not permitted to use ${aliasName}`
+          if (!this.l.isPermitted(alias, userId, tags.badges, {ignoreWhiteList: true})) return 'You cannot edit the blacklist of a command you are not permitted to use'
           const uid = await this.l.api.getId(params[1])
-          if (!uid) return 'No user with that name'
+          if (!uid) return 'Cannot find that user'
           if (!alias.blacklist || !alias.blacklist.includes(uid)) return `${params[1]} is not blacklisted from using ${aliasName}`
           alias.blacklist = alias.blacklist.filter(v => v !== uid)
           return `Removed ${params[1]} from ${aliasName}'s blacklist`
         }
         const globalAlias = this.l.getGlobalAlias(aliasName)
         if (globalAlias) { // Global aliases cant have white- or blacklists
-          if (!this.l.isPermitted(globalAlias, userId, tags.badges, {ignoreWhiteList: true})) return `You are not permitted to use ${aliasName}`
+          if (!this.l.isPermitted(globalAlias, userId, tags.badges, {ignoreWhiteList: true})) return 'You cannot edit the blacklist of a command you are not permitted to use'
           return `${params[1]} is not blacklisted from using ${aliasName}`
         }
-        return 'No command with that name'
+        return 'Cannot find that command'
       }
     },
   },

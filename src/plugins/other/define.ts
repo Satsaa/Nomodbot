@@ -37,7 +37,7 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    if (typeof this.appId !== 'string' || typeof this.appKey !== 'string') return 'This command disabled due to lack of API keys'
+    if (typeof this.appId !== 'string' || typeof this.appKey !== 'string') return 'This command disabled due to the lack of API keys'
     if (!params[1]) return 'Define something to search (param 1)'
 
     const words = params.slice(1).join(' ')
@@ -75,7 +75,7 @@ export class Instance implements PluginInstance {
 
     } catch (err) {
       console.error(err)
-      return 'Catastrophic error!'
+      return 'Catastrophic error'
     }
   }
 

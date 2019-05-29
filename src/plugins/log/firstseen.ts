@@ -32,15 +32,19 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    const uid = params[1] ? await this.l.api.getId(params[1]) : userId
-    if (!uid) return "That user doesn't exist"
+    const targetId = params[1] ? await this.l.api.getId(params[1]) : userId
+    if (!targetId) return 'Cannot find a user with that name'
+    const display = params[1] ? await this.l.api.getDisplay(targetId) : tags['display-name']
 
-    const user = this.log.getUser(channelId, uid)
-    if (!user) return 'That user has not been seen here before'
+    if (!this.log.getData) return 'Log data unavailable'
 
-    if (!user.times[0]) return 'That user has not sent any messages'
+    const user = this.log.getUser(channelId, targetId)
+    if (!user) return `${targetId === userId ? 'You have' : `${display} has`} not been seen here before`
 
-    if (uid === userId) return `@${tags['display-name']} You were first seen ${this.l.u.dateString(user.times[0] * 1000)}`
-    else return `${await this.l.api.getDisplay(uid)} was first seen ${this.l.u.dateString(user.times[0] * 1000)}`
+    if (!user.times[0]) return `${targetId === userId ? 'You have' : `${display} has`} no logged messages`
+
+    const date = this.l.u.dateString(user.times[0] * 1000)
+    if (targetId === userId) return `You were first seen on ${date}`
+    else return `${display} was first seen on ${date}`
   }
 }
