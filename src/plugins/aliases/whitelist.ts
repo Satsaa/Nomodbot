@@ -2,7 +2,7 @@ import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
-export = [
+const exp: Array<{options: PluginOptions, Instance: any}> = [
   {
     options: {
       type: 'command',
@@ -18,7 +18,8 @@ export = [
       help: [
         'Whitelist user to use command: {alias} <user> <command>',
       ],
-    } as PluginOptions,
+      atUser: true,
+    },
 
     Instance: class implements PluginInstance {
 
@@ -38,7 +39,9 @@ export = [
           const uid = await this.l.api.getId(params[1])
           if (!uid) return 'Cannot find that user'
           if (!alias.whitelist) alias.whitelist = []
-          if (alias.blacklist && alias.blacklist.includes(uid)) return `${params[2]} is blacklisted from using ${aliasName}`
+          if (alias.blacklist && alias.blacklist.includes(uid)) {
+            alias.blacklist = alias.blacklist.filter(listUid => listUid !== uid)
+          }
           if (alias.whitelist.includes(uid)) return `${params[1]} is already whitelisted to use ${aliasName}`
           alias.whitelist.push(uid)
           return `Added ${params[1]} to the whitelist of ${aliasName}`
@@ -75,7 +78,8 @@ export = [
       help: [
         'Remove user from the whitelist of command: {alias} <user> <command>',
       ],
-    } as PluginOptions,
+      atUser: true,
+    },
 
     Instance: class implements PluginInstance {
 
@@ -108,3 +112,5 @@ export = [
     },
   },
 ]
+
+module.exports = exp

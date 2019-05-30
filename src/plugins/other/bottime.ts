@@ -17,6 +17,7 @@ export const options: PluginOptions = {
   help: [
     'Display bot uptime: {alias}',
   ],
+  atUser: true,
 }
 
 export class Instance implements PluginInstance {

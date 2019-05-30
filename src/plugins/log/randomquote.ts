@@ -19,6 +19,7 @@ export const options: PluginOptions = {
     'Show a random message someone or user has sent: {alias} [<user>] [<index>]',
   ],
   requirePlugins: ['log'],
+  atUser: true,
 }
 
 export class Instance implements PluginInstance {

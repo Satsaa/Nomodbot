@@ -16,6 +16,7 @@ export const options: PluginOptions = {
   help: [
     'Join channels: {alias} <channels...>',
   ],
+  atUser: false,
 }
 
 export class Instance implements PluginInstance {
@@ -30,6 +31,6 @@ export class Instance implements PluginInstance {
     if (!params[1]) return 'Define a channel or multiple (params 1+)'
     const uid = await this.l.api.getId(params[1])
     if (!uid) return 'Cannot find that user'
-    return await this.l.join([uid]) ? undefined : 'Server response timeout'
+    return await this.l.join([uid]) ? `Joined ${await this.l.api.getDisplay(uid)}` : 'Server response timeout'
   }
 }

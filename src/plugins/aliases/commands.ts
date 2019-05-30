@@ -17,6 +17,7 @@ export const options: PluginOptions = {
   help: [
     'Display enabled commands: {alias} [<userlevel> | <badge>]',
   ],
+  atUser: false,
 }
 
 export class Instance implements PluginInstance {

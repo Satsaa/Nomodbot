@@ -17,6 +17,7 @@ export const options: PluginOptions = {
   help: [
     'Tell when {channel} usually goes live and how long they stream (average of count): {alias} [<count>]',
   ],
+  atUser: true,
 }
 
 export class Instance implements PluginInstance {

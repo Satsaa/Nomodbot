@@ -22,6 +22,7 @@ export const options: PluginOptions = {
     'Set the playlist: {alias} <anything> <playlist ID or link>',
     'Delete the playlist: {alias} del',
   ],
+  atUser: true,
 }
 
 interface SpotifyPlaylistData {

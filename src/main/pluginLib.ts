@@ -246,10 +246,10 @@ export default class PluginLibrary {
     return this.commander.masters.includes(userId)
   }
 
-  /** Whether or not `user` (LOGIN) is a KNOWN mod in `channelId` (ID) */
+  /** Whether or not `user` (LOGIN) SEEMS TO BE a mod in `channelId` (ID) */
   public isMod(channelId: number, user: string) {
     if (!this.client.channelCache.mods[channelId]) return false
-    return !!this.client.channelCache.mods[channelId][user.toLocaleLowerCase()]
+    return !!this.client.channelCache.mods[channelId][user.toLowerCase()]
   }
 
   /**

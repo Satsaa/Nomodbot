@@ -16,6 +16,7 @@ export const options: PluginOptions = {
     },
   },
   help: ['Get the urban definition of search: {alias} <search...>'],
+  atUser: false,
 }
 
 export class Instance implements PluginInstance {

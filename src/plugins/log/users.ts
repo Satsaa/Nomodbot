@@ -19,6 +19,7 @@ export const options: PluginOptions = {
     'Show how many users have chatted in {channel}: {alias}',
   ],
   requirePlugins: ['log'],
+  atUser: true,
 }
 
 export class Instance implements PluginInstance {

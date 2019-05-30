@@ -18,6 +18,7 @@ export const options: PluginOptions = {
     'Save the file in \\{channel}\\name: {alias} <name>',
     'Save the file in \\subType\\name: {alias} <subType> <name>',
   ],
+  atUser: false,
 }
 
 export class Instance implements PluginInstance {

@@ -86,9 +86,10 @@ export default class TwitchApi {
 
     // Cached file has uid, login, display tuples
     // Those will be converted to {uid: display} and {login: uid} and vice versa
-    this.ids = {}
-    this.logins = {}
-    this.displays = {}
+    this.ids = Object.create(null)
+    this.logins = Object.create(null)
+    this.displays = Object.create(null)
+    if (this.displays.constructor) {}
     const userFile =  JSON.parse(fs.readFileSync(`${this.opts.dataRoot}/global/apiUsers.json`, 'utf8')) as Array<[number, string, string]>
     for (const user of userFile) {
       const [id, login, display] = user

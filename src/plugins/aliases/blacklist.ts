@@ -2,7 +2,7 @@ import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/pluginLib'
 
-export = [
+const exp: Array<{options: PluginOptions, Instance: any}> = [
   {
     options: {
       type: 'command',
@@ -18,7 +18,8 @@ export = [
       help: [
         'Forbid a user from using a command: {alias} <user> <command>',
       ],
-    } as PluginOptions,
+      atUser: true,
+    },
 
     Instance: class implements PluginInstance {
 
@@ -52,10 +53,6 @@ export = [
           if (!this.l.isPermitted(globalAlias, userId, tags.badges, {ignoreWhiteList: true})) return 'You cannot edit the blacklist of a command you are not permitted to use'
           const uid = await this.l.api.getId(params[1])
           if (!uid) return 'Cannot find that user'
-          if (!this.l.isMaster(userId)) {
-            if (uid === channelId) return 'You cannot blacklist the broadcaster'
-            if (this.l.isMod(channelId, params[1])) return 'You cannot blacklist a moderator'
-          }
 
           // Because no channel alias was found we can create a new alias and delete it later if errors were found
           this.l.createAlias(channelId, aliasName, globalAlias)
@@ -85,7 +82,8 @@ export = [
       help: [
         'Remove user from the blacklist of command: {alias} <user> <command>',
       ],
-    } as PluginOptions,
+      atUser: true,
+    },
 
     Instance: class implements PluginInstance {
 
@@ -118,3 +116,5 @@ export = [
     },
   },
 ]
+
+module.exports = exp

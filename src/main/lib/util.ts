@@ -58,34 +58,6 @@ export function getRandomKey(obj: {[x: string]: any}) {
 }
 
 /**
- * Determines whether `obj1` contains a reference value that `obj2` also contains
- */
-export function containsSharedReference(obj1: object, obj2: object) {
-  const obj1Refs: any[] = [obj1]
-  const obj2Refs: any[] = [obj2]
-  obj1RefFill(obj1)
-  obj2RefFill(obj2)
-  for (const ref of obj1Refs) if (obj2Refs.includes(ref)) return true
-  return false
-
-  function obj1RefFill(obj1: {[x: string]: any}) {
-    for (const key in obj1) {
-      if (isObject(obj1[key]) && !obj1Refs.includes(obj1[key])) {
-        obj1Refs.push(obj1[key])
-        obj1RefFill(obj1[key])
-      }}}
-  function obj2RefFill(obj2: {[x: string]: any}) {
-    for (const key in obj2) {
-      if (isObject(obj2[key]) && !obj2Refs.includes(obj2[key])) {
-        obj2Refs.push(obj2[key])
-        obj2RefFill(obj2[key])
-      }}}
-  function isObject(v: any) {
-    return v !== null && typeof v === 'object'
-  }
-}
-
-/**
  * Human compatible indexes  
  * Converts 1 based indexes to 0 based indexes and limits the result to be within 0-max  
  * Allows using negative indexes to get -nth last indexes

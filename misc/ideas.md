@@ -1,6 +1,11 @@
 
 # Source
 
+## Data file types
+Support file types and derive types from the file type
+
+- .txt: string, .json: object, .map: map,  
+
 ## Add qol features to command plugins
 
 ### parameter type checking
@@ -13,7 +18,7 @@
 - Can have multiple strings. Prioritizes first strings
 - First string with all params present will call the command
 - Example: for !response
-  - edit <command> <>
+  - edit <command> <response...>
 
 ### @user option
 - opt-out parameter for command plugins
@@ -26,25 +31,6 @@ Run loader on the loaded data
 Run unloader on a clone of the data before unloading
 
 # Command Plugins
-
-## Blacklist
-Add functionality
-
-Allow higher than mods to blacklist mods
-Solves mod blacklisting mod issue
-- userlvl: userlvl of blacklisted at the time
-
-Allow expiry dates
-- expires?: ms
-
-## Permit / whitelist
-Add functionality
-
-Allow expiry dates
-- expires?: ms
-
-Allow specific use counts
-- uses?: ms
 
 ## Streamdays
 !days !streamdays

@@ -18,6 +18,7 @@ export const options: PluginOptions = {
   help: [
     'Get the Wikipedia summary of a subject: {command} <subject...>',
   ],
+  atUser: false,
 }
 
 export class Instance implements PluginInstance {

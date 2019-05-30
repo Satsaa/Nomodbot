@@ -5,22 +5,22 @@ import PluginLibrary from '../../main/pluginLib'
 /*
 A plugin file usually has 1 plugin, but you can have multiple if you export an array like:
 
-export = [
+const exp: Array<{options: PluginOptions, Instance: any}> = [
   {
     options: {
       ...
-    } as PluginOptions,
+    },
 
     Instance: class implements PluginInstance {
       ...
     },
   },
   {
-    options: {...} as PluginOptions,
+    options: {...},
     Instance: class implements PluginInstance {...},
   },
 ]
-
+module.exports = exp
 */
 
 export const options: PluginOptions = {
@@ -48,6 +48,7 @@ export const options: PluginOptions = {
     'Is an example: {alias} required <variable> [optional] [<optVar>] this | that <multiword...>',
     'nother example',
   ],
+  atUser: true,
 }
 
 export class Instance implements PluginInstance {

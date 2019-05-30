@@ -19,6 +19,7 @@ export const options: PluginOptions = {
     'Show the total amount of messages sent by you or user: {alias} [<user>]',
   ],
   requirePlugins: ['log'],
+  atUser: true,
 }
 
 export class Instance implements PluginInstance {
@@ -42,6 +43,6 @@ export class Instance implements PluginInstance {
 
     return params[1]
       ? `${await this.l.api.getDisplay(uid) || 'UID:' + uid} has sent ${this.l.u.plural(res, 'message')}`
-      : `@${tags['display-name']} You have sent ${this.l.u.plural(res, 'message')}`
+      : `You have sent ${this.l.u.plural(res, 'message')}`
   }
 }

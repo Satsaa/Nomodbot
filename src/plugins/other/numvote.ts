@@ -16,6 +16,7 @@ export const options: PluginOptions = {
   help: [
     'Cast a vote for alias: {alias}',
   ],
+  atUser: false,
 }
 
 export class Instance implements PluginInstance {

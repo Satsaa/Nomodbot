@@ -20,6 +20,7 @@ export const options: PluginOptions = {
     'Returns your or users iq: {alias} [<user>]',
     'Get your record and the channel record: {alias} record',
   ],
+  atUser: false,
 }
 
 interface MyIQData {
@@ -52,7 +53,7 @@ export class Instance implements PluginInstance {
     if (params[1] && params[1].toLowerCase() === 'record') {
       const byHigh = data.high.userId ? await this.l.api.getDisplay(data.high.userId) : 'God'
       const byLow = data.low.userId ? await this.l.api.getDisplay(data.low.userId) : 'God'
-      return `The highest IQ is ${high} by ${byHigh} and the lowest IQ is ${low} by ${byLow}`
+      return `@${tags['display-name']} The highest IQ is ${high} by ${byHigh} and the lowest IQ is ${low} by ${byLow}`
     }
 
     const recipient = params[1] || tags['display-name'] || 'Error'

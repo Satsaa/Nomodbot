@@ -18,6 +18,7 @@ export const options: PluginOptions = {
     'Notify a user with a message when they type in chat: {alias} <user> <message...>',
     'Delete notifies you created: {alias} delete [<user>]',
   ],
+  atUser: true,
 }
 
 interface NotifyData {
@@ -50,7 +51,7 @@ export class Instance implements PluginInstance {
       let deleteCount = 0
       if (params[2]) {
         const entry = await this.l.api.getId(params[2].toLowerCase())
-        if (!entry) return "Can't find that user"
+        if (!entry) return 'Cannot find a user with that name'
         const preLength = data[entry].length
         data[entry] = data[entry].filter(v => v.fromId !== userId)
         deleteCount += preLength - data[entry].length
@@ -67,7 +68,7 @@ export class Instance implements PluginInstance {
     } else {
       if (!params[2]) return 'Define a message (params 2+)'
       const target = await this.l.api.getId(params[1].toLowerCase())
-      if (!target) return "Can't find that user"
+      if (!target) return 'Cannot find a user with that name'
 
       if (!data[target]) data[target] = []
 

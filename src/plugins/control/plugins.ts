@@ -17,6 +17,7 @@ export const options: PluginOptions = {
   help: [
     'Display enabled plugins: {alias} [<type>]',
   ],
+  atUser: false,
 }
 
 export class Instance implements PluginInstance {

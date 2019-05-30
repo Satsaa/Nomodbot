@@ -16,6 +16,7 @@ export const options: PluginOptions = {
   help: [
     'Reload the file in \\subType | {channel}\\name: {alias} [subType] <name>',
   ],
+  atUser: false,
 }
 
 export class Instance implements PluginInstance {
