@@ -17,7 +17,6 @@ export const options: PluginOptions = {
   help: [
     'Tell how long {channel} has been live or offline: {alias}',
   ],
-  atUser: true,
 }
 
 export class Instance implements PluginInstance {

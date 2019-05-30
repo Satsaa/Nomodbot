@@ -19,7 +19,6 @@ export const options: PluginOptions = {
     'Show when you or user sent their first message: {alias} [<user>]',
   ],
   requirePlugins: ['log'],
-  atUser: true,
 }
 
 export class Instance implements PluginInstance {

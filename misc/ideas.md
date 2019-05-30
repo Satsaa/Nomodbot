@@ -20,10 +20,6 @@ Support file types and derive types from the file type
 - Example: for !response
   - edit <command> <response...>
 
-### @user option
-- opt-out parameter for command plugins
-- @user -> Whatever command outputs
-
 ## Data loaders and unloaders
 
 Options for loader and unloader functions

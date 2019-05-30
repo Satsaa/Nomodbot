@@ -18,7 +18,6 @@ export const options: PluginOptions = {
     'Notify a user with a message when they type in chat: {alias} <user> <message...>',
     'Delete notifies you created: {alias} delete [<user>]',
   ],
-  atUser: true,
 }
 
 interface NotifyData {

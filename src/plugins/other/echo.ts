@@ -18,7 +18,7 @@ export const options: PluginOptions = {
   help: [
     'Reply with echo: {alias} <echo...>',
   ],
-  atUser: false,
+  noAtUser: true,
 }
 
 export class Instance implements PluginInstance {

@@ -20,7 +20,7 @@ export const options: PluginOptions = {
     'Show a random or specific message user has sent: {alias} <user> [<index>]',
   ],
   requirePlugins: ['log'],
-  atUser: false,
+  noAtUser: true,
 }
 
 export class Instance implements PluginInstance {
@@ -40,7 +40,7 @@ export class Instance implements PluginInstance {
       if (isNaN(+params[1])) {
         uid = (await this.l.api.getId(params[1])) || userId
         const count = this.log.msgCount(channelId, uid) || 0
-        if (typeof count === 'undefined') return `@${tags['display-name']} Log data unavailable`
+        if (typeof count === 'undefined') return this.l.insertAtUser('Log data unavailable', extra)
         index = isNaN(+params[2]) ?  this.l.u.randomInt(0, count) : +params[2]
       } else {
         index = +params[1]
@@ -48,10 +48,10 @@ export class Instance implements PluginInstance {
     } else index = this.l.u.randomInt(0, this.log.msgCount(channelId, userId) || 0)
 
     const res = await this.log.getSmartIndexMsg(channelId, uid, index)
-    if (!res) return `@${tags['display-name']} That user has no logged messages`
+    if (!res) return this.l.insertAtUser('That user has no logged messages', extra)
     if (res.type === CHAT || res.type === ACTION) {
       return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`
     }
-    return `Logger returned an invalid type: ${res.type}`
+    return this.l.insertAtUser(`Logger returned an invalid type: ${res.type}`, extra)
   }
 }

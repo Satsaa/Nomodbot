@@ -23,7 +23,6 @@ export const options: PluginOptions = {
       'Respond with message: {alias} [<args...>]',
     ],
   },
-  atUser: {default: true, response: false},
 }
 
 export class Instance implements PluginInstance {

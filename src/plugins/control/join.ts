@@ -16,7 +16,6 @@ export const options: PluginOptions = {
   help: [
     'Join channels: {alias} <channels...>',
   ],
-  atUser: false,
 }
 
 export class Instance implements PluginInstance {

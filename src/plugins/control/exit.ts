@@ -16,7 +16,6 @@ export const options: PluginOptions = {
   help: [
     'Exit the process: {alias}',
   ],
-  atUser: true,
 }
 
 export class Instance implements PluginInstance {

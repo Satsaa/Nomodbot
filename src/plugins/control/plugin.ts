@@ -23,7 +23,6 @@ export const options: PluginOptions = {
     'Unload plugin: {alias} unload <plugin>',
     'Load new plugin from path: {alias} path <path>',
   ],
-  atUser: false,
 }
 
 export class Instance implements PluginInstance {

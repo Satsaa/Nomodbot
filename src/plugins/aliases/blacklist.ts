@@ -18,7 +18,6 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
       help: [
         'Forbid a user from using a command: {alias} <user> <command>',
       ],
-      atUser: true,
     },
 
     Instance: class implements PluginInstance {
@@ -38,10 +37,8 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
           if (!this.l.isPermitted(alias, userId, tags.badges, {ignoreWhiteList: true})) return 'You cannot edit the blacklist of a command you are not permitted to use'
           const uid = await this.l.api.getId(params[1])
           if (!uid) return 'Cannot find that user'
-          if (!this.l.isMaster(userId)) {
-            if (uid === channelId) return 'You cannot blacklist the broadcaster'
-            if (this.l.isMod(channelId, params[1])) return 'You cannot blacklist a moderator'
-          }
+          if (uid === channelId) return 'You cannot blacklist the broadcaster'
+          if (this.l.isMod(channelId, params[1])) return 'You cannot blacklist a moderator'
 
           if (alias.blacklist && alias.blacklist.includes(uid)) return `${params[2]} is already blacklisted from using ${aliasName}`
           if (!alias.blacklist) alias.blacklist = []
@@ -82,7 +79,6 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
       help: [
         'Remove user from the blacklist of command: {alias} <user> <command>',
       ],
-      atUser: true,
     },
 
     Instance: class implements PluginInstance {

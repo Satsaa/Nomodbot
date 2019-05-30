@@ -18,7 +18,6 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
       help: [
         'Whitelist user to use command: {alias} <user> <command>',
       ],
-      atUser: true,
     },
 
     Instance: class implements PluginInstance {
@@ -78,7 +77,6 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
       help: [
         'Remove user from the whitelist of command: {alias} <user> <command>',
       ],
-      atUser: true,
     },
 
     Instance: class implements PluginInstance {

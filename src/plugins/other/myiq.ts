@@ -20,7 +20,6 @@ export const options: PluginOptions = {
     'Returns your or users iq: {alias} [<user>]',
     'Get your record and the channel record: {alias} record',
   ],
-  atUser: false,
 }
 
 interface MyIQData {

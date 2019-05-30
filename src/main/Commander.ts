@@ -50,11 +50,11 @@ interface Command {
    * Object form allows aliases to use specific groups of help strings with their `help` key
    */
   help: string[] | {[group: string]: string[], default: string[]},
-  /** 
-   * Whether or not to insert "@user " before messages  
-   * This can also be an object, where alias' help key determines which key's value to use
+  /**
+   * Disable dynamic insertion of @user before messages  
+   * \@user is inserted when the message is short and doesn't include the user's login or display name
    */
-  atUser: boolean | {[group: string]: boolean, default: boolean}
+  noAtUser?: true
 }
 
 interface IsPermittedOptions {
@@ -491,6 +491,21 @@ export default class Commander {
     return {success: true}
   }
 
+  /** Determines if @user should be inserted to message */
+  public shouldAtUser(atUser: Command['noAtUser'], message: string, irc: PRIVMSG): boolean {
+    if (atUser) return false
+    message = message.toLowerCase()
+    if (message.length > 200) return false
+    if (message.includes(irc.user)) return false
+    if (message.includes(irc.tags['display-name'].toLowerCase())) return false
+    return true
+  }
+
+  /** Returns the @user string */
+  public getAtUser(display: string): string {
+    return `@${display}`
+  }
+
   /** Resolves with true when plugin is loaded or with false on timeout */
   public waitPlugin(pluginId: string, timeout?: number): Promise<boolean> {
     return new Promise((resolve) => {
@@ -541,6 +556,7 @@ export default class Commander {
 
   private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean, self: boolean, irc: PRIVMSG | null) {
     if (self) return // Bot shouldn't trigger commands
+    if (irc === null) return
     const params = message.split(' ')
     const alias = this.getAlias(channelId, params[0].toLowerCase()) || this.getGlobalAlias(params[0].toLowerCase())
     if (!alias || alias.disabled) return
@@ -555,9 +571,9 @@ export default class Commander {
     if (this.isPermitted(alias, userId, tags.badges)) {
       if (this.masters.includes(userId) || (tags.badges && (tags.badges.broadcaster || tags.badges.moderator))) {
         // Master users, mods and the broadcaster don't care about cooldowns
-        const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown: 0, irc: irc as PRIVMSG})
+        const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown: 0, irc})
         if (res) {
-          this.client.chat(channelId, `${!needsAtUser(plugin.atUser, alias) ? '' : `@${await this.client.api.getDisplay(userId, true)} `}${res}`)
+          this.client.chat(channelId, `${this.shouldAtUser(plugin.noAtUser, res, irc) ? this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown') : ''} ${res}`)
         }
       } else {
         const cooldown = this.getCooldown(channelId, userId, alias)
@@ -568,22 +584,12 @@ export default class Commander {
             if (alias.cooldown) cooldowns.shared[alias.target].push(Date.now())
             if (alias.userCooldown) cooldowns.user[alias.target][userId].push(Date.now())
           }
-          const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown, irc: irc as PRIVMSG})
-          if (res) this.client.chat(channelId, `${!needsAtUser(plugin.atUser, alias) ? '' : `@${await this.client.api.getDisplay(userId, true)} `}${res}`)
+          const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
+          if (res) this.client.chat(channelId, `${this.shouldAtUser(plugin.noAtUser, res, irc) ? this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown') : ''} ${res}`)
         } else { // On cooldown
-          if (instance.cooldown) instance.cooldown(channelId, userId, tags, params, { alias, message, me, cooldown, irc: irc as PRIVMSG })
+          if (instance.cooldown) instance.cooldown(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
           return
         }
-      }
-    }
-
-    function needsAtUser(atUser: Command['atUser'], alias: CommandAlias): boolean {
-      if (typeof atUser === 'boolean') {
-        return atUser
-      } else { // Object
-        if (!alias.help) return atUser.default
-        if (typeof atUser[alias.help] === 'undefined') return atUser.default
-        return atUser[alias.help]
       }
     }
   }

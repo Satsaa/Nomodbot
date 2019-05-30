@@ -48,7 +48,7 @@ export const options: PluginOptions = {
     'Is an example: {alias} required <variable> [optional] [<optVar>] this | that <multiword...>',
     'nother example',
   ],
-  atUser: true,
+  // overrideAtUser: true,
 }
 
 export class Instance implements PluginInstance {

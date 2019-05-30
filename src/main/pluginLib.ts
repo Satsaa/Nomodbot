@@ -1,5 +1,5 @@
 import TwitchClient from './client/Client'
-import Commander, { CommandAlias, DefaultCommandAlias, PluginInstance, PluginOptions, userlvls } from './Commander'
+import Commander, { CommandAlias, DefaultCommandAlias, Extra, PluginInstance, PluginOptions, userlvls } from './Commander'
 import Data from './Data'
 import * as secretKey from './lib/secretKey'
 import * as util from './lib/util'
@@ -250,6 +250,11 @@ export default class PluginLibrary {
   public isMod(channelId: number, user: string) {
     if (!this.client.channelCache.mods[channelId]) return false
     return !!this.client.channelCache.mods[channelId][user.toLowerCase()]
+  }
+
+  /** Insert @user to `message` if needed and return it */
+  public insertAtUser(message: string, extra: Extra, overrideAtUser?: true): string {
+    return (this.commander.shouldAtUser(overrideAtUser, message, extra.irc) ? this.commander.getAtUser(extra.irc.user) : '') + message
   }
 
   /**

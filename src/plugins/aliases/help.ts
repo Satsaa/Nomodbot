@@ -17,7 +17,6 @@ export const options: PluginOptions = {
   help: [
     'Display usage instructions of command: {alias} <command>',
   ],
-  atUser: true,
 }
 
 export class Instance implements PluginInstance {

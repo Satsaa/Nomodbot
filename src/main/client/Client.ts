@@ -455,7 +455,10 @@ export default class TwitchClient {
     if (!this.channelCache.mods[channelId]) this.channelCache.mods[channelId] = {}
     if (mod) {
       if (this.channelCache.mods[channelId][user]) return
-    } else if (!this.channelCache.mods[channelId][user]) return // Not modded
+      else this.channelCache.mods[channelId][user] = true
+    } else if (this.channelCache.mods[channelId][user]) {
+      delete this.channelCache.mods[channelId][user]
+    } else return // Not modded
     this.emit('mod', channelId, user, mod)
     this.ircLog(`${user} ${mod ? 'gains' : 'loses'} moderator in ${await this.api.getDisplay(channelId)}`)
   }
@@ -587,6 +590,7 @@ export default class TwitchClient {
         channelId = await this.api.getId(channel)
         if (!channelId) return this.failHandle(msg, msg.cmd)
         this.clientData.channels[channelId].userstate = {...this.clientData.channels[channelId].userstate, ...(msg ? msg.tags : {})}
+        if ((msg.tags || {}).badges) this.mod(channelId, this.opts.username, !!msg.tags.badges!.moderator)
         this.emit('userstate', channelId,  msg.tags)
         break
       case 'GLOBALUSERSTATE': // <tags> <prefix> GLOBALUSERSTATE
@@ -610,6 +614,9 @@ export default class TwitchClient {
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
         if (!channelId) return this.failHandle(msg, msg.cmd)
+        if (((msg.tags || {}).badges || {}).moderator && msg.user) {
+          this.mod(channelId, msg.user, !!msg.tags.badges!.moderator)
+        }
         const _msg = msg.params[1].endsWith(this.opts.dupeAffix)
           ? msg.params[1].substring(0, msg.params[1].length - this.opts.dupeAffix.length)
           : msg.params[1]

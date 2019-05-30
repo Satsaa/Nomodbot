@@ -19,7 +19,6 @@ export const options: PluginOptions = {
     'Show the total messages sent in {channel}: {alias}',
   ],
   requirePlugins: ['log'],
-  atUser: true,
 }
 
 export class Instance implements PluginInstance {

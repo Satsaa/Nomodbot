@@ -23,7 +23,7 @@ export const options: PluginOptions = {
     'Delete a quote at index: {alias} delete <index>',
   ],
   requirePlugins: ['lists'],
-  atUser: true,
+  noAtUser: true,
 }
 
 export class Instance implements PluginInstance {

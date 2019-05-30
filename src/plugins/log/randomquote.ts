@@ -19,7 +19,7 @@ export const options: PluginOptions = {
     'Show a random message someone or user has sent: {alias} [<user>] [<index>]',
   ],
   requirePlugins: ['log'],
-  atUser: true,
+  noAtUser: true,
 }
 
 export class Instance implements PluginInstance {
@@ -38,21 +38,21 @@ export class Instance implements PluginInstance {
       let index = 0
       if (isNaN(+params[1])) {
         userIndex = await this.l.api.getId(params[1])
-        if (!userIndex) return 'Cannot find a user with that name'
+        if (!userIndex) return this.l.insertAtUser('Cannot find a user with that name', extra)
         const count = this.log.msgCount(channelId, userIndex)
-        if (typeof count === 'undefined') return 'Log data unavailable'
+        if (typeof count === 'undefined') return this.l.insertAtUser('Log data unavailable, extra) ', extra)
         index = isNaN(+params[2]) ?  this.l.u.randomInt(0, count) : +params[2]
       } else index = +params[1]
 
       const res = await this.log.getSmartIndexMsg(channelId, userIndex, index)
-      if (!res) return 'That user has no logged messages'
+      if (!res) return this.l.insertAtUser('That user has no logged messages', extra)
       if (res.type === CHAT || res.type === ACTION) {
         return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`
       }
       return `Logger returned an invalid type: ${res.type}`
     } else { // Any message
       const data = this.log.getData(channelId)
-      if (!data) return 'Log data unavailable'
+      if (!data) return this.l.insertAtUser('Log data unavailable', extra)
 
       const randomI = this.l.u.randomInt(0, data.messageCount - 1)
       let currentI = 0
@@ -64,18 +64,18 @@ export class Instance implements PluginInstance {
           const res = await this.log.getMsg(channelId, userId, randomI - currentI)
           if (!res) {
             console.log(new Error('Failed to get a message when one was expected'))
-            return "The logger unexpectedly didn't return a message"
+            return this.l.insertAtUser("The logger unexpectedly didn't return a message", extra)
           }
           if (res.type === CHAT || res.type === ACTION) {
             return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`
           }
-          return `Logger returned an invalid type: ${res.type}`
+          return this.l.insertAtUser(`Logger returned an invalid type: ${res.type}`, extra)
         } else currentI += length
       }
       if (currentI) {
-        return 'No message chosen?'
+        return this.l.insertAtUser('No message chosen?', extra)
       }
-      return 'There are no logged messages'
+      return this.l.insertAtUser('There are no logged messages', extra)
     }
   }
 }

@@ -17,7 +17,6 @@ export const options: PluginOptions = {
     'Leave channels: {alias} <channels...>',
     'Leave {channel}: {alias}',
   ],
-  atUser: false,
 }
 
 export class Instance implements PluginInstance {

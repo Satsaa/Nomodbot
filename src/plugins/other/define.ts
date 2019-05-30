@@ -18,7 +18,6 @@ export const options: PluginOptions = {
   help: [
     'Get the definition of term: {alias} <term...>',
   ],
-  atUser: false,
 }
 
 export class Instance implements PluginInstance {
