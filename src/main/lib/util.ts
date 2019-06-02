@@ -261,9 +261,6 @@ throwSignals.forEach((signal: any) => process.on(signal, throwOnExitFunc))
  */
 export function onExit(cb: (code: number) => void) { onExitCbs.push(cb) }
 
-/** Checks if `obj` has the key chain `...keys` */
-export function validChain(obj: {[x: string]: any}, ...keys: string[]) { return keys.reduce((p, c) => (p || {})[c], obj) !== undefined }
-
 /**
  * Finds all files in `dir` and its subfolders recursively  
  * File paths may not converted by the Typescript compiler so use the __module variable to build dynamic file paths
@@ -366,7 +363,7 @@ const addArticleVowels = ['a', 'e', 'i', 'o', 'u', 'y', '8']
  */
 export function addArticle(word: string) {
   word = word.trimLeft()
-  if (addArticleVowels.includes(word.charAt(0).toLowerCase()) && !word.startsWith('uni') && !word.startsWith('one')) return 'an ' + word
+  if (addArticleVowels.includes(word.charAt(0).toLowerCase()) && !word.startsWith('use')  && !word.startsWith('uni') && !word.startsWith('one')) return 'an ' + word
   return 'a ' + word
 }
 

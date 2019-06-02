@@ -5,6 +5,7 @@ import Data from './Data'
 import deepClone from './lib/deepClone'
 import * as util from './lib/util'
 import { readDirRecursive } from './lib/util'
+import ParamValidator from './ParamValidator'
 import PluginLibrary from './pluginLib'
 
 export type PluginOptions = (Command | Controller) & PluginBase
@@ -34,11 +35,11 @@ interface PluginBase {
 }
 
 /** Controls a data type or something like that */
-interface Controller {
+export interface Controller {
   type: 'controller',
 }
 
-interface Command {
+export interface Command {
   type: 'command',
   default: {
     /** Default command alias(es) (e.g. !command) */
@@ -47,7 +48,10 @@ interface Command {
   }
   /**
    * Help strings (usage instructions)  
-   * Object form allows aliases to use specific groups of help strings with their `help` key
+   * Object form allows aliases to use specific groups of help strings with their `group` key  
+   * Format for entries should be: "Explaining the action: {command} add <COMMAND> <message...>"  
+   * Or just the explanation: "Explaining this and that"  
+   * See `README.md` Parameter Validator for details
    */
   help: string[] | {[group: string]: string[], default: string[]},
   /**
@@ -77,8 +81,8 @@ export interface CommandAlias {
   userCooldown?: number | {duration?: number, delay?: number, limit?: number}
   /** Marks the alias as hidden (e.g. hidden commands are not shown with !commands) */
   hidden?: true
-  /** Group of help strings. Defaults to 'default'. Applicable to plugins with object format help strings */
-  help?: string
+  /** Group to use in supporting functionality. Defaults to 'default' */
+  group?: string
   /** Custom data that the command plugin can handle */
   data?: any
   /** List of user ids that can use this alias without checking permissions */
@@ -149,6 +153,7 @@ export default class Commander {
   private data: Data
   private pluginLib: PluginLibrary
   private waits: {[pluginId: string]: Array<(result: boolean) => any>}
+  private validator: ParamValidator
 
   constructor(client: TwitchClient, data: Data, masters: number[]) {
     this.defaultAliases = {}
@@ -161,6 +166,8 @@ export default class Commander {
     this.pluginLib = new PluginLibrary(client, data, this)
     this.waits = {}
     this.client.on('chat', this.onChat.bind(this))
+
+    this.validator = new ParamValidator(this, this.client)
   }
 
   /**
@@ -384,6 +391,11 @@ export default class Commander {
         this.plugins[options.id] = options
         switch (options.type) {
           case 'command':
+            try {
+              this.validator.cacheHelp(options.id, options.help) // !!!
+            } catch (err) {
+              console.error(err.message)
+            }
             if (Array.isArray(options.default.alias)) {
               options.default.alias.forEach((alias) => {
                 this.defaultAliases[alias] = {...deepClone(options.default.options), ...{target: options.id}}
@@ -571,6 +583,7 @@ export default class Commander {
     if (this.isPermitted(alias, userId, tags.badges)) {
       if (this.masters.includes(userId) || (tags.badges && (tags.badges.broadcaster || tags.badges.moderator))) {
         // Master users, mods and the broadcaster don't care about cooldowns
+        console.log(this.validator.validate(channelId, plugin.id, alias.group || 'default', params.slice(1))) // !!!
         const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown: 0, irc})
         if (res) {
           this.client.chat(channelId, `${this.shouldAtUser(plugin.noAtUser, res, irc) ? this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown') : ''} ${res}`)

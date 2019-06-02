@@ -7,13 +7,13 @@ type AdvancedResult<T = undefined> = {
 } | (
   T extends undefined ? {
     success: true,
-    code?: string,
-    message?: string,
+    code?: undefined,
+    message?: undefined,
     data?: T,
   } : {
     success: true,
-    code?: string,
-    message?: string,
+    code?: undefined,
+    message?: undefined,
     data: T,
   }
 )

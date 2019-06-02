@@ -126,7 +126,7 @@ export class Instance implements PluginInstance {
 
       if (!overwrite && (this.l.getAlias(channelId, alias) || this.l.getGlobalAlias(alias))) return 'That command already exists'
 
-      this.l.createAlias(channelId, alias, {target: options.id, cooldown: 10, userCooldown: 30, help: 'response' , data})
+      this.l.createAlias(channelId, alias, {target: options.id, cooldown: 10, userCooldown: 30, group: 'response' , data})
       return `Response created: ${alias}`
     }
   }

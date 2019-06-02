@@ -284,11 +284,11 @@ export default class PluginLibrary {
     if (!plugin || plugin.type !== 'command') return
     // Ungrouped help format
     if (Array.isArray(plugin.help)) {
-      if (!fallback && alias.help && alias.help !== 'default') return
+      if (!fallback && alias.group && alias.group !== 'default') return
       return plugin.help.map(v => v)
     }
     // Grouped/object help format
-    const group = alias.help || 'default'
+    const group = alias.group || 'default'
     if (plugin.help[group]) return plugin.help[group].map(v => v)
 
     if (fallback) return plugin.help.default.map(v => v)
