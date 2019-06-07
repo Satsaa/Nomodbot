@@ -3,9 +3,9 @@
 Twitch bot with not bad things in mind (name is up for reconsideration).
 
 # Parameter Validator
-The Parameter Validator validates input messages against the usage instructions defined in a command plugins `options.help` property.  
+The Parameter Validator validates input messages against the usage instructions defined in a command plugin's `options.help` property.  
 
-Each help string is validated from first index to last. The first complete match will be accepted (some advanced variables are validated now).  
+Each help string is validated from the first index to last. The first complete match will be accepted (some advanced variables are validated now).  
 
 The typing for `options.help` can either be `helpString[]` or with grouping `{[group: string]: helpString[]}`. An alias with it's "group" property defined, will be matched against the appropriate group (default group is "default").  
 
@@ -19,25 +19,25 @@ If a help string doesn't have the character ":", it will be ignored for validati
 ```
 add | del | notcasesensitive | cAseSensitive
 ```
-Accepted when the input is exactly the same (case-sensitive if parameter name contains uppercase characters)
+Accepted when the input is exactly the same (case-sensitive if the parameter name contains uppercase characters)
 
 ### Variable parameter
 ```
 <name> | <album> | <anything>
 ```
-Always accepted when input was provided (handling differs for [advanced types](#advanced-variable-parameter))
+Always accepted if something was inputted (handling differs for [advanced types](#advanced-variable-parameter))
 
 ### Optional exact parameter
 ```
 [override] | [force] | [CaseSensitive]
 ```
-Accepted when the parameter is not defined or it's exactly the same (case-sensitive if parameter name contains uppercase characters)  
+Accepted when the parameter is not defined or is exactly the same (case-sensitive if parameter name contains uppercase characters)  
 
 ### Optional variable parameter
 ```
 [<name>] | [<default>] | [<track_number>]
 ```
-Just like variable parameters but don't need to be defined. A non optional parameter cannot follow.
+Just like variable parameters but don't need to be defined. A non-optional parameter cannot follow
 
 ### Tuple parameter
 ```
@@ -60,7 +60,7 @@ Accepted when each of the upcoming words passes the check. No parameter can foll
 **WORD**: Accepted if NOT a valid number (Anything that converts to NaN with `+str`)  
 **INTEGER**, **INDEX**: Accepted if a valid whole number  
 **Range (X-Y)**: Accepts numbers between the lowest inputted number and the highest (inclusive). Negative values are typed like "<-100--90>".  
-Accepts whole numbers if none of the numbers had a decimal place, otherwise fractions are allowed
+Accepts whole numbers if none of the numbers had a decimal place, otherwise, fractions are allowed
 
 The following parameters are accepted as valid if the parameter is defined but a message is returned if the check is not passed.  
 
@@ -103,8 +103,8 @@ Input: `"add "99 problems but physics aint one" - Albert Einstein, 1923"`
 
 ```javascript
 help: [  
-  'Define new default message: {alias} <message...>',
-  'Define new number message: {alias} <NUMBER> <message...>',
+  'Define a new default message: {alias} <message...>',
+  'Define a new number message: {alias} <NUMBER> <message...>',
 ]  
 ```
 Input: `"999 My cool message"`  
@@ -120,8 +120,8 @@ Now with reverse order of help strings:
 
 ```javascript
 help: [  
-  'Define new number message: {alias} <NUMBER> <message...>',
-  'Define new default message: {alias} <message...>',
+  'Define a new number message: {alias} <NUMBER> <message...>',
+  'Define a new default message: {alias} <message...>',
 ]  
 ```
 Input: `"999 My 999th message"`  
@@ -144,7 +144,7 @@ Input: `"The defaultly cool message"`
 
 ```javascript
 help: [  
-  'Ping the user: {alias} <USER>',
+  'Ping user: {alias} <USER>',
   'Something else: {alias} <not_user>', // Never reached
 ]  
 ```
