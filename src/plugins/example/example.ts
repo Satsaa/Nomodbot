@@ -45,7 +45,7 @@ export const options: PluginOptions = {
   // requirePlugins: ['notaplugin'],
   noUnload: true, // Blocks unloading
   help: [
-    'Is an example: {alias} required <variable> [optional] [<optVar>] this | that <multiword...>',
+    'Is an example: {alias} required this|that <variable> [optional] [<optVar>] [<multiword...>]',
     'nother example',
   ],
   // overrideAtUser: true,

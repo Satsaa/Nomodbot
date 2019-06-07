@@ -16,7 +16,7 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Show when you or user sent their first message: {alias} [<user>]',
+    'Show when you or user sent their first message: {alias} [<USER>]',
   ],
   requirePlugins: ['log'],
 }

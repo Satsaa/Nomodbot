@@ -14,7 +14,7 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Join channels: {alias} <channels...>',
+    'Join channels: {alias} <CHANNELS...>',
   ],
 }
 

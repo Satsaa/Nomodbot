@@ -15,7 +15,7 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Tell when {channel} usually goes live and how long they stream (average of count): {alias} [<count>]',
+    'Tell when {channel} usually goes live and how long they stream (average of count): {alias} [<1-100>]',
   ],
 }
 

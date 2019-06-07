@@ -16,7 +16,7 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
         },
       },
       help: [
-        'Whitelist user to use command: {alias} <user> <command>',
+        'Whitelist user to use command: {alias} <USER> <COMMAND>',
       ],
     },
 

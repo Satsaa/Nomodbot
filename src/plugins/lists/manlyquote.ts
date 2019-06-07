@@ -16,11 +16,11 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Show a random or specific manly quote: {alias} [<index>]',
-    'Add a new manly quote: {alias} add <quote>',
-    'Edit a manly quote at index: {alias} edit <index> <quote>',
-    'Insert a new manly quote at index: {alias} insert <index> <quote>',
-    'Delete a manly quote at index: {alias} delete <index>',
+    'Add a new manly quote: {alias} add <quote...>',
+    'Edit a manly quote at index: {alias} edit <INDEX> <quote...>',
+    'Insert a new manly quote at index: {alias} insert <INDEX> <quote...>',
+    'Delete a manly quote at index: {alias} delete <INDEX>',
+    'Show a random or specific manly quote: {alias} [<INDEX>]',
   ],
   requirePlugins: ['lists'],
   noAtUser: true,
@@ -44,11 +44,15 @@ export class Instance implements PluginInstance {
     let value
     switch (params[1] ? params[1].toLowerCase() : undefined) {
 
+      case 'add':
+        if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
+        if (!params[2]) return 'Define the new manly quote (params 2+)'
+        newValue = params.slice(2).join(' ');
+        [index] = this.quotes.pushEntry(newValue)
+        if (index) return `Added new entry at index ${index}`
+        else return 'Something went horribly wrong!'
+
       case 'edit':
-      case 'modify':
-      case 'mod':
-      case 'set':
-      case 'change':
         if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
         if (isNaN(+params[2])) return 'Invalid index (param 2)'
         if (!params[3]) return 'Define the new manly quote (params 3+)'
@@ -57,19 +61,7 @@ export class Instance implements PluginInstance {
         if (index) return `Modified entry at index ${index}`
         else return 'Invalid index'
 
-      case 'add':
-      case 'new':
-      case 'push':
-      case 'create':
-        if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
-        if (!params[2]) return 'Define the new manly quote (params 2+)'
-        newValue = params.slice(2).join(' ');
-        [index] = this.quotes.pushEntry(newValue)
-        if (index) return `Added new entry at index ${index}`
-        else return 'Something went horribly wrong!'
-
       case 'insert':
-      case 'splice':
         if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
         if (isNaN(+params[2])) return 'Invalid index (param 2)'
         if (!params[3]) return 'Define the new manly quote (params 3+)'
@@ -78,9 +70,7 @@ export class Instance implements PluginInstance {
         if (index) return `Added new entry at index ${index}`
         else return 'Invalid index'
 
-      case 'del':
       case 'delete':
-      case 'remove':
         if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
         if (isNaN(+params[2])) return 'Invalid index (param 2)';
         [index, value]  = this.quotes.delEntry(~~params[2])

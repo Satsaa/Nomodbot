@@ -355,16 +355,46 @@ export function commaPunctuate(words: string[], comma = ', ', and = ' and ') {
   return result
 }
 
-const addArticleVowels = ['a', 'e', 'i', 'o', 'u', 'y', '8']
+const _addArticleFirst = ['a', 'e', 'i', 'o', 'u', 'y', '8']
+const _addArticleSingle = ['a', 'e', 'f', 'h', 'i', 'l', 'm', 'n', 'o', 'r', 's', 'x', '8']
+// aefhilmnorsx
 /**
  * Adds the appropriate article (a or an) to the word  
  * "Eleven" in numeric form is not supported
  * @param word Check article against this
  */
 export function addArticle(word: string) {
-  word = word.trimLeft()
-  if (addArticleVowels.includes(word.charAt(0).toLowerCase()) && !word.startsWith('use')  && !word.startsWith('uni') && !word.startsWith('one')) return 'an ' + word
-  return 'a ' + word
+  const _word = word.trimLeft().toLowerCase()
+  const trimmed = word.trimLeft()
+  if (_addArticleSingle.includes(_word[0])) {
+    if (_word.match(/^.(\W|$)/)) return 'an ' + word
+  }
+  if (_word[0] === 'u') {
+    if (!_word.startsWith('uni') && !_word.startsWith('use')
+    && !_word.startsWith('usa') && !_word.startsWith('usi')
+    && !_word.startsWith('usu') && !_word.startsWith('ubi')
+    && !_word.startsWith('ufo') && !_word.startsWith('uk')
+    && !_word.startsWith('ura') && !_word.startsWith('unan')
+    && !_word.startsWith('ube') && !_word.startsWith('uri')
+    && !_word.startsWith('ute') && !_word.startsWith('uto')
+    && !_word.startsWith('uti')) return 'an ' + trimmed
+    else return 'a ' + trimmed
+
+  } else if (_word[0] === 'e') {
+    if (!_word.startsWith('eu')) return 'an ' + trimmed
+    else return 'a ' + trimmed
+
+  } else if (_word[0] === 'h') {
+    if (!_word.startsWith('hour') && !_word.startsWith('honor')
+    && !_word.startsWith('heir')) return 'an ' + trimmed
+    else return 'a ' + trimmed
+
+  } else if (_word[0] === 'o') {
+    if (!_word.startsWith('one') && !_word.startsWith('once')) return 'an ' + trimmed
+    else return 'a ' + trimmed
+  }
+  if (_addArticleFirst.includes(_word[0])) return 'an ' + trimmed
+  return 'a ' + trimmed
 }
 
 /**

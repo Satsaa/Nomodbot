@@ -17,7 +17,7 @@ interface CommandParameter {
   // Raw field with tokens
   raw: string
   // Possible compiled regex
-  regex?: RegExp
+  regex?: RegExp | RegExp[]
 }
 
 type CommandParameters = CommandParameter[]
@@ -29,14 +29,14 @@ export default class ParamValidator {
   private commander: Commander
   private client: TwitchClient
   private cmdParams: {[pluginId: string]: {[group: string]: CommandParameters[]}}
-  private afterCheck: string[]
+  private checkables: string[]
 
   constructor(commander: Commander, client: TwitchClient) {
     this.commander = commander
     this.client = client
     this.cmdParams = {}
 
-    this.afterCheck = ['USER', 'USERS', 'CHANNEL', 'CHANNELS', 'COMMAND', 'COMMANDS', 'PLUGIN', 'PLUGINS']
+    this.checkables = ['USER', 'USERS', 'CHANNEL', 'CHANNELS', 'COMMAND', 'COMMANDS', '!COMMAND', '!COMMANDS', 'PLUGIN', 'PLUGINS']
   }
 
   /** Generates user readable output when usage is not valid */
@@ -64,7 +64,7 @@ export default class ParamValidator {
         const duplicateUserIndexes = []
         for (let i = 0; i < _cmdParams.length; i++) {
           const pure = _cmdParams[i].pure
-          if (typeof pure === 'string' && _cmdParams[i].var && this.afterCheck.includes(pure)) {
+          if (typeof pure === 'string' && _cmdParams[i].var && this.checkables.includes(pure)) {
             // Check once or multiple times if multi param
             const checks = _cmdParams[i].multi ? words.length - 1 : 1
             for (let ii = 0; ii < checks; ii++) {
@@ -82,6 +82,13 @@ export default class ParamValidator {
                 case 'COMMANDS':
                   if (!this.commander.getAlias(channelId, word) && !this.commander.getGlobalAlias(word)) {
                     return {pass: false, message: `No command with that name (param ${i + ii + 1})`}
+                  }
+                  replace[i + ii] = lc
+                  break
+                case '!COMMAND':
+                case '!COMMANDS':
+                  if (this.commander.getAlias(channelId, word) || this.commander.getGlobalAlias(word)) {
+                    return {pass: false, message: `There is already a command with that name (param ${i + ii + 1})`}
                   }
                   replace[i + ii] = lc
                   break
@@ -104,11 +111,11 @@ export default class ParamValidator {
 
           for (const user in users) {
             if (!res[user]) notFound.push(users[user])
-            else replace[users[user]] = res[user] + '' // Change login to id
+            else replace[users[user]] = `${res[user]}` // Change login to id
           }
 
           const allNotFound = uniquify([...notFound, ...duplicateUserIndexes.filter(i => !res[words[i]])], true).map(v => v + 1)
-          if (notFound.length) return {pass: false, message: `Cannot find ${plural(allNotFound.length, 'user', true)} (param ${allNotFound.join('|')})`}
+          if (notFound.length) return {pass: false, message: `Cannot find that ${plural(allNotFound.length, 'user', true)} (param ${allNotFound.join('|')})`}
 
           for (const index of duplicateUserIndexes) {
             const user = words[index]
@@ -118,7 +125,7 @@ export default class ParamValidator {
         }
 
         return {pass: true, replace}
-      } // Passed
+      }
       let depth = 0
       for (const bool of check.fields) {
         if (bool) depth++
@@ -130,7 +137,6 @@ export default class ParamValidator {
       }
     }
 
-    // cmdParams[group]
     // Find possible parameter names/types at depth
     let possibleCmdParams: CommandParameter[] = []
     for (let i = 0; i < allChecks.length; i++) {
@@ -146,25 +152,20 @@ export default class ParamValidator {
       }
     }
     possibleCmdParams = uniquify(possibleCmdParams, false)
-    // console.log(possibleCmdParams)
 
-    // Param x must be nothing, "1", "2", "3", a command or a number
+    // Get data for no param message
     const possibleNames = []
-    let multiNames: string[] = []
     let paramNeeded = true
     let allMultis = true
     for (const cmdParam of possibleCmdParams) {
-      if (typeof cmdParam.pure === 'object') {
-        multiNames.push(`"${cmdParam.pure.join('", "')}"`)
-      } else allMultis = false
-      if (cmdParam.opt) {
-        paramNeeded = false
-      }
+      if (!cmdParam.multi) allMultis = false
+      if (cmdParam.opt) paramNeeded = false
+
       if (cmdParam.var) {
-        possibleNames.push(getName(cmdParam.pure))
+        if (typeof cmdParam.pure === 'object') possibleNames.push(...cmdParam.pure.map(v => getName(v)))
+        else possibleNames.push(getName(cmdParam.pure))
       } else possibleNames.push(...(typeof cmdParam.pure === 'object' ? cmdParam.pure.map(v => `"${v}"`) : [`"${cmdParam.pure}"`]))
     }
-    multiNames = uniquify(multiNames, true)
     if (!paramNeeded) possibleNames.unshift('nothing')
 
     if (possibleNames.length <= 1) {
@@ -178,7 +179,7 @@ export default class ParamValidator {
     return {
       pass: false,
       message: allMultis
-        ? `Params ${maxValidDepth + 1}+ must be ${commaPunctuate(multiNames, ', ', ' or ')}`
+        ? `Params ${maxValidDepth + 1}+ must be ${commaPunctuate(possibleNames, ', ', ' or ')}`
         : `Param ${maxValidDepth + 1} must be ${commaPunctuate(possibleNames, ', ', ' or ')}`,
     }
     return {pass: false, message: 'Unhandled invalid parameters'}
@@ -187,7 +188,7 @@ export default class ParamValidator {
     function getName(name: string | string[]) {
       if (typeof name === 'string') return main(name)
       else {
-        return name.map(v => main(v)).join('|')
+        return name.map(v => main(v)).join(', ')
       }
       function main(name: string) {
         switch (name) {
@@ -195,9 +196,9 @@ export default class ParamValidator {
             return 'a number'
           case 'NUMBERS':
             return 'numbers'
-          case 'STRING':
+          case 'WORD':
             return 'a word'
-          case 'STRINGS':
+          case 'WORDS':
             return 'words'
           case 'INTEGER':
             return 'a whole number'
@@ -219,6 +220,10 @@ export default class ParamValidator {
             return 'a command'
           case 'COMMANDS':
             return 'commands'
+          case '!COMMAND':
+            return 'a non-command'
+          case '!COMMANDS':
+            return 'non-commands'
           case 'PLUGIN':
             return 'a plugin'
           case 'PLUGINS':
@@ -229,10 +234,11 @@ export default class ParamValidator {
             if (splitNums.length > 1 && splitNums.every(v => typeof v === 'number' && !isNaN(v))) {
               const min = Math.min(...splitNums)
               const max = Math.max(...splitNums)
+              const whole = !name.includes('.')
               if (min === -Infinity && max === Infinity) return 'number'
-              if (min === -Infinity) return `a number less than or equal to ${max}`
-              if (max === Infinity) return `a number more than or equal to ${min}`
-              return `a number between ${min} and ${max}`
+              if (min === -Infinity) return `${whole ? 'a whole' : 'any'} number less than or equal to ${max}`
+              if (max === Infinity) return `${whole ? 'a whole' : 'any'} number more than or equal to ${min}`
+              return `${whole ? 'a whole' : 'any'} number between ${min} and ${max}`
             }
 
             return addArticle(name.replace('_', ' '))
@@ -268,12 +274,14 @@ export default class ParamValidator {
     return { pass: passes, fields: results }
 
     function main(field: CommandParameter, word: string, commander?: Commander, channelId?: number): boolean {
-      if (typeof field.pure === 'object') { // Tuple (exact)
+      if (typeof field.pure === 'object') { // Tuple
         if (!word) {
           if (!field.opt) return false
         } else {
-          const input = field.case ? word : word.toLowerCase()
-          if (field.pure.every(v =>  v !== input)) return false
+          if (!field.var) { // Exact
+            const input = field.case ? word : word.toLowerCase()
+            if (field.pure.every(v =>  v !== input)) return false
+          } else return !!types(field, word)
         }
       } else { // Non tuple
         if (!field.opt) { // Required
@@ -281,13 +289,13 @@ export default class ParamValidator {
           else {
             if (!field.var) { // Exact
               if (field.pure !== (field.case ? word : word.toLowerCase())) return false
-            } else if (!types(field, word, commander, channelId)) return false
+            } else if (!types(field, word)) return false
           }
         } else { // Optional
           if (word) {
             if (!field.var) { // Exact
               if (field.pure !== (field.case ? word : word.toLowerCase())) return false
-            } else if (!types(field, word, commander, channelId)) return false
+            } else if (!types(field, word)) return false
           }
         }
       }
@@ -295,34 +303,45 @@ export default class ParamValidator {
     }
 
     /** Validate some types like NUMBER, INT, ranges etc */
-    function types(field: CommandParameter, word: string, commander?: Commander, channelId?: number): boolean {
-      if (typeof field.pure === 'object') return true
-      if (field.regex) return !!word.match(field.regex)
-      switch (field.pure) {
-        case 'NUMBER':
-        case 'NUMBERS':
-          if (isNaN(+word)) return false
-          break
-        case 'STRING':
-        case 'STRINGS':
-          if (!isNaN(+word)) return false
-          break
-        case 'INTEGER':
-        case 'INTEGERS':
-        case 'INDEX':
-        case 'INDEXES':
-          if (!Number.isInteger(+word)) return false
-          break
-        default:
-          const splitNums = field.pure.split(/(?<!-|^)-/).map(v => +v)
-          if (splitNums.length > 1) {
-            const inputNum = +word
-            if (isNaN(inputNum)) return false
-            if (inputNum < Math.min(...splitNums) || inputNum > Math.max(...splitNums)) return false
-          }
-          break
+    function types(field: CommandParameter, word: string): boolean {
+      if (!field.var && typeof field.pure === 'object') return true
+      if (typeof field.pure === 'object') {
+        for (let i = 0; i < field.pure.length; i++) {
+          const res = switcheroo(field.regex ? (field.regex as RegExp[])[i] : undefined, field.pure[i], word)
+          if (res) return true
+        }
+        return false
       }
-      return true
+      return switcheroo(field.regex as RegExp | undefined, field.pure, word)
+
+      function switcheroo(regex: RegExp | undefined, pure: string, word: string) {
+        if (regex) return !!word.match(regex)
+        switch (pure) {
+          case 'NUMBER':
+          case 'NUMBERS':
+            return !isNaN(+word)
+          case 'WORD':
+          case 'WORDS':
+            return isNaN(+word)
+          case 'INTEGER':
+          case 'INTEGERS':
+          case 'INDEX':
+          case 'INDEXES':
+            return Number.isInteger(+word)
+          default:
+            // Range
+            const splitNums = pure.split(/(?<!-|^)-/).map(v => +v)
+            const whole = !pure.includes('.')
+            if (splitNums.length > 1) {
+              const inputNum = +word
+              if (isNaN(inputNum)) return false
+              if (whole && !Number.isInteger(inputNum)) return false
+              if (inputNum < Math.min(...splitNums) || inputNum > Math.max(...splitNums)) return false
+            }
+            break
+        }
+        return true
+      }
     }
   }
 
@@ -340,8 +359,11 @@ export default class ParamValidator {
         if (!help.match(/.*: ?{?\w+}? ?/)) continue // Ignore if just explanation
         const clean = help.replace(/.*: ?{?\w+}? ?/, '')
         if (clean) res[group].push(this._parse(clean).data!)
-        const errors = this._errorCheck(res[group][res[group].length - 1])
-        if (errors.length) throw new Error(errors.join('. '))
+        else res[group].push([]) // Fix no parameters (...: {alias})
+        if (res[group][res[group].length - 1]) {
+          const errors = this._errorCheck(res[group][res[group].length - 1])
+          if (errors.length) throw new Error(errors.join('. '))
+        }
       }
     }
     this.cmdParams[pluginId] = res
@@ -358,18 +380,26 @@ export default class ParamValidator {
       const leftSquare = field.raw.split('[').length - 1
       const rightSquare = field.raw.split(']').length - 1
 
-      if (field.raw.includes('(') || field.raw.includes(')')) errors.push('Parenthesis unsupported')
+      if (typeof field.pure) {
+        for (const pure of field.pure) {
+          if (!pure) errors.push(`Parameter name was falsy: ${pure}`)
+          if (this.checkables.includes(pure)) errors.push(`Advanced variable ${pure} is forbidden in tuples`)
+        }
+      }
 
-      if (smaller !== larger) errors.push(`The total occurences of < and > do not match: ${field.raw}`)
-      if (leftSquare !== rightSquare) errors.push(`The total occurences of [ and ] do not match: ${field.raw}`)
+      if (field.raw.includes('(') || field.raw.includes(')')) errors.push('Use of parentheses are unsupported')
+
+      if (smaller !== larger) errors.push(`The total occurrences of < and > do not match: ${field.raw}`)
+      if (leftSquare !== rightSquare) errors.push(`The total occurrences of [ and ] do not match: ${field.raw}`)
+
+      if (smaller > 1 || larger > 1) errors.push(`There can only be 0 or 2 occurrences of < or >: ${field.raw}`)
+      if (leftSquare > 1 || rightSquare > 1) errors.push(`There can only be 0 or 2 occurrences of [ or ]: ${field.raw}`)
 
       if (!field.opt && previous.opt) errors.push('Required parameter after optional parameter')
 
       if (previous.multi) errors.push('Parameter after multi parameter')
 
-      if (typeof field.raw === 'object' && field.var) errors.push('Variable tuple')
-
-      if (typeof field.raw !== 'object' && field.raw.split('/').length > 3) errors.push("Use of '/' is preserved for regex in the format: name/regex/flags")
+      if ((field.raw.split('/').length - 1) % 2) errors.push("Use of '/' is preserved for regex in the format: name/regex/flags")
 
       previous = field
     }
@@ -384,16 +414,30 @@ export default class ParamValidator {
   public _parse(input: string): AdvancedResult<CommandParameter[]> {
     const output: CommandParameters = []
     for (const raw of input.split(' ')) {
-      const _var = !!raw.match(/<.*>/) // Has <>
-      const opt = !!raw.match(/\[.*\]/) // Has []
-      const multi = !!raw.match(/\.{3}((>|])+|$)/) // Has ...
+      const _var = !!raw.match(/^[\[\].]*\<.*\>[\[\].]*$/) // Has <>
+      const opt = !!raw.match(/^[<>.]*\[.*\][<>.]*$/) // Has []
+      const multi = !!raw.match(/\.{3}[\]>]*$/) // Has ...
       const _case = raw.toLowerCase() !== raw
-      let regex: RegExp | undefined
-      // Edge tokens only: /^[\[\]<>.]+|[\[\]<>.]+$/g
+      let regex: RegExp | RegExp[] | undefined
+      // Edge tokens only: /^[[\]<>]+|(\.{3}|[[\]<>])+$/g
       // All tokens: /[\[\]<>.]+/g
-      let pure: CommandParameter['pure'] = raw.replace(/^[[\]<>.]+|[[\]<>.]+$/g, '') // Remove edge tokens
-      if (raw.includes('|')) pure = pure.split('|') // Tuple
-      else if (_var && raw.includes('/')) { // Regex
+      let pure: CommandParameter['pure'] = raw.replace(/^[[\]<>]+|(\.{3}|[[\]<>])+$/g, '') // Remove edge tokens
+      if (raw.includes('|')) {
+
+        pure = pure.split('|') // Tuple
+
+        const _regex: RegExp[] = []
+        const _pure: string[] = []
+        pure.forEach((element, i) => {
+          if (_var && element.includes('/')) {
+            const split = element.split('/')
+            _pure[i] = split[0]
+            _regex[i] = new RegExp(split[1], split[2])
+          } else _pure[i] = element
+          if (_regex.length) regex = _regex
+        })
+        pure = _pure
+      } else if (_var && raw.includes('/')) { // Regex
         const split = pure.split('/')
         pure = split[0]
         regex = new RegExp(split[1], split[2])
@@ -437,11 +481,12 @@ export default class ParamValidator {
     async function listener(this: ParamValidator, data: any) {
       const str: string = data.toString().trim()
       if (str.startsWith('>')) {
+        const rawHelps = str.slice(1).split(',')
         const splits = str.slice(1).split(',').map(v => v.replace(/.*: ?{?\w+}? ?/, ''))
         splitInputs = splits.map(v => v.split(' '))
         inputCmdParams = {default: splits.map(v => this._parse(v).data || [])}
         try {
-          this.cacheHelp('VALIDATOR_TEST', {default: splits.map(v => v)})
+          this.cacheHelp('VALIDATOR_TEST', {default: rawHelps})
         } catch (err) {
           console.error(err.message)
         }

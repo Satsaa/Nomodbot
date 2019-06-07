@@ -15,7 +15,10 @@ export const options: PluginOptions = {
       userCooldown: 60,
     },
   },
-  help: ['Get the urban definition of search: {alias} <search...>'],
+  help: [
+    'Get a random urban definition: {alias}',
+    'Get the urban definition of term: {alias} <term...>',
+  ],
   noAtUser: true,
 }
 

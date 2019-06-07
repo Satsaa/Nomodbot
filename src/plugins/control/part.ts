@@ -14,8 +14,7 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Leave channels: {alias} <channels...>',
-    'Leave {channel}: {alias}',
+    'Leave this channel or channels: {alias} [<CHANNELS...>]',
   ],
 }
 

@@ -17,8 +17,8 @@ export const options: PluginOptions = {
   requireDatas: [],
   creates: [['myIq']],
   help: [
-    'Returns your or users iq: {alias} [<user>]',
     'Get your record and the channel record: {alias} record',
+    'Returns your or users iq: {alias} [<USER>]',
   ],
 }
 

@@ -51,7 +51,7 @@ export interface Command {
    * Object form allows aliases to use specific groups of help strings with their `group` key  
    * Format for entries should be: "Explaining the action: {command} add <COMMAND> <message...>"  
    * Or just the explanation: "Explaining this and that"  
-   * See `README.md` Parameter Validator for details
+   * @see `README.md`#parameter-validator for details
    */
   help: string[] | {[group: string]: string[], default: string[]},
   /**
@@ -165,9 +165,9 @@ export default class Commander {
     this.data = data
     this.pluginLib = new PluginLibrary(client, data, this)
     this.waits = {}
-    this.client.on('chat', this.onChat.bind(this))
-
     this.validator = new ParamValidator(this, this.client)
+
+    this.client.on('chat', this.onChat.bind(this))
   }
 
   /**
@@ -394,7 +394,11 @@ export default class Commander {
             try {
               this.validator.cacheHelp(options.id, options.help) // !!!
             } catch (err) {
+              // !!!
+              console.log('in id:' + options.id)
               console.error(err.message)
+              console.log(err.stack.split('\n')[4])
+              console.log(options.help)
             }
             if (Array.isArray(options.default.alias)) {
               options.default.alias.forEach((alias) => {
@@ -515,7 +519,7 @@ export default class Commander {
 
   /** Returns the @user string */
   public getAtUser(display: string): string {
-    return `@${display}`
+    return `@${display} `
   }
 
   /** Resolves with true when plugin is loaded or with false on timeout */
@@ -583,10 +587,13 @@ export default class Commander {
     if (this.isPermitted(alias, userId, tags.badges)) {
       if (this.masters.includes(userId) || (tags.badges && (tags.badges.broadcaster || tags.badges.moderator))) {
         // Master users, mods and the broadcaster don't care about cooldowns
-        console.log(this.validator.validate(channelId, plugin.id, alias.group || 'default', params.slice(1))) // !!!
+        const validation = await this.validator.validate(channelId, plugin.id, alias.group || 'default', params.slice(1))
+        if (!validation.pass) {
+          return this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, validation.message, irc)} ${validation.message}`)
+        }
         const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown: 0, irc})
         if (res) {
-          this.client.chat(channelId, `${this.shouldAtUser(plugin.noAtUser, res, irc) ? this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown') : ''} ${res}`)
+          this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, res, irc)} ${res}`)
         }
       } else {
         const cooldown = this.getCooldown(channelId, userId, alias)
@@ -597,13 +604,20 @@ export default class Commander {
             if (alias.cooldown) cooldowns.shared[alias.target].push(Date.now())
             if (alias.userCooldown) cooldowns.user[alias.target][userId].push(Date.now())
           }
+          const validation = await this.validator.validate(channelId, plugin.id, alias.group || 'default', params.slice(1))
+          if (!validation.pass) {
+            return this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, validation.message, irc)} ${validation.message}`)
+          }
           const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
-          if (res) this.client.chat(channelId, `${this.shouldAtUser(plugin.noAtUser, res, irc) ? this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown') : ''} ${res}`)
+          if (res) this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, res, irc)} ${res}`)
         } else { // On cooldown
           if (instance.cooldown) instance.cooldown(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
           return
         }
       }
+    }
+    async function addUser(this: Commander, atUser: true | undefined, message: string, irc: PRIVMSG): Promise<string> {
+      return this.shouldAtUser(atUser, message, irc) ? this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown') : ''
     }
   }
 }

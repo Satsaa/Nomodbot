@@ -14,7 +14,8 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Reload the file in \\subType | {channel}\\name: {alias} [subType] <name>',
+    'Reload the file in \\{channel}\\name: {alias} <name>',
+    'Reload the file in \\subType\\name: {alias} <subType> <name>',
   ],
 }
 

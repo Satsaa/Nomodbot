@@ -15,7 +15,9 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Display enabled commands: {alias} [<userlevel> | <badge>]',
+    'Display disabled commands: {alias} disabled [<0-10>]',
+    'Display hidden commands: {alias} hidden [<0-10>]',
+    'Display enabled commands: {alias} [<0-10>]',
   ],
 }
 
@@ -30,12 +32,23 @@ export class Instance implements PluginInstance {
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     const aliases = { ...this.l.getEnabledGlobalAliases(), ...this.l.getEnabledAliases(channelId) }
     const aliasArray = []
-    const userLvl = isNaN(+params[1]) ? undefined : +params[1]
+    const disabled = params[1] && params[1].toLowerCase() === 'disabled'
+    const hidden = params[1] && params[1].toLowerCase() === 'hidden'
+    const userLvl = isNaN(+params[disabled || hidden ? 2 : 1]) ? undefined : +params[disabled || hidden ? 2 : 1]
     for (const alias in aliases) {
-      if (userLvl !== undefined && (aliases[alias].userlvl || userlvls.any) !== userLvl) continue
-      if (aliases[alias].hidden) continue
+      if (userLvl !== undefined && (typeof aliases[alias].userlvl === 'undefined' ? userlvls.any : aliases[alias].userlvl) !== userLvl) continue
+      if (hidden) {
+        if (!aliases[alias].hidden) continue
+      } else if (disabled) {
+        if (!aliases[alias].disabled) continue
+      } else {
+        if (aliases[alias].hidden) continue
+        if (aliases[alias].disabled) continue
+      }
       aliasArray.push(alias)
     }
-    return aliasArray.sort().join(', ')
+    if (disabled) return `Disabled commands: ${aliasArray.sort().join(', ')}`
+    if (hidden) return `Hidden commands: ${aliasArray.sort().join(', ')}`
+    return `Commands: ${aliasArray.sort().join(', ')}`
   }
 }

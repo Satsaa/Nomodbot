@@ -16,8 +16,8 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Show a random or specific message you have sent: {alias} [<index>]',
-    'Show a random or specific message user has sent: {alias} <user> [<index>]',
+    'Show a random or specific message you have sent: {alias} [<INDEX>]',
+    'Show a random or specific message user has sent: {alias} <USER> [<INDEX>]',
   ],
   requirePlugins: ['log'],
   noAtUser: true,

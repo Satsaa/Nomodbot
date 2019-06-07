@@ -17,10 +17,10 @@ export const options: PluginOptions = {
   },
   creates: [['spotifyPlaylist']],
   help: [
-    'Show the first or nth song on the playlist: {alias} [<n>]',
-    'Show a link to the playlist: {alias} <anything>',
-    'Set the playlist: {alias} <anything> <playlist ID or link>',
-    'Delete the playlist: {alias} del',
+    'Show the first or nth song on the playlist: {alias} [<1-Infinity>]',
+    'Show a link to the playlist: {alias} <list/list/i>',
+    'Set the playlist: {alias} set <playlist_ID|playlist_link>',
+    'Delete the playlist: {alias} delete',
   ],
   noAtUser: true,
 }
@@ -58,7 +58,7 @@ export class Instance implements PluginInstance {
     const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
     if (!data) return this.l.insertAtUser('Unavailable: required data is not present', extra)
     try {
-      if (params[1] === 'del' || params[1] === 'delete' || params[1] === 'remove') {
+      if (params[1] && params[1].toLowerCase() === 'delete') {
         // Delete the playlist data
         if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return this.l.insertAtUser('You are not permitted to do this operation', extra)
         const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
@@ -66,7 +66,7 @@ export class Instance implements PluginInstance {
         this.l.setData(channelId, 'spotifyPlaylist', {})
         return this.l.insertAtUser('Deleted succesfully', extra)
 
-      } else if (params[2]) {
+      } else if (params[1] && params[1].toLowerCase() === 'set') {
         // Set track id
         if (!this.l.isPermitted({userlvl: userlvls.mod}, userId, tags.badges)) return this.l.insertAtUser('You are not permitted to do this operation', extra)
         const inputId = (params[2].replace(/\/+$/, '').match(/[a-zA-Z0-9]*$/) || [])[0]
@@ -81,7 +81,7 @@ export class Instance implements PluginInstance {
         data.name = playlist.name
         return this.l.insertAtUser(`Playlist set to ${playlist.name} by ${playlist.owner.display_name}`, extra)
 
-      } else if (params[1] && isNaN(+params[1])) {
+      } else if (params[1] && params[1].toLowerCase().includes('list') && isNaN(+params[1])) {
         // Show playlist link when only 1 string parameter given
         if (!data.playlist) return this.l.insertAtUser(`Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${params[0]} set <id or link>`, extra)
         return this.l.insertAtUser(`${data.name && data.creator ? data.name + ' by ' + data.creator : 'Paylist'}: open.spotify.com/playlist/${data.playlist}`, extra)

@@ -15,8 +15,8 @@ export const options: PluginOptions = {
   },
   creates: [['notifies']],
   help: [
-    'Notify a user with a message when they type in chat: {alias} <user> <message...>',
-    'Delete notifies you created: {alias} delete [<user>]',
+    'Notify a user with a message when they type in chat: {alias} <USER> <message...>',
+    'Delete notifies you created: {alias} delete [<USER>]',
   ],
 }
 

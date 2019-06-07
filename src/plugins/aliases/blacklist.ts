@@ -16,7 +16,7 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
         },
       },
       help: [
-        'Forbid a user from using a command: {alias} <user> <command>',
+        'Forbid a user from using a command: {alias} <USER> <COMMAND>',
       ],
     },
 

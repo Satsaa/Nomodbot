@@ -16,7 +16,7 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Show the total amount of messages sent by you or user: {alias} [<user>]',
+    'Show the total amount of messages sent by you or user: {alias} [<USER>]',
   ],
   requirePlugins: ['log'],
 }

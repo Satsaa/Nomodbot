@@ -39,9 +39,9 @@ export default class Bot {
 
     this.commander = new Commander(this.client, this.data, this.opts.masters)
 
-    this.validator = new ParamValidator(this.commander, this.client)
-    this.validator.consoleInteract()
-    this.client.on('chat', this.onChat.bind(this))
+    // this.validator = new ParamValidator(this.commander, this.client)
+    // this.validator.consoleInteract()
+    // this.client.on('chat', this.onChat.bind(this))
 
     this.commander.init().then((pluginIds) => {
       this.client.connect()

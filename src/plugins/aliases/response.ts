@@ -15,12 +15,12 @@ export const options: PluginOptions = {
   },
   help: {
     default: [
-      'Create a response: {alias} add <command> <message...>',
-      'Edit or create a response: {alias} edit <command> <message...>',
-      'Get the raw response string: {alias} get <command>',
+      'Create a response: {alias} add <!COMMAND> <message...>',
+      'Edit a response: {alias} edit <COMMAND> <message...>',
+      'Get the raw response string: {alias} raw <COMMAND>',
     ],
     response: [
-      'Respond with message: {alias} [<args...>]',
+      'Respond with message: {alias} [<parameters...>]',
     ],
   },
 }
@@ -38,27 +38,33 @@ export class Instance implements PluginInstance {
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     if (extra.alias.data) { // Message alias (has data entry)
       let result = ''
-      for (const token of extra.alias.data as string[]) { // Variable
+      for (const token of extra.alias.data as string[]) {
         if ((token.startsWith('$(') && token.endsWith(')'))
-          || (token.startsWith('${') && token.endsWith('}'))) {
+          || (token.startsWith('${') && token.endsWith('}'))) { // Variable
           const pureVar = token.slice(2, -1)
           switch (pureVar) {
             case 'channel':
-              result += await this.l.api.getDisplay(channelId)
+              const cid = await this.l.api.getDisplay(channelId)
+              if (!cid) return 'Cannot find channel???'
+              result += cid
               break
             case 'user':
-              result += await this.l.api.getDisplay(userId)
+              result += tags['display-name']
               break
             case 'command':
               result += params[0]
               break
             default:
               if (pureVar.startsWith('param')) {
+                const param = params[~~pureVar.slice(5)]
+                if (!param) return `Parameter ${~~pureVar.slice(5)} needs to be defined`
                 result += params[~~pureVar.slice(5)]
-              } else result += token
+              } else {
+                result += token
+              }
               break
           }
-        } else result += token
+        } else result += token // Normal
       }
       return result
     } else { // Control alias (no data key)
@@ -66,17 +72,11 @@ export class Instance implements PluginInstance {
       if (!params[1]) return 'Define an action (param 2)'
       switch (params[1].toLowerCase()) {
         case 'add':
-        case 'create':
-        case 'new':
           break
         case 'edit':
-        case 'modify':
-        case 'overwrite':
           overwrite = true
           break
         case 'raw':
-        case 'get':
-        case 'inspect':
           if (!params[2]) return 'Define a command name (param 2)'
           const alias = this.l.getAlias(channelId, params[2]) || this.l.getGlobalAlias(params[2])
           if (!alias) {

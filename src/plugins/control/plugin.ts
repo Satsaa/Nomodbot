@@ -18,9 +18,9 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Load plugin: {alias} load <plugin>',
-    'Reload plugin: {alias} reload <plugin>',
-    'Unload plugin: {alias} unload <plugin>',
+    'Load plugin: {alias} load <PLUGIN>',
+    'Reload plugin: {alias} reload <PLUGIN>',
+    'Unload plugin: {alias} unload <PLUGIN>',
     'Load new plugin from path: {alias} path <path>',
   ],
 }

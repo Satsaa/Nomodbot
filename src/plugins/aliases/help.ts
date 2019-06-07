@@ -15,7 +15,7 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Display usage instructions of command: {alias} <command>',
+    'Display usage instructions of command: {alias} <COMMAND>',
   ],
 }
 
