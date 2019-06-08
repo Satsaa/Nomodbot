@@ -318,6 +318,7 @@ export default class Commander {
         if (badges.broadcaster) return true
       case userlvls.master:
         // Handled above
+        return false
       default:
         console.warn(`Unknown permission level: ${alias.userlvl}`)
         return true
