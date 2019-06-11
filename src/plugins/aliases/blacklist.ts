@@ -29,8 +29,6 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
       }
 
       public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-        if (!params[1]) return 'Define a user (param 1)'
-        if (!params[2]) return 'Define a command name (param 2)'
         const aliasName = params[2].toLowerCase()
         const alias = this.l.getAlias(channelId, aliasName)
         if (alias) { // Channel alias
@@ -41,22 +39,11 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
           if (this.l.isMod(channelId, params[1])) return 'You cannot blacklist a moderator'
 
           if (alias.blacklist && alias.blacklist.includes(uid)) return `${params[2]} is already blacklisted from using ${aliasName}`
-          if (!alias.blacklist) alias.blacklist = []
-          alias.blacklist.push(uid)
-          return `Blacklisted ${params[1]} from using ${aliasName}`
-        }
-        const globalAlias = this.l.getGlobalAlias(aliasName)
-        if (globalAlias) { // Global alias. Create copy
-          if (!this.l.isPermitted(globalAlias, userId, tags.badges, {ignoreWhiteList: true})) return 'You cannot edit the blacklist of a command you are not permitted to use'
-          const uid = await this.l.api.getId(params[1])
-          if (!uid) return 'Cannot find that user'
 
-          // Because no channel alias was found we can create a new alias and delete it later if errors were found
-          this.l.createAlias(channelId, aliasName, globalAlias)
-          const alias = this.l.getAlias(channelId, aliasName)
-          if (!alias) return 'Failed to create new alias?'
-          if (!alias.blacklist) alias.blacklist = []
-          alias.blacklist.push(uid)
+          let out: number[] = []
+          if (alias.blacklist) out = [...alias.blacklist]
+          out.push(uid)
+          this.l.modAlias(channelId, aliasName, {blacklist: out})
           return `Blacklisted ${params[1]} from using ${aliasName}`
         }
         return 'Cannot find that command'
@@ -99,13 +86,8 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
           const uid = await this.l.api.getId(params[1])
           if (!uid) return 'Cannot find that user'
           if (!alias.blacklist || !alias.blacklist.includes(uid)) return `${params[1]} is not blacklisted from using ${aliasName}`
-          alias.blacklist = alias.blacklist.filter(v => v !== uid)
+          this.l.modAlias(channelId, aliasName, {blacklist: alias.blacklist.filter(v => v !== uid)})
           return `Removed ${params[1]} from ${aliasName}'s blacklist`
-        }
-        const globalAlias = this.l.getGlobalAlias(aliasName)
-        if (globalAlias) { // Global aliases cant have white- or blacklists
-          if (!this.l.isPermitted(globalAlias, userId, tags.badges, {ignoreWhiteList: true})) return 'You cannot edit the blacklist of a command you are not permitted to use'
-          return `${params[1]} is not blacklisted from using ${aliasName}`
         }
         return 'Cannot find that command'
       }

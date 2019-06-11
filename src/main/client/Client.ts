@@ -62,6 +62,8 @@ export interface TwitchClientOptions {
   logAll?: boolean
   /** Server might refuse to connect with fast intervals */
   reconnectInterval?: number
+  /** Exit after this many reconnects without succesfully connecting */
+  maxReconnects?: number
   minLatency?: number
   pingInterval?: number
   dupeAffix?: string
@@ -100,6 +102,7 @@ export default class TwitchClient {
   private whisperRateLimiter: RateLimiter
 
   private reconnecting: boolean
+  private reconnects: number
   private latency: number
   private messageTypes: any
 
@@ -122,6 +125,7 @@ export default class TwitchClient {
       logAll: false,
       apiDataFile: 'apiCache.json',
       reconnectInterval: 10000,
+      maxReconnects: 1000,
       minLatency: 800,
       pingInterval: 60000,
       dupeAffix: ' 󠀀', // 	0xE0000,
@@ -185,6 +189,7 @@ export default class TwitchClient {
     this.whisperRateLimiter.times = this.clientData.global.whisperTimes
 
     this.reconnecting = false
+    this.reconnects = 0
     this.latency = 0
     this.messageTypes = JSON.parse(fs.readFileSync('./misc/seenMessageTypes.json', {encoding: 'utf8'}))
 
@@ -432,17 +437,16 @@ export default class TwitchClient {
 
   /** Tries to reconnect until succeeding */
   private async reconnect(interval: number = this.opts.reconnectInterval): Promise<void> {
+    if (interval < 1000) throw new Error(`Too small interval: ${interval}`)
+    if (this.opts.maxReconnects < this.reconnects++) throw new Error('Too many unsuccessful reconnects')
     if (this.reconnecting) return
     console.log(`Reconnecting in ${u.plural(Math.round(interval / 1000), 'second')}`)
     if (this.ws) this.ws.close()
     this.reconnecting = true
     await u.timeout(interval)
     const res = await this.connect()
-    if (!res) {
-      this.reconnecting = false
-      return this.reconnect(interval)
-    }
     this.reconnecting = false
+    if (!res) return this.reconnect(interval)
   }
 
   /** Log in console if logging irc messages is enabled */
@@ -500,6 +504,7 @@ export default class TwitchClient {
     let userId
     switch (msg.cmd) {
       case '001': // <prefix> 001 <you> :Welcome, GLHF!
+        this.reconnects = 0
         this.ircLog('Bot is welcome')
         this.join(Object.keys(this.clientData.channels).map(v => +v))
         this.emit('welcome')

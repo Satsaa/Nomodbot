@@ -36,7 +36,7 @@ export default class ParamValidator {
     this.client = client
     this.cmdParams = {}
 
-    this.checkables = ['USER', 'USERS', 'CHANNEL', 'CHANNELS', 'COMMAND', 'COMMANDS', '!COMMAND', '!COMMANDS', 'PLUGIN', 'PLUGINS']
+    this.checkables = ['USER', 'USERS', 'CHANNEL', 'CHANNELS', 'COMMAND', 'COMMANDS', '!COMMAND', '!COMMANDS', 'PLUGIN', 'PLUGINS', '!PLUGIN', '!PLUGINS']
   }
 
   /** Generates user readable output when usage is not valid */
@@ -80,14 +80,14 @@ export default class ParamValidator {
                   break
                 case 'COMMAND':
                 case 'COMMANDS':
-                  if (!this.commander.getAlias(channelId, word) && !this.commander.getGlobalAlias(word)) {
+                  if (!this.commander.getAlias(channelId, word)) {
                     return {pass: false, message: `No command with that name (param ${i + ii + 1})`}
                   }
                   replace[i + ii] = lc
                   break
                 case '!COMMAND':
                 case '!COMMANDS':
-                  if (this.commander.getAlias(channelId, word) || this.commander.getGlobalAlias(word)) {
+                  if (this.commander.getAlias(channelId, word)) {
                     return {pass: false, message: `There is already a command with that name (param ${i + ii + 1})`}
                   }
                   replace[i + ii] = lc
@@ -95,6 +95,11 @@ export default class ParamValidator {
                 case 'PLUGIN':
                 case 'PLUGINS':
                   if (!this.commander.plugins[lc]) return {pass: false, message: `No plugin with that id (param ${i + ii + 1})`}
+                  replace[i + ii] = lc
+                  break
+                case '!PLUGIN':
+                case '!PLUGINS':
+                  if (this.commander.plugins[lc]) return {pass: false, message: `There is already a plugin with that id (param ${i + ii + 1}`}
                   replace[i + ii] = lc
                   break
                 default:
@@ -221,13 +226,17 @@ export default class ParamValidator {
           case 'COMMANDS':
             return 'commands'
           case '!COMMAND':
-            return 'a non-command'
+            return 'an unexisting command'
           case '!COMMANDS':
-            return 'non-commands'
+            return 'unexisting commands'
           case 'PLUGIN':
             return 'a plugin'
           case 'PLUGINS':
             return 'plugins'
+          case '!PLUGIN':
+            return 'an unexisting plugin'
+          case '!PLUGINS':
+            return 'unexisting plugins'
           default:
             // Range (1-99, -Infinity-0)
             const splitNums = name.split(/(?<!-|^)-/).map(v => +v)
@@ -386,8 +395,6 @@ export default class ParamValidator {
           if (this.checkables.includes(pure)) errors.push(`Advanced variable ${pure} is forbidden in tuples`)
         }
       }
-
-      if (field.raw.includes('(') || field.raw.includes(')')) errors.push('Use of parentheses are unsupported')
 
       if (smaller !== larger) errors.push(`The total occurrences of < and > do not match: ${field.raw}`)
       if (leftSquare !== rightSquare) errors.push(`The total occurrences of [ and ] do not match: ${field.raw}`)

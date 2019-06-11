@@ -91,6 +91,8 @@ export interface CommandAlias {
   blacklist?: number[]
 }
 
+type ReadonlyCommandAlias = DeepReadonly<CommandAlias>
+
 /** Properties for default aliases */
 export interface DefaultCommandAlias extends Readonly<Omit<CommandAlias, 'blacklist' | 'whitelist'>> {}
 
@@ -124,6 +126,13 @@ export interface Extra {
   cooldown: number,
   /** IRCv3 parsed message that  */
   irc: PRIVMSG
+}
+
+interface AliasData {
+  /** Channel aliases */
+  aliases: { [x: string]: CommandAlias }
+  /** Defined keys make global aliases "deleted"/disabled for the channel */
+  deletes: { [x: string]: true }
 }
 
 interface CooldownData {
@@ -175,7 +184,7 @@ export default class Commander {
    * @returns List of loaded plugin ids
    */
   public async init(): Promise<string[]> {
-    this.data.autoLoad('aliases', {})
+    this.data.autoLoad('aliases', {aliases: {}, deletes: {}} as AliasData, true)
     this.data.autoLoad('cooldowns', {user: {}, shared: {} as CooldownData}, true)
     const files = (await readDirRecursive(path.join(__dirname, '..', 'plugins')))
       .filter(f => (f.endsWith('.ts') || f.endsWith('.js') && !f.includes('tempCodeRunnerFile')))
@@ -241,66 +250,75 @@ export default class Commander {
     }
   }
 
-  public createAlias(channelId: number, alias: string, options: DeepReadonly<CommandAlias>): CommandAlias | undefined {
+  public delAlias(channelId: number, alias: string): boolean {
     alias = alias.toLowerCase()
-    if (!(this.data.data[channelId] || {}).aliases) return undefined
-    this.data.data[channelId].aliases[alias] = deepClone(options)
-    return this.data.data[channelId].aliases[alias]
-  }
-  public deleteAlias(channelId: number, alias: string): boolean {
-    alias = alias.toLowerCase()
-    if (!(this.data.data[channelId] || {}).aliases) return false
-    delete this.data.data[channelId].aliases[alias]
+    if (!((this.data.data[channelId] || {}).aliases)) return false
+    delete this.data.data[channelId].aliases.aliases[alias]
+    this.data.data[channelId].aliases.deletes[alias] = true
     return true
   }
 
-  public getAlias(channelId: number, alias: string): CommandAlias | void {
+  /** Merge `options` to an existing alias `alias` */
+  public modAlias(channelId: number, alias: string, options: Partial<CommandAlias>): ReadonlyCommandAlias | void {
     alias = alias.toLowerCase()
-    if (((this.data.data[channelId] || {}).aliases || {})[alias]) {
-      return this.data.data[channelId].aliases[alias]
+    if (!((this.data.data[channelId] || {}).aliases.aliases)) return
+    if (!this.data.data[channelId].aliases.aliases[alias]) {
+      // Copy global alias
+      if (this.data.data[channelId].aliases.deletes[alias]) return
+      if (!this.defaultAliases[alias]) return
+      this.data.data[channelId].aliases.aliases[alias] = deepClone(this.defaultAliases[alias])
     }
-  }
-  public getGlobalAlias(alias: string): DefaultCommandAlias | undefined {
-    alias = alias.toLowerCase()
-    return this.defaultAliases[alias]
+    this.data.data[channelId].aliases.aliases[alias] = {...this.data.data[channelId].aliases.aliases[alias], ...options}
+    this.data.data[channelId].aliases.deletes[alias] = true
   }
 
-  public getAliases(channelId: number): {[alias: string]: CommandAlias} | void {
-    if ((this.data.data[channelId] || {}).aliases) {
-      return this.data.data[channelId].aliases
-    }
-  }
-  public getGlobalAliases(): {[alias: string]: DefaultCommandAlias} {
-    return this.defaultAliases
+  public setAlias(channelId: number, alias: string, options: CommandAlias): ReadonlyCommandAlias | void {
+    alias = alias.toLowerCase()
+    if (!((this.data.data[channelId] || {}).aliases.aliases)) return
+    this.data.data[channelId].aliases.aliases[alias] = options
+    this.data.data[channelId].aliases.deletes[alias] = true
   }
 
-  public getAliasesById(channelId: number, pluginId: string): {[alias: string]: CommandAlias} {
-    const aliases = this.getAliases(channelId) || {}
-    const res: {[alias: string]: CommandAlias} = {}
-    for (const alias in aliases) {
-      if (aliases[alias].target === pluginId) res[alias] = aliases[alias]
-    }
-    return res
+  public getAlias(channelId: number, alias: string): ReadonlyCommandAlias | void {
+    alias = alias.toLowerCase()
+    if (!(((this.data.data[channelId] || {}).aliases.aliases || {})[alias])) return
+    if (!this.data.data[channelId].aliases.deletes[alias]) return this.defaultAliases[alias]
+    return this.data.data[channelId].aliases.aliases[alias]
   }
-  public getGlobalAliasesById(pluginId: string): {[alias: string]: DefaultCommandAlias} {
-    const aliases = this.getGlobalAliases()
-    const res: {[alias: string]: DefaultCommandAlias} = {}
-    for (const alias in aliases) {
-      if (aliases[alias].target === pluginId) res[alias] = aliases[alias]
+
+  public getAliases(channelId: number): {[x: string]: ReadonlyCommandAlias} | void {
+    if (!((this.data.data[channelId] || {}).aliases)) return
+    const globals: {[x: string]: DefaultCommandAlias} = {}
+    for (const key in this.defaultAliases) {
+      if (!this.data.data[channelId].aliases.deletes[key]) globals[key] = this.defaultAliases[key]
+    }
+    return {...globals, ...this.data.data[channelId].aliases.aliases}
+  }
+
+  public getAliasesById(channelId: number, pluginId: string): {[x: string]: ReadonlyCommandAlias} | void  {
+    if (!((this.data.data[channelId] || {}).aliases)) return
+    const res: {[x: string]: DefaultCommandAlias} = {}
+    for (const key in this.defaultAliases) {
+      if (!this.data.data[channelId].aliases.deletes[key] && this.defaultAliases[key].target === pluginId) {
+        res[key] = this.defaultAliases[key]
+      }
+    }
+    const locals = this.data.data[channelId].aliases.aliases
+    for (const key in locals) {
+      if (locals[key].target === pluginId) res[key] = locals[key]
     }
     return res
   }
 
   /** Determine if `userId` with `badges` would be permitted to call this alias */
-  public isPermitted(alias: CommandAliasLike, userId: number, badges: IrcMessage['tags']['badges'], options: IsPermittedOptions = {}) {
+  public isPermitted(alias: DeepReadonly<CommandAliasLike>, userId: number, badges: IrcMessage['tags']['badges'], options: IsPermittedOptions = {}) {
     // Number: 0: anyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
     if (this.masters.includes(userId)) return true // Master
     if (!badges) badges = {}
     if (alias.blacklist && alias.blacklist.includes(userId)) {
-      if (badges.moderator || badges.broadcaster) {// Clean invalid entries
-        // Mods and broadcasters can't be blacklisted
-        alias.blacklist = alias.blacklist.filter(v => v !== userId)
-      } else return false
+      if (!badges.moderator && !badges.broadcaster) return false
+      // !!! Removing moderator/broadcaster entries was removed in favor of filtering on mod event
+      // !!! Moderator gained -> remove entries from aliases
     }
     if (!options.ignoreWhiteList && alias.whitelist && alias.whitelist.includes(userId)) return true
     switch (alias.userlvl) {
@@ -486,8 +504,8 @@ export default class Commander {
     if (this.instances[pluginId].unload) await this.instances[pluginId].unload!()
 
     // Disable default aliases
-    for (const alias of Object.keys(this.getGlobalAliasesById(pluginId))) {
-      delete this.defaultAliases[alias]
+    for (const name in this.defaultAliases) {
+      if (this.defaultAliases[name].target === pluginId) delete this.defaultAliases[name]
     }
 
     // Unload data
@@ -575,7 +593,7 @@ export default class Commander {
     if (self) return // Bot shouldn't trigger commands
     if (irc === null) return
     const params = message.split(' ')
-    const alias = this.getAlias(channelId, params[0].toLowerCase()) || this.getGlobalAlias(params[0].toLowerCase())
+    const alias = this.getAlias(channelId, params[0])
     if (!alias || alias.disabled) return
     const instance = this.instances[alias.target]
     const plugin = this.plugins[alias.target]

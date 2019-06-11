@@ -79,25 +79,20 @@ export default class PluginLibrary {
   public part: TwitchClient['part']
 
   /**
-   * Create a command alias in `channelId`  
-   * This will overwrite any existing aliases
+   * Create or overwrite a command alias in `channelId`  
    * @returns Created alias
    */
-  public createAlias: Commander['createAlias']
-  /** Delete a command alias in `channelId` */
-  public deleteAlias: Commander['deleteAlias']
+  public setAlias: Commander['setAlias']
   /** Return alias of `channelId` */
   public getAlias: Commander['getAlias']
-  /** Return global alias */
-  public getGlobalAlias: Commander['getGlobalAlias']
+  /** Merge `options` to an existing alias of `channelId` */
+  public modAlias: Commander['modAlias']
+  /** Delete a command alias in `channelId` */
+  public delAlias: Commander['delAlias']
   /** Returns all aliases of `channelId` */
   public getAliases: Commander['getAliases']
-  /** Returns all global aliases */
-  public getGlobalAliases: Commander['getGlobalAliases']
   /** Returns all aliases of `pluginId` of `channelId` */
   public getAliasesById: Commander['getAliasesById']
-  /** Returns all global aliases of `pluginId` */
-  public getGlobalAliasesById: Commander['getGlobalAliasesById']
   /** Determine if `userId` with `badges` would be permitted to call this command */
   public isPermitted: Commander['isPermitted']
   /** Determine the remaining cooldown of `alias` in `channelId` for `userId` */
@@ -136,8 +131,8 @@ export default class PluginLibrary {
 
     this.getPath = this.data.getPath.bind(this.data)
     this.getData = this.data.getData.bind(this.data)
-    this.waitData = this.data.waitData.bind(this.data)
     this.setData = this.data.setData.bind(this.data)
+    this.waitData = this.data.waitData.bind(this.data)
     this.autoLoad = this.data.autoLoad.bind(this.data)
     this.load = this.data.load.bind(this.data)
     this.reload = this.data.reload.bind(this.data)
@@ -149,14 +144,12 @@ export default class PluginLibrary {
     this.join = this.client.join.bind(this.client)
     this.part = this.client.part.bind(this.client)
 
-    this.createAlias = this.commander.createAlias.bind(this.commander)
-    this.deleteAlias = this.commander.deleteAlias.bind(this.commander)
+    this.setAlias = this.commander.setAlias.bind(this.commander)
     this.getAlias = this.commander.getAlias.bind(this.commander)
-    this.getGlobalAlias = this.commander.getGlobalAlias.bind(this.commander)
+    this.modAlias = this.commander.modAlias.bind(this.commander)
+    this.delAlias = this.commander.delAlias.bind(this.commander)
     this.getAliases = this.commander.getAliases.bind(this.commander)
-    this.getGlobalAliases = this.commander.getGlobalAliases.bind(this.commander)
     this.getAliasesById = this.commander.getAliasesById.bind(this.commander)
-    this.getGlobalAliasesById = this.commander.getGlobalAliasesById.bind(this.commander)
     this.isPermitted = this.commander.isPermitted.bind(this.commander)
     this.getCooldown = this.commander.getCooldown.bind(this.commander)
     this.reloadPlugin = this.commander.reloadPlugin.bind(this.commander)
@@ -279,7 +272,7 @@ export default class PluginLibrary {
    * @param alias Command alias
    * @param fallback If enabled, help strings of the default group will be returned when `alias`' help property points to an undefined group
    */
-  public getHelp(alias: CommandAlias, fallback = false): string[] | void {
+  public getHelp(alias: DeepReadonly<CommandAlias> | CommandAlias, fallback = false): string[] | void {
     const plugin = this.getPlugin(alias.target)
     if (!plugin || plugin.type !== 'command') return
     // Ungrouped help format
@@ -327,10 +320,10 @@ export default class PluginLibrary {
     const result: { [alias: string]: CommandAlias; } = {}
     if (channelId) {
       // Channel aliases
-      for (const alias in this.data.data[channelId].aliases) {
-        if (this.data.data[channelId].aliases[alias].disabled) continue
+      for (const alias in this.data.data[channelId].aliases.aliases) {
+        if (this.data.data[channelId].aliases.aliases[alias].disabled) continue
         // Channel aliases may and should overwrite default aliases here
-        result[alias] = this.data.data[channelId].aliases[alias]
+        result[alias] = this.data.data[channelId].aliases.aliases[alias]
       }
     } else {
       // Default aliases

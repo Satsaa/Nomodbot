@@ -1,56 +1,56 @@
 {
   "commands": {
     "353": {
-      "__count__": 4565,
+      "__count__": 4615,
       "_paramlengths_": {
-        "4": 3463
+        "4": 3513
       },
       "_prefix_": {
-        "prefix": 3213,
+        "prefix": 3263,
         "user": 1,
         "nick": 1
       }
     },
     "366": {
-      "__count__": 1793,
+      "__count__": 1809,
       "_paramlengths_": {
-        "3": 1516
+        "3": 1532
       },
       "_prefix_": {
-        "prefix": 1472,
+        "prefix": 1488,
         "user": 1,
         "nick": 1
       }
     },
     "372": {
-      "__count__": 968,
+      "__count__": 976,
       "_paramlengths_": {
-        "2": 901
+        "2": 909
       },
       "_prefix_": {
-        "prefix": 900,
+        "prefix": 908,
         "user": 1,
         "nick": 1
       }
     },
     "375": {
-      "__count__": 968,
+      "__count__": 976,
       "_paramlengths_": {
-        "2": 901
+        "2": 909
       },
       "_prefix_": {
-        "prefix": 900,
+        "prefix": 908,
         "user": 1,
         "nick": 1
       }
     },
     "376": {
-      "__count__": 968,
+      "__count__": 976,
       "_paramlengths_": {
-        "2": 901
+        "2": 909
       },
       "_prefix_": {
-        "prefix": 900,
+        "prefix": 908,
         "user": 1,
         "nick": 1
       }
@@ -59,213 +59,213 @@
       "__count__": 3
     },
     "CAP": {
-      "__count__": 974,
+      "__count__": 982,
       "_paramlengths_": {
-        "3": 905
+        "3": 913
       },
       "_prefix_": {
-        "prefix": 904,
+        "prefix": 912,
         "user": 1,
         "nick": 1
       }
     },
     "001": {
-      "__count__": 968,
+      "__count__": 976,
       "_paramlengths_": {
-        "2": 901
+        "2": 909
       },
       "_prefix_": {
-        "prefix": 900,
+        "prefix": 908,
         "user": 1,
         "nick": 1
       }
     },
     "002": {
-      "__count__": 968,
+      "__count__": 976,
       "_paramlengths_": {
-        "2": 901
+        "2": 909
       },
       "_prefix_": {
-        "prefix": 900,
+        "prefix": 908,
         "user": 1,
         "nick": 1
       }
     },
     "003": {
-      "__count__": 968,
+      "__count__": 976,
       "_paramlengths_": {
-        "2": 901
+        "2": 909
       },
       "_prefix_": {
-        "prefix": 900,
+        "prefix": 908,
         "user": 1,
         "nick": 1
       }
     },
     "004": {
-      "__count__": 968,
+      "__count__": 976,
       "_paramlengths_": {
-        "2": 901
+        "2": 909
       },
       "_prefix_": {
-        "prefix": 900,
+        "prefix": 908,
         "user": 1,
         "nick": 1
       }
     },
     "GLOBALUSERSTATE": {
-      "__count__": 966,
-      "badges": 966,
-      "color": 966,
-      "display-name": 966,
-      "emote-sets": 966,
-      "user-id": 966,
-      "user-type": 966,
+      "__count__": 974,
+      "badges": 974,
+      "color": 974,
+      "display-name": 974,
+      "emote-sets": 974,
+      "user-id": 974,
+      "user-type": 974,
       "_paramlengths_": {
-        "0": 899
+        "0": 907
       },
       "_prefix_": {
-        "prefix": 898,
+        "prefix": 906,
         "user": 1,
         "nick": 1
       },
-      "badge-info": 713
+      "badge-info": 721
     },
     "JOIN": {
-      "__count__": 172394,
+      "__count__": 177686,
       "_paramlengths_": {
-        "1": 81135
+        "1": 86427
       },
       "_prefix_": {
-        "prefix": 80824,
-        "user": 80824,
-        "nick": 80824
+        "prefix": 86116,
+        "user": 86116,
+        "nick": 86116
       }
     },
     "USERSTATE": {
-      "__count__": 5325,
-      "badges": 5325,
-      "color": 5325,
-      "display-name": 5325,
-      "emote-sets": 5325,
-      "mod": 5325,
-      "subscriber": 5325,
-      "user-type": 5325,
+      "__count__": 5403,
+      "badges": 5403,
+      "color": 5403,
+      "display-name": 5403,
+      "emote-sets": 5403,
+      "mod": 5403,
+      "subscriber": 5403,
+      "user-type": 5403,
       "_paramlengths_": {
-        "1": 5016
+        "1": 5094
       },
       "_prefix_": {
-        "prefix": 4971,
+        "prefix": 5049,
         "user": 1,
         "nick": 1
       },
-      "badge-info": 2925
+      "badge-info": 3003
     },
     "ROOMSTATE": {
-      "__count__": 1986,
+      "__count__": 2002,
       "broadcaster-lang": 254,
-      "emote-only": 1877,
-      "followers-only": 1847,
-      "r9k": 1817,
-      "rituals": 1813,
-      "room-id": 1986,
-      "slow": 1823,
-      "subs-only": 1874,
+      "emote-only": 1893,
+      "followers-only": 1863,
+      "r9k": 1833,
+      "rituals": 1829,
+      "room-id": 2002,
+      "slow": 1839,
+      "subs-only": 1890,
       "_paramlengths_": {
-        "1": 1518
+        "1": 1534
       },
       "_prefix_": {
-        "prefix": 1473,
+        "prefix": 1489,
         "user": 1,
         "nick": 1
       }
     },
     "MODE": {
-      "__count__": 13610,
+      "__count__": 13687,
       "_paramlengths_": {
-        "3": 3866
+        "3": 3943
       },
       "_prefix_": {
-        "prefix": 3593,
+        "prefix": 3670,
         "user": 1,
         "nick": 1
       }
     },
     "PRIVMSG": {
-      "__count__": 2295343,
-      "badges": 2295343,
-      "color": 2295343,
-      "display-name": 2295343,
-      "emotes": 2295343,
-      "flags": 2295343,
-      "id": 2295343,
-      "mod": 2295343,
-      "room-id": 2295343,
-      "subscriber": 2295343,
-      "tmi-sent-ts": 2295343,
-      "turbo": 2295343,
-      "user-id": 2295343,
-      "user-type": 2295343,
-      "emote-only": 289199,
-      "bits": 919,
+      "__count__": 2300269,
+      "badges": 2300269,
+      "color": 2300269,
+      "display-name": 2300269,
+      "emotes": 2300269,
+      "flags": 2300269,
+      "id": 2300269,
+      "mod": 2300269,
+      "room-id": 2300269,
+      "subscriber": 2300269,
+      "tmi-sent-ts": 2300269,
+      "turbo": 2300269,
+      "user-id": 2300269,
+      "user-type": 2300269,
+      "emote-only": 289359,
+      "bits": 925,
       "_paramlengths_": {
-        "2": 167027
+        "2": 171953
       },
       "_prefix_": {
-        "prefix": 165853,
-        "user": 165853,
-        "nick": 165853
+        "prefix": 170779,
+        "user": 170779,
+        "nick": 170779
       },
-      "badge-info": 156796
+      "badge-info": 161722
     },
     "CLEARCHAT": {
-      "__count__": 26317,
-      "ban-duration": 25716,
-      "room-id": 26317,
-      "target-user-id": 26313,
-      "tmi-sent-ts": 26317,
+      "__count__": 26318,
+      "ban-duration": 25717,
+      "room-id": 26318,
+      "target-user-id": 26314,
+      "tmi-sent-ts": 26318,
       "target-msg-id": 470,
       "_paramlengths_": {
         "1": 3,
-        "2": 658
+        "2": 659
       },
       "_prefix_": {
-        "prefix": 644,
+        "prefix": 645,
         "user": 1,
         "nick": 1
       }
     },
     "USERNOTICE": {
-      "__count__": 16590,
-      "badges": 16590,
-      "color": 16590,
-      "display-name": 16590,
-      "emotes": 16590,
-      "flags": 16590,
-      "id": 14059,
-      "login": 16590,
-      "mod": 16590,
-      "msg-id": 16590,
-      "msg-param-cumulative-months": 13413,
-      "msg-param-months": 15601,
-      "msg-param-should-share-streak": 13413,
-      "msg-param-sub-plan-name": 15601,
-      "msg-param-sub-plan": 15856,
-      "room-id": 16590,
-      "subscriber": 16590,
-      "system-msg": 16590,
-      "tmi-sent-ts": 16590,
+      "__count__": 16632,
+      "badges": 16632,
+      "color": 16632,
+      "display-name": 16632,
+      "emotes": 16632,
+      "flags": 16632,
+      "id": 14101,
+      "login": 16632,
+      "mod": 16632,
+      "msg-id": 16632,
+      "msg-param-cumulative-months": 13449,
+      "msg-param-months": 15640,
+      "msg-param-should-share-streak": 13449,
+      "msg-param-sub-plan-name": 15640,
+      "msg-param-sub-plan": 15897,
+      "room-id": 16632,
+      "subscriber": 16632,
+      "system-msg": 16632,
+      "tmi-sent-ts": 16632,
       "turbo": 12437,
-      "user-id": 16590,
-      "user-type": 16590,
-      "msg-param-streak-months": 2181,
+      "user-id": 16632,
+      "user-type": 16632,
+      "msg-param-streak-months": 2185,
       "msg-param-ritual-name": 709,
-      "msg-param-mass-gift-count": 245,
-      "msg-param-origin-id": 2433,
-      "msg-param-sender-count": 2267,
-      "msg-param-recipient-display-name": 2188,
-      "msg-param-recipient-id": 2188,
-      "msg-param-recipient-user-name": 2188,
+      "msg-param-mass-gift-count": 246,
+      "msg-param-origin-id": 2437,
+      "msg-param-sender-count": 2271,
+      "msg-param-recipient-display-name": 2191,
+      "msg-param-recipient-id": 2191,
+      "msg-param-recipient-user-name": 2191,
       "msg-param-fun-string": 158,
       "msg-param-sender-login": 13,
       "msg-param-sender-name": 13,
@@ -275,35 +275,35 @@
       "msg-param-viewerCount": 4,
       "msg-param-threshold": 4,
       "_paramlengths_": {
-        "1": 1069,
-        "2": 553
+        "1": 1093,
+        "2": 571
       },
       "_prefix_": {
-        "prefix": 1608,
+        "prefix": 1650,
         "user": 1,
         "nick": 1
       },
-      "badge-info": 1509,
-      "msg-param-bits-amount": 1,
-      "msg-param-domain": 1,
-      "msg-param-min-cheer-amount": 1,
-      "msg-param-selected-count": 1
+      "badge-info": 1551,
+      "msg-param-bits-amount": 2,
+      "msg-param-domain": 2,
+      "msg-param-min-cheer-amount": 2,
+      "msg-param-selected-count": 2
     },
     "PART": {
-      "__count__": 183607,
+      "__count__": 188946,
       "_paramlengths_": {
-        "1": 74289
+        "1": 79628
       },
       "_prefix_": {
-        "prefix": 74175,
-        "user": 74175,
-        "nick": 74175
+        "prefix": 79514,
+        "user": 79514,
+        "nick": 79514
       }
     },
     "PING": {
-      "__count__": 6611,
+      "__count__": 6930,
       "_paramlengths_": {
-        "1": 6187
+        "1": 6506
       },
       "_prefix_": {
         "prefix": 1,
@@ -312,9 +312,9 @@
       }
     },
     "PONG": {
-      "__count__": 28839,
+      "__count__": 30364,
       "_paramlengths_": {
-        "1": 28449
+        "1": 29974
       },
       "_prefix_": {
         "prefix": 1,
@@ -338,24 +338,24 @@
       }
     },
     "HOSTTARGET": {
-      "__count__": 1195,
+      "__count__": 1208,
       "_paramlengths_": {
-        "2": 1011
+        "2": 1024
       },
       "_prefix_": {
-        "prefix": 1001,
+        "prefix": 1014,
         "user": 1,
         "nick": 1
       }
     },
     "NOTICE": {
-      "__count__": 1502,
-      "msg-id": 1496,
+      "__count__": 1515,
+      "msg-id": 1509,
       "_paramlengths_": {
-        "2": 1124
+        "2": 1137
       },
       "_prefix_": {
-        "prefix": 1113,
+        "prefix": 1126,
         "user": 1,
         "nick": 1
       },
@@ -384,104 +384,104 @@
   },
   "noticeIds": {
     "submysterygift": {
-      "__count__": 119,
-      "badges": 119,
-      "color": 119,
-      "display-name": 119,
-      "emotes": 119,
-      "flags": 119,
-      "login": 119,
-      "mod": 119,
-      "msg-id": 119,
-      "msg-param-mass-gift-count": 119,
-      "msg-param-origin-id": 119,
-      "msg-param-sender-count": 116,
-      "msg-param-sub-plan": 119,
-      "room-id": 119,
-      "subscriber": 119,
-      "system-msg": 119,
-      "tmi-sent-ts": 119,
-      "user-id": 119,
-      "user-type": 119,
-      "id": 41,
-      "badge-info": 36
+      "__count__": 120,
+      "badges": 120,
+      "color": 120,
+      "display-name": 120,
+      "emotes": 120,
+      "flags": 120,
+      "login": 120,
+      "mod": 120,
+      "msg-id": 120,
+      "msg-param-mass-gift-count": 120,
+      "msg-param-origin-id": 120,
+      "msg-param-sender-count": 117,
+      "msg-param-sub-plan": 120,
+      "room-id": 120,
+      "subscriber": 120,
+      "system-msg": 120,
+      "tmi-sent-ts": 120,
+      "user-id": 120,
+      "user-type": 120,
+      "id": 42,
+      "badge-info": 37
     },
     "subgift": {
-      "__count__": 988,
-      "badges": 988,
-      "color": 988,
-      "display-name": 988,
-      "emotes": 988,
-      "flags": 988,
-      "login": 988,
-      "mod": 988,
-      "msg-id": 988,
-      "msg-param-months": 988,
-      "msg-param-origin-id": 988,
-      "msg-param-recipient-display-name": 988,
-      "msg-param-recipient-id": 988,
-      "msg-param-recipient-user-name": 988,
-      "msg-param-sender-count": 968,
-      "msg-param-sub-plan-name": 988,
-      "msg-param-sub-plan": 988,
-      "room-id": 988,
-      "subscriber": 988,
-      "system-msg": 988,
-      "tmi-sent-ts": 988,
-      "user-id": 988,
-      "user-type": 988,
+      "__count__": 991,
+      "badges": 991,
+      "color": 991,
+      "display-name": 991,
+      "emotes": 991,
+      "flags": 991,
+      "login": 991,
+      "mod": 991,
+      "msg-id": 991,
+      "msg-param-months": 991,
+      "msg-param-origin-id": 991,
+      "msg-param-recipient-display-name": 991,
+      "msg-param-recipient-id": 991,
+      "msg-param-recipient-user-name": 991,
+      "msg-param-sender-count": 971,
+      "msg-param-sub-plan-name": 991,
+      "msg-param-sub-plan": 991,
+      "room-id": 991,
+      "subscriber": 991,
+      "system-msg": 991,
+      "tmi-sent-ts": 991,
+      "user-id": 991,
+      "user-type": 991,
       "msg-param-fun-string": 20,
-      "id": 255,
-      "badge-info": 224
+      "id": 258,
+      "badge-info": 227
     },
     "resub": {
-      "__count__": 1340,
-      "badges": 1340,
-      "color": 1340,
-      "display-name": 1340,
-      "emotes": 1340,
-      "flags": 1340,
-      "login": 1340,
-      "mod": 1340,
-      "msg-id": 1340,
-      "msg-param-cumulative-months": 1340,
-      "msg-param-months": 1340,
-      "msg-param-should-share-streak": 1340,
-      "msg-param-sub-plan-name": 1340,
-      "msg-param-sub-plan": 1340,
-      "room-id": 1340,
-      "subscriber": 1340,
-      "system-msg": 1340,
-      "tmi-sent-ts": 1340,
-      "user-id": 1340,
-      "user-type": 1340,
-      "msg-param-streak-months": 324,
-      "id": 941,
-      "badge-info": 888
+      "__count__": 1373,
+      "badges": 1373,
+      "color": 1373,
+      "display-name": 1373,
+      "emotes": 1373,
+      "flags": 1373,
+      "login": 1373,
+      "mod": 1373,
+      "msg-id": 1373,
+      "msg-param-cumulative-months": 1373,
+      "msg-param-months": 1373,
+      "msg-param-should-share-streak": 1373,
+      "msg-param-sub-plan-name": 1373,
+      "msg-param-sub-plan": 1373,
+      "room-id": 1373,
+      "subscriber": 1373,
+      "system-msg": 1373,
+      "tmi-sent-ts": 1373,
+      "user-id": 1373,
+      "user-type": 1373,
+      "msg-param-streak-months": 328,
+      "id": 974,
+      "badge-info": 921
     },
     "sub": {
-      "__count__": 1280,
-      "badges": 1280,
-      "color": 1280,
-      "display-name": 1280,
-      "emotes": 1280,
-      "flags": 1280,
-      "login": 1280,
-      "mod": 1280,
-      "msg-id": 1280,
-      "msg-param-cumulative-months": 1280,
-      "msg-param-months": 1280,
-      "msg-param-should-share-streak": 1280,
-      "msg-param-sub-plan-name": 1280,
-      "msg-param-sub-plan": 1280,
-      "room-id": 1280,
-      "subscriber": 1280,
-      "system-msg": 1280,
-      "tmi-sent-ts": 1280,
-      "user-id": 1280,
-      "user-type": 1280,
-      "id": 310,
-      "badge-info": 287
+      "__count__": 1283,
+      "badges": 1283,
+      "color": 1283,
+      "display-name": 1283,
+      "emotes": 1283,
+      "flags": 1283,
+      "login": 1283,
+      "mod": 1283,
+      "msg-id": 1283,
+      "msg-param-cumulative-months": 1283,
+      "msg-param-months": 1283,
+      "msg-param-should-share-streak": 1283,
+      "msg-param-sub-plan-name": 1283,
+      "msg-param-sub-plan": 1283,
+      "room-id": 1283,
+      "subscriber": 1283,
+      "system-msg": 1283,
+      "tmi-sent-ts": 1283,
+      "user-id": 1283,
+      "user-type": 1283,
+      "id": 313,
+      "badge-info": 290
     },
     "ritual": {
       "__count__": 102,
@@ -525,24 +525,24 @@
       "badge-info": 5
     },
     "primepaidupgrade": {
-      "__count__": 10,
-      "badge-info": 10,
-      "badges": 10,
-      "color": 10,
-      "display-name": 10,
-      "emotes": 10,
-      "flags": 10,
-      "id": 10,
-      "login": 10,
-      "mod": 10,
-      "msg-id": 10,
-      "msg-param-sub-plan": 10,
-      "room-id": 10,
-      "subscriber": 10,
-      "system-msg": 10,
-      "tmi-sent-ts": 10,
-      "user-id": 10,
-      "user-type": 10
+      "__count__": 11,
+      "badge-info": 11,
+      "badges": 11,
+      "color": 11,
+      "display-name": 11,
+      "emotes": 11,
+      "flags": 11,
+      "id": 11,
+      "login": 11,
+      "mod": 11,
+      "msg-id": 11,
+      "msg-param-sub-plan": 11,
+      "room-id": 11,
+      "subscriber": 11,
+      "system-msg": 11,
+      "tmi-sent-ts": 11,
+      "user-id": 11,
+      "user-type": 11
     },
     "unraid": {
       "__count__": 1,
@@ -584,41 +584,41 @@
       "user-type": 1
     },
     "rewardgift": {
-      "__count__": 1,
-      "badge-info": 1,
-      "badges": 1,
-      "color": 1,
-      "display-name": 1,
-      "emotes": 1,
-      "flags": 1,
-      "id": 1,
-      "login": 1,
-      "mod": 1,
-      "msg-id": 1,
-      "msg-param-bits-amount": 1,
-      "msg-param-domain": 1,
-      "msg-param-min-cheer-amount": 1,
-      "msg-param-selected-count": 1,
-      "room-id": 1,
-      "subscriber": 1,
-      "system-msg": 1,
-      "tmi-sent-ts": 1,
-      "user-id": 1,
-      "user-type": 1
+      "__count__": 2,
+      "badge-info": 2,
+      "badges": 2,
+      "color": 2,
+      "display-name": 2,
+      "emotes": 2,
+      "flags": 2,
+      "id": 2,
+      "login": 2,
+      "mod": 2,
+      "msg-id": 2,
+      "msg-param-bits-amount": 2,
+      "msg-param-domain": 2,
+      "msg-param-min-cheer-amount": 2,
+      "msg-param-selected-count": 2,
+      "room-id": 2,
+      "subscriber": 2,
+      "system-msg": 2,
+      "tmi-sent-ts": 2,
+      "user-id": 2,
+      "user-type": 2
     }
   },
   "userNoticeIds": {
     "host_on": {
-      "__count__": 1009,
-      "msg-id": 1009
+      "__count__": 1018,
+      "msg-id": 1018
     },
     "emote_only_on": {
       "__count__": 6,
       "msg-id": 6
     },
     "host_target_went_offline": {
-      "__count__": 80,
-      "msg-id": 80
+      "__count__": 84,
+      "msg-id": 84
     },
     "emote_only_off": {
       "__count__": 6,

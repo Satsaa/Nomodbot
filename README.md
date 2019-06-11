@@ -37,19 +37,19 @@ Accepted when the parameter is not defined or is exactly the same (case-sensitiv
 ```
 [<name>] | [<default>] | [<track_number>]
 ```
-Just like variable parameters but don't need to be defined. A non-optional parameter cannot follow
+Just like variable parameters but don't need to be defined. Following parameters must also be optional  
 
 ### Tuple parameter
 ```
 add|del|edit | <this|that|reg/^thus$/i> | [1|2|3] | case|Sen|sitive
 ```
-Accepted when one of the exact strings is matched. All of the strings are case-sensitive if any of them have an uppercase variable.
+Accepted when one of the exact strings is matched. All of the strings are case-sensitive if any of them have an uppercase variable  
 
 ### Multi-word parameter
 ```
 777... | <message...> | [<reason...>] | <USERS...> | <0-1...> | 0|2...
 ```
-Accepted when each of the upcoming words passes the check. No parameter can follow.  
+Accepted when each of the upcoming words passes the check. No other parameter can follow  
 
 ### Advanced variable parameter
 ```
@@ -60,15 +60,17 @@ Accepted when each of the upcoming words passes the check. No parameter can foll
 **WORD**: Accepted if NOT a valid number (Anything that converts to NaN with `+str`)  
 **INTEGER**, **INDEX**: Accepted if a valid whole number  
 **Range (X-Y)**: Accepts numbers between the lowest inputted number and the highest (inclusive). Negative values are typed like "<-100--90>".  
-Accepts whole numbers if none of the numbers had a decimal place, otherwise, fractions are allowed
+Accepts whole numbers if none of the numbers had a decimal place, otherwise, fractions are allowed  
+**Regexp (name/regex/flags)**: Accepts anything that matches with the regex  
+
 
 The following parameters are accepted as valid if the parameter is defined but a message is returned if the check is not passed.  
-
 
 **USER**, **CHANNEL**: Checks for the existence of the inputted user. Input is converted to user ids   
 **COMMAND**: Checks that the inputted command exists. Input is converted to lowercase  
 **!COMMAND**: Checks that the inputted command DOESN'T exists. Input is converted to lowercase  
 **PLUGIN**: Checks that the inputted plugin (by id) exists. Input is converted to lowercase  
+**!PLUGIN**: Checks that the inputted plugin (by id) DOESN'T exists. Input is converted to lowercase  
 
 Plural versions are also accepted, INDEX -> INDEXES or USER -> USERS and so on.  
 

@@ -78,7 +78,7 @@ export class Instance implements PluginInstance {
           break
         case 'raw':
           if (!params[2]) return 'Define a command name (param 2)'
-          const alias = this.l.getAlias(channelId, params[2]) || this.l.getGlobalAlias(params[2])
+          const alias = this.l.getAlias(channelId, params[2])
           if (!alias) {
             return 'Cannot find that command'
           }
@@ -124,9 +124,9 @@ export class Instance implements PluginInstance {
 
       console.log(data)
 
-      if (!overwrite && (this.l.getAlias(channelId, alias) || this.l.getGlobalAlias(alias))) return 'That command already exists'
+      if (!overwrite && this.l.getAlias(channelId, alias)) return 'That command already exists'
 
-      this.l.createAlias(channelId, alias, {target: options.id, cooldown: 10, userCooldown: 30, group: 'response' , data})
+      this.l.setAlias(channelId, alias, {target: options.id, cooldown: 10, userCooldown: 30, group: 'response' , data})
       return `Response created: ${alias}`
     }
   }
