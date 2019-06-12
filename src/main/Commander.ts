@@ -75,10 +75,10 @@ export interface CommandAlias {
    * Number: 0: anyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
    */
   userlvl?: userlvls,
-  /** Cooldowns are in seconds. This can either be a number or ratelimiter options object */
-  cooldown?: number | {duration?: number, delay?: number, limit?: number}
-  /** Cooldowns are in seconds. This can either be a number or ratelimiter options object */
-  userCooldown?: number | {duration?: number, delay?: number, limit?: number}
+  /** Cooldowns are in seconds */
+  cooldown?: number
+  /** Cooldowns are in seconds */
+  userCooldown?: number
   /** Marks the alias as hidden (e.g. hidden commands are not shown with !commands) */
   hidden?: true
   /** Group to use in supporting functionality. Defaults to 'default' */
@@ -91,6 +91,8 @@ export interface CommandAlias {
   blacklist?: number[]
 }
 
+type CommandAliasSource = CommandAlias | ReadonlyCommandAlias
+
 type ReadonlyCommandAlias = DeepReadonly<CommandAlias>
 
 /** Properties for default aliases */
@@ -99,11 +101,11 @@ export interface DefaultCommandAlias extends Readonly<Omit<CommandAlias, 'blackl
 type Source = MaybeArray<{options: PluginOptions, Instance: new() => PluginInstance}>
 
 /** isPermitted helper type */
-interface CommandAliasLike {
+type CommandAliasLike = {
   userlvl?: userlvls,
   whitelist?: number[],
   blacklist?: number[]
-}
+} | DeepReadonly<{userlvl?: userlvls, whitelist?: number[], blacklist?: number[]}>
 
 /** userlvls */
 export enum userlvls {
@@ -176,6 +178,7 @@ export default class Commander {
     this.waits = {}
     this.validator = new ParamValidator(this, this.client)
 
+    this.client.on('mod', this.onMod.bind(this))
     this.client.on('chat', this.onChat.bind(this))
   }
 
@@ -259,7 +262,7 @@ export default class Commander {
   }
 
   /** Merge `options` to an existing alias `alias` */
-  public modAlias(channelId: number, alias: string, options: Partial<CommandAlias>): ReadonlyCommandAlias | void {
+  public modAlias(channelId: number, alias: string, options: Partial<CommandAliasSource>): ReadonlyCommandAlias | void {
     alias = alias.toLowerCase()
     if (!((this.data.data[channelId] || {}).aliases.aliases)) return
     if (!this.data.data[channelId].aliases.aliases[alias]) {
@@ -268,31 +271,35 @@ export default class Commander {
       if (!this.defaultAliases[alias]) return
       this.data.data[channelId].aliases.aliases[alias] = deepClone(this.defaultAliases[alias])
     }
-    this.data.data[channelId].aliases.aliases[alias] = {...this.data.data[channelId].aliases.aliases[alias], ...options}
+    this.data.data[channelId].aliases.aliases[alias] = deepClone({...this.data.data[channelId].aliases.aliases[alias], ...options})
     this.data.data[channelId].aliases.deletes[alias] = true
+    return this.data.data[channelId].aliases.aliases[alias]
   }
 
-  public setAlias(channelId: number, alias: string, options: CommandAlias): ReadonlyCommandAlias | void {
+  public setAlias(channelId: number, alias: string, options: CommandAliasSource): ReadonlyCommandAlias | void {
     alias = alias.toLowerCase()
     if (!((this.data.data[channelId] || {}).aliases.aliases)) return
-    this.data.data[channelId].aliases.aliases[alias] = options
+    this.data.data[channelId].aliases.aliases[alias] = deepClone(options)
     this.data.data[channelId].aliases.deletes[alias] = true
+    return this.data.data[channelId].aliases.aliases[alias]
   }
 
   public getAlias(channelId: number, alias: string): ReadonlyCommandAlias | void {
     alias = alias.toLowerCase()
-    if (!(((this.data.data[channelId] || {}).aliases.aliases || {})[alias])) return
-    if (!this.data.data[channelId].aliases.deletes[alias]) return this.defaultAliases[alias]
+    if (!((this.data.data[channelId] || {}).aliases)) return
+    if (!this.data.data[channelId].aliases.deletes[alias]) {
+      return this.defaultAliases[alias] || this.data.data[channelId].aliases.aliases[alias]
+    }
     return this.data.data[channelId].aliases.aliases[alias]
   }
 
   public getAliases(channelId: number): {[x: string]: ReadonlyCommandAlias} | void {
     if (!((this.data.data[channelId] || {}).aliases)) return
-    const globals: {[x: string]: DefaultCommandAlias} = {}
+    const defaults: {[x: string]: DefaultCommandAlias} = {}
     for (const key in this.defaultAliases) {
-      if (!this.data.data[channelId].aliases.deletes[key]) globals[key] = this.defaultAliases[key]
+      if (!this.data.data[channelId].aliases.deletes[key]) defaults[key] = this.defaultAliases[key]
     }
-    return {...globals, ...this.data.data[channelId].aliases.aliases}
+    return {...defaults, ...this.data.data[channelId].aliases.aliases}
   }
 
   public getAliasesById(channelId: number, pluginId: string): {[x: string]: ReadonlyCommandAlias} | void  {
@@ -311,15 +318,11 @@ export default class Commander {
   }
 
   /** Determine if `userId` with `badges` would be permitted to call this alias */
-  public isPermitted(alias: DeepReadonly<CommandAliasLike>, userId: number, badges: IrcMessage['tags']['badges'], options: IsPermittedOptions = {}) {
+  public isPermitted(alias: CommandAliasLike, userId: number, badges: IrcMessage['tags']['badges'], options: IsPermittedOptions = {}) {
     // Number: 0: anyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
     if (this.masters.includes(userId)) return true // Master
     if (!badges) badges = {}
-    if (alias.blacklist && alias.blacklist.includes(userId)) {
-      if (!badges.moderator && !badges.broadcaster) return false
-      // !!! Removing moderator/broadcaster entries was removed in favor of filtering on mod event
-      // !!! Moderator gained -> remove entries from aliases
-    }
+    if (alias.blacklist && alias.blacklist.includes(userId) && !badges.moderator && !badges.broadcaster) return false
     if (!options.ignoreWhiteList && alias.whitelist && alias.whitelist.includes(userId)) return true
     switch (alias.userlvl) {
       case undefined:
@@ -589,6 +592,21 @@ export default class Commander {
     }
   }
 
+  private async onMod(channelId: number, login: string, mod: boolean) {
+    // Remove moderators from blacklists
+    if (!mod) return
+    const userId = await this.client.api.getId(login, true)
+    if (!userId) return
+    const aliases = this.getAliases(channelId)
+    if (!aliases) return
+    for (const name in aliases) {
+      if (aliases[name].blacklist) {
+        const newList = aliases[name].blacklist!.filter(v => v !== userId)
+        this.modAlias(channelId, name, {blacklist: newList})
+      }
+    }
+  }
+
   private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean, self: boolean, irc: PRIVMSG | null) {
     if (self) return // Bot shouldn't trigger commands
     if (irc === null) return
@@ -621,7 +639,7 @@ export default class Commander {
           if (cooldowns) {
             // Add entries to cooldowns
             if (alias.cooldown) cooldowns.shared[alias.target].push(Date.now())
-            if (alias.userCooldown) cooldowns.user[alias.target][userId].push(Date.now())
+            if (alias.userCooldown && alias.userCooldown > (alias.cooldown || 0)) cooldowns.user[alias.target][userId].push(Date.now())
           }
           const validation = await this.validator.validate(channelId, plugin.id, alias.group || 'default', params.slice(1))
           if (!validation.pass) {

@@ -265,6 +265,7 @@ export default class TwitchClient {
   /** Send `msg` to `channelId` */
   public chat(channelId: number, msg: string, options: {command?: boolean} = {}) {
     return new Promise((resolve) => {
+      msg = msg.replace(/\n/g, '')
       const login = this.channels[channelId]
       if (!login) return resolve(false)
       if (!this.clientData.channels[channelId]) return resolve(false)
@@ -286,13 +287,15 @@ export default class TwitchClient {
         if (this.clientData.channels[channelId].phase) msg += this.opts.dupeAffix
         this.send(`PRIVMSG #${login} :${msg}`)
         const res = await eventTimeout(this, 'userstate', {
-          timeout: this.getLatency(), matchArgs: [channelId, {'display-name': this.globaluserstate['display-name']}]})
+          timeout: this.getLatency(), matchArgs: [channelId, {'display-name': this.globaluserstate['display-name']}],
+        })
         if (!res.timeout) {
+          console.log(`[${await this.api.getLogin(channelId)}] bot: ${msg}`)
           // Emit own messages
           const botId = await this.api.getId(this.opts.username)
           if (!botId) return this.failHandle(undefined, 'BOT ID')
           this.emit('chat', channelId, botId, res.args[1] as PRIVMSG['tags'], msg, msg.search(/^(\.|\/|\\)me/) !== -1, true, null)
-        }
+        } else console.error(`[${await this.api.getLogin(channelId)}] Failed to send message: ${msg}`)
         resolve(!res.timeout)
       })
     })
@@ -301,6 +304,7 @@ export default class TwitchClient {
   /** Whisper `msg` to `userId` */
   public whisper(userId: number, msg: string) {
     return new Promise(async (resolve) => {
+      msg = msg.replace(/\n)/g, '')
       const login = await this.api.getLogin(userId)
       if (!login) return resolve(false)
       this.whisperRateLimiter.queue(() => {
@@ -335,7 +339,6 @@ export default class TwitchClient {
   private doc(msg: IrcMessage) {
     if (msg.cmd !== null) {
       // tag types. Types are now in a predefined list
-
       // noticeIds
       if (msg.cmd === 'NOTICE' && typeof msg.tags['msg-id'] === 'string') {
         const tag3 = msg.tags['msg-id'].toString()
@@ -350,6 +353,10 @@ export default class TwitchClient {
         }
       } else if (msg.cmd === 'USERNOTICE' && typeof msg.tags['msg-id'] === 'string') {
         const tag3 = msg.tags['msg-id'].toString()
+        if (tag3 === 'rewardgift') { // !!! Inspect reward gifts
+          console.error('rewardgift!')
+          console.log(msg)
+        }
         if (!this.messageTypes.noticeIds[tag3]) this.messageTypes.noticeIds[tag3] = { __count__: 1}
         else this.messageTypes.noticeIds[tag3].__count__++
         const commandObj = this.messageTypes.noticeIds[tag3]

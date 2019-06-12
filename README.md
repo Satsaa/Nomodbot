@@ -19,7 +19,8 @@ If a help string doesn't have the character ":", it will be ignored for validati
 ```
 add | del | notcasesensitive | cAseSensitive
 ```
-Accepted when the input is exactly the same (case-sensitive if the parameter name contains uppercase characters)
+Accepted when the input is exactly the same (case-sensitive if the parameter name contains uppercase characters).  
+Input is converted to lowercase if only lowercase characters were in the parameter  
 
 ### Variable parameter
 ```
@@ -44,6 +45,7 @@ Just like variable parameters but don't need to be defined. Following parameters
 add|del|edit | <this|that|reg/^thus$/i> | [1|2|3] | case|Sen|sitive
 ```
 Accepted when one of the exact strings is matched. All of the strings are case-sensitive if any of them have an uppercase variable  
+Input is converted to lowercase if only lowercase characters were in the tuple parameter  
 
 ### Multi-word parameter
 ```

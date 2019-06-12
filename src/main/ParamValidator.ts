@@ -105,6 +105,11 @@ export default class ParamValidator {
                 default:
               }
             }
+          } else { // Array
+            if (!_cmdParams[i].var && !_cmdParams[i].case) {
+              replace[i] = words[i].toLowerCase()
+              console.log(words[i].toLowerCase())
+            }
           }
         }
 
@@ -250,7 +255,7 @@ export default class ParamValidator {
               return `${whole ? 'a whole' : 'any'} number between ${min} and ${max}`
             }
 
-            return addArticle(name.replace('_', ' '))
+            return addArticle(name.replace(/_/g, ' '))
         }
       }
     }

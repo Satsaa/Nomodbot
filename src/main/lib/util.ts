@@ -208,7 +208,7 @@ export function parseTimeStr(str: string): number {
 export function dateString(ms: number, separator = '-') {
   let dateStr = new Date(ms).toISOString()
   dateStr = dateStr.substring(0, dateStr.indexOf('T'))
-  if (separator) return dateStr.replace(/=/gi, separator)
+  if (separator) return dateStr.replace(/=/g, separator)
   else return dateStr
 }
 
@@ -222,7 +222,7 @@ export function insert(str: string, index: number, insert: string) { return str.
 
 /**
  * Returns `value` `singular` or `value` `plural` based on `value`
- * @param v If this is 1 or '1' `singular` is returned
+ * @param v If this is 1, '1' or 'one' `singular` is returned
  * @param singular Singular form
  * @param plural Plural form. Defaults to `singular + 's'`
  * @param noValue `value` wont be returned with the result
@@ -235,8 +235,8 @@ export function plural(v: string | number, singular: string, plural?: string | b
     noValue = plural
     plural = old
   }
-  if (noValue) return (v === 1 || v === '1' ? `${singular}` : `${plural || singular + 's'}`)
-  return (v === 1 || v === '1' ? `${v} ${singular}` : `${v} ${plural || singular + 's'}`)
+  if (noValue) return (v === 1 || v === '1' || v === 'one' ? `${singular}` : `${plural || singular + 's'}`)
+  return (v === 1 || v === '1' || v === 'one' ? `${v} ${singular}` : `${v} ${plural || singular + 's'}`)
 }
 
 const onExitCbs: Array<(code: number) => void> = []

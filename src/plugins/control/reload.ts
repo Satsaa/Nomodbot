@@ -31,7 +31,7 @@ export class Instance implements PluginInstance {
     let subType = ~~params[1]
     let name = params[2]
     if (!params[2]) {
-      if (!params[2]) return 'Define atleast a file name (params 1+)'
+      if (!params[1]) return 'Define atleast a file name (params 1+)'
       // Channel specific with single param
       subType = channelId
       name = params[1]

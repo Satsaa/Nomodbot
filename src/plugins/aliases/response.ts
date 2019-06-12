@@ -18,6 +18,7 @@ export const options: PluginOptions = {
       'Create a response: {alias} add <!COMMAND> <message...>',
       'Edit a response: {alias} edit <COMMAND> <message...>',
       'Get the raw response string: {alias} raw <COMMAND>',
+      'Delete a response or a command: {alias} delete <COMMAND>',
     ],
     response: [
       'Respond with message: {alias} [<parameters...>]',
@@ -69,26 +70,22 @@ export class Instance implements PluginInstance {
       return result
     } else { // Control alias (no data key)
       let overwrite = false
-      if (!params[1]) return 'Define an action (param 2)'
       switch (params[1].toLowerCase()) {
         case 'add':
           break
         case 'edit':
           overwrite = true
           break
+        case 'delete':
+          const aliasName = params[2]
+          if (this.l.delAlias(channelId, aliasName)) return 'Command successfully deleted'
+          else return 'Command deletion failed'
         case 'raw':
-          if (!params[2]) return 'Define a command name (param 2)'
           const alias = this.l.getAlias(channelId, params[2])
-          if (!alias) {
-            return 'Cannot find that command'
-          }
-          if (alias.target !== options.id || !alias.data || !Array.isArray(alias.data)) return 'That command is not a valid response command'
-          return alias.data.join('')
-        default:
-          return 'Invalid action (param 1)'
+          if (!alias) return 'no command'
+          if (alias.target !== options.id || !alias.data || !Array.isArray(alias.data)) return 'That command is not a response command'
+          return `${params[2]}: "${alias.data.join('')}"`
       }
-      if (!params[2]) return 'Define a command name (param 2)'
-      if (!params[3]) return 'Define a message (params 3+)'
 
       const alias = params[2].toLowerCase()
       const message = params.slice(3).join(' ')
