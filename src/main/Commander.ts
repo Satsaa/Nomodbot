@@ -629,11 +629,11 @@ export default class Commander {
         // Master users, mods and the broadcaster don't care about cooldowns
         const validation = await this.validator.validate(channelId, plugin.id, alias.group || 'default', params.slice(1))
         if (!validation.pass) {
-          return this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, validation.message, irc)} ${validation.message}`)
+          return this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, validation.message, irc)}${validation.message}`)
         }
         const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown: 0, irc})
         if (res) {
-          this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, res, irc)} ${res}`)
+          this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, res, irc)}${res}`)
         }
       } else {
         const cooldown = this.getCooldown(channelId, userId, alias)
@@ -646,10 +646,10 @@ export default class Commander {
           }
           const validation = await this.validator.validate(channelId, plugin.id, alias.group || 'default', params.slice(1))
           if (!validation.pass) {
-            return this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, validation.message, irc)} ${validation.message}`)
+            return this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, validation.message, irc)}${validation.message}`)
           }
           const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
-          if (res) this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, res, irc)} ${res}`)
+          if (res) this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, res, irc)}${res}`)
         } else { // On cooldown
           if (instance.cooldown) instance.cooldown(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
           return
@@ -657,7 +657,7 @@ export default class Commander {
       }
     }
     async function addUser(this: Commander, atUser: true | undefined, message: string, irc: PRIVMSG): Promise<string> {
-      return this.shouldAtUser(atUser, message, irc) ? this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown') : ''
+      return this.shouldAtUser(atUser, message, irc) ? this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown') + ' ' : ''
     }
   }
 }
