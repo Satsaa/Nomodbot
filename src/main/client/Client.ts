@@ -193,6 +193,14 @@ export default class TwitchClient {
     this.reconnecting = false
     this.reconnects = 0
     this.latency = 0
+    // Doc file
+    fs.mkdirSync('./misc/', {recursive: true})
+    try {
+      fs.accessSync('./misc/seenMessageTypes.json', fs.constants.R_OK | fs.constants.W_OK)
+    } catch (err) {
+      if (err.code === 'ENOENT') fs.writeFileSync('./misc/seenMessageTypes.json', '{}')
+      else throw err
+    }
     this.messageTypes = JSON.parse(fs.readFileSync('./misc/seenMessageTypes.json', {encoding: 'utf8'}))
 
     this.ids = {}
@@ -344,6 +352,7 @@ export default class TwitchClient {
       // noticeIds
       if (msg.cmd === 'NOTICE' && typeof msg.tags['msg-id'] === 'string') {
         const tag3 = msg.tags['msg-id'].toString()
+        if (!this.messageTypes.userNoticeIds)  this.messageTypes.userNoticeIds = {}
         if (!this.messageTypes.userNoticeIds[tag3]) this.messageTypes.userNoticeIds[tag3] = { __count__: 1}
         else this.messageTypes.userNoticeIds[tag3].__count__++
         for (const tag in msg.tags) {
@@ -359,6 +368,7 @@ export default class TwitchClient {
           console.error('rewardgift!')
           console.log(msg)
         }
+        if (!this.messageTypes.noticeIds)  this.messageTypes.noticeIds = {}
         if (!this.messageTypes.noticeIds[tag3]) this.messageTypes.noticeIds[tag3] = { __count__: 1}
         else this.messageTypes.noticeIds[tag3].__count__++
         const commandObj = this.messageTypes.noticeIds[tag3]
@@ -370,6 +380,7 @@ export default class TwitchClient {
         }
       }
       // commands
+      if (!this.messageTypes.commands)  this.messageTypes.commands = {}
       if (!this.messageTypes.commands[msg.cmd]) this.messageTypes.commands[msg.cmd] = { __count__: 1}
       else this.messageTypes.commands[msg.cmd].__count__++
       const commandObj = this.messageTypes.commands[msg.cmd]

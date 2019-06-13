@@ -9,3 +9,4 @@ tsconfig.tsbuildinfo
 delet default snippets.ahk
 /src/tools/logConverter
 !/src/tools/logConverter/logConverter.ts
+misc/seenMessageTypes.json
