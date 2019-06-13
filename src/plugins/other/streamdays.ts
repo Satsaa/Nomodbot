@@ -8,16 +8,19 @@ export const options: PluginOptions = {
   title: 'StreamDays',
   description: 'Tells the days the streamer usually streams on',
   default: {
-    alias: ['?day', '?days', '?streamday', '?streamdays'],
+    alias: ['?days', '?streamday', '?streamdays'],
     options: {
       cooldown: 10,
       userCooldown: 30,
     },
   },
   help: [
-    'Tell the days {channel} usually streams on: {alias} [<7-98>]',
+    'Tell the days {channel} usually streams on: {alias} [<1-8>]',
   ],
+  noAtUser: true,
 }
+
+const DAY = 86400000
 
 export class Instance implements PluginInstance {
 
@@ -32,14 +35,29 @@ export class Instance implements PluginInstance {
       const recent = await this.l.api.recentBroadcasts(channelId)
       if (typeof recent !== 'object') return 'Cannot resolve recent broadcasts'
 
-      const count = Math.ceil((+params[1] || 28) / 7) * 7 // Round to larger divisor of 7
-      const videos = recent.data.slice(0, count)
-      const dayCounts = [0, 0, 0, 0, 0, 0, 0]
-      for (const video of videos) {
-        dayCounts[new Date(video.created_at).getDay()]++
+      const weeks = +params[1] || 8 // 8 months for affiliates
+      const videos = recent.data
+      if (videos.length < 1) return 'There are no vods :('
+      const toDay = new Date().getTime() / DAY
+
+      const streamCounts = [0, 0, 0, 0, 0, 0, 0]
+
+      let prevDateString = ''
+      let total = 0
+      for (let i = 0; i < weeks * 7 || i < videos.length; i++) {
+        const date = new Date(videos[i].created_at)
+        if (date.getTime() / DAY < toDay - weeks * 7) { // Stop on too old entries
+          total = i
+          break
+        }
+        const dateString = `${date.getUTCFullYear()}.${date.getUTCMonth()}.${date.getUTCDate()}`
+         // Ignore multiple streams in one day
+        if (prevDateString !== dateString) streamCounts[date.getUTCDay()]++
+        prevDateString = dateString
       }
-      const percentages = dayCounts.map(v => v / count / 7)
-      return `Monday: ${Math.round(percentages[6] * 100)}%, tuesday: ${Math.round(percentages[0] * 100)}, wednesday: ${Math.round(percentages[1] * 100)}, thursday: ${Math.round(percentages[2] * 100)}, friday: ${Math.round(percentages[3] * 100)}, saturday: ${Math.round(percentages[4] * 100)}, sunday: ${Math.round(percentages[5] * 100)}`
+
+      const percentages = streamCounts.map((v, i) => Math.round(v / weeks  * 100) + '%')
+      return `Likelihood of stream (average of ${this.l.u.plural(Math.ceil(total / 7), 'week')}): Mon: ${percentages[1]}, tue: ${percentages[2]}, wed: ${percentages[3]}, thu: ${percentages[4]}, fri: ${percentages[5]}, sat: ${percentages[6]}, sun: ${percentages[0]}`
 
     } catch (err) {
       console.error(err)
