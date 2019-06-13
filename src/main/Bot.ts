@@ -10,7 +10,7 @@ import ParamValidator from './ParamValidator'
 export interface BotOptions {
   masters: number[],
 }
-
+console.error('test')
 export default class Bot {
 
   private client: Client
