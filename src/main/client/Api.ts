@@ -400,7 +400,7 @@ export default class TwitchApi {
     const cached = this.handleGeneric(channelCache, this.deprecate.recentBroadcasts, generic) as VideosResponse | undefined
     if (cached) return cached
 
-    const res = await this._videos({user_id: channelId, first: 100})
+    const res = await this._videos({user_id: channelId, first: 100, type: 'archive'})
     if (typeof res === 'object') {
       channelCache.res = res
       channelCache.time = Date.now()

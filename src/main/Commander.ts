@@ -612,13 +612,14 @@ export default class Commander {
   private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean, self: boolean, irc: PRIVMSG | null) {
     if (self) return // Bot shouldn't trigger commands
     if (irc === null) return
-    const params = message.split(' ')
+    let params = message.split(' ')
     const alias = this.getAlias(channelId, params[0])
     if (!alias || alias.disabled) return
     const instance = this.instances[alias.target]
     const plugin = this.plugins[alias.target]
     if (plugin.type !== 'command') return console.log(`Trying to call a non command: ${alias.target}`)
     if (!plugin.noOmitAtUser) message = message.replace(/ @.*/, '') // Remove @user... from command calls
+    params = message.split(' ')
     // Make sure the plugin is loaded
     if (!instance) return console.log(`Cannot call unloaded command: ${alias.target}`)
     if (!this.plugins[alias.target]) return console.log(`Alias has an unknown target id ${alias.target}`)
