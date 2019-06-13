@@ -59,6 +59,8 @@ export interface Command {
    * \@user is inserted when the message is short and doesn't include the user's login or display name
    */
   noAtUser?: true
+  /** Disable removal of @user and the following words when calling this command */
+  noOmitAtUser?: true
 }
 
 interface IsPermittedOptions {
@@ -616,6 +618,7 @@ export default class Commander {
     const instance = this.instances[alias.target]
     const plugin = this.plugins[alias.target]
     if (plugin.type !== 'command') return console.log(`Trying to call a non command: ${alias.target}`)
+    if (!plugin.noOmitAtUser) message = message.replace(/ @.*/, '') // Remove @user... from command calls
     // Make sure the plugin is loaded
     if (!instance) return console.log(`Cannot call unloaded command: ${alias.target}`)
     if (!this.plugins[alias.target]) return console.log(`Alias has an unknown target id ${alias.target}`)

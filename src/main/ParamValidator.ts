@@ -69,6 +69,7 @@ export default class ParamValidator {
             const checks = _cmdParams[i].multi ? words.length - 1 : 1
             for (let ii = 0; ii < checks; ii++) {
               const word = words[i + ii]
+              if (!word) continue
               const lc = word.toLowerCase()
               switch (pure) {
                 case 'USERS':

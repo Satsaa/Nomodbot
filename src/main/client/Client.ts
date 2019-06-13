@@ -48,6 +48,7 @@ export interface TwitchClientOptions {
   username: string
   password: string
   clientId: string
+  clientSecret?: string | null
   server?: string
   secure?: boolean
   port?: number
@@ -117,6 +118,7 @@ export default class TwitchClient {
    */
   constructor(options: TwitchClientOptions) {
     this.opts = {
+      clientSecret: null,
       server: 'irc-ws.chat.twitch.tv',
       secure: false,
       port: u.get(options.port, options.secure ? 443 : 80),
@@ -171,7 +173,7 @@ export default class TwitchClient {
     this.rateLimiter = new RateLimiter(this.opts.msgRLOpts)
     this.whisperRateLimiter = new RateLimiter(this.opts.whisperRLOpts)
 
-    this.api = new TwitchApi({clientId: this.opts.clientId, dataRoot: this.opts.dataRoot})
+    this.api = new TwitchApi({clientId: this.opts.clientId, clientSecret: this.opts.clientSecret, dataRoot: this.opts.dataRoot})
 
     // Match rateLimiter's options length with times lengths
     // Make sure the times arrays are big enough
@@ -732,7 +734,16 @@ export default class TwitchClient {
       case 'NOTICE': // <tags> <prefix> NOTICE #<channel> :<message>
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return this.failHandle(msg, msg.cmd)
+        if (!channelId) {
+          const last = msg.params[msg.params.length - 1] || ''
+          if (last === 'Login authentication failed'
+            || last === 'Login unsuccessful'
+            || last === 'Improperly formatted auth') {
+            console.error(last)
+            process.exit(1)
+          }
+          return this.failHandle(msg, msg.cmd)
+        }
         if (msg.tags['msg-id'] === 'msg_ratelimit') this.ircLog('Rate limited')
         this.emit('notice', channelId, msg.tags, msg.params[1])
         switch (msg.tags['msg-id']) {

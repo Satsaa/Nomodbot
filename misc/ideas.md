@@ -6,20 +6,6 @@ Support file types and derive types from the file type
 
 - .txt: string, .json: object, .map: map,  
 
-## Add qol features to command plugins
-
-### parameter type checking
-- Could use syntax like: "exact <variable> [optional] [<optional_var>] <NUMBER> <USER> <multiword_var...>"
-- Could also be merged into help strings. Then syntax would be: "Action explanation: exact <variable> [optional]"
-  - Forbids use of ":" except once before parameters
-- Case never matters for an input but uppercase fields are types
-- Advanced types like "USER" will check if a user with that login name exists and converts the field to an userid
-- Multiwords always last
-- Can have multiple strings. Prioritizes first strings
-- First string with all params present will call the command
-- Example: for !response
-  - edit <command> <response...>
-
 ## Data loaders and unloaders
 
 Options for loader and unloader functions

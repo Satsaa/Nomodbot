@@ -34,6 +34,7 @@ export class Instance implements PluginInstance {
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     const targetId = params[1] ? await this.l.api.getId(params[1]) : userId
     if (!targetId) return 'Cannot find a user with that name'
+    const self = targetId === userId
     const display = params[1] ? await this.l.api.getDisplay(targetId) : tags['display-name']
 
     if (!this.log.getData) return 'Log data unavailable'
@@ -44,7 +45,7 @@ export class Instance implements PluginInstance {
     if (!length) return 'Bad length returned'
     if (length <= 1) return `${targetId === userId ? 'You have' : `${display} has`} no logged messages`
 
-    const ms = this.log.getTime(channelId, targetId, length)
+    const ms = this.log.getTime(channelId, targetId, self ? (length > 0 ? length - 1 : length) : length)
     if (!ms) return 'Bad time returned'
 
     const since = this.l.u.timeSince(ms, 1, true)

@@ -30,6 +30,7 @@ export default class Bot {
       username: secretKey.getKey('./cfg/keys.json', 'twitch', 'username'),
       password: secretKey.getKey('./cfg/keys.json', 'twitch', 'password'),
       clientId: secretKey.getKey('./cfg/keys.json', 'twitch', 'client-id'),
+      clientSecret: secretKey.getKey('./cfg/keys.json', 'twitch', 'client-secret'), // Optional but preferred for ~25x more api possibilities
       dataRoot: './data/',
       logInfo: true,
       // logAll: true,

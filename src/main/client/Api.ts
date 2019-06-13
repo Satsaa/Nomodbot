@@ -25,10 +25,17 @@ interface GenericOptions {
 }
 
 interface ApiOptions {
-  /** Client id which will be used to make requests */
-  clientId: string,
+  /** Client id which will be used to get a bearer token */
+  clientId: string
+  /** Client id which will be used to get a bearer token */
+  clientSecret?: string | null
   /** Bot data root folder path */
   dataRoot: string
+}
+
+interface ApiData {
+  bearer: null, expire: 0,
+  users: Array<[number, string, string]>
 }
 
 export default class TwitchApi {
@@ -52,6 +59,16 @@ export default class TwitchApi {
   private rlRemaining: number
   /** Bucket will reset to limit at ms */
   private rlReset: number
+
+  /** Bearer token */
+  private bearer?: string | null
+  /** Bearer expire time */
+  private expire: number
+  /** Bearer schedule/timeout */
+  private bearerTimeout: NodeJS.Timeout | null
+  /** Block bearer scheduling/timeout */
+  private blockBearerTimeout: boolean
+
   /** Contains deprecation times for caches */
   private deprecate: {
     recentBroadcasts: number
@@ -66,21 +83,21 @@ export default class TwitchApi {
       recentBroadcasts: {time: 0},
     }
 
-    this.rlLimit = 30
-    this.rlRemaining = 30
+    this.rlLimit = this.opts.clientSecret ? 800 : 30
+    this.rlRemaining = this.opts.clientSecret ? 800 : 30
     this.rlReset = 0
 
     /** Default min cache update timings */
     this.deprecate = {
-      recentBroadcasts: 30 * 60 * 1000, // 30 min
+      recentBroadcasts: 5 * 60 * 1000, // 5 min
     }
 
     // Prepare cache file
     fs.mkdirSync(path.dirname(this.opts.dataRoot), {recursive: true})
     try {
-      fs.accessSync(`${this.opts.dataRoot}/global/apiUsers.json`, fs.constants.R_OK | fs.constants.W_OK)
+      fs.accessSync(`${this.opts.dataRoot}/global/apiData.json`, fs.constants.R_OK | fs.constants.W_OK)
     } catch (err) {
-      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataRoot}/global/apiUsers.json`, '[]')
+      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataRoot}/global/apiData.json`, '{bearer: null, expire: 0, users: []}')
       else throw err
     }
 
@@ -90,11 +107,15 @@ export default class TwitchApi {
     this.logins = Object.create(null)
     this.displays = Object.create(null)
     if (this.displays.constructor) {}
-    const userFile =  JSON.parse(fs.readFileSync(`${this.opts.dataRoot}/global/apiUsers.json`, 'utf8')) as Array<[number, string, string]>
-    for (const user of userFile) {
-      const [id, login, display] = user
-      this.cacheUser(id, login, display)
+    const rawData = JSON.parse(fs.readFileSync(`${this.opts.dataRoot}/global/apiData.json`, 'utf8')) as ApiData
+    this.bearer = rawData.bearer
+    this.expire = rawData.expire
+    for (const user of rawData.users) {
+      this.cacheUser(user[0], user[1], user[2])
     }
+
+    this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), Math.min(2 ** 31 - 1, Math.max(this.expire - Date.now())))
+    this.blockBearerTimeout = false
 
     util.onExit(this.onExit.bind(this))
   }
@@ -422,6 +443,49 @@ export default class TwitchApi {
     return true
   }
 
+  private refreshBearer() {
+    if (this.blockBearerTimeout) return
+    if (!this.opts.clientSecret) return
+    if (this.bearerTimeout) clearTimeout(this.bearerTimeout)
+    this.bearerTimeout = null
+    this.blockBearerTimeout = true
+    this.bearer = null
+    this.expire = 0
+    const scope = 'channel:moderate+chat:edit+chat:read+whispers:read+whispers:edit+channel_editor'
+    const options = {
+      host: 'id.twitch.tv',
+      path: `/oauth2/token?client_id=${this.opts.clientId}&client_secret=${this.opts.clientSecret}&grant_type=client_credentials&scope=${scope}`,
+      method: 'POST',
+    }
+    https.get(options, (res) => {
+      if (res.statusCode === 200) { // success!
+        let data = ''
+        res.on('data', (chunk) => {
+          data += chunk
+        }).on('end', () => {
+          const result = JSON.parse(data)
+          console.log('Bearer refreshed')
+          this.bearer = result.access_token
+          this.expire = Date.now() + result.expires_in * 1000
+          const timeout = Math.min(2 ** 31 - 1, Math.max(this.expire - Date.now(), 5 * 60 * 1000))
+          console.log(`Next refresh in: ${util.timeUntil(Date.now() + Math.max(this.expire - Date.now(), 5 * 60 * 1000))}`)
+          if (!this.bearerTimeout) this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), timeout)
+          this.blockBearerTimeout = false
+        }).on('error', (err) => {
+          console.error('Bearer refresh failed')
+          console.error(err)
+          if (!this.bearerTimeout) this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), 1 * 60 * 1000)
+          this.blockBearerTimeout = false
+        })
+      } else {
+        console.error('Bearer refresh failed')
+        console.error(res.statusMessage)
+        if (!this.bearerTimeout) this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), 1 * 60 * 1000)
+        this.blockBearerTimeout = false
+      }
+    })
+  }
+
   private get(path: string, params: {[param: string]: any}): Promise<object | string | undefined> {
     return new Promise((resolve) => {
       if (this.rlRemaining < 3 && this.rlReset > Date.now()) {
@@ -444,7 +508,9 @@ export default class TwitchApi {
       const options = {
         host: 'api.twitch.tv',
         path: path + queryP,
-        headers: {
+        headers: this.bearer ? {
+          Authorization: `Bearer ${this.bearer}`,
+        } : {
           'client-id': this.opts.clientId,
         },
       }
@@ -464,7 +530,10 @@ export default class TwitchApi {
             console.error(err)
             resolve(undefined)
           })
-        } else resolve(`${res.statusCode}: ${util.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
+        } else {
+          if (res.statusCode === 401) this.refreshBearer() // Unauthorized
+          resolve(`${res.statusCode}: ${util.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
+        }
       })
     })
   }
@@ -503,9 +572,9 @@ export default class TwitchApi {
         failed++
       }
     }
-    if (failed) console.log(`[TWITCHAPI] Skipped ${failed} ${util.plural(failed, 'users')} on apiUsers.json save`)
+    if (failed) console.log(`[TWITCHAPI] Skipped ${failed} ${util.plural(failed, 'users')} on apiData.json save`)
     // Folders must be created at this points
-    fs.writeFileSync(`${this.opts.dataRoot}/global/apiUsers.json`, JSON.stringify(saveData, null, '\t'))
+    fs.writeFileSync(`${this.opts.dataRoot}/global/apiData.json`, JSON.stringify({bearer: this.bearer, expire: this.expire, users: saveData} as ApiData))
 
     // Save loaded channel caches
     for (const channelId in this.channelCaches) {
