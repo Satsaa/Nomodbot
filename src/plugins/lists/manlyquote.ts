@@ -30,25 +30,25 @@ export class Instance implements PluginInstance {
 
   private l: PluginLibrary
   private lists: ListsExtension
-  private quotes: ReturnType<ListsExtension['getList']>
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.lists = this.l.ext.lists as ListsExtension
-    this.quotes = this.lists.getList(options.id, undefined, defaultQuotes)
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     let newValue: string
     let index
     let value
+    const quotes = this.lists.getGlobalList(options.id, defaultQuotes)
+    if (!quotes) return 'Manlyquote data unavailable'
     switch (params[1] ? params[1].toLowerCase() : undefined) {
 
       case 'add':
         if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
         if (!params[2]) return 'Define the new manly quote (params 2+)'
         newValue = params.slice(2).join(' ');
-        [index] = this.quotes.pushEntry(newValue)
+        [index] = quotes.pushEntry(newValue)
         if (index) return `Added new entry at index ${index}`
         else return 'Something went horribly wrong!'
 
@@ -57,7 +57,7 @@ export class Instance implements PluginInstance {
         if (isNaN(+params[2])) return 'Invalid index (param 2)'
         if (!params[3]) return 'Define the new manly quote (params 3+)'
         newValue = params.slice(3).join(' ');
-        [index] = this.quotes.setEntry(~~params[2], newValue)
+        [index] = quotes.setEntry(~~params[2], newValue)
         if (index) return `Modified entry at index ${index}`
         else return 'Invalid index'
 
@@ -66,26 +66,26 @@ export class Instance implements PluginInstance {
         if (isNaN(+params[2])) return 'Invalid index (param 2)'
         if (!params[3]) return 'Define the new manly quote (params 3+)'
         newValue = params.slice(3).join(' ');
-        [index] = this.quotes.insertEntry(~~params[2], newValue)
+        [index] = quotes.insertEntry(~~params[2], newValue)
         if (index) return `Added new entry at index ${index}`
         else return 'Invalid index'
 
       case 'delete':
         if (!this.l.isPermitted({userlvl: userlvls.master}, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
         if (isNaN(+params[2])) return 'Invalid index (param 2)';
-        [index, value]  = this.quotes.delEntry(~~params[2])
+        [index, value]  = quotes.delEntry(~~params[2])
         if (index) return `Deleted at ${index}: ${value}`
         else return 'Invalid index'
 
       case undefined:
-        if (!this.quotes.entries.length) return 'There are no manly quotes';
-        [index, value] = this.quotes.randomEntry()
+        if (!quotes.entries.length) return 'There are no manly quotes';
+        [index, value] = quotes.randomEntry()
         if (index) return `${index}: ${value}`
         else return 'Something went horribly wrong!'
 
       default:
-        if (!this.quotes.entries.length) return 'There are no manly quotes';
-        [index, value] = this.quotes.getEntry(~~params[1])
+        if (!quotes.entries.length) return 'There are no manly quotes';
+        [index, value] = quotes.getEntry(~~params[1])
         if (index) return `${index}: ${value}`
         else return 'Something went horribly wrong!'
     }

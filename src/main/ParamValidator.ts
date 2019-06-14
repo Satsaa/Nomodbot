@@ -109,7 +109,6 @@ export default class ParamValidator {
           } else { // Array
             if (!_cmdParams[i].var && !_cmdParams[i].case) {
               replace[i] = words[i].toLowerCase()
-              console.log(words[i].toLowerCase())
             }
           }
         }

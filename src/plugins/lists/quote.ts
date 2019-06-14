@@ -40,7 +40,8 @@ export class Instance implements PluginInstance {
     let newValue: string
     let index
     let value
-    const quotes: ReturnType<ListsExtension['getList']> = this.lists.getList(options.id, channelId, [])
+    const quotes = this.lists.getList<string>(options.id, channelId, [])
+    if (!quotes) return 'Quote data unavailable'
     switch (params[1] ? params[1].toLowerCase() : undefined) {
 
       case 'add':

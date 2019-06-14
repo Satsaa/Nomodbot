@@ -7,19 +7,19 @@ export const options: PluginOptions = {
   id: 'lists',
   title: 'Lists',
   description: 'Used to make and handle arrays of data. Like a list of quotes',
-  creates: [['global', 'listData']],
+  creates: [['global', 'listData'], ['listData']],
 }
 
 export interface ListsExtension {
   /**
-   * Gets a global or `channelId` list instance based on `listName`  
+   * Gets list instance of `channelId` based on `listName`  
    * All functions return [usedIndex(one-based), valueOfEntry]  
-   * Use safe = true to disable out of bounds to valid index conversion  
+   * Use unSafe = true to disable out of bounds index to valid index conversion  
    * 
    * ALL LISTS USE ONE BASED INDEXING  
    * NEGATIVE INDEXES RETURN THE NTH LAST ENTRY  
    * ALL INDEXES WILL RETURN A VALID ENTRY  
-   * WITH `safe` ONLY INDEXES WITHIN THE LIST LENGTH RETURN AN ENTRY  
+   * WITH `unSafe` ONLY INDEXES WITHIN THE LIST LENGTH RETURN AN ENTRY  
    * 
    * In a 10 length list  
    * `getEntry(5) => [5, entries[4]]`  
@@ -28,14 +28,14 @@ export interface ListsExtension {
    * `getEntry(0) => [1, entries[0]]`  
    * `getEntry(99) => [10, entries[9]]`  
    * 
-   * `safe` = true
+   * `unSafe` = true
    * `getEntry(3, true) => [3, entries[2]]`  
    * `getEntry(99, true) => [falsy, undefined]`  
    * `getEntry(-2, true) => [falsy, undefined]`  
    * `getEntry(0, true) => [falsy, undefined]`  
    */
-  // tslint:disable-next-line: bool-param-default // Cant set initializers here?
-  getList: (listName: string, channelId?: number, defaultData?: any[], setDefaults?: boolean) => List,
+  getList: <T2, T = T2>(listName: string, channelId: number, defaultData?: T2[], setDefaults?: boolean) => List<T> | undefined,
+  getGlobalList: <T2, T = T2>(listName: string, defaultData?: T2[], setDefaults?: boolean) => List<T> | undefined,
 }
 
 interface ListsType {
@@ -43,30 +43,35 @@ interface ListsType {
   globals: { [listName: string]: any[] },
 }
 
+interface ListData {
+  [listName: string]: any[]
+}
+
 export class Instance implements PluginInstance {
 
   private l: PluginLibrary
-  private lists: ListsType
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
-    this.lists = { channels: {}, globals: {} }
+    this.l.load('global', 'listData', {})
+    this.l.autoLoad('listData', {})
   }
 
   public async init(): Promise<void> {
-    this.lists = await this.l.load('global', 'listData', {channels: {}, globals: {}}, true) as ListsType
     const extensions: ListsExtension = {
-      getList: (listName: string, channelId?: number, defaultData: any[] = [], setDefaults = false) => {
-        if (channelId) { // Channel list
-          if (!this.lists.channels[channelId]) this.lists.channels[channelId] = {}
-          if (!this.lists.channels[channelId][listName]) this.lists.channels[channelId][listName] = defaultData
-          if (setDefaults) defaultKeys(this.lists.channels[channelId][listName], defaultData)
-          return new List(listName, this.lists.channels[channelId], this.l)
-        } else { // Global list
-          if (!this.lists.globals[listName]) this.lists.globals[listName] = defaultData
-          if (setDefaults) defaultKeys(this.lists.globals[listName], defaultData)
-          return new List(listName, this.lists.globals, this.l)
-        }
+      getList: (listName: string, channelId: number, defaultData: any[] = [], setDefaults = false) => {
+        const data = this.l.getData(channelId, 'listData') as ListData
+        if (!data) return
+        if (!data[listName]) data[listName] = defaultData
+        if (setDefaults) defaultKeys(data[listName], defaultData)
+        return new List(data[listName], this.l)
+      },
+      getGlobalList: (listName: string, defaultData: any[] = [], setDefaults = false) => {
+        const data = this.l.getData('global', 'listData') as ListData
+        if (!data) return
+        if (!data[listName]) data[listName] = defaultData
+        if (setDefaults) defaultKeys(data[listName], defaultData)
+        return new List(data[listName], this.l)
       },
     }
     this.l.extend(options.id, extensions)
@@ -77,61 +82,65 @@ export class Instance implements PluginInstance {
   }
 }
 
-class List {
+class List<T = string> {
 
-  public get entries(): List['baseList'][List['listName']] {
-    return this.baseList[this.listName]
-  }
-  public listName: string
-  private baseList: {[listName: string]: any[]}
+  public entries: T[]
   private l: PluginLibrary
 
-  constructor(listName: string, baseList: {[listName: string]: any[]}, l: PluginLibrary) {
-    this.listName = listName
-    this.baseList = baseList
+  constructor(list: T[], l: PluginLibrary) {
+    this.entries = list
     this.l = l
   }
 
   /** Gets a random array entry */
-  public randomEntry(): [number, any] {
+  public randomEntry(): [number, T] {
     const zero = this.l.u.randomInt(0, this.entries.length - 1)
     return [zero + 1, this.entries[zero]]
   }
 
+  public getEntry(index: number, unSafe: true): [number, T | undefined]
+  public getEntry(index: number, unSafe?: false): [number, T]
   /** Gets an array entry */
-  public getEntry(index: number, safe = false): [number, any] {
+  public getEntry(index: number, unSafe = false): [number, T | undefined] {
     index = Math.floor(index)
-    if (safe && this.isUnsafe(index)) return [0, undefined]
+    if (unSafe && this.isUnsafe(index)) return [0, undefined]
     const zero = this.getIndex(index)
     return [zero + 1, this.entries[zero]]
   }
 
-  /** Removes an array entry */
-  public delEntry(index: number, safe = false): [number, any] {
+  public delEntry(index: number, unSafe: true): [number, T | undefined]
+  public delEntry(index: number, unSafe?: false): [number, T | undefined]
+  /** Removes an array entry if the list is not empty */
+  public delEntry(index: number, unSafe = false): [number, T | undefined] {
     index = Math.floor(index)
-    if (safe && this.isUnsafe(index)) return [0, undefined]
+    if (unSafe && this.isUnsafe(index)) return [0, undefined]
     const zero = this.getIndex(index)
-    return this.entries.splice(zero, 1)[0]
+    if (!this.entries.length) return [0, undefined]
+    return [zero + 1, this.entries.splice(zero, 1)[0]]
   }
 
+  public setEntry(index: number, value: T, unSafe: true): [number, T | undefined]
+  public setEntry(index: number, value: T, unSafe?: false): [number, T]
   /** Sets the value of an array entry */
-  public setEntry(index: number, value: any, safe = false): [number, any] {
+  public setEntry(index: number, value: T, unSafe = false): [number, T | undefined] {
     index = Math.floor(index)
-    if (safe && this.isUnsafe(index)) return [0, undefined]
+    if (unSafe && this.isUnsafe(index)) return [0, undefined]
     const zero = this.getIndex(index)
     return [zero + 1, this.entries[zero] = value]
   }
 
+  public insertEntry(index: number, value: T, unSafe: true): [number, T | undefined]
+  public insertEntry(index: number, value: T, unSafe?: false): [number, T]
   /** Inserts an array entry */
-  public insertEntry(index: number, value: any, safe = false): [number, any] {
+  public insertEntry(index: number, value: T, unSafe = false): [number, T | undefined] {
     index = Math.floor(index)
-    if (safe && this.isUnsafe(index)) return [0, undefined]
+    if (unSafe && this.isUnsafe(index)) return [0, undefined]
     const zero = this.getIndex(index)
-    return [zero + 1, this.entries.splice(zero, 0, value)]
+    return [zero + 1, this.entries.splice(zero, 0, value)[0]]
   }
 
   /** Adds an entry at the end of entries */
-  public pushEntry(value: any): [number, any] {
+  public pushEntry(value: T): [number, T] {
     return [this.entries.push(value), this.entries[this.entries.length - 1]]
   }
 
