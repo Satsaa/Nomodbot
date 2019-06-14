@@ -44,7 +44,7 @@ export class Instance implements PluginInstance {
 
       let prevDateString = ''
       let total = 0
-      for (let i = 0; i < weeks * 7 || i < videos.length; i++) {
+      for (let i = 1; i < weeks * 7 || i < videos.length; i++) {
         const date = new Date(videos[i].created_at)
         if (date.getTime() / DAY < toDay - weeks * 7) { // Stop on too old entries
           total = i
