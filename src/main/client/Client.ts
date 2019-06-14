@@ -294,7 +294,7 @@ export default class TwitchClient {
       // 0 delay but normal limits per 30 sec could be safe for moderated channels !!!
       this.rateLimiter.queue(async () => {
         this.clientData.channels[channelId].phase = !this.clientData.channels[channelId].phase
-        if (this.clientData.channels[channelId].phase) msg += this.opts.dupeAffix
+        if (this.clientData.channels[channelId].phase && !msg.match(/^[\/\\\.]/)) msg += this.opts.dupeAffix
         this.send(`PRIVMSG #${login} :${msg}`)
         const res = await eventTimeout(this, 'userstate', {
           timeout: this.getLatency(), matchArgs: [channelId, {'display-name': this.globaluserstate['display-name']}],
