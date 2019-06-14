@@ -332,13 +332,13 @@ export default class Commander {
         return true
       // Fallthrough cases
       case userlvls.sub:
-        if (badges.subscriber) return true
+        if (typeof badges.subscriber !== 'undefined') return true
       case userlvls.vip:
-        if (badges.vip) return true
+        if (typeof badges.vip !== 'undefined') return true
       case userlvls.mod:
-        if (badges.moderator) return true
+        if (typeof badges.moderator !== 'undefined') return true
       case userlvls.streamer:
-        if (badges.broadcaster) return true
+        if (typeof badges.broadcaster !== 'undefined') return true
       case userlvls.master:
         // Handled above
         return false
