@@ -289,15 +289,16 @@ export default class TwitchClient {
           }
         }
       }
+      const isCommand = !!msg.match(/^[\/\\\.]/)
       // It is not possible to know if nmb has been unmodded before sending a message. (pubsub may tell this? Still would be too late?)
       // Being over basic limits and losing mod will cause the bot to be disconnected and muted for 30 or so minutes (not good)
       // 0 delay but normal limits per 30 sec could be safe for moderated channels !!!
       this.rateLimiter.queue(async () => {
         this.clientData.channels[channelId].phase = !this.clientData.channels[channelId].phase
-        if (this.clientData.channels[channelId].phase && !msg.match(/^[\/\\\.]/)) msg += this.opts.dupeAffix
+        if (this.clientData.channels[channelId].phase && isCommand) msg += this.opts.dupeAffix
         this.send(`PRIVMSG #${login} :${msg}`)
-        const res = await eventTimeout(this, 'userstate', {
-          timeout: this.getLatency(), matchArgs: [channelId, {'display-name': this.globaluserstate['display-name']}],
+        const res = await eventTimeout(this, isCommand ? 'notice' : 'userstate', {
+          timeout: this.getLatency(), matchArgs: isCommand ? undefined : [channelId, {'display-name': this.globaluserstate['display-name']}],
         })
         if (!res.timeout) {
           console.log(`[${await this.api.getLogin(channelId)}] bot: ${msg}`)
@@ -755,8 +756,8 @@ export default class TwitchClient {
           }
           return this.failHandle(msg, msg.cmd)
         }
-        if (msg.tags['msg-id'] === 'msg_ratelimit') this.ircLog('Rate limited')
         this.emit('notice', channelId, msg.tags, msg.params[1])
+        if (msg.tags['msg-id'] === 'msg_ratelimit') this.ircLog('Rate limited')
         switch (msg.tags['msg-id']) {
           case 'msg_ratelimit':
             this.ircLog('Rate limited')
