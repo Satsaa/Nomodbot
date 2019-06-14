@@ -13,6 +13,7 @@ export const options: PluginOptions = {
     options: {
       cooldown: 30,
       userCooldown: 60,
+      userlvl: userlvls.sub,
     },
   },
   help: [
