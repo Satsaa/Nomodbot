@@ -4,17 +4,17 @@ import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'command',
-  id: 'exit',
-  title: 'Exit',
-  description: 'Exits the process',
+  id: 'restart',
+  title: 'Restart',
+  description: 'Restarts the process if possible',
   default: {
-    alias: '$exit',
+    alias: '$restart',
     options: {
       userlvl: userlvls.master,
     },
   },
   help: [
-    'Exit the process: {alias}',
+    'Restart the process if possible: {alias}',
   ],
 }
 
@@ -27,10 +27,11 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    if (process.send) {
-      process.send({cmd: 'AUTO_RESTART', val: false})
-      process.send({cmd: 'AUTO_RESTART_NEXT', val: false})
-    }
+    if (!process.send) return 'Process manager is not available'
+
+    process.send({cmd: 'AUTO_RESTART_NEXT', val: true})
+    process.send({cmd: 'PUSH_ARGS', val: [`-m=${channelId}:Restarted`]})
+
     process.exit()
     return 'Exit unsuccessful?'
   }

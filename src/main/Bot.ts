@@ -22,6 +22,18 @@ export default class Bot {
   constructor(options: BotOptions) {
 
     onExit(this.onExit.bind(this))
+
+    // Launch args
+    let joinMessage = null
+    for (const arg of process.argv) {
+      // --message=45645645:Restart_complete
+      if (arg.startsWith('--message=') || arg.startsWith('-m=')) {
+        const val = arg.slice(arg.indexOf('=') + 1)
+        const split: string[] = val.split(/:/)
+        joinMessage = {channelId: ~~split[0], message: split.slice(1).join(' ').replace(/\_/g, ' ')}
+      }
+    }
+
     this.opts = {
       masters: [],
       ...deepClone(options),
@@ -34,6 +46,7 @@ export default class Bot {
       dataRoot: './data/',
       logInfo: true,
       // logAll: true,
+      joinMessage,
     })
 
     this.data = new Data(this.client, './data/', ['apiCache', 'apiUsers', 'clientData'])

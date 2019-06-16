@@ -69,6 +69,8 @@ export interface TwitchClientOptions {
   pingInterval?: number
   dupeAffix?: string
   maxMsgLength?: number
+  /** Send a message in channel when client is connected */
+  joinMessage?: null | {channelId: number, message: string}
   readonly msgRLOpts?: DeepReadonly<RateLimiterOptions>
   readonly whisperRLOpts?: DeepReadonly<RateLimiterOptions | RateLimiterOptions[]>
 }
@@ -132,6 +134,7 @@ export default class TwitchClient {
       pingInterval: 60000,
       dupeAffix: ' 󠀀', // 	0xE0000,
       maxMsgLength: 499,
+      joinMessage: null,
       msgRLOpts: {
         duration: 30000,
         limit: 19,
@@ -205,6 +208,8 @@ export default class TwitchClient {
 
     this.ids = {}
     this.channels = {}
+
+    if (this.opts.joinMessage) setTimeout(() => { this.opts.joinMessage = null }, 30000)
 
     setTimeout(this.pingLoop.bind(this), this.opts.pingInterval * u.randomFloat(0.9, 1.0))
     setInterval(() => {
@@ -562,6 +567,10 @@ export default class TwitchClient {
           this.ids[channel] = channelId
           this.api.loadChannelCache(channelId)
           this.emit('join', channelId)
+          if (this.opts.joinMessage && this.opts.joinMessage.channelId === channelId) {
+            this.chat(channelId, this.opts.joinMessage.message)
+            this.opts.joinMessage = null
+          }
         }
         this.userJoin(channelId, msg.user || 'undefined')
         break
