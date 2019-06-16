@@ -20,7 +20,7 @@ export const options: PluginOptions = {
     'Get a random urban definition: {alias}',
     'Get the urban definition of term: {alias} <term...>',
   ],
-  noAtUser: true,
+  disableMention: true,
 }
 
 export class Instance implements PluginInstance {

@@ -48,7 +48,8 @@ export const options: PluginOptions = {
     'Is an example: {alias} required this|that <variable> [optional] [<optVar>] [<multiword...>]',
     'nother example',
   ],
-  // overrideAtUser: true,
+  disableMention: true,
+  unignoreMentions: true,
 }
 
 export class Instance implements PluginInstance {

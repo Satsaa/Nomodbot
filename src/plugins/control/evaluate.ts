@@ -16,7 +16,7 @@ export const options: PluginOptions = {
   help: [
     'Evaluate a string, execute it and return the result: {alias} <evalString>',
   ],
-  noAtUser: true,
+  disableMention: true,
 }
 
 export class Instance implements PluginInstance {

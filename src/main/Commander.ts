@@ -58,9 +58,9 @@ export interface Command {
    * Disable dynamic insertion of @user before messages  
    * \@user is inserted when the message is short and doesn't include the user's login or display name
    */
-  noAtUser?: true
+  disableMention?: true
   /** Disable removal of @user and the following words when calling this command */
-  noOmitAtUser?: true
+  unignoreMentions?: true
 }
 
 interface IsPermittedOptions {
@@ -532,7 +532,7 @@ export default class Commander {
   }
 
   /** Determines if @user should be inserted to message */
-  public shouldAtUser(atUser: Command['noAtUser'], message: string, irc: PRIVMSG): boolean {
+  public shouldAtUser(atUser: Command['disableMention'], message: string, irc: PRIVMSG): boolean {
     if (atUser) return false
     message = message.toLowerCase()
     if (message.length > 200) return false
@@ -618,7 +618,7 @@ export default class Commander {
     const instance = this.instances[alias.target]
     const plugin = this.plugins[alias.target]
     if (plugin.type !== 'command') return console.log(`Trying to call a non command: ${alias.target}`)
-    if (!plugin.noOmitAtUser) message = message.replace(/ @.*/, '') // Remove @user... from command calls
+    if (!plugin.unignoreMentions) message = message.replace(/ @.*/, '') // Remove @user... from command calls
     params = message.split(' ')
     // Make sure the plugin is loaded
     if (!instance) return console.log(`Cannot call unloaded command: ${alias.target}`)
@@ -630,11 +630,11 @@ export default class Commander {
         // Master users, mods and the broadcaster don't care about cooldowns
         const validation = await this.validator.validate(channelId, plugin.id, alias.group || 'default', params.slice(1))
         if (!validation.pass) {
-          return this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, validation.message, irc)}${validation.message}`)
+          return this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, validation.message, irc)}${validation.message}`)
         }
         const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown: 0, irc})
         if (res) {
-          this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, res, irc)}${res}`)
+          this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
         }
       } else {
         const cooldown = this.getCooldown(channelId, userId, alias)
@@ -647,10 +647,10 @@ export default class Commander {
           }
           const validation = await this.validator.validate(channelId, plugin.id, alias.group || 'default', params.slice(1))
           if (!validation.pass) {
-            return this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, validation.message, irc)}${validation.message}`)
+            return this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, validation.message, irc)}${validation.message}`)
           }
           const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
-          if (res) this.client.chat(channelId, `${await addUser.bind(this)(plugin.noAtUser, res, irc)}${res}`)
+          if (res) this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
         } else { // On cooldown
           if (instance.cooldown) instance.cooldown(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
           return

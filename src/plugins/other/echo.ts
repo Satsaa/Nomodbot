@@ -18,8 +18,8 @@ export const options: PluginOptions = {
   help: [
     'Reply with echo: {alias} <echo...>',
   ],
-  noAtUser: true,
-  noOmitAtUser: true,
+  disableMention: true,
+  unignoreMentions: true,
 }
 
 export class Instance implements PluginInstance {

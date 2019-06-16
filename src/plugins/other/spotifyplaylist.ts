@@ -22,7 +22,7 @@ export const options: PluginOptions = {
     'Set the playlist: {alias} set <playlist_ID|playlist_link>',
     'Delete the playlist: {alias} delete',
   ],
-  noAtUser: true,
+  disableMention: true,
 }
 
 interface SpotifyPlaylistData {

@@ -20,7 +20,7 @@ export const options: PluginOptions = {
     'Show a random or specific message user has sent: {alias} <USER> [<INDEX>]',
   ],
   requirePlugins: ['log'],
-  noAtUser: true,
+  disableMention: true,
 }
 
 export class Instance implements PluginInstance {

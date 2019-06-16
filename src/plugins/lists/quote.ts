@@ -23,7 +23,7 @@ export const options: PluginOptions = {
     'Show a random or specific quote: {alias} [<INDEX>]',
   ],
   requirePlugins: ['lists'],
-  noAtUser: true,
+  disableMention: true,
 }
 
 export class Instance implements PluginInstance {

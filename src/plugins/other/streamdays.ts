@@ -17,7 +17,7 @@ export const options: PluginOptions = {
   help: [
     'Tell the days {channel} usually streams on: {alias} [<1-8>]',
   ],
-  noAtUser: true,
+  disableMention: true,
 }
 
 const DAY = 86400000
