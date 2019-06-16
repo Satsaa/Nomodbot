@@ -1,6 +1,6 @@
 import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
-import PluginLibrary from '../../main/pluginLib'
+import PluginLibrary from '../../main/PluginLib'
 import { ACTION, CHAT, LogExtension} from './log'
 
 export const options: PluginOptions = {

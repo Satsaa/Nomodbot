@@ -31,6 +31,7 @@ export class Manager {
     this.args = []
 
     this.child = fork(this.opts.childPath, this.getArgs(), {cwd: process.cwd(), stdio: 'inherit'})
+    console.log('Child birth')
 
     this.lastRestart = 0
 
@@ -72,6 +73,7 @@ export class Manager {
   }
 
   private onChildClose(this: Manager) {
+    console.log('Child death')
     if (this.opts.autoRestart || this.opts.autoRestartNext) {
       this.opts.autoRestartNext = false
       this.gracedBirth()
@@ -101,6 +103,7 @@ export class Manager {
       setTimeout(() => {
         this.lastRestart = Date.now()
         this.child = fork(this.opts.childPath, this.getArgs(), {cwd: process.cwd(), stdio: 'inherit'})
+        console.log('Child birth')
         this.args = []
         this.registerEvents()
       }, 1000)
