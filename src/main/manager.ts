@@ -1,6 +1,5 @@
 import { fork } from 'child_process'
 import path from 'path'
-import { onExit } from '../main/lib/util'
 
 console.log('Manager started')
 
@@ -14,10 +13,6 @@ const minRestartInterval = 10 * 1000
 let lastRestart = 0
 
 registerEvents()
-
-onExit(() => {
-  console.error('Manager exit')
-})
 
 // Events
 
@@ -58,7 +53,7 @@ function onChildClose() {
     autoRestartNext = false
     gracedBirth()
   } else {
-    console.log('Manager exiting')
+    console.log('Manager exiting. Autorestart disabled')
     process.exit()
   }
 }
@@ -79,9 +74,12 @@ function gracedBirth() {
       console.log('Too quick restarts')
       process.exit()
     }
-    lastRestart = Date.now()
-    child = fork(path.join(__dirname, '/index'), args, {cwd: process.cwd(), stdio: 'inherit'})
-    args = []
-    registerEvents()
+    console.log('Manager birthing')
+    setTimeout(() => {
+      lastRestart = Date.now()
+      child = fork(path.join(__dirname, '/index'), args, {cwd: process.cwd(), stdio: 'inherit'})
+      args = []
+      registerEvents()
+    }, 1000)
   }
 }
