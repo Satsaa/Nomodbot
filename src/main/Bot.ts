@@ -27,7 +27,7 @@ export default class Bot {
     let joinMessage = null
     for (const arg of process.argv) {
       // --message=45645645:Restart_complete
-      if (arg.startsWith('--message=') || arg.startsWith('-m=')) {
+      if (arg.startsWith('--joinmsg=') || arg.startsWith('-jm=')) {
         const val = arg.slice(arg.indexOf('=') + 1)
         const split: string[] = val.split(/:/)
         joinMessage = {channelId: ~~split[0], message: split.slice(1).join(' ').replace(/\_/g, ' ')}

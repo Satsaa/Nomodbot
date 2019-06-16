@@ -30,7 +30,7 @@ export class Instance implements PluginInstance {
     if (!process.send) return 'Process manager is not available'
 
     process.send({cmd: 'AUTO_RESTART_NEXT', val: true})
-    process.send({cmd: 'PUSH_ARGS', val: [`-m=${channelId}:Restarted`]})
+    process.send({cmd: 'PUSH_ARGS', val: [`-jm=${channelId}:Restarted`]})
 
     process.exit()
     return 'Exit unsuccessful?'

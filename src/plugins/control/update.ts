@@ -37,7 +37,7 @@ export class Instance implements PluginInstance {
     if (!await this.exec(`git pull origin ${branch}`)) return 'An error occurred while updating repository'
     if (!await this.exec('tsc')) return 'An error occurred during compilation'
 
-    process.send({cmd: 'PUSH_ARGS', val: [`-m=${channelId}:Restarted_and_updated`]})
+    process.send({cmd: 'PUSH_ARGS', val: [`-jm=${channelId}:Restarted_and_updated`]})
     process.send({cmd: 'AUTO_RESTART_NEXT', val: true})
 
     setTimeout(() => {

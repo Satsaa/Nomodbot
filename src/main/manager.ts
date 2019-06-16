@@ -1,85 +1,113 @@
-import { fork } from 'child_process'
+import { ChildProcess, fork } from 'child_process'
 import path from 'path'
+import deepClone from './lib/deepClone'
 
-console.log('Manager started')
+interface ManagerOptions {
+  childPath?: string
+  args?: string[],
+  /** Exit process if restarting too often */
+  minRestartInterval?: number,
+  autoRestart?: boolean,
+  autoRestartNext?: boolean,
+}
 
-let child = fork(path.join(__dirname, '/index'), [], {cwd: process.cwd(), stdio: 'inherit'})
+export class Manager {
+  public opts: Required<ManagerOptions>
+  private args: string[]
+  private child: ChildProcess
+  private lastRestart: number
 
-let autoRestart = true
-let autoRestartNext = false
-let args: string[] = []
+  constructor(options: ManagerOptions = {}) {
+    console.log('Manager started')
+    this.opts = {
+      childPath: path.join(__dirname, '/index'),
+      args: [],
+      minRestartInterval: 10 * 1000,
+      autoRestart: true,
+      autoRestartNext: false,
+      ...deepClone(options),
+    }
 
-const minRestartInterval = 10 * 1000
-let lastRestart = 0
+    this.args = []
 
-registerEvents()
+    this.child = fork(this.opts.childPath, this.getArgs(), {cwd: process.cwd(), stdio: 'inherit'})
+
+    this.lastRestart = 0
+
+    this.registerEvents()
+  }
 
 // Events
 
-function onMessage(msg: {cmd: string, val: any}) {
-  try {
-    if (!msg.cmd) return
-    const cmd = msg.cmd + ''
-    const val = msg.val
-    switch (cmd) {
-      case 'KILL':
-        process.exit()
-        break
-      case 'AUTO_RESTART_NEXT':
-        autoRestartNext = typeof val === undefined ? true : val
-        break
-      case 'AUTO_RESTART':
-        autoRestart = typeof val === undefined ? true : val
-        break
-      case 'SET_ARGS':
-        args = Array.isArray(val) ? val : []
-        break
-      case 'PUSH_ARGS':
-        if (Array.isArray(val)) args.push(...(val.map(v => v + '')))
-        break
-      default:
-        console.log('Invalid message')
-        console.log(msg)
-        break
+  private onMessage(this: Manager, msg: {cmd: string, val: any}) {
+    try {
+      if (!msg.cmd) return
+      const cmd = msg.cmd + ''
+      const val = msg.val
+      switch (cmd) {
+        case 'KILL':
+          process.exit()
+          break
+        case 'AUTO_RESTART_NEXT':
+          this.opts.autoRestartNext = typeof val === undefined ? true : val
+          break
+        case 'AUTO_RESTART':
+          this.opts.autoRestart = typeof val === undefined ? true : val
+          break
+        case 'SET_ARGS':
+          this.args = Array.isArray(val) ? val : []
+          break
+        case 'PUSH_ARGS':
+          if (Array.isArray(val)) this.args.push(...(val.map(v => v + '')))
+          break
+        default:
+          console.log('Invalid message')
+          console.log(msg)
+          break
+      }
+    } catch (err) {
+      console.log('Invalid message')
+      console.log(msg)
     }
-  } catch (err) {
-    console.log('Invalid message')
-    console.log(msg)
   }
-}
 
-function onChildClose() {
-  if (autoRestart || autoRestartNext) {
-    autoRestartNext = false
-    gracedBirth()
-  } else {
-    console.log('Manager exiting. Autorestart disabled')
-    process.exit()
+  private onChildClose(this: Manager) {
+    if (this.opts.autoRestart || this.opts.autoRestartNext) {
+      this.opts.autoRestartNext = false
+      this.gracedBirth()
+    } else {
+      console.log('Manager exiting. Autorestart disabled')
+      process.exit()
+    }
   }
-}
 
 // Methods
 
-function registerEvents() {
-  child.on('message', onMessage)
-  child.on('close', onChildClose)
-}
+  private registerEvents(this: Manager) {
+    this.child.on('message', this.onMessage.bind(this))
+    this.child.on('close', this.onChildClose.bind(this))
+  }
 
-function gracedBirth() {
-  if (child.once) birth()
-  else child.once('close', birth)
-
-  function birth() {
-    if (Date.now() - lastRestart < minRestartInterval) {
-      console.log('Too quick restarts')
-      process.exit()
-    }
+  private gracedBirth(this: Manager) {
     console.log('Manager birthing')
-    setTimeout(() => {
-      lastRestart = Date.now()
-      child = fork(path.join(__dirname, '/index'), args, {cwd: process.cwd(), stdio: 'inherit'})
-      args = []
-      registerEvents()
-    }, 1000)
+    if (this.child.once) birth.bind(this)()
+    else this.child.once('close', birth.bind(this))
+
+    function birth(this: Manager) {
+      if (Date.now() - this.lastRestart < this.opts.minRestartInterval) {
+        console.log('Too quick restarts')
+        process.exit()
+      }
+      setTimeout(() => {
+        this.lastRestart = Date.now()
+        this.child = fork(this.opts.childPath, this.getArgs(), {cwd: process.cwd(), stdio: 'inherit'})
+        this.args = []
+        this.registerEvents()
+      }, 1000)
+    }
+  }
+
+  private getArgs(this: Manager) {
+    return [...this.opts.args, ...this.args]
   }
 }
