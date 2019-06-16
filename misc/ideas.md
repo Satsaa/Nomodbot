@@ -14,13 +14,9 @@ Run unloader on a clone of the data before unloading
 
 # Command Plugins
 
-## Streamdays
-!days !streamdays
-
-Tells the probability of streams per day
-- Just* like !streamtimes
-- Uses average of streams within time period instead of average of N streams
-- Time period must be divisible by 7 days
+## Suggest
+!suggest <message...>
+!report <message...>
 
 ## Crime count
 !crimes
@@ -29,7 +25,7 @@ Tells and tracks the amount of times a user has been timedout
 - Implement log line types (eg timeouts subs and such)
 
 ## afk
-!afk (message...)
+!afk [<message...>]
 
 Notify afk users with a custom message
 - !afk marks a user as afk until they write again in chat

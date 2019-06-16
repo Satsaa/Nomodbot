@@ -67,7 +67,7 @@ export class Instance implements PluginInstance {
         + `for ${this.l.u.timeDuration(averageDuration, 2)} (previous ${this.l.u.plural(total, 'stream', 'streams')})`
     } catch (err) {
       console.error(err)
-      return 'Catastrophic error'
+      return `Error occurred: ${err.name}`
     }
   }
 }
