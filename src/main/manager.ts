@@ -8,8 +8,10 @@ let child = fork(path.join(__dirname, '/index'), [], {cwd: process.cwd(), stdio:
 
 let autoRestart = true
 let autoRestartNext = false
-let ignoreExit = false
 let args: string[] = []
+
+const minRestartInterval = 10 * 1000
+let lastRestart = 0
 
 registerEvents()
 
@@ -52,7 +54,6 @@ function onMessage(msg: {cmd: string, val: any}) {
 }
 
 function onChildClose() {
-  if (ignoreExit) return
   if (autoRestart || autoRestartNext) {
     autoRestartNext = false
     gracedBirth()
@@ -74,9 +75,13 @@ function gracedBirth() {
   else child.once('close', birth)
 
   function birth() {
+    if (Date.now() - lastRestart < minRestartInterval) {
+      console.log('Too quick restarts')
+      process.exit()
+    }
+    lastRestart = Date.now()
     child = fork(path.join(__dirname, '/index'), args, {cwd: process.cwd(), stdio: 'inherit'})
     args = []
     registerEvents()
-    ignoreExit = false
   }
 }
