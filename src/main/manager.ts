@@ -1,5 +1,6 @@
 import { ChildProcess, fork } from 'child_process'
 import path from 'path'
+
 import deepClone from './lib/deepClone'
 
 interface ManagerOptions {
@@ -10,7 +11,9 @@ interface ManagerOptions {
   autoRestart?: boolean,
   autoRestartNext?: boolean,
 }
-
+/**
+ * @param asd asd asd asd as das das d
+ */
 export class Manager {
   public opts: Required<ManagerOptions>
   private args: string[]
@@ -30,7 +33,7 @@ export class Manager {
 
     this.args = []
 
-    this.child = fork(this.opts.childPath, this.getArgs(), {cwd: process.cwd(), stdio: 'inherit'})
+    this.child = fork(this.opts.childPath, this.getArgs(), { cwd: process.cwd(), stdio: 'inherit' })
     console.log('Child birth')
 
     this.lastRestart = 0
@@ -38,13 +41,15 @@ export class Manager {
     this.registerEvents()
   }
 
-// Events
+  // Events
 
   private onMessage(this: Manager, msg: {cmd: string, val: any}) {
     try {
-      if (!msg.cmd) return
-      const cmd = msg.cmd + ''
-      const val = msg.val
+      if (!msg.cmd)
+        return
+
+      const cmd = `${msg.cmd}`,
+            val = msg.val
       switch (cmd) {
         case 'KILL':
           process.exit()
@@ -59,7 +64,8 @@ export class Manager {
           this.args = Array.isArray(val) ? val : []
           break
         case 'PUSH_ARGS':
-          if (Array.isArray(val)) this.args.push(...(val.map(v => v + '')))
+          if (Array.isArray(val))
+            this.args.push(...(val.map(v => String(v))))
           break
         default:
           console.log('Invalid message')
@@ -83,7 +89,7 @@ export class Manager {
     }
   }
 
-// Methods
+  // Methods
 
   private registerEvents(this: Manager) {
     this.child.on('message', this.onMessage.bind(this))
@@ -92,8 +98,10 @@ export class Manager {
 
   private gracedBirth(this: Manager) {
     console.log('Manager birthing')
-    if (this.child.once) birth.bind(this)()
-    else this.child.once('close', birth.bind(this))
+    if (this.child.once)
+      birth.bind(this)()
+    else
+      this.child.once('close', birth.bind(this))
 
     function birth(this: Manager) {
       if (Date.now() - this.lastRestart < this.opts.minRestartInterval) {
@@ -102,7 +110,7 @@ export class Manager {
       }
       setTimeout(() => {
         this.lastRestart = Date.now()
-        this.child = fork(this.opts.childPath, this.getArgs(), {cwd: process.cwd(), stdio: 'inherit'})
+        this.child = fork(this.opts.childPath, this.getArgs(), { cwd: process.cwd(), stdio: 'inherit' })
         console.log('Child birth')
         this.args = []
         this.registerEvents()

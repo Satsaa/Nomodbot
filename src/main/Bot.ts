@@ -1,18 +1,17 @@
+import * as secretKey from './lib/secretKey'
 import Client from './client/Client'
+import Data from './Data'
 import { PRIVMSG } from './client/parser'
 import Commander from './Commander'
-import Data from './Data'
 import deepClone from './lib/deepClone'
-import * as secretKey from './lib/secretKey'
-import { onExit } from './lib/util'
 import ParamValidator from './ParamValidator'
+import { onExit } from './lib/util'
 
 export interface BotOptions {
-  masters: number[],
+  masters: number[]
 }
 
 export default class Bot {
-
   private client: Client
   private data: Data
   private opts: Required<BotOptions>
@@ -20,7 +19,6 @@ export default class Bot {
   private validator?: ParamValidator
 
   constructor(options: BotOptions) {
-
     onExit(this.onExit.bind(this))
 
     // Launch args
@@ -28,9 +26,11 @@ export default class Bot {
     for (const arg of process.argv) {
       // --message=45645645:Restart_complete
       if (arg.startsWith('--joinmsg=') || arg.startsWith('-jm=')) {
-        const val = arg.slice(arg.indexOf('=') + 1)
-        const split: string[] = val.split(/:/)
-        joinMessage = {channelId: ~~split[0], message: split.slice(1).join(' ').replace(/\_/g, ' ')}
+        const val = arg.slice(arg.indexOf('=') + 1),
+              split = val.split(/:/),
+              channelId = ~~split[0]
+        if (channelId)
+          joinMessage = { channelId, message: split.slice(1).join(' ').replace(/_/g, ' ') }
       }
     }
 
@@ -42,7 +42,8 @@ export default class Bot {
       username: secretKey.getKey('./cfg/keys.json', 'twitch', 'username'),
       password: secretKey.getKey('./cfg/keys.json', 'twitch', 'password'),
       clientId: secretKey.getKey('./cfg/keys.json', 'twitch', 'client-id'),
-      clientSecret: secretKey.getKey('./cfg/keys.json', 'twitch', 'client-secret'), // Optional but preferred for ~25x more api possibilities
+      // Optional but preferred for ~25x more api calls per min
+      clientSecret: secretKey.getKey('./cfg/keys.json', 'twitch', 'client-secret'),
       dataRoot: './data/',
       logInfo: true,
       // logAll: true,
@@ -64,13 +65,16 @@ export default class Bot {
   }
 
   private async onChat(cid: number, uid: number, userstate: PRIVMSG['tags'], message: string, me: boolean, self: boolean, irc: PRIVMSG | null) {
-    if (!this.validator) return
+    if (!this.validator)
+      return
     console.log('\n>>>')
+
     const params = message.split(' ')
     console.log(await this.validator.validate(61365582, 'VALIDATOR_TEST', 'default', params.slice(1)))
   }
 
   private onExit(code: number) {
-    if (this.data) this.data.saveAllSync()
+    if (this.data)
+      this.data.saveAllSync()
   }
 }
