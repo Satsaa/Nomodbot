@@ -12,13 +12,7 @@ Options for loader and unloader functions
 Run loader on the loaded data
 Run unloader on a clone of the data before unloading
 
-
 # Command Plugins
-
-## Backup
-$backup
-
-- Backups data folder to root/backup/YYYY-MM-DD-hh-mm-ss
 
 ## Suggest
 !suggest <message...>
@@ -50,7 +44,6 @@ Shows a message with 3 random emotes and gives points based on that
 - 2x same emote = ~ 0.5 x EmoteWeight x bet
 - 3x same emote = ~ 10 x EmoteWeight x bet
 - Subscriber emotes give extra points (rare) (requires subscription of bot)
-- Slot categories (pepe frogs, etc.)
 
 ## Schedule
 !schedule (now | next)  
