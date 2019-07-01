@@ -30,6 +30,7 @@ export class Instance implements PluginInstance {
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     if (!params[1]) return 'Define something to search (params 1+)'
 
+    // test
     const words = params.slice(1).join(' ')
     try {
       const data = await this.wiki(words)
