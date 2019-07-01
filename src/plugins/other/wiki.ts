@@ -56,7 +56,7 @@ export class Instance implements PluginInstance {
   }
 
   public wiki(subject: string): Promise<{[x: string]: any} | string> {
-    let redirects = 0
+    let redirects = 0 // test
     return get.bind(this)(subject)
 
     function get(this: Instance, subject: string): Promise<any> {
