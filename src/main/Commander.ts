@@ -194,8 +194,8 @@ export default class Commander {
     this.data.autoLoad('cooldowns', { user: {}, shared: {} as CooldownData }, true)
 
     const files = (await readDirRecursive(path.join(__dirname, '..', 'plugins')))
-      .filter(f => (f.endsWith('.ts') || f.endsWith('.js')) && !f.includes('tempCodeRunnerFile')),
-          optionsArr = (await Promise.all(files.map(file => this.loadFromPath(file)))).flat()
+      .filter(f => (f.endsWith('.ts') || f.endsWith('.js')) && !f.includes('tempCodeRunnerFile'))
+    const optionsArr = (await Promise.all(files.map(file => this.loadFromPath(file)))).flat()
     this.findConflicts(optionsArr, files)
     await Promise.all(optionsArr)
     return optionsArr.map(v => v.id)
@@ -203,10 +203,10 @@ export default class Commander {
 
   /** Check for duplicate data type creations and if a plugin requires data that no present plugin creates */
   public findConflicts(optionsArray: PluginOptions[], files: string[]) {
-    const messages: string[] = [], // Error messages
-          created: string[] = [], // Created data types
-          titles: string[] = [], // Corresponding plugin title for created entries
-          ids: string[] = [] // Ids of plugins
+    const messages: string[] = [] // Error messages
+    const created: string[] = [] // Created data types
+    const titles: string[] = [] // Corresponding plugin title for created entries
+    const ids: string[] = [] // Ids of plugins
     // Fill ids
     optionsArray.forEach((c, i) => {
       if (ids.includes(c.id)) {
@@ -361,8 +361,8 @@ export default class Commander {
     const cooldowns = this.data.getData(channelId, 'cooldowns') as CooldownData
     if (!cooldowns) return 0
 
-    let cd = 0,
-        ucd = 0
+    let cd = 0
+    let ucd = 0
     const now = Date.now()
     if (alias.cooldown) {
       if (typeof cooldowns.shared[alias.target] !== 'object') cooldowns.shared[alias.target] = []
@@ -395,9 +395,9 @@ export default class Commander {
       if (times.length < opts.limit!) { // Limit is not reached calculate needed wait for delay
         return times.length ? times[times.length - 1] + opts.delay! - now : 0
       } else {
-        const exceeds = times.length - opts.limit!,
-              delayTest = times[times.length - 1] + opts.delay! - now, // test only for delay
-              limitTest = times[exceeds + 0] + duration - now // test all but delay
+        const exceeds = times.length - opts.limit!
+        const delayTest = times[times.length - 1] + opts.delay! - now // test only for delay
+        const limitTest = times[exceeds + 0] + duration - now // test all but delay
         return Math.max(delayTest, limitTest)
       }
     }
@@ -418,8 +418,8 @@ export default class Commander {
     }
 
     function handle(this: Commander, path: string, plugin: {options: PluginOptions, Instance: new() => PluginInstance}) {
-      const _plugin: {options: PluginOptions, Instance: new() => PluginInstance} = plugin,
-            options = _plugin.options
+      const _plugin: {options: PluginOptions, Instance: new() => PluginInstance} = plugin
+      const options = _plugin.options
       if (options) {
         const type = options.type // Cant use options in default case
         this.paths[options.id] = path
@@ -486,9 +486,9 @@ export default class Commander {
       else return { success: false, code: 'UNLOADED', message: 'Plugin is not loaded' }
     }
 
-    const creates = this.plugins[pluginId].creates,
-          reqPlugin: string[] = [],
-          reqData: string[] = []
+    const creates = this.plugins[pluginId].creates
+    const reqPlugin: string[] = []
+    const reqData: string[] = []
     // Check that other plugins dont require parts of this plugin
     for (const pid in this.plugins) {
       // Test if this plugin is vital
@@ -633,8 +633,8 @@ export default class Commander {
     const alias = this.getAlias(channelId, params[0])
     if (!alias || alias.disabled) return
 
-    const instance = this.instances[alias.target],
-          plugin = this.plugins[alias.target]
+    const instance = this.instances[alias.target]
+    const plugin = this.plugins[alias.target]
     if (plugin.type !== 'command') return console.log(`Trying to call a non command: ${alias.target}`)
     if (!plugin.unignoreMentions) message = message.replace(/ @.*/, '') // Remove @user... from command calls
     params = message.split(' ')

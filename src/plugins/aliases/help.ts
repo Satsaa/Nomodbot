@@ -27,8 +27,8 @@ export class Instance implements PluginInstance {
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     if (!params[1]) return 'Define a command (param 1)'
 
-    const input = params[1].toLowerCase(),
-          alias = this.l.getAlias(channelId, input)
+    const input = params[1].toLowerCase()
+    const alias = this.l.getAlias(channelId, input)
     if (!alias) return 'Cannot find that command'
 
     const helps = this.l.getHelp(alias, true)

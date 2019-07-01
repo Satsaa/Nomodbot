@@ -100,16 +100,16 @@ export class Instance implements PluginInstance {
       case 'set': {
         switch (params[3]) {
           case 'cd': {
-            const cd = ~~params[4],
-                  alias = this.l.getAlias(channelId, params[2])
+            const cd = ~~params[4]
+            const alias = this.l.getAlias(channelId, params[2])
             if (!alias) return 'No command'
 
             const res = this.l.modAlias(channelId, params[2], { cooldown: cd || undefined })
             if (res) { return `Cooldown of "${params[2].toLowerCase()}" set to ${this.l.u.plural(cd, 'second')}. The user cooldown is ${this.l.u.plural(alias.userCooldown || 0, 'second')}` } else { return 'Failed to change cooldown' }
           }
           case 'ucd': {
-            const cd = ~~params[4],
-                  alias = this.l.getAlias(channelId, params[2])
+            const cd = ~~params[4]
+            const alias = this.l.getAlias(channelId, params[2])
             if (!alias) return 'No command'
 
             const res = this.l.modAlias(channelId, params[2], { userCooldown: cd || undefined })

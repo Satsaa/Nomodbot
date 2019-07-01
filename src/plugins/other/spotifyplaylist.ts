@@ -92,8 +92,8 @@ export class Instance implements PluginInstance {
         // Show recent track
         if (!data.playlist) return this.l.insertAtUser(`Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${params[0]} set <id or link>`, extra)
 
-        const pos = params[1] ? Math.floor(~~params[1] - 1) : 0,
-              playlist = await this.getPlaylist(data.playlist)
+        const pos = params[1] ? Math.floor(~~params[1] - 1) : 0
+        const playlist = await this.getPlaylist(data.playlist)
         if (typeof playlist === 'string') return this.l.insertAtUser('Invalid playlist', extra)
 
         const track = playlist.tracks.items[pos].track
@@ -153,27 +153,27 @@ export class Instance implements PluginInstance {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`,
       },
-    },
+    }
 
-          request = https.request(options, (res) => {
-            if (res.statusCode === 200) { // success!
-              let data = ''
-              res.on('data', (chunk) => {
-                data += chunk
-              }).on('end', () => {
-                const result = JSON.parse(data)
-                console.log('[SPOTIFYPLAYLIST] Refreshed access token')
-                this.accessToken = result.access_token
-                this.timeout = setTimeout(this.tokenLoop.bind(this), result.expires_in * 1000 - 5000)
-              }).on('error', (err) => {
-                console.log('[SPOTIFYPLAYLIST] Error when requesting access token', res)
-                this.timeout = setTimeout(this.tokenLoop.bind(this), 10 * 1000)
-              })
-            } else {
-              console.log('[SPOTIFYPLAYLIST] Unexpected response when requesting access token', res)
-              this.timeout = setTimeout(this.tokenLoop.bind(this), 60 * 1000)
-            }
-          })
+    const request = https.request(options, (res) => {
+      if (res.statusCode === 200) { // success!
+        let data = ''
+        res.on('data', (chunk) => {
+          data += chunk
+        }).on('end', () => {
+          const result = JSON.parse(data)
+          console.log('[SPOTIFYPLAYLIST] Refreshed access token')
+          this.accessToken = result.access_token
+          this.timeout = setTimeout(this.tokenLoop.bind(this), result.expires_in * 1000 - 5000)
+        }).on('error', (err) => {
+          console.log('[SPOTIFYPLAYLIST] Error when requesting access token', res)
+          this.timeout = setTimeout(this.tokenLoop.bind(this), 10 * 1000)
+        })
+      } else {
+        console.log('[SPOTIFYPLAYLIST] Unexpected response when requesting access token', res)
+        this.timeout = setTimeout(this.tokenLoop.bind(this), 60 * 1000)
+      }
+    })
 
     request.on('error', (err) => {
       console.log('[SPOTIFYPLAYLIST] Error when requesting access token')

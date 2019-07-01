@@ -26,8 +26,8 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
       }
 
       public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-        const aliasName = params[2].toLowerCase(),
-              alias = this.l.getAlias(channelId, aliasName)
+        const aliasName = params[2].toLowerCase()
+        const alias = this.l.getAlias(channelId, aliasName)
         if (alias) { // Channel alias
           if (!this.l.isPermitted(alias, userId, tags.badges, { ignoreWhiteList: true })) return 'You cannot edit the blacklist of a command you are not permitted to use'
 
@@ -75,8 +75,8 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
         if (!params[1]) return 'Define a user (param 1)'
         if (!params[2]) return 'Define a command (param 2)'
 
-        const aliasName = params[2].toLowerCase(),
-              alias = this.l.getAlias(channelId, aliasName)
+        const aliasName = params[2].toLowerCase()
+        const alias = this.l.getAlias(channelId, aliasName)
         if (alias) { // Channel alias
           if (!this.l.isPermitted(alias, userId, tags.badges, { ignoreWhiteList: true })) return 'You cannot edit the blacklist of a command you are not permitted to use'
 

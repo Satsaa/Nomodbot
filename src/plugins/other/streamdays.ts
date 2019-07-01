@@ -32,15 +32,15 @@ export class Instance implements PluginInstance {
       const recent = await this.l.api.recentBroadcasts(channelId)
       if (typeof recent !== 'object') return 'Cannot resolve recent broadcasts'
 
-      const weeks = Number(params[1]) || 8, // 8 months for affiliates
-            videos = recent.data
+      const weeks = Number(params[1]) || 8 // 8 months for affiliates
+      const videos = recent.data
       if (videos.length < 1) return 'There are no vods :('
 
-      const toDay = new Date().getTime() / DAY,
-            streamCounts = [0, 0, 0, 0, 0, 0, 0]
+      const toDay = new Date().getTime() / DAY
+      const streamCounts = [0, 0, 0, 0, 0, 0, 0]
 
-      let prevDateString = '',
-          total = 0
+      let prevDateString = ''
+      let total = 0
       for (let i = 1; i < weeks * 7 || i < videos.length; i++) {
         const date = new Date(videos[i].created_at)
         if (date.getTime() / DAY < toDay - weeks * 7) { // Stop on too old entries

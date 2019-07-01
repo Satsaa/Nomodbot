@@ -35,8 +35,8 @@ export class Instance implements PluginInstance {
 
       const videos = recent.data.slice(0, count)
 
-      let total = 0,
-          totalDuration = 0
+      let total = 0
+      let totalDuration = 0
       const clockAngles: number[] = []
       for (const video of videos) {
         const date = new Date(video.created_at)
@@ -50,8 +50,8 @@ export class Instance implements PluginInstance {
       let averageAngle = meanAngleDeg(clockAngles)
       if (averageAngle < 0) averageAngle += 360
 
-      let hours: number | string = Math.floor(averageAngle / 15),
-          minutes: number | string = Math.round((averageAngle / 15 - hours) * 60)
+      let hours: number | string = Math.floor(averageAngle / 15)
+      let minutes: number | string = Math.round((averageAngle / 15 - hours) * 60)
       if (hours.toString().length === 1) hours = `0${hours}`
       if (minutes.toString().length === 1) minutes = `0${minutes}`
 

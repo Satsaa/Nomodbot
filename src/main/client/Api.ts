@@ -412,9 +412,9 @@ export default class TwitchApi {
   public async recentBroadcasts(channelId: number, generic: GenericOptions = {}): Promise<string | VideosResponse | undefined> {
     if (!this.channelCaches[channelId]) this.loadChannelCache(channelId)
 
-    const channelCache = this.channelCaches[channelId].recentBroadcasts,
+    const channelCache = this.channelCaches[channelId].recentBroadcasts
 
-          cached = this.handleGeneric(channelCache, this.deprecate.recentBroadcasts, generic) as VideosResponse | undefined
+    const cached = this.handleGeneric(channelCache, this.deprecate.recentBroadcasts, generic) as VideosResponse | undefined
     if (cached) return cached
 
     const res = await this._videos({ user_id: channelId, first: 100, type: 'archive' })
@@ -436,8 +436,8 @@ export default class TwitchApi {
     if (this.channelCaches[channelId]) return false // Block unneeded loads
     this.channelCaches[channelId] = deepClone(this.channelCacheDefault) // Blocks multiple loads
 
-    const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`,
-          dir = `${this.opts.dataRoot}/${channelId}/`
+    const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`
+    const dir = `${this.opts.dataRoot}/${channelId}/`
     try {
       await fsp.mkdir(dir, { recursive: true })
 
@@ -455,8 +455,8 @@ export default class TwitchApi {
   public async unloadChannelCache(channelId: number): Promise<boolean> {
     if (!this.channelCaches[channelId]) return false // Block unneeded unloads
 
-    const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`,
-          dir = `${this.opts.dataRoot}/${channelId}/`
+    const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`
+    const dir = `${this.opts.dataRoot}/${channelId}/`
     await fsp.mkdir(dir, { recursive: true })
     await fsp.writeFile(path, JSON.stringify(this.channelCaches[channelId], null, '\t'))
     delete this.channelCaches[channelId]
@@ -472,12 +472,12 @@ export default class TwitchApi {
     this.bearer = null
     this.expire = 0
 
-    const scope = 'channel:moderate+chat:edit+chat:read+whispers:read+whispers:edit+channel_editor',
-          options = {
-            host: 'id.twitch.tv',
-            path: `/oauth2/token?client_id=${this.opts.clientId}&client_secret=${this.opts.clientSecret}&grant_type=client_credentials&scope=${scope}`,
-            method: 'POST',
-          }
+    const scope = 'channel:moderate+chat:edit+chat:read+whispers:read+whispers:edit+channel_editor'
+    const options = {
+      host: 'id.twitch.tv',
+      path: `/oauth2/token?client_id=${this.opts.clientId}&client_secret=${this.opts.clientSecret}&grant_type=client_credentials&scope=${scope}`,
+      method: 'POST',
+    }
     https.get(options, (res) => {
       if (res.statusCode === 200) { // success!
         let data = ''
@@ -588,9 +588,9 @@ export default class TwitchApi {
     const saveData: Array<[number, string, string]> = []
     let failed = 0
     for (const _id in this.logins) {
-      const id = ~~_id,
-            login = this.logins[id],
-            display = this.displays[id]
+      const id = ~~_id
+      const login = this.logins[id]
+      const display = this.displays[id]
       if (id && login && display) {
         saveData.push([id, login, display])
       } else {
@@ -603,8 +603,8 @@ export default class TwitchApi {
 
     // Save loaded channel caches
     for (const channelId in this.channelCaches) {
-      const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`,
-            dir = `${this.opts.dataRoot}/${channelId}/`
+      const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`
+      const dir = `${this.opts.dataRoot}/${channelId}/`
       fs.mkdirSync(dir, { recursive: true })
       fs.writeFileSync(path, JSON.stringify(this.channelCaches[channelId], null, '\t'))
     }

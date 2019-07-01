@@ -190,8 +190,8 @@ export default class Data extends EventEmitter {
   public async unautoLoad(name: string, noUnload = false): Promise<Data['autoLoads']> {
     for (let i = 0; i < this.autoLoads.length; i++) {
       if (this.autoLoads[i].name === name) {
-        const returnVal = this.autoLoads.splice(i, 1),
-              savePromises = []
+        const returnVal = this.autoLoads.splice(i, 1)
+        const savePromises = []
         for (const channel in this.client.clientData.channels) { // Load for present channels
           savePromises.push(this.save(channel, name, true))
         }

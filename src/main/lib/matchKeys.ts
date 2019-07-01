@@ -30,8 +30,8 @@ export default (haystackObj: DeepReadonly<object>, needleObj: DeepReadonly<objec
       if (i > options.maxDepth) return true
     }
     for (const key in matchObj) {
-      const matchKey = matchObj[key],
-            objKey = obj[key]
+      const matchKey = matchObj[key]
+      const objKey = obj[key]
       if (typeof objKey === 'undefined') return false // key didnt exist in obj
       // test that values match
       if (options.matchValues // Test values if chosen

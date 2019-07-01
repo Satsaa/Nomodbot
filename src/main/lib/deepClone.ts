@@ -4,8 +4,8 @@
  * Only own keys are cloned
  */
 export default function <T extends object | any[]>(obj: T): T {
-  const sourceRefs: any[] = [], // Avoid circular reasoning
-        outRefs: {[x: string]: any} = [] // Avoid circular reasoning
+  const sourceRefs: any[] = [] // Avoid circular reasoning
+  const outRefs: {[x: string]: any} = [] // Avoid circular reasoning
 
   // @ts-ignore // ez fix for return value
   return cloneObj(obj)

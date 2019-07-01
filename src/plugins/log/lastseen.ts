@@ -33,8 +33,8 @@ export class Instance implements PluginInstance {
     const targetId = params[1] ? await this.l.api.getId(params[1]) : userId
     if (!targetId) return 'Cannot find a user with that name'
 
-    const self = targetId === userId,
-          display = params[1] ? await this.l.api.getDisplay(targetId) : tags['display-name']
+    const self = targetId === userId
+    const display = params[1] ? await this.l.api.getDisplay(targetId) : tags['display-name']
 
     if (!this.log.getData) return 'Log data unavailable'
 

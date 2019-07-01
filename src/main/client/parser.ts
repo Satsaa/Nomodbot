@@ -94,11 +94,11 @@ function num(v: string) {
 
 function emotes(v: string) { // emotes=25:0-4/354:6-10/1:12-13
   if (typeof v === 'string' && v !== '') {
-    const emotes: { [emote: string]: {start: number, end: number} } = {},
-          splitted = v.split('/')
+    const emotes: { [emote: string]: {start: number, end: number} } = {}
+    const splitted = v.split('/')
     splitted.forEach((fullEmote) => {
-      const emote: string[] = fullEmote.split(':'),
-            area = emote[1].split('-')
+      const emote: string[] = fullEmote.split(':')
+      const area = emote[1].split('-')
       emotes[emote[0]] = { start: ~~area[0], end: ~~area[1] }
     })
     return emotes
@@ -107,8 +107,8 @@ function emotes(v: string) { // emotes=25:0-4/354:6-10/1:12-13
 
 function badges(v: string) {
   if (typeof v === 'string' && v !== '') {
-    const badges: {[badge: string]: number} = {},
-          splitted = v.split(',')
+    const badges: {[badge: string]: number} = {}
+    const splitted = v.split(',')
     splitted.forEach((fullBadge) => {
       const badge = fullBadge.split('/')
       badges[badge[0]] = ~~badge[1]
@@ -147,13 +147,13 @@ export default function parse(msg: string): IrcMessage | null {
 
     // find next '=', ';' or ' ' and slice keys and values based on those
     while (i < nextSpace) {
-      let nextEquals = msg.indexOf('=', i),
-          nextSemiColon = msg.indexOf(';', i)
+      let nextEquals = msg.indexOf('=', i)
+      let nextSemiColon = msg.indexOf(';', i)
       if (nextEquals === -1) { nextEquals = nextSpace }
       if (nextSemiColon === -1) { nextSemiColon = nextSpace }
 
-      const minIndex = Math.min(nextEquals, nextSpace, nextSemiColon),
-            semiMinIndex = Math.min(nextSpace, nextSemiColon)
+      const minIndex = Math.min(nextEquals, nextSpace, nextSemiColon)
+      const semiMinIndex = Math.min(nextSpace, nextSemiColon)
 
       let val: string = msg.slice(minIndex + 1, semiMinIndex)
 

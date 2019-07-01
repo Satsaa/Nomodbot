@@ -198,8 +198,8 @@ export class Instance implements PluginInstance {
       if (!data) return resolve()
       if (!data.users[userId]) return resolve()
 
-      const user = data.users[userId],
-            index = this.l.u.smartIndex(oneIndex, user.offsets)
+      const user = data.users[userId]
+      const index = this.l.u.smartIndex(oneIndex, user.offsets)
       if (index > user.offsets.length - 1) return resolve()
 
       const offset = user.offsets.slice(0, index + 1).reduce((prev, cur) => prev + cur)
@@ -225,9 +225,9 @@ export class Instance implements PluginInstance {
     return new Promise((resolve) => {
       if (!this.fds[channelId]) return resolve()
 
-      let stream: undefined | fs.ReadStream = fs.createReadStream('', { start: offset, highWaterMark: 64, encoding: 'utf8', fd: this.fds[channelId], autoClose: false }),
+      let stream: undefined | fs.ReadStream = fs.createReadStream('', { start: offset, highWaterMark: 64, encoding: 'utf8', fd: this.fds[channelId], autoClose: false })
 
-          line = ''
+      let line = ''
       stream.on('data', (chunk: string) => {
         const split = chunk.split('\n')
         line += split[0]
@@ -243,8 +243,8 @@ export class Instance implements PluginInstance {
     const data = this.l.getData(channelId, 'log') as LogData
     if (!data || !data.users[userId]) return
 
-    let total = 0,
-        i = 0
+    let total = 0
+    let i = 0
     for (const offset of data.users[userId].offsets) {
       total += offset
       if (++i >= index) return total
@@ -256,8 +256,8 @@ export class Instance implements PluginInstance {
     const data = this.l.getData(channelId, 'log') as LogData
     if (!data || !data.users[userId]) return
 
-    let total = 0,
-        i = 0
+    let total = 0
+    let i = 0
     for (const time of data.users[userId].times) {
       total += time
       if (++i >= index) return total * 1000
@@ -329,12 +329,12 @@ export class Instance implements PluginInstance {
     return new Promise((resolve) => {
       console.log(offset ? `[LOG] Tracking at offset ${offset} in ${channelId}` : `[LOG] Retracking ${this.l.api.cachedDisplay(channelId)} completely`)
 
-      const start = Date.now(),
-            path = this.l.getPath(channelId, 'log', 'txt'),
-            stream = fs.createReadStream(path, { start: offset, highWaterMark: 1000000, encoding: 'utf8' })
-      let splitEnd = '',
-          tracked = 0,
-          failed = 0
+      const start = Date.now()
+      const path = this.l.getPath(channelId, 'log', 'txt')
+      const stream = fs.createReadStream(path, { start: offset, highWaterMark: 1000000, encoding: 'utf8' })
+      let splitEnd = ''
+      let tracked = 0
+      let failed = 0
       stream.on('data', (chunk: string) => {
         stream.pause()
 
@@ -405,9 +405,9 @@ export class Instance implements PluginInstance {
     const nextNewLine = line.indexOf('\n')
     if (nextNewLine !== -1) line = line.slice(0, line.indexOf('\n'))
 
-    const colon = line.split(':'),
+    const colon = line.split(':')
 
-          ms = Number(colon[0]) * 1000
+    const ms = Number(colon[0]) * 1000
     if (!ms) return
 
     const type = colon[1]

@@ -37,9 +37,9 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    let newValue: string,
-        index,
-        value
+    let newValue: string
+    let index
+    let value
     const quotes = this.lists.getList<string>(options.id, channelId, [])
     if (!quotes) return 'Quote data unavailable'
     switch (params[1] ? params[1].toLowerCase() : undefined) {

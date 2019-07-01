@@ -45,8 +45,8 @@ export class Manager {
     try {
       if (!msg.cmd) return
 
-      const cmd = `${msg.cmd}`,
-            val = msg.val
+      const cmd = `${msg.cmd}`
+      const val = msg.val
       switch (cmd) {
         case 'KILL':
           process.exit()

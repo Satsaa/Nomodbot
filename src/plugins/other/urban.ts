@@ -40,14 +40,14 @@ export class Instance implements PluginInstance {
       }
       if (data.list.length === 0) return 'No definition found'
 
-      const def = data.list[0],
-            word = this.l.u.cap(def.word),
-            definition = this.l.u.endPunctuate(def.definition).replace(/\[.*?\]/g, this.tidyBrackets.bind(this)),
-            example = this.l.u.endPunctuate(def.example).replace(/\[.*?\]/g, this.tidyBrackets.bind(this)),
-            good = def.thumbs_up,
-            bad = def.thumbs_down,
-            link = def.permalink.replace('http://', '').replace(/^[a-zA-Z0-9]*\./, ''),
-            dateStr = this.l.u.dateString(Date.parse(def.written_on))
+      const def = data.list[0]
+      const word = this.l.u.cap(def.word)
+      const definition = this.l.u.endPunctuate(def.definition).replace(/\[.*?\]/g, this.tidyBrackets.bind(this))
+      const example = this.l.u.endPunctuate(def.example).replace(/\[.*?\]/g, this.tidyBrackets.bind(this))
+      const good = def.thumbs_up
+      const bad = def.thumbs_down
+      const link = def.permalink.replace('http://', '').replace(/^[a-zA-Z0-9]*\./, '')
+      const dateStr = this.l.u.dateString(Date.parse(def.written_on))
 
       return this.l.u.fitStrings(Math.min(this.l.maxMsgLength, 200),
         [`[${this.l.u.fontify(word, 'mathSansBold')}]`, 5], // title

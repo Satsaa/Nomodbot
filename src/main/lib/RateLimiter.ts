@@ -84,8 +84,8 @@ export default class RateLimiter {
   }
 
   private loop() {
-    const now = Date.now(),
-          entry = this.entries[0]
+    const now = Date.now()
+    const entry = this.entries[0]
     this.times.forEach((times) => { times.push(now) })
     entry.cb(...entry.args)
     entry.resolve(true)
@@ -111,8 +111,8 @@ export default class RateLimiter {
   }
 
   private _getTimeout(options: Required<RateLimiterOptions>, timesIndex: number) {
-    const now = Date.now(),
-          times = this.times[timesIndex]
+    const now = Date.now()
+    const times = this.times[timesIndex]
 
     // Remove old entries
     for (let i = 0; i < times.length; i++) {

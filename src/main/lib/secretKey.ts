@@ -20,8 +20,8 @@ export function getKey(file: string, ...keys: string[]) {
     cache[file] = JSON.parse(fs.readFileSync(file).toString())
   }
 
-  let current = cache[file],
-      changed = false
+  let current = cache[file]
+  let changed = false
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i]
     if (i === keys.length - 1) {
@@ -64,8 +64,8 @@ export function setKey(file: string, ...keysAndVal: string[]): any {
     cache[file] = JSON.parse(fs.readFileSync(file).toString())
   }
 
-  const keys = keysAndVal.splice(0, keysAndVal.length - 1),
-        val = keysAndVal
+  const keys = keysAndVal.splice(0, keysAndVal.length - 1)
+  const val = keysAndVal
 
   let current = cache[file]
   for (let i = 0; i < keys.length - 1; i++) {

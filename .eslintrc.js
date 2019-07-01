@@ -231,7 +231,7 @@ module.exports = {
     'object-curly-newline': ["error", { "multiline": true, "consistent": true }],
     'object-curly-spacing': ["error", "always", { "objectsInObjects": true }],
     'object-property-newline': 'off',
-    'one-var':  ["error", "consecutive"],
+    'one-var':  ["error", "never"],
     'one-var-declaration-per-line': ["error", "always"],
     'operator-assignment': 'error',
     'operator-linebreak': ["error", "before"],

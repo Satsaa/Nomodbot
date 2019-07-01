@@ -533,8 +533,8 @@ export default class TwitchClient {
   private async handleMessage(msg: IrcMessage) {
     if (msg === null) return
 
-    let channel: string,
-        channelId: void | number
+    let channel: string
+    let channelId: void | number
 
     if (this.opts.logAll) console.log(msg)
 
@@ -711,21 +711,21 @@ export default class TwitchClient {
         switch (msg.tags['msg-id']) {
           case 'resub':
           case 'sub': {
-            const userId = msg.tags['user-id'],
-                  streak = msg.tags['msg-param-months'],
-                  cumulative = msg.tags['msg-param-cumulative-months'],
-                  tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
+            const userId = msg.tags['user-id']
+            const streak = msg.tags['msg-param-months']
+            const cumulative = msg.tags['msg-param-cumulative-months']
+            const tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
             if (!userId) return this.failHandle(msg, 'Sub notice had no "user-id"')
             this.emit('sub', channelId, userId, streak, cumulative, tier, false, msg.params[1])
             break
           }
           case 'subgift':
           case 'anonsubgift': {
-            const gifterId = msg.tags['msg-param-origin-id'],
-                  targetId = msg.tags['msg-param-recipient-id'],
-                  streak = msg.tags['msg-param-months'],
-                  total = msg.tags['msg-param-sender-count'],
-                  tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
+            const gifterId = msg.tags['msg-param-origin-id']
+            const targetId = msg.tags['msg-param-recipient-id']
+            const streak = msg.tags['msg-param-months']
+            const total = msg.tags['msg-param-sender-count']
+            const tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
             if (!targetId) this.failHandle(msg, 'Subgift notice had no "msg-param-recipient-id"')
             if (!total) this.failHandle(msg, 'Subgift notice had no "msg-param-sender-count"')
             if (!targetId || !total) return
@@ -735,9 +735,9 @@ export default class TwitchClient {
           }
           case 'submysterygift':
           case 'anonsubmysterygift': {
-            const gifterId = msg.tags['msg-param-origin-id'],
-                  total = msg.tags['msg-param-mass-gift-count'],
-                  tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
+            const gifterId = msg.tags['msg-param-origin-id']
+            const total = msg.tags['msg-param-mass-gift-count']
+            const tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
             if (!total) return this.failHandle(msg, 'Submysterygift notice had no "msg-param-sender-count"')
             this.emit('massgift', channelId, gifterId, total, tier)
             break
@@ -748,8 +748,8 @@ export default class TwitchClient {
             this.emit('raid', channelId, undefined, undefined)
             break
           case 'raid': {
-            const viewerCount = msg.tags['viewer-count'],
-                  userId = await this.api.getId(`${msg.tags.login}`)
+            const viewerCount = msg.tags['viewer-count']
+            const userId = await this.api.getId(`${msg.tags.login}`)
             if (!userId) return this.failHandle(msg, msg.tags['msg-id'])
             this.emit('raid', channelId, userId, viewerCount)
             break
@@ -797,8 +797,8 @@ export default class TwitchClient {
             this.ircLog('Rate limited')
             break
           case 'msg_timedout': {
-            const duration = typeof msg.params[1] === 'string' ? ~~msg.params[1].match(/(\d*)[a-zA-Z .]*$/)![1] : 0,
-                  userId = await this.api.getId(this.opts.username)
+            const duration = typeof msg.params[1] === 'string' ? ~~msg.params[1].match(/(\d*)[a-zA-Z .]*$/)![1] : 0
+            const userId = await this.api.getId(this.opts.username)
             if (!userId) return this.failHandle(msg, msg.tags['msg-id'])
             this.emit('timeout', channelId, userId, duration)
             break

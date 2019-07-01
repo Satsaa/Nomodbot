@@ -48,19 +48,19 @@ export default class ParamValidator {
 
     if (!cmdParams[group] || cmdParams[group].length === 0) return { pass: true, replace: [] } // No help strings, so ignore
 
-    let maxValidDepth = 0,
-        deepestIndex = 0
+    let maxValidDepth = 0
+    let deepestIndex = 0
 
     const allChecks: Array<ReturnType<ParamValidator['check']>> = []
 
     for (let i = 0; i < cmdParams[group].length; i++) {
-      const _cmdParams = cmdParams[group][i],
-            check = this.check(_cmdParams, words)
+      const _cmdParams = cmdParams[group][i]
+      const check = this.check(_cmdParams, words)
       allChecks.push(check)
       if (check.pass) {
-        const replace: string[] = [],
-              users: {[user: string]: number} = {},
-              duplicateUserIndexes = []
+        const replace: string[] = []
+        const users: {[user: string]: number} = {}
+        const duplicateUserIndexes = []
         for (let i = 0; i < _cmdParams.length; i++) {
           const pure = _cmdParams[i].pure
           if (typeof pure === 'string' && _cmdParams[i].var && this.checkables.includes(pure)) {
@@ -113,9 +113,9 @@ export default class ParamValidator {
 
         // >add <COMMAND> <message>,edit <COMMAND> <message>,del <COMMAND>
         if (Object.keys(users).length) {
-          const res = await this.client.api.getIds(Object.keys(users)),
+          const res = await this.client.api.getIds(Object.keys(users))
 
-                notFound: number[] = []
+          const notFound: number[] = []
 
           for (const user in users) {
             if (res[user]) replace[users[user]] = `${res[user]}` // Change login to id
@@ -164,8 +164,8 @@ export default class ParamValidator {
 
     // Get data for no param message
     const possibleNames = []
-    let paramNeeded = true,
-        allMultis = true
+    let paramNeeded = true
+    let allMultis = true
     for (const cmdParam of possibleCmdParams) {
       if (!cmdParam.multi) allMultis = false
       if (cmdParam.opt) paramNeeded = false
@@ -244,9 +244,9 @@ export default class ParamValidator {
             // Range (1-99, -Infinity-0)
             const splitNums = name.split(/(?<!-|^)-/).map(v => Number(v))
             if (splitNums.length > 1 && splitNums.every(v => typeof v === 'number' && !isNaN(v))) {
-              const min = Math.min(...splitNums),
-                    max = Math.max(...splitNums),
-                    whole = !name.includes('.')
+              const min = Math.min(...splitNums)
+              const max = Math.max(...splitNums)
+              const whole = !name.includes('.')
               if (min === -Infinity && max === Infinity) return 'number'
               if (min === -Infinity) return `${whole ? 'a whole' : 'any'} number less than or equal to ${max}`
               if (max === Infinity) return `${whole ? 'a whole' : 'any'} number more than or equal to ${min}`
@@ -338,8 +338,8 @@ export default class ParamValidator {
             return Number.isInteger(Number(word))
           default: {
             // Range
-            const splitNums = pure.split(/(?<!-|^)-/).map(v => Number(v)),
-                  whole = !pure.includes('.')
+            const splitNums = pure.split(/(?<!-|^)-/).map(v => Number(v))
+            const whole = !pure.includes('.')
             if (splitNums.length > 1) {
               const inputNum = Number(word)
               if (isNaN(inputNum)) return false
@@ -356,9 +356,9 @@ export default class ParamValidator {
 
   /** Handle command plugins help field. Caching parameter types. Throws on invalid help strings */
   public cacheHelp(pluginId: string, help: Command['help']) {
-    const res: {[group: string]: CommandParameters[]} = {},
+    const res: {[group: string]: CommandParameters[]} = {}
 
-          source = Array.isArray(help) ? { default: help } : help
+    const source = Array.isArray(help) ? { default: help } : help
 
     for (const group in source) {
       res[group] = []
@@ -384,10 +384,10 @@ export default class ParamValidator {
     const errors = []
     let previous: CommandParameters[number] = { opt: false, var: false, multi: false, case: false, pure: '', raw: '' }
     for (const field of cmdParams) {
-      const smaller = field.raw.split('<').length - 1,
-            larger = field.raw.split('>').length - 1,
-            leftSquare = field.raw.split('[').length - 1,
-            rightSquare = field.raw.split(']').length - 1
+      const smaller = field.raw.split('<').length - 1
+      const larger = field.raw.split('>').length - 1
+      const leftSquare = field.raw.split('[').length - 1
+      const rightSquare = field.raw.split(']').length - 1
 
       if (typeof field.pure === 'object') {
         for (const pure of field.pure) {
@@ -421,19 +421,19 @@ export default class ParamValidator {
   public _parse(input: string): AdvancedResult<CommandParameter[]> {
     const output: CommandParameters = []
     for (const raw of input.split(' ')) {
-      const _var = Boolean(raw.match(/^[\[\].]*\<.*\>[\[\].]*$/)), // Has <>
-            opt = Boolean(raw.match(/^[<>.]*\[.*\][<>.]*$/)), // Has []
-            multi = Boolean(raw.match(/\.{3}[\]>]*$/)), // Has ...
-            _case = raw.toLowerCase() !== raw
-      let regex: RegExp | RegExp[] | undefined,
+      const _var = Boolean(raw.match(/^[\[\].]*\<.*\>[\[\].]*$/)) // Has <>
+      const opt = Boolean(raw.match(/^[<>.]*\[.*\][<>.]*$/)) // Has []
+      const multi = Boolean(raw.match(/\.{3}[\]>]*$/)) // Has ...
+      const _case = raw.toLowerCase() !== raw
+      let regex: RegExp | RegExp[] | undefined
       // Edge tokens only: /^[[\]<>]+|(\.{3}|[[\]<>])+$/g
       // All tokens: /[\[\]<>.]+/g
-          pure: CommandParameter['pure'] = raw.replace(/^[\[\]<>]+|(\.{3}|[\[\]<>])+$/g, '') // Remove edge tokens
+      let pure: CommandParameter['pure'] = raw.replace(/^[\[\]<>]+|(\.{3}|[\[\]<>])+$/g, '') // Remove edge tokens
       if (raw.includes('|')) {
         pure = pure.split('|') // Tuple
 
-        const _regex: RegExp[] = [],
-              _pure: string[] = []
+        const _regex: RegExp[] = []
+        const _pure: string[] = []
         pure.forEach((element, i) => {
           if (_var && element.includes('/')) {
             const split = element.split('/')
@@ -459,8 +459,8 @@ export default class ParamValidator {
       })
     }
 
-    const validate = this._errorCheck(output),
-          success = !validate.length
+    const validate = this._errorCheck(output)
+    const success = !validate.length
     if (success) {
       return { success, data: output }
     }
@@ -481,15 +481,15 @@ export default class ParamValidator {
   public consoleInteract() {
     const stdin: NodeJS.Socket = process.openStdin()
 
-    let splitInputs = ['<test> [test...]'.split(' ')],
-        inputCmdParams = { default: [this._parse('<test> [test...]').data || []] }
+    let splitInputs = ['<test> [test...]'.split(' ')]
+    let inputCmdParams = { default: [this._parse('<test> [test...]').data || []] }
     stdin.addListener('data', listener.bind(this))
 
     async function listener(this: ParamValidator, data: any) {
       const str: string = data.toString().trim()
       if (str.startsWith('>')) {
-        const rawHelps = str.slice(1).split(','),
-              splits = str.slice(1).split(',').map(v => v.replace(/.*: ?{?\w+}? ?/, ''))
+        const rawHelps = str.slice(1).split(',')
+        const splits = str.slice(1).split(',').map(v => v.replace(/.*: ?{?\w+}? ?/, ''))
         splitInputs = splits.map(v => v.split(' '))
         inputCmdParams = { default: splits.map(v => this._parse(v).data || []) }
         try {
@@ -502,8 +502,8 @@ export default class ParamValidator {
         if (res) console.log(res)
       } else {
         try {
-          let logMsg = '',
-              i = 0
+          let logMsg = ''
+          let i = 0
           for (const splitInput of splitInputs) {
             const res = this.check(inputCmdParams.default[i], str.split(' '))
             splitInput.forEach((v, i) => {

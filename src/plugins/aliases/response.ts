@@ -86,10 +86,10 @@ export class Instance implements PluginInstance {
         }
       }
 
-      const alias = params[2].toLowerCase(),
-            message = params.slice(3).join(' '),
-            messageLc = message.toLowerCase(),
-            variables: string[] = []
+      const alias = params[2].toLowerCase()
+      const message = params.slice(3).join(' ')
+      const messageLc = message.toLowerCase()
+      const variables: string[] = []
 
       let data: string[] = []
       const unknowns = []
