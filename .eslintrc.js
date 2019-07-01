@@ -65,7 +65,7 @@ module.exports = {
     'class-methods-use-this': 'off',
     'complexity': 'off',
     'consistent-return': 'off', // Hopefully a typescript solution is found
-    'curly': ["error", "multi-or-nest", "consistent"],
+    'curly': ["error", "multi-line", "consistent"],
     'default-case': 'off',
     'dot-location': 'off',
     'dot-notation': 'error',
@@ -168,8 +168,8 @@ module.exports = {
     'array-bracket-spacing': 'error',
     'array-element-newline': 'off',
     'block-spacing': 'error',
-    'brace-style': ["error", "1tbs", { "allowSingleLine": false }],
-    'camelcase': ["error", {'properties': "never"}],
+    'brace-style': ["error", "1tbs", { "allowSingleLine": true }],
+    'camelcase': 'off',
     'capitalized-comments': 'off', // Flags variable names etc.
     'comma-dangle': ["error", "always-multiline"],
     'comma-spacing': 'error',
@@ -223,12 +223,12 @@ module.exports = {
     'no-restricted-syntax': 'off',
     'no-tabs': "error",
     'no-ternary': 'off',
-    'no-trailing-spaces': 'error',
+    'no-trailing-spaces': ["error", { "ignoreComments": true }],
     'no-underscore-dangle': 'off',
     'no-unneeded-ternary': ["error", { "defaultAssignment": false }],
     'no-whitespace-before-property': 'error',
-    'nonblock-statement-body-position': ["error", "below"],
-    'object-curly-newline': ["error", { "multiline": true }],
+    'nonblock-statement-body-position': ["error", "beside"],
+    'object-curly-newline': ["error", { "multiline": true, "consistent": true }],
     'object-curly-spacing': ["error", "always", { "objectsInObjects": true }],
     'object-property-newline': 'off',
     'one-var':  ["error", "consecutive"],
@@ -250,7 +250,11 @@ module.exports = {
     'sort-keys': 'off',
     'sort-vars': 'off',
     'space-before-blocks': "error",
-    'space-before-function-paren':  ["error", "never"],
+    'space-before-function-paren':  ["error", {
+      "anonymous": "never",
+      "named": "never",
+      "asyncArrow": "always"
+    }],
     'space-in-parens': 'error',
     'space-infix-ops': 'error',
     'space-unary-ops': 'error',
@@ -300,7 +304,7 @@ module.exports = {
     '@typescript-eslint/await-thenable': 'error',
     '@typescript-eslint/ban-ts-ignore': 'off',
     '@typescript-eslint/ban-types': 'error',
-    '@typescript-eslint/camelcase': 'off',
+    '@typescript-eslint/camelcase': ["error", {'properties': "never"}],
     '@typescript-eslint/class-name-casing': 'error',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-member-accessibility': 'off',
@@ -309,17 +313,45 @@ module.exports = {
     '@typescript-eslint/indent': [
       "error", 2,{ // Tabs are not well supported
         "SwitchCase": 1,
-        "VariableDeclarator": { "var": 2, "let": 2, "const": 3 }
+        "VariableDeclarator": "first"
       }],
     '@typescript-eslint/interface-name-prefix': ['error', 'never'],
     '@typescript-eslint/member-delimiter-style': ['error', { "multiline": { "delimiter": "none", }, "singleline": { "delimiter": "comma", }}],
     '@typescript-eslint/member-naming': 'off',
-    '@typescript-eslint/member-ordering': 'error',
+    '@typescript-eslint/member-ordering': ['error', { // Aids remove
+      "default": [
+        "public-static-field",
+        "protected-static-field",
+        "private-static-field",
+        "public-instance-field",
+        "protected-instance-field",
+        "private-instance-field",
+        "public-field",
+        "protected-field",
+        "private-field",
+        "static-field",
+        "instance-field",
+        "constructor",
+        "public-static-method",
+        "protected-static-method",
+        "private-static-method",
+        "public-instance-method",
+        "protected-instance-method",
+        "private-instance-method",
+        "public-method",
+        "protected-method",
+        "private-method",
+        "static-method",
+        "instance-method",
+        "method", // fix index types
+        "field", // fix index types
+      ],
+    }],
     '@typescript-eslint/no-angle-bracket-type-assertion': 'error',
     '@typescript-eslint/no-array-constructor': 'error',
     '@typescript-eslint/no-empty-interface': 'error',
-    '@typescript-eslint/no-explicit-any': 'error',
-    '@typescript-eslint/no-extra-parens': ['error', 'all'],
+    '@typescript-eslint/no-explicit-any': 'off', // Blocks typing as any
+    '@typescript-eslint/no-extra-parens': ['error', 'all', { "nestedBinaryExpressions": false }],
     '@typescript-eslint/no-extraneous-class': 'off',
     '@typescript-eslint/no-floating-promises': 'off', // Not implemented atm
     '@typescript-eslint/no-for-in-array': 'error',
@@ -353,7 +385,7 @@ module.exports = {
     '@typescript-eslint/semi': 'off',
     '@typescript-eslint/type-annotation-spacing': 'error',
     '@typescript-eslint/unbound-method': 'off', // False positives?
-    '@typescript-eslint/unified-signatures': 'error',
+    '@typescript-eslint/unified-signatures': 'off', // Too aggressive
 
 
     // import
@@ -418,7 +450,7 @@ module.exports = {
     "unicorn/no-new-buffer": "error",
     "unicorn/no-process-exit": "off",
     "unicorn/no-unreadable-array-destructuring": "off",
-    "unicorn/no-unsafe-regex": "error",
+    "unicorn/no-unsafe-regex": "off", // Too aggressive?
     "unicorn/no-unused-properties": "off",
     "unicorn/no-zero-fractions": "off",
     "unicorn/number-literal-case": "off",

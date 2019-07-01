@@ -5,7 +5,6 @@ import * as secretKey from './lib/secretKey'
 import * as util from './lib/util'
 
 export default class PluginLibrary {
-
   /** util library */
   public u: typeof util
   /** Libaries shared by plugins */
@@ -16,7 +15,7 @@ export default class PluginLibrary {
     once: TwitchClient['once']
     removeListener: TwitchClient['removeListener']
     prependListener: TwitchClient['prependListener']
-    prependOnceListener: TwitchClient['prependOnceListener'],
+    prependOnceListener: TwitchClient['prependOnceListener']
   }
   public api: TwitchClient['api']
 
@@ -207,7 +206,7 @@ export default class PluginLibrary {
   }
 
   /** Loads a new plugin from ./bin/plugins/`path`.js */
-  public loadFromPath(path: string) {
+  public async loadFromPath(path: string) {
     return this.commander.loadFromPath(`../plugins/${path}.js`)
   }
 
@@ -231,7 +230,7 @@ export default class PluginLibrary {
           return 'master'
       }
     }
-    return
+    return undefined
   }
 
   /** Whether or not `userId` is a master user */
@@ -242,7 +241,7 @@ export default class PluginLibrary {
   /** Whether or not `user` (LOGIN) SEEMS TO BE a mod in `channelId` (ID) */
   public isMod(channelId: number, user: string) {
     if (!this.client.channelCache.mods[channelId]) return false
-    return !!this.client.channelCache.mods[channelId][user.toLowerCase()]
+    return Boolean(this.client.channelCache.mods[channelId][user.toLowerCase()])
   }
 
   /** Insert @user to `message` if needed and return it */
@@ -280,6 +279,7 @@ export default class PluginLibrary {
       if (!fallback && alias.group && alias.group !== 'default') return
       return plugin.help.map(v => v)
     }
+
     // Grouped/object help format
     const group = alias.group || 'default'
     if (plugin.help[group]) return plugin.help[group].map(v => v)
@@ -317,7 +317,7 @@ export default class PluginLibrary {
   private _getEnabledAliases(): {[x: string]: DefaultCommandAlias}
   /** Returns active default aliases or active aliases of `channelId` */
   private _getEnabledAliases(channelId?: number): {[alias: string]: CommandAlias} {
-    const result: { [alias: string]: CommandAlias; } = {}
+    const result: { [alias: string]: CommandAlias } = {}
     if (channelId) {
       // Channel aliases
       for (const alias in this.data.data[channelId].aliases.aliases) {

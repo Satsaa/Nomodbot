@@ -1,22 +1,22 @@
-import deepClone from './deepClone';
+import deepClone from './deepClone'
 import matchKeys, { MatchKeysOptions } from './matchKeys'
 
 export interface ExpectOptions {
   /** Whether to return after first match or not */
-  once?: boolean,
+  once?: boolean
   /** Timeout after this ms and callback with `expired` = true */
-  timeout?: null | number,
+  timeout?: null | number
   /** Options on how matching is done */
   matchOptions?: MatchKeysOptions
 }
 
 export interface ExpectEntry {
-  cb: CallBack,
-  id: number,
-  once: boolean,
-  matchObj: object,
-  options: ExpectOptions,
-  timeout: null | NodeJS.Timeout,
+  cb: CallBack
+  id: number
+  once: boolean
+  matchObj: object
+  options: ExpectOptions
+  timeout: null | NodeJS.Timeout
 }
 
 export type CallBack = (expired: boolean, match?: object) => void
@@ -27,7 +27,6 @@ export type CallBack = (expired: boolean, match?: object) => void
  * `Expector.expect` and calls the supplied callback
  */
 export default class Expector {
-
   private entries: ExpectEntry[]
   private id: number
 
@@ -48,11 +47,10 @@ export default class Expector {
   public expect(matchObj: object, cb: CallBack): number
   public expect(matchObj: object, options: ExpectOptions, cb: CallBack): number
   public expect(matchObj: object, options: ExpectOptions | CallBack, cb?: CallBack) {
-
     if (typeof options === 'function') {
       cb = options
       options = {}
-    } else options = deepClone(options)
+    } else { options = deepClone(options) }
     if (typeof cb !== 'function') throw new Error('Callback is not a function?')
 
     const id = this.id++
@@ -67,13 +65,17 @@ export default class Expector {
           ignoreUndefined: true,
           matchValues: true,
           maxDepth: undefined,
-          ...(options.matchOptions || {}) },
-        ...options},
-      timeout: typeof options.timeout !== 'number' ? null : setTimeout(() => {
-        if (cb === undefined) throw new Error('Callback is undefined?')
-        cb(true)
-        this.unExpect(id)
-      }, options.timeout),
+          ...options.matchOptions || {},
+        },
+        ...options,
+      },
+      timeout: typeof options.timeout === 'number'
+        ? setTimeout(() => {
+          if (cb === undefined) throw new Error('Callback is undefined?')
+          cb(true)
+          this.unExpect(id)
+        }, options.timeout)
+        : null,
     })
     return id
   }

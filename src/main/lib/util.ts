@@ -22,7 +22,7 @@ export function randomFloat(min: number, max: number) { return (Math.random() * 
  * @param skew Skews the normal mean closer to min (>1) or max (<1). I don't know
  */
 export function randomNormal(min = 0, max = 100, skew = 1) {
-  return Math.pow(((Math.sqrt(Math.log(Math.random()) * -2.0) * Math.cos(Math.PI * Math.random() * 2.0)) / 10.0 + 0.5), skew) * (max - min) + min
+  return Math.pow((Math.sqrt(Math.log(Math.random()) * -2.0) * Math.cos(Math.PI * Math.random() * 2.0)) / 10.0 + 0.5, skew) * (max - min) + min
 }
 
 /**
@@ -104,14 +104,17 @@ export function uniquify<T extends any[]>(array: T, table: T extends (boolean[] 
  * @returns [`days`,`hours`,`minutes`,`seconds`]
  */
 export function MSToDHMS(ms: number) {
-  let d; let h; let m; let s
+  let h,
+      m,
+      s
   s = Math.floor(ms / 1000)
   m = Math.floor(s / 60)
-  s = s % 60
+  s %= 60
   h = Math.floor(m / 60)
-  m = m % 60
-  d = Math.floor(h / 24)
-  h = h % 24
+  m %= 60
+
+  const d = Math.floor(h / 24)
+  h %= 24
   return [d, h, m, s]
 }
 
@@ -139,9 +142,9 @@ export function timeSince(ms: number, top = 4, long = false) { return timeDurati
  */
 export function timeDuration(t: number | number[], top = 4, long = false) {
   let exists = 0
-  const untill = []
-  const dateStrLong = [' day', ' hour', ' minute', ' second']
-  const dateStrShort = ['d', 'h', 'm', 's']
+  const untill = [],
+        dateStrLong = [' day', ' hour', ' minute', ' second'],
+        dateStrShort = ['d', 'h', 'm', 's']
 
   if (typeof t === 'number') {
     t = MSToDHMS(t) // make to an array
@@ -151,14 +154,16 @@ export function timeDuration(t: number | number[], top = 4, long = false) {
     if (t[i]) {
       exists++
       if (exists < top + 1) {
-        if (!long) untill[i] = t[i] + dateStrShort[i] // short
-        else { // long with singular/plural
+        if (long) { // long with singular/plural
           if (t[i] === 1) untill[i] = t[i] + dateStrLong[i] // singular
-          else untill[i] = t[i] + dateStrLong[i] + 's' // plural
+          else untill[i] = `${t[i] + dateStrLong[i]}s` // plural
+        } else { // short
+          untill[i] = t[i] + dateStrShort[i]
         }
       }
     }
   }
+
   const str = untill.join(' ').trim()
   if (str === '') {
     return long ? '0 seconds' : '0s'
@@ -167,13 +172,13 @@ export function timeDuration(t: number | number[], top = 4, long = false) {
 }
 
 const parseTimeTypes: Array<{strings: string[], value: number}> = [
-  {strings: ['y', 'yr', 'yrs', 'year', 'years'], value: 31536000000},
-  {strings: ['d', 'day', 'days'], value: 86400000},
-  {strings: ['h', 'hr', 'hrs', 'hour', 'hours'], value: 3600000},
-  {strings: ['m', 'min', 'mins', 'minute', 'minutes'], value: 60000},
-  {strings: ['s', 'sec', 'secs', 'second', 'seconds'], value: 1000},
-  {strings: ['ms', 'millisecond', 'milliseconds'], value: 1},
-  {strings: ['ns', 'nanosecond', 'nanoseconds'], value: 1},
+  { strings: ['y', 'yr', 'yrs', 'year', 'years'], value: 31536000000 },
+  { strings: ['d', 'day', 'days'], value: 86400000 },
+  { strings: ['h', 'hr', 'hrs', 'hour', 'hours'], value: 3600000 },
+  { strings: ['m', 'min', 'mins', 'minute', 'minutes'], value: 60000 },
+  { strings: ['s', 'sec', 'secs', 'second', 'seconds'], value: 1000 },
+  { strings: ['ms', 'millisecond', 'milliseconds'], value: 1 },
+  { strings: ['ns', 'nanosecond', 'nanoseconds'], value: 1 },
 ]
 /**
  * Converts strings like 5days600min99ms to time in milliseconds  
@@ -182,12 +187,14 @@ const parseTimeTypes: Array<{strings: string[], value: number}> = [
  * Any non numeric or alphabetic characters are removed
  */
 export function parseTimeStr(str: string): number {
-  const split = str.replace(/\W/, '').toLowerCase().match(/[a-zA-Z]+|[0-9]+/g)
+  const split = str.replace(/\W/, '').toLowerCase().match(/[a-zA-Z]+|\d+/g)
   if (!split) return 0
+
   let total = 0
   for (let i = 0; i < split.length; i++) {
-    if (!isNaN(+split[i + 1])) continue
-    const num: number = +split[i]
+    if (!isNaN(Number(split[i + 1]))) continue
+
+    const num: number = Number(split[i])
     if (isNaN(num)) continue
     total += getMultiplier(split[i + 1]) * num
     i++ // Skip time string
@@ -235,23 +242,23 @@ export function plural(v: string | number, singular: string, plural?: string | b
     noValue = plural
     plural = old
   }
-  if (noValue) return (v === 1 || v === '1' || v === 'one' ? `${singular}` : `${plural || singular + 's'}`)
-  return (v === 1 || v === '1' || v === 'one' ? `${v} ${singular}` : `${v} ${plural || singular + 's'}`)
+  if (noValue) return v === 1 || v === '1' || v === 'one' ? `${singular}` : `${plural || `${singular}s`}`
+  return v === 1 || v === '1' || v === 'one' ? `${v} ${singular}` : `${v} ${plural || `${singular}s`}`
 }
 
-const onExitCbs: Array<(code: number) => void> = []
-const signals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBUS', 'SIGFPE', 'SIGSEGV', 'SIGILL', 'SIGUSR1', 'SIGUSR2', 'SIGQUIT']
-const throwSignals = ['uncaughtException']
-const onExitFunc = (code: number) => {
-  onExitCbs.forEach(cb => cb(code))
-  signals.forEach((signal: any) => process.removeListener(signal, onExitFunc))
-  process.exit(code)
-}
-const throwOnExitFunc = (error: Error) => {
-  onExitCbs.forEach(cb => cb(1))
-  signals.forEach((signal: any) => process.removeListener(signal, onExitFunc))
-  throw error
-}
+const onExitCbs: Array<(code: number) => void> = [],
+      signals = ['exit', 'SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBUS', 'SIGFPE', 'SIGSEGV', 'SIGILL', 'SIGUSR1', 'SIGUSR2', 'SIGQUIT'],
+      throwSignals = ['uncaughtException'],
+      onExitFunc = (code: number) => {
+        onExitCbs.forEach(cb => cb(code))
+        signals.forEach((signal: any) => process.removeListener(signal, onExitFunc))
+        process.exit(code)
+      },
+      throwOnExitFunc = (error: Error) => {
+        onExitCbs.forEach(cb => cb(1))
+        signals.forEach((signal: any) => process.removeListener(signal, onExitFunc))
+        throw error
+      }
 signals.forEach((signal: any) => process.on(signal, onExitFunc))
 throwSignals.forEach((signal: any) => process.on(signal, throwOnExitFunc))
 /**
@@ -269,9 +276,8 @@ export function onExit(cb: (code: number) => void) { onExitCbs.push(cb) }
 export async function readDirRecursive(dir: string, allFiles: string[] = []) {
   const files = (await fsp.readdir(dir)).map(file => path.resolve(dir, file))
   allFiles.push(...files)
-  await Promise.all(files.map(async file => (
-    (await fsp.stat(file)).isDirectory() && readDirRecursive(file, allFiles)
-  )))
+  await Promise.all(files.map(async file => (await fsp.stat(file)).isDirectory() && readDirRecursive(file, allFiles)
+  ))
   return allFiles
 }
 
@@ -289,11 +295,11 @@ export function timeout(ms: number): Promise<void> {
 
 export interface FitStringOptions {
   /** Fitting length */
-  maxLength: number,
+  maxLength: number
   /** Truncated strings are ended with '...' by default */
-  ender?: string,
+  ender?: string
   /** Strings are separated by this. Defaults to no separator */
-  separator?: string,
+  separator?: string
 }
 /**
  * Combines strings in a way that it fits in `length` and truncates strings based on their priority
@@ -305,15 +311,16 @@ export function fitStrings(options: number | FitStringOptions, ...strings: Array
     maxLength: 500,
     ender: '...',
     separator: ' ',
-    ...(typeof options === 'object' ? options : {maxLength: options}),
-  }
-  const maxLength = opts.maxLength + opts.separator.length
+    ...typeof options === 'object' ? options : { maxLength: options },
+  },
+        maxLength = opts.maxLength + opts.separator.length,
 
-  const byPriority = [...strings].sort((a, b) => b[1] - a[1])
-  const message = []
+        byPriority = [...strings].sort((a, b) => b[1] - a[1]),
+        message = []
   let remaining = maxLength - opts.separator.length
   for (const pair of byPriority) {
     if (remaining < 0) break
+
     const final = end(opts.ender, pair[0].slice(0, remaining), pair[0].length)
     if (final.length) {
       message[strings.indexOf(pair)] = final
@@ -355,8 +362,8 @@ export function commaPunctuate(words: string[], comma = ', ', and = ' and ') {
   return result
 }
 
-const _addArticleFirst = ['a', 'e', 'i', 'o', 'u', 'y', '8']
-const _addArticleSingle = ['a', 'e', 'f', 'h', 'i', 'l', 'm', 'n', 'o', 'r', 's', 'x', '8']
+const _addArticleFirst = ['a', 'e', 'i', 'o', 'u', 'y', '8'],
+      _addArticleSingle = ['a', 'e', 'f', 'h', 'i', 'l', 'm', 'n', 'o', 'r', 's', 'x', '8']
 // aefhilmnorsx
 /**
  * Adds the appropriate article (a or an) to the word  
@@ -364,12 +371,12 @@ const _addArticleSingle = ['a', 'e', 'f', 'h', 'i', 'l', 'm', 'n', 'o', 'r', 's'
  * @param word Check article against this
  */
 export function addArticle(word: string) {
-  const _word = word.trimLeft().toLowerCase()
-  const trimmed = word.trimLeft()
+  const _word = word.trimLeft().toLowerCase(),
+        trimmed = word.trimLeft()
   if (_addArticleSingle.includes(_word[0])) {
-    if (_word.match(/^.(\W|$)/)) return 'an ' + word
+    if (_word.match(/^.(\W|$)/)) return `an ${word}`
   }
-  if (_word[0] === 'u') {
+  if (_word.startsWith('u')) {
     if (!_word.startsWith('uni') && !_word.startsWith('use')
     && !_word.startsWith('usa') && !_word.startsWith('usi')
     && !_word.startsWith('usu') && !_word.startsWith('ubi')
@@ -377,24 +384,21 @@ export function addArticle(word: string) {
     && !_word.startsWith('ura') && !_word.startsWith('unan')
     && !_word.startsWith('ube') && !_word.startsWith('uri')
     && !_word.startsWith('ute') && !_word.startsWith('uto')
-    && !_word.startsWith('uti')) return 'an ' + trimmed
-    else return 'a ' + trimmed
-
-  } else if (_word[0] === 'e') {
-    if (!_word.startsWith('eu')) return 'an ' + trimmed
-    else return 'a ' + trimmed
-
-  } else if (_word[0] === 'h') {
+    && !_word.startsWith('uti')) return `an ${trimmed}`
+    else return `a ${trimmed}`
+  } else if (_word.startsWith('e')) {
+    if (_word.startsWith('eu')) return `a ${trimmed}`
+    else return `an ${trimmed}`
+  } else if (_word.startsWith('h')) {
     if (!_word.startsWith('hour') && !_word.startsWith('honor')
-    && !_word.startsWith('heir')) return 'an ' + trimmed
-    else return 'a ' + trimmed
-
-  } else if (_word[0] === 'o') {
-    if (!_word.startsWith('one') && !_word.startsWith('once')) return 'an ' + trimmed
-    else return 'a ' + trimmed
+    && !_word.startsWith('heir')) return `an ${trimmed}`
+    else return `a ${trimmed}`
+  } else if (_word.startsWith('o')) {
+    if (!_word.startsWith('one') && !_word.startsWith('once')) return `an ${trimmed}`
+    else return `a ${trimmed}`
   }
-  if (_addArticleFirst.includes(_word[0])) return 'an ' + trimmed
-  return 'a ' + trimmed
+  if (_addArticleFirst.includes(_word[0])) return `an ${trimmed}`
+  return `a ${trimmed}`
 }
 
 /**
@@ -402,18 +406,18 @@ export function addArticle(word: string) {
  * @param i Check ordinal against this
  */
 export function addOrdinal(i: number, ordinalOnly = false) {
-  const j = i % 10
-  const k = i % 100
+  const j = i % 10,
+        k = i % 100
   if (j === 1 && k !== 11) {
-    return ordinalOnly ? '' : i + 'st'
+    return ordinalOnly ? '' : `${i}st`
   }
   if (j === 2 && k !== 12) {
-    return ordinalOnly ? '' : i + 'nd'
+    return ordinalOnly ? '' : `${i}nd`
   }
   if (j === 3 && k !== 13) {
-    return ordinalOnly ? '' : i + 'rd'
+    return ordinalOnly ? '' : `${i}rd`
   }
-  return ordinalOnly ? '' : i + 'th'
+  return ordinalOnly ? '' : `${i}th`
 }
 /**
  * Converts bytes to a more readable format
@@ -423,35 +427,36 @@ export function addOrdinal(i: number, ordinalOnly = false) {
 export function formatBytes(bytes: number, decimals = 0) {
   if (bytes === 0) return '0 Bytes'
   if (bytes === 1) return '1 Byte'
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  return parseFloat((bytes / Math.pow(1024, i)).toFixed(decimals)) + ' ' + sizes[i]
+
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+        i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(decimals))} ${sizes[i]}`
 }
 
-const fontifyAlpha = `abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890<>(){}[]&#%/,.:;_-+|?!'"'*=`
-const fontifyStyles = {
-  // tslint:disable: max-line-length
-  circled: Array.from('ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ①②③④⑤⑥⑦⑧⑨⓪⧀⧁(){}[]&#%⊘,⨀:;_⊖⊕⦶?!\'"\'⊛⊜]'),
-  circledNeg: Array.from('🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩❶❷❸❹❺❻❼❽❾⓿<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'),
-  fullwidth: Array.from('ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ１２３４５６７８９０<>（）｛｝［］＆＃％／，．：；＿－＋｜？！\'"＇＊＝]'),
-  mathBold: Array.from('𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗𝟎<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'),
-  mathBoldFraktur: Array.from('𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅1234567890<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'),
-  mathBoldItalic: Array.from('𝒂𝒃𝒄𝒅𝒆𝒇𝒈𝒉𝒊𝒋𝒌𝒍𝒎𝒏𝒐𝒑𝒒𝒓𝒔𝒕𝒖𝒗𝒘𝒙𝒚𝒛𝑨𝑩𝑪𝑫𝑬𝑭𝑮𝑯𝑰𝑱𝑲𝑳𝑴𝑵𝑶𝑷𝑸𝑹𝑺𝑻𝑼𝑽𝑾𝑿𝒀𝒁1234567890<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'),
-  mathBoldScript: Array.from('𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩1234567890<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'),
-  mathDoubleStruck: Array.from('𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ𝟙𝟚𝟛𝟜𝟝𝟞𝟟𝟠𝟡𝟘<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'),
-  mathMonospace: Array.from('𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿𝟶<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'),
-  mathSans: Array.from('𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹𝟣𝟤𝟥𝟦𝟧𝟨𝟩𝟪𝟫𝟢<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'),
-  mathSansBold: Array.from('𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭𝟭𝟮𝟯𝟰𝟱𝟲𝟳𝟴𝟵𝟬<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'),
-  mathSansBoldItalic: Array.from('𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯𝘼𝘽𝘾𝘿𝙀𝙁𝙂𝙃𝙄𝙅𝙆𝙇𝙈𝙉𝙊𝙋𝙌𝙍𝙎𝙏𝙐𝙑𝙒𝙓𝙔𝙕1234567890<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'),
-  mathSansItalic: Array.from('𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻𝘈𝘉𝘊𝘋𝘌𝘍𝘎𝘏𝘐𝘑𝘒𝘓𝘔𝘕𝘖𝘗𝘘𝘙𝘚𝘛𝘜𝘝𝘞𝘟𝘠𝘡1234567890<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'),
-  parenthesized: Array.from('⒜⒝⒞⒟⒠⒡⒢⒣⒤⒥⒦⒧⒨⒩⒪⒫⒬⒭⒮⒯⒰⒱⒲⒳⒴⒵⒜⒝⒞⒟⒠⒡⒢⒣⒤⒥⒦⒧⒨⒩⒪⒫⒬⒭⒮⒯⒰⒱⒲⒳⒴⒵⑴⑵⑶⑷⑸⑹⑺⑻⑼0<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'),
-  squared: Array.from('🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉1234567890<>(){}[]&#%⧄,⊡:;_⊟⊞|?!\'"\'⧆=]'),
-  // tslint:enable: max-line-length
-}
-const _tuple = <T extends string[]>(...args: T) => args
+const fontifyAlpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890<>(){}[]&#%/,.:;_-+|?!\'"\'*=',
+      fontifyStyles = {
+        // tslint:disable: max-line-length
+        circled: [...'ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ①②③④⑤⑥⑦⑧⑨⓪⧀⧁(){}[]&#%⊘,⨀:;_⊖⊕⦶?!\'"\'⊛⊜]'],
+        circledNeg: [...'🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩❶❷❸❹❺❻❼❽❾⓿<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'],
+        fullwidth: [...'ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ１２３４５６７８９０<>（）｛｝［］＆＃％／，．：；＿－＋｜？！\'"＇＊＝]'],
+        mathBold: [...'𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗𝟎<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'],
+        mathBoldFraktur: [...'𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅1234567890<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'],
+        mathBoldItalic: [...'𝒂𝒃𝒄𝒅𝒆𝒇𝒈𝒉𝒊𝒋𝒌𝒍𝒎𝒏𝒐𝒑𝒒𝒓𝒔𝒕𝒖𝒗𝒘𝒙𝒚𝒛𝑨𝑩𝑪𝑫𝑬𝑭𝑮𝑯𝑰𝑱𝑲𝑳𝑴𝑵𝑶𝑷𝑸𝑹𝑺𝑻𝑼𝑽𝑾𝑿𝒀𝒁1234567890<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'],
+        mathBoldScript: [...'𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩1234567890<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'],
+        mathDoubleStruck: [...'𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ𝟙𝟚𝟛𝟜𝟝𝟞𝟟𝟠𝟡𝟘<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'],
+        mathMonospace: [...'𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿𝟶<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'],
+        mathSans: [...'𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓𝖠𝖡𝖢𝖣𝖤𝖥𝖦𝖧𝖨𝖩𝖪𝖫𝖬𝖭𝖮𝖯𝖰𝖱𝖲𝖳𝖴𝖵𝖶𝖷𝖸𝖹𝟣𝟤𝟥𝟦𝟧𝟨𝟩𝟪𝟫𝟢<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'],
+        mathSansBold: [...'𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭𝟭𝟮𝟯𝟰𝟱𝟲𝟳𝟴𝟵𝟬<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'],
+        mathSansBoldItalic: [...'𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯𝘼𝘽𝘾𝘿𝙀𝙁𝙂𝙃𝙄𝙅𝙆𝙇𝙈𝙉𝙊𝙋𝙌𝙍𝙎𝙏𝙐𝙑𝙒𝙓𝙔𝙕1234567890<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'],
+        mathSansItalic: [...'𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻𝘈𝘉𝘊𝘋𝘌𝘍𝘎𝘏𝘐𝘑𝘒𝘓𝘔𝘕𝘖𝘗𝘘𝘙𝘚𝘛𝘜𝘝𝘞𝘟𝘠𝘡1234567890<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'],
+        parenthesized: [...'⒜⒝⒞⒟⒠⒡⒢⒣⒤⒥⒦⒧⒨⒩⒪⒫⒬⒭⒮⒯⒰⒱⒲⒳⒴⒵⒜⒝⒞⒟⒠⒡⒢⒣⒤⒥⒦⒧⒨⒩⒪⒫⒬⒭⒮⒯⒰⒱⒲⒳⒴⒵⑴⑵⑶⑷⑸⑹⑺⑻⑼0<>(){}[]&#%/,.:;_-+|?!\'"\'*=]'],
+        squared: [...'🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉1234567890<>(){}[]&#%⧄,⊡:;_⊟⊞|?!\'"\'⧆=]'],
+        // tslint:enable: max-line-length
+      },
+      _tuple = <T extends string[]>(...args: T) => args
 export const DATATYPES = _tuple('static', 'dynamic')
 type fontifyUnion = 'circled' | 'circledNeg' | 'fullwidth' | 'mathBold' | 'mathBoldFraktur' | 'mathBoldItalic' | 'mathBoldScript' | 'mathDoubleStruck'
-  | 'mathMonospace' | 'mathSans' | 'mathSansBold' | 'mathSansBoldItalic' | 'mathSansItalic' | 'parenthesized' | 'squared'
+| 'mathMonospace' | 'mathSans' | 'mathSansBold' | 'mathSansBoldItalic' | 'mathSansItalic' | 'parenthesized' | 'squared'
 /**
  * Convert text to useless unicode fonts
  * @param str Normal string to convert
@@ -459,11 +464,12 @@ type fontifyUnion = 'circled' | 'circledNeg' | 'fullwidth' | 'mathBold' | 'mathB
  */
 export function fontify(str: string, style: fontifyUnion) {
   if (!(style in fontifyStyles) || !str) return str
+
   let out = ''
   for (let i = 0; i < str.length; i++) {
-    if (fontifyAlpha.indexOf(str.charAt(i)) !== -1) {
+    if (fontifyAlpha.includes(str.charAt(i))) {
       out += fontifyStyles[style][fontifyAlpha.indexOf(str.charAt(i))]
-    } else out += str.charAt(i)
+    } else { out += str.charAt(i) }
   }
   return out
 }

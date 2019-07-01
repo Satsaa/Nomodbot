@@ -1,4 +1,5 @@
 import * as path from 'path'
+
 import TwitchClient from './client/Client'
 import { IrcMessage, PRIVMSG } from './client/parser'
 import Data from './Data'
@@ -11,7 +12,7 @@ import PluginLibrary from './PluginLib'
 export type PluginOptions = (Command | Controller) & PluginBase
 
 interface PluginBase {
-  type: string,
+  type: string
   /** Unique id for identifying this plugin (lower case) */
   id: string
   title: string
@@ -36,15 +37,15 @@ interface PluginBase {
 
 /** Controls a data type or something like that */
 export interface Controller {
-  type: 'controller',
+  type: 'controller'
 }
 
 export interface Command {
-  type: 'command',
+  type: 'command'
   default: {
     /** Default command alias(es) (e.g. !command) */
-    alias: string | string[],
-    options: Omit<CommandAlias, 'target' | 'whitelist' | 'blacklist'>,
+    alias: string | string[]
+    options: Omit<CommandAlias, 'target' | 'whitelist' | 'blacklist'>
   }
   /**
    * Help strings (usage instructions)  
@@ -53,7 +54,7 @@ export interface Command {
    * Or just the explanation: "Explaining this and that"  
    * @see `README.md`#parameter-validator for details
    */
-  help: string[] | {[group: string]: string[], default: string[]},
+  help: string[] | {default: string[], [group: string]: string[]}
   /**
    * Disable dynamic insertion of @user before messages  
    * \@user is inserted when the message is short and doesn't include the user's login or display name
@@ -76,7 +77,7 @@ export interface CommandAlias {
    * Controls who can use this command  
    * Number: 0: anyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
    */
-  userlvl?: userlvls,
+  userlvl?: userlvls
   /** Cooldowns are in seconds */
   cooldown?: number
   /** Cooldowns are in seconds */
@@ -98,14 +99,14 @@ type CommandAliasSource = CommandAlias | ReadonlyCommandAlias
 type ReadonlyCommandAlias = DeepReadonly<CommandAlias>
 
 /** Properties for default aliases */
-export interface DefaultCommandAlias extends Readonly<Omit<CommandAlias, 'blacklist' | 'whitelist'>> {}
+export type DefaultCommandAlias = Readonly<Omit<CommandAlias, 'blacklist' | 'whitelist'>>
 
 type Source = MaybeArray<{options: PluginOptions, Instance: new() => PluginInstance}>
 
 /** isPermitted helper type */
 type CommandAliasLike = {
-  userlvl?: userlvls,
-  whitelist?: number[],
+  userlvl?: userlvls
+  whitelist?: number[]
   blacklist?: number[]
 } | DeepReadonly<{userlvl?: userlvls, whitelist?: number[], blacklist?: number[]}>
 
@@ -121,13 +122,13 @@ export enum userlvls {
 
 export interface Extra {
   /** Used alias */
-  alias: DefaultCommandAlias,
+  alias: DefaultCommandAlias
   /** Full* chat message *Action headers are not included */
-  message: string,
+  message: string
   /** Message was an action (/me) */
-  me: boolean,
+  me: boolean
   /** Remaining cooldown when trying to trigger command */
-  cooldown: number,
+  cooldown: number
   /** IRCv3 parsed message that  */
   irc: PRIVMSG
 }
@@ -148,9 +149,9 @@ export interface PluginInstance {
   /** This plugin is being loaded, execute before enabling this plugin */
   init?: () => Promise<void>
   /** An alias of this command plugin is called */
-  call?: (channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) => Promise<string | void>,
+  call?: (channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) => Promise<string | void>
   /** An alias of this command is called but it was on cooldown */
-  cooldown?: (channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) => void,
+  cooldown?: (channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) => void
   /** This plugin is being unloaded (not when the bot is shutting down). Creates are unloaded automatically after this */
   unload?: () => Promise<void>
 }
@@ -189,11 +190,12 @@ export default class Commander {
    * @returns List of loaded plugin ids
    */
   public async init(): Promise<string[]> {
-    this.data.autoLoad('aliases', {aliases: {}, deletes: {}} as AliasData, true)
-    this.data.autoLoad('cooldowns', {user: {}, shared: {} as CooldownData}, true)
+    this.data.autoLoad('aliases', { aliases: {}, deletes: {} } as AliasData, true)
+    this.data.autoLoad('cooldowns', { user: {}, shared: {} as CooldownData }, true)
+
     const files = (await readDirRecursive(path.join(__dirname, '..', 'plugins')))
-      .filter(f => (f.endsWith('.ts') || f.endsWith('.js') && !f.includes('tempCodeRunnerFile')))
-    const optionsArr = files.map(file => this.loadFromPath(file)).flat()
+      .filter(f => (f.endsWith('.ts') || f.endsWith('.js')) && !f.includes('tempCodeRunnerFile')),
+          optionsArr = (await Promise.all(files.map(file => this.loadFromPath(file)))).flat()
     this.findConflicts(optionsArr, files)
     await Promise.all(optionsArr)
     return optionsArr.map(v => v.id)
@@ -201,10 +203,10 @@ export default class Commander {
 
   /** Check for duplicate data type creations and if a plugin requires data that no present plugin creates */
   public findConflicts(optionsArray: PluginOptions[], files: string[]) {
-    const messages: string[] = [] // Error messages
-    const created: string[] = [] // Created data types
-    const titles: string[] = [] // Corresponding plugin title for created entries
-    const ids: string[] = [] // Ids of plugins
+    const messages: string[] = [], // Error messages
+          created: string[] = [], // Created data types
+          titles: string[] = [], // Corresponding plugin title for created entries
+          ids: string[] = [] // Ids of plugins
     // Fill ids
     optionsArray.forEach((c, i) => {
       if (ids.includes(c.id)) {
@@ -228,7 +230,7 @@ export default class Commander {
     optionsArray.forEach((r) => {
       if (r.requireDatas) {
         r.requireDatas.forEach((e) => {
-          if (created.indexOf(makePath(e)) === -1) {
+          if (!created.includes(makePath(e))) {
             messages.push(`${r.title} requires ${makePath(e)}`)
           }
         })
@@ -257,7 +259,7 @@ export default class Commander {
 
   public delAlias(channelId: number, alias: string): boolean {
     alias = alias.toLowerCase()
-    if (!((this.data.data[channelId] || {}).aliases)) return false
+    if (!(this.data.data[channelId] || {}).aliases) return false
     delete this.data.data[channelId].aliases.aliases[alias]
     this.data.data[channelId].aliases.deletes[alias] = true
     return true
@@ -266,21 +268,21 @@ export default class Commander {
   /** Merge `options` to an existing alias `alias` */
   public modAlias(channelId: number, alias: string, options: Partial<CommandAliasSource>): ReadonlyCommandAlias | void {
     alias = alias.toLowerCase()
-    if (!((this.data.data[channelId] || {}).aliases.aliases)) return
+    if (!(this.data.data[channelId] || {}).aliases.aliases) return
     if (!this.data.data[channelId].aliases.aliases[alias]) {
       // Copy global alias
       if (this.data.data[channelId].aliases.deletes[alias]) return
       if (!this.defaultAliases[alias]) return
       this.data.data[channelId].aliases.aliases[alias] = deepClone(this.defaultAliases[alias])
     }
-    this.data.data[channelId].aliases.aliases[alias] = deepClone({...this.data.data[channelId].aliases.aliases[alias], ...options})
+    this.data.data[channelId].aliases.aliases[alias] = deepClone({ ...this.data.data[channelId].aliases.aliases[alias], ...options })
     this.data.data[channelId].aliases.deletes[alias] = true
     return this.data.data[channelId].aliases.aliases[alias]
   }
 
   public setAlias(channelId: number, alias: string, options: CommandAliasSource): ReadonlyCommandAlias | void {
     alias = alias.toLowerCase()
-    if (!((this.data.data[channelId] || {}).aliases.aliases)) return
+    if (!(this.data.data[channelId] || {}).aliases.aliases) return
     this.data.data[channelId].aliases.aliases[alias] = deepClone(options)
     this.data.data[channelId].aliases.deletes[alias] = true
     return this.data.data[channelId].aliases.aliases[alias]
@@ -288,7 +290,7 @@ export default class Commander {
 
   public getAlias(channelId: number, alias: string): ReadonlyCommandAlias | void {
     alias = alias.toLowerCase()
-    if (!((this.data.data[channelId] || {}).aliases)) return
+    if (!(this.data.data[channelId] || {}).aliases) return
     if (!this.data.data[channelId].aliases.deletes[alias]) {
       return this.defaultAliases[alias] || this.data.data[channelId].aliases.aliases[alias]
     }
@@ -296,22 +298,25 @@ export default class Commander {
   }
 
   public getAliases(channelId: number): {[x: string]: ReadonlyCommandAlias} | void {
-    if (!((this.data.data[channelId] || {}).aliases)) return
+    if (!(this.data.data[channelId] || {}).aliases) return
+
     const defaults: {[x: string]: DefaultCommandAlias} = {}
     for (const key in this.defaultAliases) {
       if (!this.data.data[channelId].aliases.deletes[key]) defaults[key] = this.defaultAliases[key]
     }
-    return {...defaults, ...this.data.data[channelId].aliases.aliases}
+    return { ...defaults, ...this.data.data[channelId].aliases.aliases }
   }
 
-  public getAliasesById(channelId: number, pluginId: string): {[x: string]: ReadonlyCommandAlias} | void  {
-    if (!((this.data.data[channelId] || {}).aliases)) return
+  public getAliasesById(channelId: number, pluginId: string): {[x: string]: ReadonlyCommandAlias} | void {
+    if (!(this.data.data[channelId] || {}).aliases) return
+
     const res: {[x: string]: DefaultCommandAlias} = {}
     for (const key in this.defaultAliases) {
       if (!this.data.data[channelId].aliases.deletes[key] && this.defaultAliases[key].target === pluginId) {
         res[key] = this.defaultAliases[key]
       }
     }
+
     const locals = this.data.data[channelId].aliases.aliases
     for (const key in locals) {
       if (locals[key].target === pluginId) res[key] = locals[key]
@@ -330,15 +335,18 @@ export default class Commander {
       case undefined:
       case userlvls.any:
         return true
-      // Fallthrough cases
       case userlvls.sub:
         if (typeof badges.subscriber !== 'undefined') return true
+        // Fallthrough
       case userlvls.vip:
         if (typeof badges.vip !== 'undefined') return true
+        // Fallthrough
       case userlvls.mod:
         if (typeof badges.moderator !== 'undefined') return true
+        // Fallthrough
       case userlvls.streamer:
         if (typeof badges.broadcaster !== 'undefined') return true
+        // Fallthrough
       case userlvls.master:
         // Handled above
         return false
@@ -352,8 +360,9 @@ export default class Commander {
   public getCooldown(channelId: number, userId: number, alias: DefaultCommandAlias): number {
     const cooldowns = this.data.getData(channelId, 'cooldowns') as CooldownData
     if (!cooldowns) return 0
-    let cd = 0
-    let ucd = 0
+
+    let cd = 0,
+        ucd = 0
     const now = Date.now()
     if (alias.cooldown) {
       if (typeof cooldowns.shared[alias.target] !== 'object') cooldowns.shared[alias.target] = []
@@ -367,12 +376,12 @@ export default class Commander {
     return Math.max(cd, ucd)
 
     function next(times: number[], opts: number | {duration?: number, delay?: number, limit?: number}) {
-      if (typeof opts === 'number') opts = {duration: opts, delay: 0, limit: 1}
-      else {
-        if (typeof opts.delay === 'undefined') opts.delay =  0
-        if (typeof opts.duration === 'undefined') opts.duration =  30000
-        if (typeof opts.limit === 'undefined') opts.limit =  1
+      if (typeof opts === 'number') { opts = { duration: opts, delay: 0, limit: 1 } } else {
+        if (typeof opts.delay === 'undefined') opts.delay = 0
+        if (typeof opts.duration === 'undefined') opts.duration = 30000
+        if (typeof opts.limit === 'undefined') opts.limit = 1
       }
+
       const duration = opts.duration! * 1000
 
       // Remove times older than duration
@@ -380,24 +389,26 @@ export default class Commander {
         if (times[i] < now - duration) { // time is expired
           times.shift()
           i--
-        } else break
+        } else { break }
       }
       // Calculate next time
       if (times.length < opts.limit!) { // Limit is not reached calculate needed wait for delay
-        return times.length ? (times[times.length - 1] + opts.delay!) - now : 0
+        return times.length ? times[times.length - 1] + opts.delay! - now : 0
       } else {
-        const exceeds = times.length - opts.limit!
-        const delayTest = (times[times.length - 1] + opts.delay!) - now // test only for delay
-        const limitTest = (times[exceeds + 0] + duration) - now // test all but delay
+        const exceeds = times.length - opts.limit!,
+              delayTest = times[times.length - 1] + opts.delay! - now, // test only for delay
+              limitTest = times[exceeds + 0] + duration - now // test all but delay
         return Math.max(delayTest, limitTest)
       }
     }
   }
 
-  public loadFromPath(path: string) {
+  public async loadFromPath(path: string) {
     path = require.resolve(path)
     delete require.cache[path] // Delete cache entry
-    const source: Source = require(path)
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const source: Source = require(path) // (await import(path)).default !!! When es modules supported
 
     // Check if multi plugin file
     if (Array.isArray(source)) {
@@ -407,8 +418,8 @@ export default class Commander {
     }
 
     function handle(this: Commander, path: string, plugin: {options: PluginOptions, Instance: new() => PluginInstance}) {
-      const _plugin: {options: PluginOptions, Instance: new() => PluginInstance} = plugin
-      const options = _plugin.options
+      const _plugin: {options: PluginOptions, Instance: new() => PluginInstance} = plugin,
+            options = _plugin.options
       if (options) {
         const type = options.type // Cant use options in default case
         this.paths[options.id] = path
@@ -419,37 +430,38 @@ export default class Commander {
               this.validator.cacheHelp(options.id, options.help) // !!!
             } catch (err) {
               // !!!
-              console.log('in id:' + options.id)
+              console.log(`in id:${options.id}`)
               console.error(err.message)
               console.log(err.stack.split('\n')[4])
               console.log(options.help)
             }
             if (Array.isArray(options.default.alias)) {
               options.default.alias.forEach((alias) => {
-                this.defaultAliases[alias] = {...deepClone(options.default.options), ...{target: options.id}}
+                this.defaultAliases[alias] = { ...deepClone(options.default.options), ...{ target: options.id } }
               })
             } else {
-              this.defaultAliases[options.default.alias] = {...deepClone(options.default.options), ...{target: options.id}}
+              this.defaultAliases[options.default.alias] = { ...deepClone(options.default.options), ...{ target: options.id } }
             }
             break
           case 'controller':
             break
           default:
-            throw new Error('Unknown plugin type: ' + type)
+            throw new Error(`Unknown plugin type: ${type}`)
         }
         this.instantiatePlugin(options, _plugin.Instance) // Maybe this should be awaited? !!!
         return options
-      } else throw console.error('Plugin lacks options export: ' + path)
+      } else { throw console.error(`Plugin lacks options export: ${path}`) }
     }
   }
 
   /** Loads `pluginId` if possible */
   public async loadPlugin(pluginId: string, timeout = 5000): Promise<AdvancedResult> {
-    if (!this.paths[pluginId]) return {success: false, code: 'MISSING', message: 'Plugin path missing. The plugin has never been loaded?'}
-    this.loadFromPath(this.paths[pluginId])
+    if (!this.paths[pluginId]) return { success: false, code: 'MISSING', message: 'Plugin path missing. The plugin has never been loaded?' }
+    await this.loadFromPath(this.paths[pluginId])
+
     const res = await this.waitPlugin(pluginId, timeout)
-    if (!res) return {success: false, code: 'TIMEOUT', message: 'Plugin wait timeout. The plugin may still finish loading later'}
-    return  {success: true}
+    if (!res) return { success: false, code: 'TIMEOUT', message: 'Plugin wait timeout. The plugin may still finish loading later' }
+    return { success: true }
   }
 
   /** Reloads `pluginId` if possible */
@@ -462,20 +474,21 @@ export default class Commander {
   /** Unloads `pluginId` if possible */
   public async unloadPlugin(pluginId: string, timeout?: number): Promise<AdvancedResult> {
     if (!this.paths[pluginId]) {
-      return {success: false, code: 'MISSING', message: 'Plugin path missing. The plugin has never been loaded?'}
+      return { success: false, code: 'MISSING', message: 'Plugin path missing. The plugin has never been loaded?' }
     }
     if (this.plugins[pluginId].noUnload) {
-      return {success: false, code: 'UNSUPPORTED', message: 'Plugin explicitly does not support unloading'}
-    }
-    const res = await this.waitPlugin(pluginId, timeout) // Plugin must be loaded before unloading
-    if (!res) {
-      if (typeof timeout === 'number') return {success: false, code: 'TIMEOUT', message: 'Plugin wait timeout'}
-      else return {success: false, code: 'UNLOADED', message: 'Plugin is not loaded'}
+      return { success: false, code: 'UNSUPPORTED', message: 'Plugin explicitly does not support unloading' }
     }
 
-    const creates = this.plugins[pluginId].creates
-    const reqPlugin: string[] = []
-    const reqData: string[] = []
+    const res = await this.waitPlugin(pluginId, timeout) // Plugin must be loaded before unloading
+    if (!res) {
+      if (typeof timeout === 'number') return { success: false, code: 'TIMEOUT', message: 'Plugin wait timeout' }
+      else return { success: false, code: 'UNLOADED', message: 'Plugin is not loaded' }
+    }
+
+    const creates = this.plugins[pluginId].creates,
+          reqPlugin: string[] = [],
+          reqData: string[] = []
     // Check that other plugins dont require parts of this plugin
     for (const pid in this.plugins) {
       // Test if this plugin is vital
@@ -486,7 +499,7 @@ export default class Commander {
       if (creates) {
         for (const create of creates) {
           const createString = create.join('/')
-          for (const require of (this.plugins[pid].requireDatas || [])) {
+          for (const require of this.plugins[pid].requireDatas || []) {
             const requireString = require.join('/')
             if (createString === requireString) {
               reqData.push(pid)
@@ -499,11 +512,11 @@ export default class Commander {
     util.uniquify(reqPlugin, true)
     util.uniquify(reqData, true)
     if (reqPlugin.length && reqData.length) {
-      return {success: false, code: 'REQUIRED', message: `Other plugins require this plugin (${reqPlugin.join(', ')}) and data created by this plugin (${reqData.join(', ')})`}
+      return { success: false, code: 'REQUIRED', message: `Other plugins require this plugin (${reqPlugin.join(', ')}) and data created by this plugin (${reqData.join(', ')})` }
     } else if (reqPlugin.length) {
-      return {success: false, code: 'REQUIREDPLUGIN', message: `Other plugins require this plugin (${reqPlugin.join(', ')})`}
+      return { success: false, code: 'REQUIREDPLUGIN', message: `Other plugins require this plugin (${reqPlugin.join(', ')})` }
     } else if (reqData.length) {
-      return {success: false, code: 'REQUIREDDATA', message: `Other plugins require data created by this plugin (${reqData.join(', ')})`}
+      return { success: false, code: 'REQUIREDDATA', message: `Other plugins require data created by this plugin (${reqData.join(', ')})` }
     }
 
     if (this.instances[pluginId].unload) await this.instances[pluginId].unload!()
@@ -528,7 +541,7 @@ export default class Commander {
 
     delete this.plugins[pluginId]
     delete this.instances[pluginId]
-    return {success: true}
+    return { success: true }
   }
 
   /** Determines if @user should be inserted to message */
@@ -550,8 +563,8 @@ export default class Commander {
   public waitPlugin(pluginId: string, timeout?: number): Promise<boolean> {
     return new Promise((resolve) => {
       if (this.instances[pluginId]) return resolve(true)
-      if (!this.waits[pluginId]) this.waits[pluginId] = [resolve]
-      else this.waits[pluginId].push(resolve)
+      if (this.waits[pluginId]) this.waits[pluginId].push(resolve)
+      else this.waits[pluginId] = [resolve]
       if (timeout !== undefined) {
         setTimeout(() => {
           // Resolve only if not resolved yet and remove from wait list
@@ -584,6 +597,7 @@ export default class Commander {
       }
     }
     if (options.requirePlugins) await Promise.all(options.requirePlugins.map(id => this.waitPlugin(id)))
+
     const instance = new instantiator(this.pluginLib)
     if (typeof instance.init === 'function') await instance.init()
     // console.log(`Instantiated ${options.id}`)
@@ -597,26 +611,30 @@ export default class Commander {
   private async onMod(channelId: number, login: string, mod: boolean) {
     // Remove moderators from blacklists
     if (!mod) return
+
     const userId = await this.client.api.getId(login, true)
     if (!userId) return
+
     const aliases = this.getAliases(channelId)
     if (!aliases) return
     for (const name in aliases) {
       if (aliases[name].blacklist) {
         const newList = aliases[name].blacklist!.filter(v => v !== userId)
-        this.modAlias(channelId, name, {blacklist: newList})
+        this.modAlias(channelId, name, { blacklist: newList })
       }
     }
   }
 
-  private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean, self: boolean, irc: PRIVMSG | null) {
+  private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean, self: boolean, irc: PRIVMSG | undefined) {
     if (self) return // Bot shouldn't trigger commands
-    if (irc === null) return
+    if (!irc) return
+
     let params = message.split(' ')
     const alias = this.getAlias(channelId, params[0])
     if (!alias || alias.disabled) return
-    const instance = this.instances[alias.target]
-    const plugin = this.plugins[alias.target]
+
+    const instance = this.instances[alias.target],
+          plugin = this.plugins[alias.target]
     if (plugin.type !== 'command') return console.log(`Trying to call a non command: ${alias.target}`)
     if (!plugin.unignoreMentions) message = message.replace(/ @.*/, '') // Remove @user... from command calls
     params = message.split(' ')
@@ -632,7 +650,8 @@ export default class Commander {
         if (!validation.pass) {
           return this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, validation.message, irc)}${validation.message}`)
         }
-        const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown: 0, irc})
+
+        const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown: 0, irc })
         if (res) {
           this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
         }
@@ -645,20 +664,21 @@ export default class Commander {
             if (alias.cooldown) cooldowns.shared[alias.target].push(Date.now())
             if (alias.userCooldown && alias.userCooldown > (alias.cooldown || 0)) cooldowns.user[alias.target][userId].push(Date.now())
           }
+
           const validation = await this.validator.validate(channelId, plugin.id, alias.group || 'default', params.slice(1))
           if (!validation.pass) {
             return this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, validation.message, irc)}${validation.message}`)
           }
+
           const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
           if (res) this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
-        } else { // On cooldown
-          if (instance.cooldown) instance.cooldown(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
-          return
+        } else if (instance.cooldown) {
+          instance.cooldown(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
         }
       }
     }
     async function addUser(this: Commander, atUser: true | undefined, message: string, irc: PRIVMSG): Promise<string> {
-      return this.shouldAtUser(atUser, message, irc) ? this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown') + ' ' : ''
+      return this.shouldAtUser(atUser, message, irc) ? `${this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown')} ` : ''
     }
   }
 }

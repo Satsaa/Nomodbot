@@ -2,6 +2,7 @@ import fs from 'fs'
 import { promises as fsp } from 'fs'
 import https from 'https'
 import path from 'path'
+
 import deepClone from '../lib/deepClone'
 import defaultKeys from '../lib/defaultKeys'
 import * as util from '../lib/util'
@@ -34,7 +35,8 @@ interface ApiOptions {
 }
 
 interface ApiData {
-  bearer: null, expire: 0,
+  bearer: null
+  expire: 0
   users: Array<[number, string, string]>
 }
 
@@ -80,7 +82,7 @@ export default class TwitchApi {
     this.channelCaches = {}
 
     this.channelCacheDefault = {
-      recentBroadcasts: {time: 0},
+      recentBroadcasts: { time: 0 },
     }
 
     this.rlLimit = this.opts.clientSecret ? 800 : 30
@@ -93,7 +95,7 @@ export default class TwitchApi {
     }
 
     // Prepare cache file
-    fs.mkdirSync(path.dirname(this.opts.dataRoot), {recursive: true})
+    fs.mkdirSync(path.dirname(this.opts.dataRoot), { recursive: true })
     try {
       fs.accessSync(`${this.opts.dataRoot}/global/apiData.json`, fs.constants.R_OK | fs.constants.W_OK)
     } catch (err) {
@@ -106,7 +108,7 @@ export default class TwitchApi {
     this.ids = Object.create(null)
     this.logins = Object.create(null)
     this.displays = Object.create(null)
-    if (this.displays.constructor) {}
+
     const rawData = JSON.parse(fs.readFileSync(`${this.opts.dataRoot}/global/apiData.json`, 'utf8')) as ApiData
     this.bearer = rawData.bearer
     this.expire = rawData.expire
@@ -131,27 +133,25 @@ export default class TwitchApi {
   /** Gets the cached user ID for `login` or fetches it from the API */
   public async getId(login: string, onlyCached = false): Promise<number | undefined> {
     login = login.toLowerCase()
-    if (this.ids[login]) return this.ids[login]
-    else {
+    if (this.ids[login]) { return this.ids[login] } else {
       if (onlyCached) return
 
-      const res = await this._users({login})
+      const res = await this._users({ login })
       if (typeof res === 'object' && res.data[0]) {
         return this.ids[login] // now defined by cacheUser
-      } else return
+      } else { return undefined }
     }
   }
 
   /** Gets the cached login name for `id` or fetches it from the API */
   public async getLogin(id: number, onlyCached = false): Promise<string | undefined> {
-    if (this.logins[id]) return this.logins[id]
-    else {
+    if (this.logins[id]) { return this.logins[id] } else {
       if (onlyCached) return
 
-      const res = await this._users({id})
+      const res = await this._users({ id })
       if (typeof res === 'object' && res.data[0]) {
         return this.logins[id] // now defined by cacheUser
-      } else return
+      } else { return undefined }
     }
   }
 
@@ -163,20 +163,21 @@ export default class TwitchApi {
   public async getDisplay(user: number | string, onlyCached = false): Promise<string | undefined> {
     if (typeof user === 'string') {
       user = user.toLowerCase()
+
       const id = await this.getId(user)
       if (!id) return
       return this.displays[id]
     }
+
     const id = user
 
-    if (this.displays[id]) return this.displays[id]
-    else {
+    if (this.displays[id]) { return this.displays[id] } else {
       if (onlyCached) return
 
-      const res = await this._users({id})
+      const res = await this._users({ id })
       if (typeof res === 'object' && res.data[0]) {
         return this.displays[id] // now defined by cacheUser
-      } else return
+      } else { return undefined }
     }
   }
 
@@ -187,6 +188,7 @@ export default class TwitchApi {
    */
   public async getIds(logins: string[], onlyCached = false): Promise<{[login: string]: number | undefined}> {
     logins = logins.map(v => v.toLowerCase())
+
     // Create return object which removes duplicates as a side effect
     const res: {[login: string]: number | undefined} = {}
     for (const login of logins) {
@@ -198,7 +200,7 @@ export default class TwitchApi {
     for (const login of logins) {
       if (this.ids[login]) {
         res[login] = this.ids[login]
-      } else notInCache.push(login)
+      } else { notInCache.push(login) }
     }
 
     if (!onlyCached) {
@@ -211,7 +213,8 @@ export default class TwitchApi {
       for (const hundred of hundreds) {
         if (!first) await util.timeout(1000)
         first = false
-        const users = await this._users({login: hundred})
+
+        const users = await this._users({ login: hundred })
         if (typeof users === 'object') {
           for (const user of users.data) {
             res[user.login] = ~~user.id
@@ -240,7 +243,7 @@ export default class TwitchApi {
     for (const id of ids) {
       if (this.logins[id]) {
         res[id] = this.logins[id]
-      } else notInCache.push(id)
+      } else { notInCache.push(id) }
     }
 
     if (!onlyCached) {
@@ -253,7 +256,8 @@ export default class TwitchApi {
       for (const hundred of hundreds) {
         if (!first) await util.timeout(1000)
         first = false
-        const users = await this._users({id: hundred})
+
+        const users = await this._users({ id: hundred })
         if (typeof users === 'object') {
           for (const user of users.data) {
             res[~~user.id] = user.login
@@ -287,6 +291,7 @@ export default class TwitchApi {
     if (typeof users[0] === 'string') { // Using logins
       let logins = users as string[]
       logins = logins.map(v => v.toLowerCase())
+
       // Create return object which removes duplicates as a side effect
       const res: {[login: string]: string | undefined} = {}
       for (const login of logins) {
@@ -298,7 +303,7 @@ export default class TwitchApi {
       for (const login of logins) {
         if (this.ids[login]) {
           res[login] = this.displays[this.ids[login]]
-        } else notInCache.push(login)
+        } else { notInCache.push(login) }
       }
 
       if (!onlyCached) {
@@ -311,7 +316,8 @@ export default class TwitchApi {
         for (const hundred of hundreds) {
           if (!first) await util.timeout(1000)
           first = false
-          const users = await this._users({login: hundred})
+
+          const users = await this._users({ login: hundred })
           if (typeof users === 'object') {
             for (const user of users.data) {
               res[user.login] = user.display_name
@@ -334,7 +340,7 @@ export default class TwitchApi {
       for (const id of ids) {
         if (this.displays[id]) {
           res[id] = this.displays[id]
-        } else notInCache.push(id)
+        } else { notInCache.push(id) }
       }
 
       if (!onlyCached) {
@@ -347,7 +353,8 @@ export default class TwitchApi {
         for (const hundred of hundreds) {
           if (!first) await util.timeout(1000)
           first = false
-          const users = await this._users({id: hundred})
+
+          const users = await this._users({ id: hundred })
           if (typeof users === 'object') {
             for (const user of users.data) {
               res[~~user.id] = user.display_name
@@ -381,7 +388,7 @@ export default class TwitchApi {
 
   /** Gets the follow status of `userId` towards `channelId` from the API */
   public async getFollow(userId: number, channelId: number): Promise<FollowsResponse['data'][number] | undefined | string> {
-    const res = await this._follows({from_id: userId, to_id: channelId})
+    const res = await this._follows({ from_id: userId, to_id: channelId })
     if (typeof res === 'object') {
       return res.data[0]
     }
@@ -393,14 +400,14 @@ export default class TwitchApi {
 
   /** Gets the most recent videos of `channelId` of the type 'broadcast' */
   public async recentBroadcasts(channelId: number, generic: GenericOptions = {}): Promise<string | VideosResponse | undefined> {
-
     if (!this.channelCaches[channelId]) this.loadChannelCache(channelId)
-    const channelCache = this.channelCaches[channelId].recentBroadcasts
 
-    const cached = this.handleGeneric(channelCache, this.deprecate.recentBroadcasts, generic) as VideosResponse | undefined
+    const channelCache = this.channelCaches[channelId].recentBroadcasts,
+
+          cached = this.handleGeneric(channelCache, this.deprecate.recentBroadcasts, generic) as VideosResponse | undefined
     if (cached) return cached
 
-    const res = await this._videos({user_id: channelId, first: 100, type: 'archive'})
+    const res = await this._videos({ user_id: channelId, first: 100, type: 'archive' })
     if (typeof res === 'object') {
       channelCache.res = res
       channelCache.time = Date.now()
@@ -418,25 +425,28 @@ export default class TwitchApi {
   public async loadChannelCache(channelId: number): Promise<boolean> {
     if (this.channelCaches[channelId]) return false // Block unneeded loads
     this.channelCaches[channelId] = deepClone(this.channelCacheDefault) // Blocks multiple loads
-    const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`
-    const dir = `${this.opts.dataRoot}/${channelId}/`
+
+    const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`,
+          dir = `${this.opts.dataRoot}/${channelId}/`
     try {
       await fsp.mkdir(dir, { recursive: true })
+
       const cache = JSON.parse(await fsp.readFile(path, 'utf8'))
       this.channelCaches[channelId] = cache
       defaultKeys(cache, this.channelCacheDefault) // Make sure source file has all required keys
     } catch (err) {
       if (err.code === 'ENOENT') {
         defaultKeys(this.channelCaches[channelId], this.channelCacheDefault)
-      } else throw err
+      } else { throw err }
     }
     return true
   }
   /** Saves and removes channel cache of `channelId` from memory */
   public async unloadChannelCache(channelId: number): Promise<boolean> {
     if (!this.channelCaches[channelId]) return false // Block unneeded unloads
-    const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`
-    const dir = `${this.opts.dataRoot}/${channelId}/`
+
+    const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`,
+          dir = `${this.opts.dataRoot}/${channelId}/`
     await fsp.mkdir(dir, { recursive: true })
     await fsp.writeFile(path, JSON.stringify(this.channelCaches[channelId], null, '\t'))
     delete this.channelCaches[channelId]
@@ -451,12 +461,13 @@ export default class TwitchApi {
     this.blockBearerTimeout = true
     this.bearer = null
     this.expire = 0
-    const scope = 'channel:moderate+chat:edit+chat:read+whispers:read+whispers:edit+channel_editor'
-    const options = {
-      host: 'id.twitch.tv',
-      path: `/oauth2/token?client_id=${this.opts.clientId}&client_secret=${this.opts.clientSecret}&grant_type=client_credentials&scope=${scope}`,
-      method: 'POST',
-    }
+
+    const scope = 'channel:moderate+chat:edit+chat:read+whispers:read+whispers:edit+channel_editor',
+          options = {
+            host: 'id.twitch.tv',
+            path: `/oauth2/token?client_id=${this.opts.clientId}&client_secret=${this.opts.clientSecret}&grant_type=client_credentials&scope=${scope}`,
+            method: 'POST',
+          }
     https.get(options, (res) => {
       if (res.statusCode === 200) { // success!
         let data = ''
@@ -467,6 +478,7 @@ export default class TwitchApi {
           console.log('Bearer refreshed')
           this.bearer = result.access_token
           this.expire = Date.now() + result.expires_in * 1000
+
           const timeout = Math.min(2 ** 31 - 1, Math.max(this.expire - Date.now(), 5 * 60 * 1000))
           console.log(`Next refresh in: ${util.timeUntil(Date.now() + Math.max(this.expire - Date.now(), 5 * 60 * 1000))}`)
           if (!this.bearerTimeout) this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), timeout)
@@ -492,14 +504,14 @@ export default class TwitchApi {
         console.log('API being ratelimited')
         return
       }
-      if (!path.endsWith('?')) path = path + '?'
-      if (!path.startsWith('/')) path = '/' + path
+      if (!path.endsWith('?')) path += '?'
+      if (!path.startsWith('/')) path = `/${path}`
 
       // Stringify query parameters
       let queryP: string = ''
       for (const param in params) {
         const paramVal = params[param]
-        if (Array.isArray(paramVal)) paramVal.forEach(v => queryP += `${param}=${encodeURIComponent(v)}&`)
+        if (Array.isArray(paramVal)) paramVal.forEach((v) => { queryP += `${param}=${encodeURIComponent(v)}&` })
         else queryP += `${param}=${encodeURIComponent(paramVal)}&`
       }
 
@@ -508,11 +520,13 @@ export default class TwitchApi {
       const options = {
         host: 'api.twitch.tv',
         path: path + queryP,
-        headers: this.bearer ? {
-          Authorization: `Bearer ${this.bearer}`,
-        } : {
-          'client-id': this.opts.clientId,
-        },
+        headers: this.bearer
+          ? {
+            Authorization: `Bearer ${this.bearer}`,
+          }
+          : {
+            'client-id': this.opts.clientId,
+          },
       }
       https.get(options, (res) => {
         if (typeof res.headers['ratelimit-limit'] === 'string') this.rlLimit = ~~res.headers['ratelimit-limit']!
@@ -549,6 +563,7 @@ export default class TwitchApi {
     if (!cache.res) return
     if (generic.noUpdate) return cache.res
     if (generic.requireUpdate) return // Must update
+
     const now = Date.now()
     if (generic.maxAge) if (cache.time + generic.maxAge > now) return // Too old
     if (generic.preferUpdate) if (this.rlRemaining < 3 && this.rlReset > now) return // Prefer update -> Check if possible
@@ -563,9 +578,9 @@ export default class TwitchApi {
     const saveData: Array<[number, string, string]> = []
     let failed = 0
     for (const _id in this.logins) {
-      const id = ~~_id
-      const login = this.logins[id]
-      const display = this.displays[id]
+      const id = ~~_id,
+            login = this.logins[id],
+            display = this.displays[id]
       if (id && login && display) {
         saveData.push([id, login, display])
       } else {
@@ -574,12 +589,12 @@ export default class TwitchApi {
     }
     if (failed) console.log(`[TWITCHAPI] Skipped ${failed} ${util.plural(failed, 'users')} on apiData.json save`)
     // Folders must be created at this points
-    fs.writeFileSync(`${this.opts.dataRoot}/global/apiData.json`, JSON.stringify({bearer: this.bearer, expire: this.expire, users: saveData} as ApiData))
+    fs.writeFileSync(`${this.opts.dataRoot}/global/apiData.json`, JSON.stringify({ bearer: this.bearer, expire: this.expire, users: saveData } as ApiData))
 
     // Save loaded channel caches
     for (const channelId in this.channelCaches) {
-      const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`
-      const dir = `${this.opts.dataRoot}/${channelId}/`
+      const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`,
+            dir = `${this.opts.dataRoot}/${channelId}/`
       fs.mkdirSync(dir, { recursive: true })
       fs.writeFileSync(path, JSON.stringify(this.channelCaches[channelId], null, '\t'))
     }

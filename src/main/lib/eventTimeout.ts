@@ -1,15 +1,16 @@
 import { EventEmitter } from 'events'
+
 import matchKeys, { MatchKeysOptions } from './matchKeys'
 
 interface Options {
-  timeout?: number,
-  matchArgs?: any[],
-  matchOptions?: MatchKeysOptions,
+  timeout?: number
+  matchArgs?: any[]
+  matchOptions?: MatchKeysOptions
 }
 
 interface EventEmitterLike {
-  removeListener: EventEmitter['removeListener'],
-  on: EventEmitter['on'],
+  removeListener: EventEmitter['removeListener']
+  on: EventEmitter['on']
 }
 
 /**
@@ -25,18 +26,19 @@ export default function timeoutEvent(emitter: EventEmitterLike, event: string, o
   return new Promise((resolve) => {
     const cbFunc = (...args: any[]) => {
       if (options.matchArgs) {
-        if (!matchKeys(args, options.matchArgs, options.matchOptions || {matchValues: true})) return
+        if (!matchKeys(args, options.matchArgs, options.matchOptions || { matchValues: true })) return
       }
       emitter.removeListener(event, cbFunc)
       clearTimeout(timeout)
-      resolve({timeout: false, args})
+      resolve({ timeout: false, args })
     }
-    const timeoutFunc = () => {
-      emitter.removeListener(event, cbFunc)
-      resolve({timeout: true, args: []})
-    }
-    let timeout: NodeJS.Timeout
-    if (options.timeout !== undefined) timeout = setTimeout(timeoutFunc, options.timeout)
+    let timeout: number
+    if (options.timeout !== undefined) timeout = setTimeout(timeoutFunc, options.timeout, cbFunc)
     emitter.on(event, cbFunc)
+
+    function timeoutFunc(cbFunc: (...args: any[]) => void) {
+      emitter.removeListener(event, cbFunc)
+      resolve({ timeout: true, args: [] })
+    }
   })
 }

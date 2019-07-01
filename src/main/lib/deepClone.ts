@@ -3,10 +3,9 @@
  * Deeply clones `obj`  
  * Only own keys are cloned
  */
-export default <T extends object | any[]>(obj: T): T => {
-
-  const sourceRefs: any[] = [] // Avoid circular reasoning
-  const outRefs: {[x: string]: any} = [] // Avoid circular reasoning
+export default function <T extends object | any[]>(obj: T): T {
+  const sourceRefs: any[] = [], // Avoid circular reasoning
+        outRefs: {[x: string]: any} = [] // Avoid circular reasoning
 
   // @ts-ignore // ez fix for return value
   return cloneObj(obj)
@@ -22,7 +21,7 @@ export default <T extends object | any[]>(obj: T): T => {
       if (isObject(value)) {
         const index = sourceRefs.indexOf(value)
         returnVal[key] = index === -1 ? cloneObj(obj[key]) : returnVal[key] = outRefs[index]
-      } else returnVal[key] = value
+      } else { returnVal[key] = value }
     }
     return returnVal
   }

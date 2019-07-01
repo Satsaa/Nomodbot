@@ -20,57 +20,57 @@
 */
 
 export interface IrcMessage {
-  raw: string,
+  raw: string
+  // The most elegant solution
   tags: {
-    // The most elegant solution
-    [x: string]: string,
+    [x: string]: string
     // @ts-ignore
-    badges?: { [badge: string]: number },
+    badges?: { [badge: string]: number }
     // @ts-ignore
-    'badge-info'?: { [badge: string]: number },
+    'badge-info'?: { [badge: string]: number }
     // @ts-ignore
-    emotes?: { [emote: string]: {start: number, end: number} },
+    emotes?: { [emote: string]: {start: number, end: number} }
     // @ts-ignore
-    'display-name'?: string,
+    'display-name'?: string
     // @ts-ignore
-    'user-id'?: number,
+    'user-id'?: number
     // @ts-ignore
-    'emote-only'?: number,
+    'emote-only'?: number
     // @ts-ignore
-    'followers-only'?: number,
+    'followers-only'?: number
     // @ts-ignore
-    'subs-only'?: number,
+    'subs-only'?: number
     // @ts-ignore
-    'slow'?: number,
+    'slow'?: number
     // @ts-ignore
-    'ban-duration'?: number,
+    'ban-duration'?: number
     // @ts-ignore
-    'msg-param-months'?: number,
+    'msg-param-months'?: number
     // @ts-ignore
-    'msg-param-cumulative-months'?: number,
+    'msg-param-cumulative-months'?: number
     // @ts-ignore
-    'msg-param-sub-plan'?: number,
+    'msg-param-sub-plan'?: number
     // @ts-ignore
-    'msg-param-origin-id'?: number,
+    'msg-param-origin-id'?: number
     // @ts-ignore
-    'msg-param-recipient-id'?: number,
+    'msg-param-recipient-id'?: number
     // @ts-ignore
-    'msg-param-sender-count'?: number,
+    'msg-param-sender-count'?: number
     // @ts-ignore
-    'msg-param-mass-gift-count'?: number,
+    'msg-param-mass-gift-count'?: number
     // @ts-ignore
-    'viewer-count'?: number,
-  },
-  prefix: string | null,
-  nick: string | null,
-  user: string | null,
-  cmd: string | null,
+    'viewer-count'?: number
+  }
+  prefix: string | null
+  nick: string | null
+  user: string | null
+  cmd: string | null
   params: string[]
 }
 
 const conversions: {[tag: string]: (v: string) => any} = {
-  'emotes': emotes,
-  'badges': badges,
+  emotes,
+  badges,
   'badge-info': badges,
   'user-id': num,
   'emote-only': num,
@@ -94,27 +94,27 @@ function num(v: string) {
 
 function emotes(v: string) { // emotes=25:0-4/354:6-10/1:12-13
   if (typeof v === 'string' && v !== '') {
-    const emotes: { [emote: string]: {start: number, end: number} } = {}
-    const splitted = v.split('/')
+    const emotes: { [emote: string]: {start: number, end: number} } = {},
+          splitted = v.split('/')
     splitted.forEach((fullEmote) => {
-      const emote: string[] = fullEmote.split(':')
-      const area = emote[1].split('-')
-      emotes[emote[0]] = {start: ~~area[0], end: ~~area[1]}
+      const emote: string[] = fullEmote.split(':'),
+            area = emote[1].split('-')
+      emotes[emote[0]] = { start: ~~area[0], end: ~~area[1] }
     })
     return emotes
-  } else return {}
+  } else { return {} }
 }
 
 function badges(v: string) {
   if (typeof v === 'string' && v !== '') {
-    const badges: {[badge: string]: number} = {}
-    const splitted = v.split(',')
+    const badges: {[badge: string]: number} = {},
+          splitted = v.split(',')
     splitted.forEach((fullBadge) => {
       const badge = fullBadge.split('/')
       badges[badge[0]] = ~~badge[1]
     })
     return badges
-  } else return {}
+  } else { return {} }
 }
 
 /**
@@ -123,7 +123,6 @@ function badges(v: string) {
  * @param msg Message to parse
  */
 export default function parse(msg: string): IrcMessage | null {
-
   const result: IrcMessage = {
     raw: msg,
     tags: {},
@@ -141,23 +140,25 @@ export default function parse(msg: string): IrcMessage | null {
 
   if (msg.charAt(i) === '@') {
     i++
+
     // Tags | @strValue=str;truthyVar;zeroLengthStr=
     let nextSpace = msg.indexOf(' ')
     if (nextSpace === -1) nextSpace = msg.length
 
     // find next '=', ';' or ' ' and slice keys and values based on those
     while (i < nextSpace) {
-      let nextEquals = msg.indexOf('=', i)
-      let nextSemiColon = msg.indexOf(';', i)
+      let nextEquals = msg.indexOf('=', i),
+          nextSemiColon = msg.indexOf(';', i)
       if (nextEquals === -1) { nextEquals = nextSpace }
       if (nextSemiColon === -1) { nextSemiColon = nextSpace }
-      const minIndex = Math.min(nextEquals, nextSpace, nextSemiColon)
-      const semiMinIndex = Math.min(nextSpace, nextSemiColon)
+
+      const minIndex = Math.min(nextEquals, nextSpace, nextSemiColon),
+            semiMinIndex = Math.min(nextSpace, nextSemiColon)
 
       let val: string = msg.slice(minIndex + 1, semiMinIndex)
 
       // Unescape characters: ' ' '/' ';' '\n' '\r'
-      if (val.indexOf('\\') !== -1) {
+      if (val.includes('\\')) {
         val = val.replace(/\\s/g, ' ').replace(/\\:/g, ';').replace(/\\\\/g, '\\').replace(/\\n/g, '\n').replace(/\\r/g, '\r')
       }
 
@@ -179,8 +180,10 @@ export default function parse(msg: string): IrcMessage | null {
   // Prefix and its user and nick | nick!user@example.com
   if (msg.charAt(i) === ':') {
     result.prefix = msg.slice(i + 1, nextSpace)
+
     const prefixNextExclam = result.prefix.indexOf('!')
     if (prefixNextExclam !== -1) result.nick = result.prefix.slice(0, prefixNextExclam)
+
     const prefixNextAt = result.prefix.indexOf('@')
     if (prefixNextAt !== -1) {
       result.user = result.prefix.slice(prefixNextExclam === -1 ? 0 : prefixNextExclam + 1, prefixNextAt)
@@ -195,6 +198,7 @@ export default function parse(msg: string): IrcMessage | null {
   if (i < nextSpace) result.cmd = msg.slice(i === 0 ? 0 : i + 1, nextSpace)
 
   i = nextSpace + 1
+
   let nextColon = msg.indexOf(':', i)
   if (nextColon === -1) nextColon = msg.length
 
@@ -212,11 +216,11 @@ export default function parse(msg: string): IrcMessage | null {
 }
 
 export interface PRIVMSG {
-  raw: string,
+  raw: string
   tags: Required<Pick<IrcMessage['tags'], 'badge-info' | 'badges' | 'color' | 'display-name' | 'emotes' | 'flags' | 'id' | 'mod' | 'room-id' | 'subscriber' | 'tmi-sent-ts' | 'turbo' | 'user-id' | 'user-type'>> & Partial<Pick<IrcMessage['tags'], 'bits'>>
-  prefix: string,
-  nick: string,
-  user: string,
-  cmd: 'PRIVMSG',
+  prefix: string
+  nick: string
+  user: string
+  cmd: 'PRIVMSG'
   params: [string, string]
 }

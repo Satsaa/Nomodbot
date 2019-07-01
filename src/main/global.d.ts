@@ -1,20 +1,20 @@
 
 type AdvancedResult<T = undefined> = {
-  success: false,
-  code: string,
-  message: string,
-  data?: T,
+  success: false
+  code: string
+  message: string
+  data?: T
 } | (
   T extends undefined ? {
-    success: true,
-    code?: undefined,
-    message?: undefined,
-    data?: T,
+    success: true
+    code?: undefined
+    message?: undefined
+    data?: T
   } : {
-    success: true,
-    code?: undefined,
-    message?: undefined,
-    data: T,
+    success: true
+    code?: undefined
+    message?: undefined
+    data: T
   }
 )
 

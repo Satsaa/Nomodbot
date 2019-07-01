@@ -15,6 +15,22 @@ Run unloader on a clone of the data before unloading
 
 # Command Plugins
 
+## Trivia
+!trivia [<category>]
+!trivia stop
+
+- Asks users questions
+- Normal users can start a trivia only when stream is offline
+- Weight categories towards recently played games
+- It would be good to get some questions from game APIs so they self-update
+- Multigategories
+  - Categories that contain multiple single categories
+  - Valve: Dota2, Underlords, Artifact, CS:GO etc.
+- Hardcoded categories can utilize functions
+- Custom categories per channel
+- Hints showing partial answer
+- Custom hints for hardcoded questions allowed
+
 ## Backup
 $backup
 

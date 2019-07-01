@@ -1,9 +1,9 @@
-﻿import * as fs from 'fs'
+import * as fs from 'fs'
 
 // Used/read key files are stored here
 let cache: {[x: string]: any} = {}
 
-  /**
+/**
    * Return key value if it exists in JSON `file`  
    * Creates `file` and `keys` if needed. Created keys are set to null
    * @param file Path to file containing the wanted key
@@ -19,12 +19,13 @@ export function getKey(file: string, ...keys: string[]) {
     }
     cache[file] = JSON.parse(fs.readFileSync(file).toString())
   }
-  let current = cache[file]
-  let changed = false
+
+  let current = cache[file],
+      changed = false
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i]
     if (i === keys.length - 1) {
-        // last key
+      // last key
       if (typeof current[key] === 'undefined') {
         changed = true
         current[key] = null
@@ -46,7 +47,7 @@ export function getKey(file: string, ...keys: string[]) {
   return undefined
 }
 
-  /**
+/**
    * Set key value in JSON `file`  
    * Creates `file` if needed
    * @param file Path to file containing the wanted key
@@ -62,14 +63,16 @@ export function setKey(file: string, ...keysAndVal: string[]): any {
     }
     cache[file] = JSON.parse(fs.readFileSync(file).toString())
   }
-  const keys = keysAndVal.splice(0, keysAndVal.length - 1)
-  const val = keysAndVal
+
+  const keys = keysAndVal.splice(0, keysAndVal.length - 1),
+        val = keysAndVal
 
   let current = cache[file]
   for (let i = 0; i < keys.length - 1; i++) {
     if (typeof current[keys[i]] !== 'object' || current[keys[i]] === null) current[keys[i]] = {}
     current = current[keys[i]]
   }
+
   const prevVal = current[keys[keys.length - 1]]
   current[keys[keys.length - 1]] = val
 
@@ -77,7 +80,7 @@ export function setKey(file: string, ...keysAndVal: string[]): any {
   return prevVal
 }
 
-  /**
+/**
    * Files are cached in memory for efficiency  
    * Empty the cache or part of it
    * @param file Specific cache file to delete

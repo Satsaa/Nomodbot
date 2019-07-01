@@ -1,11 +1,11 @@
 import { EventEmitter } from 'events'
 import * as fs from 'fs'
 import { promises as fsp } from 'fs'
+
 import TwitchClient from './client/Client'
 import defaultKeys from './lib/defaultKeys'
 
 export default class Data extends EventEmitter {
-
   /** This data changes when events happen */
   public data: {[subType: string]: {[name: string]: {[x: string]: any}}}
 
@@ -45,12 +45,13 @@ export default class Data extends EventEmitter {
    */
   public getData(subType: string | number, name: string) {
     if ((this.data[subType] || {})[name]) return this.data[subType][name]
-    return
+    return undefined
   }
   /** Sets the data variable to `value` */
   public setData(subType: string | number, name: string, value: object) {
     if (!this.data[subType]) this.data[subType] = {}
-    return this.data[subType][name] = value
+    this.data[subType][name] = value
+    return value
   }
 
   /** Wait until the data is loaded. Resolves with the data or undefined if timedout */
@@ -72,7 +73,7 @@ export default class Data extends EventEmitter {
   public saveAllSync() {
     for (const subType in this.data) {
       for (const name in this.data[subType]) {
-        const data  = this.getData(subType, name)
+        const data = this.getData(subType, name)
         if (typeof data === 'object') fs.writeFileSync(`${this.dataPath}/${subType}/${name}.json`, JSON.stringify(data, null, 0))
         else console.error(new Error(`Failed to save ${subType}\\${name} because it's type was ${typeof data}`))
       }
@@ -122,10 +123,11 @@ export default class Data extends EventEmitter {
    */
   public async load(subType: string | number, name: string, defaultData?: object, setDefaults = false): Promise<object> {
     if (!this.data[subType]) this.data[subType] = {}
-    if ((subType + '').length === 0 || name.length === 0) throw new Error('subType and name must not be zero-length')
+    if (String(subType).length === 0 || name.length === 0) throw new Error('subType and name must not be zero-length')
     if (this.reserved.includes(name)) throw new Error(`${name} is reserved for internal functions`)
     if (this.getData(subType, name)) throw new Error(`${name} has already been loaded by another source`)
     this.blockLoad(subType, name)
+
     const file = `${this.dataPath}/${subType}/${name}.json`
     try { // Check if file is already created
       await fsp.access(file, fs.constants.F_OK)
@@ -137,14 +139,16 @@ export default class Data extends EventEmitter {
           await fsp.access(file, fs.constants.F_OK)
         } catch (err) {
           if (err.code !== 'ENOENT') throw err
-          await fsp.mkdir(pathOnly, {recursive: true})
+          await fsp.mkdir(pathOnly, { recursive: true })
         }
+
         const result = this.setData(subType, name, defaultData)
         this.emit('load', subType, name, result)
         this.save(subType, name).catch((err) => { throw err })
         return result
-      } else throw new Error('Cannot load file that doesn\'t exist. Define defaultData if you want to create it if needed')
+      } else { throw new Error('Cannot load file that doesn\'t exist. Define defaultData if you want to create it if needed') }
     }
+
     let data
     try {
       data = JSON.parse(await fsp.readFile(file, 'utf8'))
@@ -154,6 +158,7 @@ export default class Data extends EventEmitter {
     if (typeof data !== 'object') throw new Error(`Wrong data type in file: ${typeof data}`)
     if (setDefaults) defaultKeys(data, defaultData || {})
     if (typeof data !== 'object') throw new Error(`Data became corrupted: ${typeof data}`)
+
     const result = this.setData(subType, name, data)
     this.emit('load', subType, name, result)
     return result
@@ -174,7 +179,7 @@ export default class Data extends EventEmitter {
     for (const channel in this.client.clientData.channels) { // Load for present channels
       this.load(channel, name, defaultData, setDefaults)
     }
-    this.autoLoads.push({name, defaultData, setDefaults})
+    this.autoLoads.push({ name, defaultData, setDefaults })
   }
   /**
    * Disables the autoLoading of specified data and unloads it  
@@ -185,8 +190,8 @@ export default class Data extends EventEmitter {
   public async unautoLoad(name: string, noUnload = false): Promise<Data['autoLoads']> {
     for (let i = 0; i < this.autoLoads.length; i++) {
       if (this.autoLoads[i].name === name) {
-        const returnVal = this.autoLoads.splice(i, 1)
-        const savePromises = []
+        const returnVal = this.autoLoads.splice(i, 1),
+              savePromises = []
         for (const channel in this.client.clientData.channels) { // Load for present channels
           savePromises.push(this.save(channel, name, true))
         }
@@ -225,7 +230,7 @@ export default class Data extends EventEmitter {
   private onPart(channelId: number) {
     for (const autoLoad of this.autoLoads) {
       if (this.data[channelId] && typeof this.data[channelId][autoLoad.name] === 'object') {
-        this.save(channelId, autoLoad.name, true).then(() => {}, (err) => {
+        this.save(channelId, autoLoad.name, true).catch((err) => {
           console.log(`[Data.autoLoad] Error unloading ${channelId}`, err)
         })
       } else {

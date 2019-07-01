@@ -55,7 +55,7 @@ export class Instance implements PluginInstance {
       case 'path':
         try {
           if (!await this.compile()) return 'An error occurred during compilation'
-          const options = this.l.loadFromPath(params[2])
+          const options = await this.l.loadFromPath(params[2])
           const names = options.map(v => v.id)
           const all = await Promise.all(options.map(v => this.l.waitPlugin(v.id), 5000))
           const results: string[] = []

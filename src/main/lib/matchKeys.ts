@@ -1,9 +1,9 @@
 
 export interface MatchKeysOptions {
   /** Keys that are undefined, won't be matched by value */
-  ignoreUndefined?: boolean,
+  ignoreUndefined?: boolean
   /** Whether or not values are matched */
-  matchValues?: boolean,
+  matchValues?: boolean
   /** Maximum depth checked. Deeper objects are ignored. Circular objects don't cause infinite loops regardless of this setting */
   maxDepth?: number
 }
@@ -16,7 +16,6 @@ export interface MatchKeysOptions {
  * @param options
  */
 export default (haystackObj: DeepReadonly<object>, needleObj: DeepReadonly<object>, options: DeepReadonly<MatchKeysOptions> = {}) => {
-
   if (typeof needleObj !== 'object' || typeof haystackObj !== 'object') return needleObj === haystackObj
 
   const references: any[] = [] // Avoid circular reasoning
@@ -31,14 +30,14 @@ export default (haystackObj: DeepReadonly<object>, needleObj: DeepReadonly<objec
       if (i > options.maxDepth) return true
     }
     for (const key in matchObj) {
-      const matchKey = matchObj[key]
-      const objKey = obj[key]
+      const matchKey = matchObj[key],
+            objKey = obj[key]
       if (typeof objKey === 'undefined') return false // key didnt exist in obj
       // test that values match
-      if ((options.matchValues)                                             // Test values if chosen
-        && (!options.ignoreUndefined || matchKey !== undefined)             // Ignore undefined values if chosen
-        && (matchKey !== objKey)                                            // Check if values don't match
-        && (typeof matchKey !== 'object' || typeof objKey !== 'object')) {  // Check that both are not objects
+      if (options.matchValues // Test values if chosen
+        && (!options.ignoreUndefined || matchKey !== undefined) // Ignore undefined values if chosen
+        && (matchKey !== objKey) // Check if values don't match
+        && (typeof matchKey !== 'object' || typeof objKey !== 'object')) { // Check that both are not objects
         return false
       }
       // test that keys exist
