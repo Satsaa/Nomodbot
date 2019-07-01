@@ -171,8 +171,8 @@ export default class ParamValidator {
       if (cmdParam.opt) paramNeeded = false
 
       if (cmdParam.var) {
-        if (typeof cmdParam.pure === 'object') possibleNames.push(...cmdParam.pure.map(v => getName(v)))
-        else possibleNames.push(getName(cmdParam.pure))
+        if (typeof cmdParam.pure === 'object') possibleNames.push(...cmdParam.pure.map(v => getName(v, cmdParam.multi)))
+        else possibleNames.push(getName(cmdParam.pure, cmdParam.multi))
       } else { possibleNames.push(...typeof cmdParam.pure === 'object' ? cmdParam.pure.map(v => `"${v}"`) : [`"${cmdParam.pure}"`]) }
     }
     if (!paramNeeded) possibleNames.unshift('nothing')
@@ -180,7 +180,7 @@ export default class ParamValidator {
     if (possibleNames.length <= 1) {
       const invalid = cmdParams[group][deepestIndex][maxValidDepth]
       if (invalid.var) {
-        const name = getName(invalid.pure)
+        const name = getName(invalid.pure, invalid.multi)
         if (invalid.multi) return { pass: false, message: `Define ${name} (params ${maxValidDepth + 1}+)` }
         else return { pass: false, message: `Define ${name} (param ${maxValidDepth + 1})` }
       }
@@ -194,11 +194,11 @@ export default class ParamValidator {
     return { pass: false, message: 'Unhandled invalid parameters' }
 
     /** Converts types like NUMBER, USER to number, user */
-    function getName(name: string | string[]) {
-      if (typeof name === 'string') { return main(name) } else {
-        return name.map(v => main(v)).join(', ')
+    function getName(name: string | string[], multi: boolean) {
+      if (typeof name === 'string') { return main(name, multi) } else {
+        return name.map(v => main(v, multi)).join(', ')
       }
-      function main(name: string) {
+      function main(name: string, multi: boolean) {
         switch (name) {
           case 'NUMBER':
             return 'a number'
@@ -253,7 +253,8 @@ export default class ParamValidator {
               return `${whole ? 'a whole' : 'any'} number between ${min} and ${max}`
             }
 
-            return addArticle(name.replace(/_/g, ' '))
+            // Add article to names that seem like non plural forms
+            return name.endsWith('s') || name.endsWith('\'') ? name.replace(/_/g, ' ') : addArticle(name.replace(/_/g, ' '))
           }
         }
       }

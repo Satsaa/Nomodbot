@@ -71,6 +71,23 @@ USERNOTICE    Subs, rituals and more
 @badges=;color=#FF69B4;display-name=Satsaa;emotes=64138:0-8;flags=;id=3b314fa7-06af-4e14-bf07-bd58d686049a;login=satsaa;mod=0;msg-id=ritual;msg-param-ritual-name=new_chatter;room-id=116888929;subscriber=0;system-msg=@Satsaa\sis\snew\shere.\sSay\shello!;tmi-sent-ts=1552772151290;user-id=61365582;user-type= :tmi.twitch.tv USERNOTICE #ssaab :SeemsGood
 ^new chatter ritual
 
+// !!!
+display-name: 'woldxd',
+id: '808028ee-cc59-4fb9-b619-59fcd23b2d95',
+login: 'woldxd',
+mod: '0',
+msg-id: 'rewardgift',
+msg-param-bits-amount: '500',
+msg-param-domain: 'seasonal-pride',
+msg-param-min-cheer-amount: '200',
+msg-param-selected-count: '10',
+system-msg: 'reward',
+user-id: 441229134,
+user-type: ''
+},
+params: [ '#l34um1', 'A Cheer shared Rewards to 10 others in Chat!']
+}
+
 PRIVMSG       Someone sends a message
 @badge-info=;badges=;color=#DAA520;<display-name=千本桜景厳;>emotes=;flags=;id=4814d191-0003-4e83-beb9-a21deb4995fb;mod=0;room-id=22484632;subscriber=0;tmi-sent-ts=1555873627911;turbo=0;user-id=47054454;user-type= :<jarozy>!jarozy@jarozy.tmi.twitch.tv PRIVMSG #forsen :VAVE ZULUL
 

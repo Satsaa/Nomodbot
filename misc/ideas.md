@@ -1,6 +1,29 @@
 
 # Source
 
+## Make parameter validation better
+Per help string functions
+
+- Call object form
+- Separates checked help strings from user shows help strings
+- Also support cooldown methods
+- Test that functions have the required arguments
+
+<pre>
+class {
+  ctor() {
+    this.call = {
+      'echo <...message>'(command: string, message: string[]){...},
+      'echo'(command: string){...},
+      ...
+    }
+  }
+  public 'echo <...message>'(command: string, message: string[]) {
+
+  }
+}
+</pre>
+
 ## Data file types
 Support file types and derive types from the file type
 
@@ -16,8 +39,8 @@ Run unloader on a clone of the data before unloading
 # Command Plugins
 
 ## Trivia
-!trivia [<category>]
-!trivia stop
+!trivia start [\<category>]  
+!trivia stop  
 
 - Asks users questions
 - Normal users can start a trivia only when stream is offline
@@ -32,22 +55,18 @@ Run unloader on a clone of the data before unloading
 - Custom hints for hardcoded questions allowed
 
 ## Backup
-$backup
+$backup  
 
 - Backups data folder to root/backup/YYYY-MM-DD-hh-mm-ss
 
-## Suggest
-!suggest <message...>
-!report <message...>
-
 ## Crime count
-!crimes
+!crimes  
 
 Tells and tracks the amount of times a user has been timedout
 - Implement log line types (eg timeouts subs and such)
 
 ## afk
-!afk [<message...>]
+!afk [<message...>]  
 
 Notify afk users with a custom message
 - !afk marks a user as afk until they write again in chat
@@ -57,7 +76,7 @@ Notify afk users with a custom message
 - Don't notify a user that already received a notify?
 
 ## slots
-!slots (bet)
+!slots \<bet>  
 
 Shows a message with 3 random emotes and gives points based on that
 - Bad odds
@@ -69,15 +88,15 @@ Shows a message with 3 random emotes and gives points based on that
 - Slot categories (pepe frogs, etc.)
 
 ## Schedule
-!schedule (now | next)  
-!schedule set [calendarLink]  
+!schedule now|next  
+!schedule set \<calendarLink>  
 
 Shows the current or an upcoming event of the linked calendar app  
 Could support timed messages (periodically spam the upcoming event etc)  
 
 ## Combo
-!combo enable|disable
-!combo minimum (count)
+!combo enable|disable  
+!combo minimum \<count>  
 
 Emote combo announcements
 - Only send the combo when the combo ends (different emote is sent or timeout)

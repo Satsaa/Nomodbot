@@ -35,6 +35,7 @@ export interface ListsExtension {
    * `getEntry(0, true) => [falsy, undefined]`  
    */
   getList: <T2, T = T2>(listName: string, channelId: number, defaultData?: T2[], setDefaults?: boolean) => List<T> | undefined
+  /** Gets global list instance `listName` */
   getGlobalList: <T2, T = T2>(listName: string, defaultData?: T2[], setDefaults?: boolean) => List<T> | undefined
 }
 
