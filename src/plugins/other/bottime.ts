@@ -14,13 +14,10 @@ export const options: PluginOptions = {
       userCooldown: 30,
     },
   },
-  help: [
-    'Display bot uptime: {alias}',
-  ],
+  help: ['Display bot uptime: {alias}'],
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {

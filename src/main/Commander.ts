@@ -265,7 +265,7 @@ export default class Commander {
     return true
   }
 
-  /** Merge `options` to an existing alias `alias` */
+  /** Merge `options` over `alias` */
   public modAlias(channelId: number, alias: string, options: Partial<CommandAliasSource>): ReadonlyCommandAlias | void {
     alias = alias.toLowerCase()
     if (!(this.data.data[channelId] || {}).aliases.aliases) return
@@ -609,14 +609,14 @@ export default class Commander {
   }
 
   private async onMod(channelId: number, login: string, mod: boolean) {
-    // Remove moderators from blacklists
     if (!mod) return
 
-    const userId = await this.client.api.getId(login, true)
+    const userId = this.client.api.cachedId(login)
     if (!userId) return
 
     const aliases = this.getAliases(channelId)
     if (!aliases) return
+    // Remove moderators from blacklists
     for (const name in aliases) {
       if (aliases[name].blacklist) {
         const newList = aliases[name].blacklist!.filter(v => v !== userId)

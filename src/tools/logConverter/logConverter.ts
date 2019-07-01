@@ -1,35 +1,37 @@
 import fs from 'fs'
 import https from 'https'
+
 import * as secretKey from '../../main/lib/secretKey'
 
-const input = './src/main/tools/logConverter/log.txt'
-const output =  './src/main/tools/logConverter/output.json'
+const input = './src/main/tools/logConverter/log.txt',
+      output = './src/main/tools/logConverter/output.json',
 
-/*
+  /*
   Converts a log file from nomodbot 0.2
   {id: display} -> [uid, login, display][]
 */
 
-const clientId = secretKey.getKey('./cfg/keys.json', 'twitch', 'client-id')
+      clientId = secretKey.getKey('./cfg/keys.json', 'twitch', 'client-id'),
 
-const rawFile = fs.readFileSync(input, 'utf8')
+      rawFile = fs.readFileSync(input, 'utf8')
 
 console.log('Parsing input')
-const seen: {[a: string]: 1} = {}
-const inputIds = rawFile
-  .split('\n') // Split to log lines
-  .map((v, i, arr) => (v.match(/:c:([^:]*)/) || [])[1]) // Extract id from log line
-  .filter(v => typeof v === 'string') // Remove non string
-  .filter((elem, index, self) => { // Remove duplicates (takes long)
-    if (seen[elem]) {
-      return false
-    } else {
-      seen[elem] = 1
-      return true
-    }
-  })
 
-const input100: string[][] = []
+const seen: {[a: string]: 1} = {},
+      inputIds = rawFile
+        .split('\n') // Split to log lines
+        .map((v, i, arr) => (v.match(/:c:([^:]*)/) || [])[1]) // Extract id from log line
+        .filter(v => typeof v === 'string') // Remove non string
+        .filter((elem, index, self) => { // Remove duplicates (takes long)
+          if (seen[elem]) {
+            return false
+          } else {
+            seen[elem] = 1
+            return true
+          }
+        }),
+
+      input100: string[][] = []
 inputIds.forEach((v, i) => {
   const index100 = Math.floor(i / 100)
   if (!input100[index100]) input100[index100] = []
@@ -38,9 +40,8 @@ inputIds.forEach((v, i) => {
 })
 console.log(`Input handled. ${inputIds.length} user(s)`)
 
-const outputArr: Array<[number, string, string]> = [];
-
-(async () => {
+const outputArr: Array<[number, string, string]> = []
+;(async () => {
   // get data from API
   let index = 0
   for (const ids of input100) {
@@ -48,6 +49,7 @@ const outputArr: Array<[number, string, string]> = [];
     console.log(`${index}/${input100.length} ${Math.floor(index / input100.length * 100)}%`)
     await new Promise(resolve => setTimeout(resolve, 2500))
     console.log(`Getting ${ids.length} user(s)`)
+
     const res = await getUsers(ids)
     let total = 0
     for (const user of res) {
@@ -64,7 +66,6 @@ const outputArr: Array<[number, string, string]> = [];
 
 function getUsers(ids: string[]): Promise<UsersResponse> {
   return new Promise((resolve) => {
-
     let query = ''
     for (const id of ids) {
       query += `id=${encodeURIComponent(id)}&`
@@ -72,7 +73,7 @@ function getUsers(ids: string[]): Promise<UsersResponse> {
 
     const options = {
       host: 'api.twitch.tv',
-      path: 'https://api.twitch.tv/helix/users?' + query,
+      path: `https://api.twitch.tv/helix/users?${query}`,
       headers: {
         'client-id': clientId,
       },

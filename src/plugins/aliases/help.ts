@@ -14,13 +14,10 @@ export const options: PluginOptions = {
       userCooldown: 30,
     },
   },
-  help: [
-    'Display usage instructions of command: {alias} <COMMAND>',
-  ],
+  help: ['Display usage instructions of command: {alias} <COMMAND>'],
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
@@ -29,8 +26,9 @@ export class Instance implements PluginInstance {
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     if (!params[1]) return 'Define a command (param 1)'
-    const input = params[1].toLowerCase()
-    const alias = this.l.getAlias(channelId, input)
+
+    const input = params[1].toLowerCase(),
+          alias = this.l.getAlias(channelId, input)
     if (!alias) return 'Cannot find that command'
 
     const helps = this.l.getHelp(alias, true)
@@ -38,5 +36,4 @@ export class Instance implements PluginInstance {
 
     return helps.join('. ')
   }
-
 }

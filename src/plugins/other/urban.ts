@@ -1,4 +1,5 @@
 import https from 'https'
+
 import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/PluginLib'
@@ -24,7 +25,6 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
@@ -39,14 +39,15 @@ export class Instance implements PluginInstance {
         return 'The API returned invalid data'
       }
       if (data.list.length === 0) return 'No definition found'
-      const def = data.list[0]
-      const word = this.l.u.cap(def.word)
-      const definition = this.l.u.endPunctuate(def.definition).replace(/\[.*?\]/g, this.tidyBrackets.bind(this))
-      const example = this.l.u.endPunctuate(def.example).replace(/\[.*?\]/g, this.tidyBrackets.bind(this))
-      const good = def.thumbs_up
-      const bad = def.thumbs_down
-      const link = def.permalink.replace('http://', '').replace(/^[a-zA-Z0-9]*\./, '')
-      const dateStr = this.l.u.dateString(Date.parse(def.written_on))
+
+      const def = data.list[0],
+            word = this.l.u.cap(def.word),
+            definition = this.l.u.endPunctuate(def.definition).replace(/\[.*?\]/g, this.tidyBrackets.bind(this)),
+            example = this.l.u.endPunctuate(def.example).replace(/\[.*?\]/g, this.tidyBrackets.bind(this)),
+            good = def.thumbs_up,
+            bad = def.thumbs_down,
+            link = def.permalink.replace('http://', '').replace(/^[a-zA-Z0-9]*\./, ''),
+            dateStr = this.l.u.dateString(Date.parse(def.written_on))
 
       return this.l.u.fitStrings(Math.min(this.l.maxMsgLength, 200),
         [`[${this.l.u.fontify(word, 'mathSansBold')}]`, 5], // title
@@ -55,7 +56,7 @@ export class Instance implements PluginInstance {
         [`⮝${good} ⮟${bad}`, 3], // votes
         [`${link}`, 4], // link
         [`${dateStr}`, 2], // date
-        )
+      )
     } catch (err) {
       console.error(err)
       return `Error occurred: ${err.name}`
@@ -68,15 +69,17 @@ export class Instance implements PluginInstance {
 
   public getUrban(terms: string): Promise<{[x: string]: any} | string> {
     return new Promise((resolve, reject) => {
-      const options = terms.length ? {
-        host: 'api.urbandictionary.com',
-        path: '/v0/define?term=' + encodeURIComponent(terms),
-        headers: { accept: 'application/json' },
-      } : {
-        host: 'api.urbandictionary.com',
-        path: '/v0/random',
-        headers: { accept: 'application/json' },
-      }
+      const options = terms.length
+        ? {
+          host: 'api.urbandictionary.com',
+          path: `/v0/define?term=${encodeURIComponent(terms)}`,
+          headers: { accept: 'application/json' },
+        }
+        : {
+          host: 'api.urbandictionary.com',
+          path: '/v0/random',
+          headers: { accept: 'application/json' },
+        }
 
       https.get(options, (res) => {
         if (res.statusCode === 200) { // success!

@@ -1,36 +1,36 @@
 
 import https from 'https'
 
-const channelId = 266132990
-const clientId = ''
-const userToken = ''
-const scope = 'channel_editor'
-const title = 'test title'
-const game = 'Dota 2'
+const channelId = 266132990,
+      clientId = '',
+      userToken = '',
+      scope = 'channel_editor',
+      title = 'test title',
+      game = 'Dota 2',
 
-const options = {
-  host: 'api.twitch.tv',
-  path: `/kraken/channels/${channelId}`,
-  method: 'PUT',
-  headers: {
-    'Client-ID': clientId,
-    'Accept': 'application/vnd.twitchtv.v5+json',
-    'Content-Type': 'application/json',
-    'Authorization': `OAuth ${userToken}`,
-  },
-}
+      options = {
+        host: 'api.twitch.tv',
+        path: `/kraken/channels/${channelId}`,
+        method: 'PUT',
+        headers: {
+          'Client-ID': clientId,
+          'Accept': 'application/vnd.twitchtv.v5+json',
+          'Content-Type': 'application/json',
+          'Authorization': `OAuth ${userToken}`,
+        },
+      },
 
-const req = https.request(options, (res) => {
-  console.log('STATUS: ' + res.statusCode)
-  console.log('HEADERS: ' + JSON.stringify(res.headers))
-  res.setEncoding('utf8')
-  res.on('data', (chunk) => {
-    console.log('BODY: ' + chunk)
-  })
-})
+      req = https.request(options, (res) => {
+        console.log(`STATUS: ${res.statusCode}`)
+        console.log(`HEADERS: ${JSON.stringify(res.headers)}`)
+        res.setEncoding('utf8')
+        res.on('data', (chunk) => {
+          console.log(`BODY: ${chunk}`)
+        })
+      })
 
 req.on('error', (e) => {
-  console.log('problem with request: ' + e.message)
+  console.log(`problem with request: ${e.message}`)
 })
 
 // write data to request body

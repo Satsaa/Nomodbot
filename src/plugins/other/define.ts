@@ -1,4 +1,5 @@
 import https from 'https'
+
 import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/PluginLib'
@@ -15,13 +16,10 @@ export const options: PluginOptions = {
       userCooldown: 30,
     },
   },
-  help: [
-    'Get the definition of term: {alias} <term...>',
-  ],
+  help: ['Get the definition of term: {alias} <term...>'],
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
   private appId?: null | string
   private appKey?: null | string
@@ -48,12 +46,12 @@ export class Instance implements PluginInstance {
         return 'The API returned invalid data'
       }
 
-      let definition
-      let pronun // pronunciation
-      let category // noun, verb etc
-      const word = data.results[0].word
+      let definition,
+          pronun, // pronunciation
+          category // noun, verb etc
+      const word = data.results[0].word,
 
-      const entry = ((data.results[0].lexicalEntries || {})[0] || {}) ? data.results[0].lexicalEntries[0] : {}
+            entry = (data.results[0].lexicalEntries || {})[0] || {} ? data.results[0].lexicalEntries[0] : {}
 
       if ((((((entry.entries || {})[0] || {}).senses || {})[0] || {}).definitions || {})[0]) {
         definition = data.results[0].lexicalEntries[0].entries[0].senses[0].definitions[0]
@@ -61,7 +59,7 @@ export class Instance implements PluginInstance {
       }
 
       if (((entry.pronunciations || {})[0] || {}).phoneticSpelling) {
-        pronun = '/' + data.results[0].lexicalEntries[0].pronunciations[0].phoneticSpelling + '/ '
+        pronun = `/${data.results[0].lexicalEntries[0].pronunciations[0].phoneticSpelling}/ `
       }
 
       if (entry.lexicalCategory) {
@@ -72,7 +70,6 @@ export class Instance implements PluginInstance {
       pronun = pronun || ''
       category = category || 'Unknown'
       return `[${category} ${pronun}${word}]: ${definition}${definition.endsWith('.') ? '' : '.'}`
-
     } catch (err) {
       console.error(err)
       return `Error occurred: ${err.name}`
@@ -84,7 +81,7 @@ export class Instance implements PluginInstance {
       const options = {
         host: 'od-api.oxforddictionaries.com',
         port: 443,
-        path: '/api/v2/entries/' + lang + '/' + encodeURIComponent(words),
+        path: `/api/v2/entries/${lang}/${encodeURIComponent(words)}`,
         method: 'GET',
         headers: {
           accept: 'application/json',

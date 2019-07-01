@@ -34,13 +34,13 @@ export interface ListsExtension {
    * `getEntry(-2, true) => [falsy, undefined]`  
    * `getEntry(0, true) => [falsy, undefined]`  
    */
-  getList: <T2, T = T2>(listName: string, channelId: number, defaultData?: T2[], setDefaults?: boolean) => List<T> | undefined,
-  getGlobalList: <T2, T = T2>(listName: string, defaultData?: T2[], setDefaults?: boolean) => List<T> | undefined,
+  getList: <T2, T = T2>(listName: string, channelId: number, defaultData?: T2[], setDefaults?: boolean) => List<T> | undefined
+  getGlobalList: <T2, T = T2>(listName: string, defaultData?: T2[], setDefaults?: boolean) => List<T> | undefined
 }
 
 interface ListsType {
-  channels: { [id: number]: {[listName: string]: any[]} },
-  globals: { [listName: string]: any[] },
+  channels: { [id: number]: {[listName: string]: any[]} }
+  globals: { [listName: string]: any[] }
 }
 
 interface ListData {
@@ -48,7 +48,6 @@ interface ListData {
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
@@ -83,7 +82,6 @@ export class Instance implements PluginInstance {
 }
 
 class List<T = string> {
-
   public entries: T[]
   private l: PluginLibrary
 
@@ -104,6 +102,7 @@ class List<T = string> {
   public getEntry(index: number, unSafe = false): [number, T | undefined] {
     index = Math.floor(index)
     if (unSafe && this.isUnsafe(index)) return [0, undefined]
+
     const zero = this.getIndex(index)
     return [zero + 1, this.entries[zero]]
   }
@@ -114,6 +113,7 @@ class List<T = string> {
   public delEntry(index: number, unSafe = false): [number, T | undefined] {
     index = Math.floor(index)
     if (unSafe && this.isUnsafe(index)) return [0, undefined]
+
     const zero = this.getIndex(index)
     if (!this.entries.length) return [0, undefined]
     return [zero + 1, this.entries.splice(zero, 1)[0]]
@@ -125,8 +125,10 @@ class List<T = string> {
   public setEntry(index: number, value: T, unSafe = false): [number, T | undefined] {
     index = Math.floor(index)
     if (unSafe && this.isUnsafe(index)) return [0, undefined]
+
     const zero = this.getIndex(index)
-    return [zero + 1, this.entries[zero] = value]
+    this.entries[zero] = value
+    return [zero + 1, value]
   }
 
   public insertEntry(index: number, value: T, unSafe: true): [number, T | undefined]
@@ -135,6 +137,7 @@ class List<T = string> {
   public insertEntry(index: number, value: T, unSafe = false): [number, T | undefined] {
     index = Math.floor(index)
     if (unSafe && this.isUnsafe(index)) return [0, undefined]
+
     const zero = this.getIndex(index)
     return [zero + 1, this.entries.splice(zero, 0, value)[0]]
   }

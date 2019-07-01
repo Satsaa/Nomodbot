@@ -21,7 +21,6 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
@@ -33,8 +32,9 @@ export class Instance implements PluginInstance {
       this.l.saveAllSync()
       return 'Saved all data'
     }
-    let subType = ~~params[1]
-    let name = params[2]
+
+    let subType = ~~params[1],
+        name = params[2]
     if (!params[2]) {
       // Channel specific with single param
       subType = channelId

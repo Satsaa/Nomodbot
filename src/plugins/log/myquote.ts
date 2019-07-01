@@ -1,7 +1,8 @@
 import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/PluginLib'
-import { ACTION, CHAT, LogExtension} from './log'
+
+import { ACTION, CHAT, LogExtension } from './log'
 
 export const options: PluginOptions = {
   type: 'command',
@@ -24,7 +25,6 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
   private log: LogExtension
 
@@ -34,18 +34,19 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    let uid: number = userId
-    let index = 0
+    let uid: number = userId,
+        index = 0
     if (params[1]) {
-      if (isNaN(+params[1])) {
-        uid = (await this.l.api.getId(params[1])) || userId
+      if (isNaN(Number(params[1]))) {
+        uid = await this.l.api.getId(params[1]) || userId
+
         const count = this.log.msgCount(channelId, uid) || 0
         if (typeof count === 'undefined') return this.l.insertAtUser('Log data unavailable', extra)
-        index = isNaN(+params[2]) ?  this.l.u.randomInt(0, count) : +params[2]
+        index = isNaN(Number(params[2])) ? this.l.u.randomInt(0, count) : Number(params[2])
       } else {
-        index = +params[1]
+        index = Number(params[1])
       }
-    } else index = this.l.u.randomInt(0, this.log.msgCount(channelId, userId) || 0)
+    } else { index = this.l.u.randomInt(0, this.log.msgCount(channelId, userId) || 0) }
 
     const res = await this.log.getSmartIndexMsg(channelId, uid, index)
     if (!res) return this.l.insertAtUser('That user has no logged messages', extra)

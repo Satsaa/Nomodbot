@@ -14,13 +14,10 @@ export const options: PluginOptions = {
       userCooldown: 60,
     },
   },
-  help: [
-    'Display enabled plugins: {alias} [<type>]',
-  ],
+  help: ['Display enabled plugins: {alias} [<type>]'],
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
@@ -35,6 +32,7 @@ export class Instance implements PluginInstance {
       pluginOpts = pluginOpts.filter(v => v.type === type)
     }
     if (pluginOpts.length === 0) return `No plugins of that type. Available types: ${availableTypes.join(', ')}`
+
     const plugins = pluginOpts.map(v => v.id).sort()
     return plugins.join(', ')
   }

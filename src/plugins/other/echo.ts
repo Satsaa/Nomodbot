@@ -15,15 +15,12 @@ export const options: PluginOptions = {
       userCooldown: 30,
     },
   },
-  help: [
-    'Reply with echo: {alias} <echo...>',
-  ],
+  help: ['Reply with echo: {alias} [<echo...>]'],
   disableMention: true,
   unignoreMentions: true,
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
@@ -31,6 +28,6 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    return params.splice(1).join(' ')
+    return params.splice(1).join(' ') || 'echo'
   }
 }

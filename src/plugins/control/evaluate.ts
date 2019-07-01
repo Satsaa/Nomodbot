@@ -13,14 +13,11 @@ export const options: PluginOptions = {
       userlvl: userlvls.master,
     },
   },
-  help: [
-    'Evaluate a string, execute it and return the result: {alias} <evalString>',
-  ],
+  help: ['Evaluate a string, execute it and return the result: {alias} <evalString>'],
   disableMention: true,
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
@@ -30,7 +27,8 @@ export class Instance implements PluginInstance {
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     try {
       if (!params[1]) return 'Define the evaluation string (params 1+)'
-      // tslint:disable-next-line: no-eval
+
+      // eslint-disable-next-line no-eval
       let result = eval(params.slice(1).join(' '))
 
       if (typeof result === 'object' && typeof result.then === 'function') { // Thenable
@@ -41,7 +39,7 @@ export class Instance implements PluginInstance {
         return result.message
       }
 
-      return result + ''
+      return `${result}`
     } catch (err) {
       console.error(err)
       return `Error occurred: ${err.name}`

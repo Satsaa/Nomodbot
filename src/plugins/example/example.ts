@@ -53,7 +53,6 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {

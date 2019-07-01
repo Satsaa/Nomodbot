@@ -20,14 +20,11 @@ export const options: PluginOptions = {
       'Get the raw response string: {alias} raw <COMMAND>',
       'Delete a response or a command: {alias} delete <COMMAND>',
     ],
-    response: [
-      'Respond with message: {alias} [<parameters...>]',
-    ],
+    response: ['Respond with message: {alias} [<parameters...>]'],
   },
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
   private variables: string[]
 
@@ -44,11 +41,12 @@ export class Instance implements PluginInstance {
           || (token.startsWith('${') && token.endsWith('}'))) { // Variable
           const pureVar = token.slice(2, -1)
           switch (pureVar) {
-            case 'channel':
+            case 'channel': {
               const cid = await this.l.api.getDisplay(channelId)
               if (!cid) return 'Cannot find channel???'
               result += cid
               break
+            }
             case 'user':
               result += tags['display-name']
               break
@@ -65,7 +63,7 @@ export class Instance implements PluginInstance {
               }
               break
           }
-        } else result += token // Normal
+        } else { result += token } // Normal
       }
       return result
     } else { // Control alias (no data key)
@@ -77,20 +75,21 @@ export class Instance implements PluginInstance {
           overwrite = true
           break
         case 'delete':
-          const aliasName = params[2]
-          if (this.l.delAlias(channelId, aliasName)) return 'Command successfully deleted'
+          if (this.l.delAlias(channelId, params[2])) return 'Command successfully deleted'
           else return 'Command deletion failed'
-        case 'raw':
+
+        case 'raw': {
           const alias = this.l.getAlias(channelId, params[2])
           if (!alias) return 'no command'
           if (alias.target !== options.id || !alias.data || !Array.isArray(alias.data)) return 'That command is not a response command'
           return `${params[2]}: "${alias.data.join('')}"`
+        }
       }
 
-      const alias = params[2].toLowerCase()
-      const message = params.slice(3).join(' ')
-      const messageLc = message.toLowerCase()
-      const variables: string[] = []
+      const alias = params[2].toLowerCase(),
+            message = params.slice(3).join(' '),
+            messageLc = message.toLowerCase(),
+            variables: string[] = []
 
       let data: string[] = []
       const unknowns = []
@@ -105,12 +104,13 @@ export class Instance implements PluginInstance {
 
         // Validate variable names
         variables.push(messageLc.slice(match.index, match.index + match[0].length))
+
         const variable = variables[variables.length - 1]
         if (variable) {
           const pureVar = variable.slice(2, -1)
           if (pureVar.startsWith('param')) {
-            if (isNaN(+pureVar.slice(5)) || +pureVar.slice(5) < 1 || +pureVar.slice(5) !== Math.floor(+pureVar.slice(5))) unknowns.push(pureVar)
-          } else if (!this.variables.includes(pureVar)) unknowns.push(pureVar)
+            if (isNaN(Number(pureVar.slice(5))) || Number(pureVar.slice(5)) < 1 || Number(pureVar.slice(5)) !== Math.floor(Number(pureVar.slice(5)))) unknowns.push(pureVar)
+          } else if (!this.variables.includes(pureVar)) { unknowns.push(pureVar) }
         }
         match = varRegex.exec(messageLc)
       }
@@ -123,7 +123,7 @@ export class Instance implements PluginInstance {
 
       if (!overwrite && this.l.getAlias(channelId, alias)) return 'That command already exists'
 
-      this.l.setAlias(channelId, alias, {target: options.id, cooldown: 10, userCooldown: 30, group: 'response' , data})
+      this.l.setAlias(channelId, alias, { target: options.id, cooldown: 10, userCooldown: 30, group: 'response', data })
       return `Response created: ${alias}`
     }
   }

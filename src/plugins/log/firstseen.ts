@@ -1,7 +1,8 @@
 import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/PluginLib'
-import { LogExtension} from './log'
+
+import { LogExtension } from './log'
 
 export const options: PluginOptions = {
   type: 'command',
@@ -15,14 +16,11 @@ export const options: PluginOptions = {
       userCooldown: 30,
     },
   },
-  help: [
-    'Show when you or user sent their first message: {alias} [<USER>]',
-  ],
+  help: ['Show when you or user sent their first message: {alias} [<USER>]'],
   requirePlugins: ['log'],
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
   private log: LogExtension
 
@@ -34,6 +32,7 @@ export class Instance implements PluginInstance {
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     const targetId = params[1] ? await this.l.api.getId(params[1]) : userId
     if (!targetId) return 'Cannot find a user with that name'
+
     const display = params[1] ? await this.l.api.getDisplay(targetId) : tags['display-name']
 
     if (!this.log.getData) return 'Log data unavailable'

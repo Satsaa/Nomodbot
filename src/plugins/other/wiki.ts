@@ -1,4 +1,5 @@
 import https from 'https'
+
 import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/PluginLib'
@@ -15,14 +16,11 @@ export const options: PluginOptions = {
       userCooldown: 60,
     },
   },
-  help: [
-    'Get the Wikipedia summary of a subject: {command} <subject...>',
-  ],
+  help: ['Get the Wikipedia summary of a subject: {command} <subject...>'],
   disableMention: true,
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
@@ -51,7 +49,6 @@ export class Instance implements PluginInstance {
         [`[${data.displaytitle}]`, 2], // [title]
         [data.extract, 0], // summary
         [`${data.content_urls.desktop.page.replace('https://', '')}`, 1]) // link
-
     } catch (err) {
       console.error(err)
       return `Error occurred: ${err.name}`
@@ -66,7 +63,7 @@ export class Instance implements PluginInstance {
       return new Promise((resolve) => {
         const options = {
           host: 'en.wikipedia.org',
-          path: '/api/rest_v1/page/summary/' + encodeURIComponent(subject),
+          path: `/api/rest_v1/page/summary/${encodeURIComponent(subject)}`,
           headers: {
             accept: 'application/json',
           },
@@ -80,13 +77,13 @@ export class Instance implements PluginInstance {
             }).on('end', () => {
               const result = JSON.parse(data)
               resolve(result)
-            }).on('error', (err) => {throw err})
+            }).on('error', (err) => { throw err })
           } else if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400) {
             redirects++
             if (redirects > 3) resolve('Too many redirects')
             else if (res.headers.location) get.bind(this)(res.headers.location).then(resolve)
             else resolve(`${res.statusCode}: ${this.l.u.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
-          } else resolve(`${res.statusCode}: ${this.l.u.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
+          } else { resolve(`${res.statusCode}: ${this.l.u.cap((res.statusMessage || 'Unknown response').toLowerCase())}`) }
         })
       })
     }

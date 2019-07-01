@@ -106,7 +106,7 @@ export default class ParamValidator {
                 default:
               }
             }
-          } else if (!_cmdParams[i].var && !_cmdParams[i].case) { // Array
+          } else if (!_cmdParams[i].var && !_cmdParams[i].case && words[i]) { // Array
             replace[i] = words[i].toLowerCase()
           }
         }

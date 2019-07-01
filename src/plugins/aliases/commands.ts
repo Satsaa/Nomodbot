@@ -22,7 +22,6 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
@@ -30,11 +29,11 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    const aliases = { ...this.l.getEnabledGlobalAliases(), ...this.l.getEnabledAliases(channelId) }
-    const aliasArray = []
-    const disabled = params[1] && params[1].toLowerCase() === 'disabled'
-    const hidden = params[1] && params[1].toLowerCase() === 'hidden'
-    const userLvl = isNaN(+params[disabled || hidden ? 2 : 1]) ? undefined : +params[disabled || hidden ? 2 : 1]
+    const aliases = { ...this.l.getEnabledGlobalAliases(), ...this.l.getEnabledAliases(channelId) },
+          aliasArray = [],
+          disabled = params[1] && params[1].toLowerCase() === 'disabled',
+          hidden = params[1] && params[1].toLowerCase() === 'hidden',
+          userLvl = isNaN(Number(params[disabled || hidden ? 2 : 1])) ? undefined : Number(params[disabled || hidden ? 2 : 1])
     for (const alias in aliases) {
       if (userLvl !== undefined && (typeof aliases[alias].userlvl === 'undefined' ? userlvls.any : aliases[alias].userlvl) !== userLvl) continue
       if (hidden) {

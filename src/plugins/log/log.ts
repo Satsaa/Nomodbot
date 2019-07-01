@@ -1,5 +1,6 @@
 import fs from 'fs'
 import { promises as fsp } from 'fs'
+
 import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/PluginLib'
@@ -13,11 +14,11 @@ export const options: PluginOptions = {
 }
 
 interface LogData {
-  offset: number,
-  messageCount: number,
-  userCount: number,
-  firstSec: number,
-  lastSec: number,
+  offset: number
+  messageCount: number
+  userCount: number
+  firstSec: number
+  lastSec: number
   users: {
     [userId: number]: {
       /** Byte offset where the log is in log.txt. The actual value is the sum of all previous values in the array */
@@ -72,7 +73,6 @@ export interface LogExtension {
   getTime(channelId: number, userId: number, messageIndex: number): number | undefined
 }
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
   private streams: { [channelId: number]: fs.WriteStream }
   /** File descriptors of each channel */
@@ -128,12 +128,12 @@ export class Instance implements PluginInstance {
     this.l.unextend(options.id)
 
     this.onExit()
-    return
   }
 
   public async validate(channelId: number, userId: number) {
     const data = this.l.getData(channelId, 'log') as LogData
     if (!data || !data.users[userId]) return
+
     const user = data.users[userId]
     if (user.offsets.length !== user.times.length) return 'offsets times length mismatch'
 
@@ -150,6 +150,7 @@ export class Instance implements PluginInstance {
         console.log(`${Math.round((end - start) / 1000)} ms`)
         start = Date.now()
       }
+
       const res = await this.getMsg(channelId, userId, i)
       if (!res) {
         return `Invalid message at index ${i}`
@@ -178,7 +179,7 @@ export class Instance implements PluginInstance {
   public users(channelId: number) {
     const data = this.l.getData(channelId, 'log') as LogData
     if (!data) return
-    return Object.keys(data.users).map(v => +v)
+    return Object.keys(data.users).map(v => Number(v))
   }
 
   public getUser(channelId: number, userId: number) {
@@ -196,9 +197,11 @@ export class Instance implements PluginInstance {
       const data = this.l.getData(channelId, 'log') as LogData
       if (!data) return resolve()
       if (!data.users[userId]) return resolve()
-      const user = data.users[userId]
-      const index = this.l.u.smartIndex(oneIndex, user.offsets)
+
+      const user = data.users[userId],
+            index = this.l.u.smartIndex(oneIndex, user.offsets)
       if (index > user.offsets.length - 1) return resolve()
+
       const offset = user.offsets.slice(0, index + 1).reduce((prev, cur) => prev + cur)
       this.readOffset(channelId, offset).then(resolve)
     })
@@ -209,8 +212,10 @@ export class Instance implements PluginInstance {
       const data = this.l.getData(channelId, 'log') as LogData
       if (!data) return resolve()
       if (!data.users[userId]) return resolve()
+
       const user = data.users[userId]
       if (index > user.offsets.length - 1) return resolve()
+
       const offset = user.offsets.slice(0, index + 1).reduce((prev, cur) => prev + cur)
       this.readOffset(channelId, offset).then(resolve)
     })
@@ -219,9 +224,10 @@ export class Instance implements PluginInstance {
   public async readOffset(channelId: number, offset: number): Promise<LogLineData | undefined> {
     return new Promise((resolve) => {
       if (!this.fds[channelId]) return resolve()
-      let stream: undefined | fs.ReadStream = fs.createReadStream('', {start: offset, highWaterMark: 64, encoding: 'utf8', fd: this.fds[channelId], autoClose: false})
 
-      let line = ''
+      let stream: undefined | fs.ReadStream = fs.createReadStream('', { start: offset, highWaterMark: 64, encoding: 'utf8', fd: this.fds[channelId], autoClose: false }),
+
+          line = ''
       stream.on('data', (chunk: string) => {
         const split = chunk.split('\n')
         line += split[0]
@@ -236,8 +242,9 @@ export class Instance implements PluginInstance {
   public getOffset(channelId: number, userId: number, index: number) {
     const data = this.l.getData(channelId, 'log') as LogData
     if (!data || !data.users[userId]) return
-    let total = 0
-    let i = 0
+
+    let total = 0,
+        i = 0
     for (const offset of data.users[userId].offsets) {
       total += offset
       if (++i >= index) return total
@@ -248,8 +255,9 @@ export class Instance implements PluginInstance {
   public getTime(channelId: number, userId: number, index: number) {
     const data = this.l.getData(channelId, 'log') as LogData
     if (!data || !data.users[userId]) return
-    let total = 0
-    let i = 0
+
+    let total = 0,
+        i = 0
     for (const time of data.users[userId].times) {
       total += time
       if (++i >= index) return total * 1000
@@ -280,8 +288,9 @@ export class Instance implements PluginInstance {
   /** Initializes the write stream. Testing for errors and retracking if necessary */
   private async initStream(channelId: number) {
     const path = this.l.getPath(channelId, 'log', 'txt')
-    await fsp.mkdir(path.replace('log.txt', ''), {recursive: true})
-    const stream = fs.createWriteStream(path, { flags: 'a+'})
+    await fsp.mkdir(path.replace('log.txt', ''), { recursive: true })
+
+    const stream = fs.createWriteStream(path, { flags: 'a+' })
     stream.once('open', (fd) => {
       this.streams[channelId] = stream
       this.fds[channelId] = fd
@@ -293,19 +302,18 @@ export class Instance implements PluginInstance {
     } catch (err) {
       if (err.code !== 'ENOENT') throw err
     }
+
     const data = await this.l.waitData(channelId, 'log', 2000) as LogData
     if (!data) throw new Error('Data was not loaded in time')
     if (fileSize !== data.offset) {
       if (!fileSize) {
         console.log(`${channelId} Reset log data because log txt size was falsy`)
         this.l.setData(channelId, 'log', this.defaultData)
-      } else {
-        if (fileSize > data.offset) {
-          await this.trackLog(channelId, data.offset)
-        } else if (fileSize < data.offset) {
-          this.l.setData(channelId, 'log', this.defaultData)
-          await this.trackLog(channelId, 0) // Retrack completely if cached offset is ahead (e.g. deletion of log.txt)
-        }
+      } else if (fileSize > data.offset) {
+        await this.trackLog(channelId, data.offset)
+      } else if (fileSize < data.offset) {
+        this.l.setData(channelId, 'log', this.defaultData)
+        await this.trackLog(channelId, 0) // Retrack completely if cached offset is ahead (e.g. deletion of log.txt)
       }
     }
   }
@@ -318,16 +326,18 @@ export class Instance implements PluginInstance {
   }
 
   private trackLog(channelId: number, offset = 0) {
-    return new Promise(async (resolve) => {
-      console.log(offset ? `[LOG] Tracking at offset ${offset} in ${channelId}` : `[LOG] Retracking ${await this.l.api.getDisplay(channelId)} completely`)
-      const start = Date.now()
-      const path = this.l.getPath(channelId, 'log', 'txt')
-      const stream = fs.createReadStream(path, {start: offset, highWaterMark: 1000000, encoding: 'utf8'})
-      let splitEnd = ''
-      let tracked = 0
-      let failed = 0
+    return new Promise((resolve) => {
+      console.log(offset ? `[LOG] Tracking at offset ${offset} in ${channelId}` : `[LOG] Retracking ${this.l.api.cachedDisplay(channelId)} completely`)
+
+      const start = Date.now(),
+            path = this.l.getPath(channelId, 'log', 'txt'),
+            stream = fs.createReadStream(path, { start: offset, highWaterMark: 1000000, encoding: 'utf8' })
+      let splitEnd = '',
+          tracked = 0,
+          failed = 0
       stream.on('data', (chunk: string) => {
         stream.pause()
+
         const chunks = chunk.split('\n')
         chunks[0] = splitEnd + chunks[0] // Combine previous chunks partial last line and partial first line of this chunk
         splitEnd = chunks.pop() as string
@@ -339,10 +349,11 @@ export class Instance implements PluginInstance {
       })
       stream.on('close', async () => {
         stream.destroy()
+
         const data = this.l.getData(channelId, 'log')
-        if (!data) throw new Error("Uh oh can't set size when data is unloaded")
+        if (!data) throw new Error('Uh oh can\'t set size when data is unloaded')
         data.offset = (await fsp.stat(path)).size
-        console.log(`[LOG] Tracked ${this.l.u.plural(tracked, 'line')} ${failed ? this.l.u.plural(tracked, 'line ' , 'lines ') : ''}in ${await this.l.api.getDisplay(channelId)} in ${Date.now() - start} ms`)
+        console.log(`[LOG] Tracked ${this.l.u.plural(tracked, 'line')} ${failed ? this.l.u.plural(tracked, 'line ', 'lines ') : ''}in ${await this.l.api.getDisplay(channelId)} in ${Date.now() - start} ms`)
         resolve()
       })
     })
@@ -362,27 +373,29 @@ export class Instance implements PluginInstance {
   /** Writes the log message to log.txt and updates log data */
   private track(channelId: number, time: number, type: TYPES, userId: number, message: string, noWrite = false) {
     time = Math.round(time / 1000)
+
     const final = `${time}:${type}:${userId}:${message.replace(/\n/g, '')}\n`
     if (!noWrite) this.streams[channelId].write(final)
+
     const data = this.l.getData(channelId, 'log') as LogData
     if (!(data || {}).users) throw new Error('Data is unloaded or fully or partially') // Rare?
     if (!data.firstSec) data.firstSec = time
     data.lastSec = time
-    data.messageCount ++
-    if (!data.users[userId]) {
-      data.userCount ++
+    data.messageCount++
+    if (data.users[userId]) {
+      const user = data.users[userId]
+      user.offsets.push(data.offset - user.offset)
+      user.offset = data.offset
+      user.times.push(time - user.time)
+      user.time = time
+    } else {
+      data.userCount++
       data.users[userId] = {
         offsets: [data.offset],
         offset: data.offset,
         times: [time],
         time,
       }
-    } else {
-      const user = data.users[userId]
-      user.offsets.push(data.offset - user.offset)
-      user.offset = data.offset
-      user.times.push(time - user.time)
-      user.time = time
     }
     data.offset += Buffer.byteLength(final, 'utf8')
   }
@@ -391,63 +404,75 @@ export class Instance implements PluginInstance {
   private parseLogLine(line: string): LogLineData | undefined {
     const nextNewLine = line.indexOf('\n')
     if (nextNewLine !== -1) line = line.slice(0, line.indexOf('\n'))
-    const colon = line.split(':')
 
-    const ms = +colon[0] * 1000
+    const colon = line.split(':'),
+
+          ms = Number(colon[0]) * 1000
     if (!ms) return
+
     const type = colon[1]
     if (!type) return
-    const userId = +colon[2]
+
+    const userId = Number(colon[2])
     if (!userId) return
 
-    let duration
-    let sourceId
-    let message
-    let tier
     switch (type) {
       case CHAT:
-      case ACTION:
+      case ACTION: {
         // TIMESEC:c|a:USERID:MESSAGE
-        message = colon.splice(3).join(':')
+        const message = colon.splice(3).join(':')
         return { ms, type, userId, message }
-      case TIMEOUT:
+      }
+      case TIMEOUT: {
         // TIMESEC:t:USERID:DURATION:SOURCEID?:REASON
-        duration = +colon[3]
+        const duration = Number(colon[3])
         if (!duration) return
-        sourceId = colon[4] ? +colon[4] : undefined
+
+        let sourceId = colon[4] ? Number(colon[4]) : undefined
         if (!sourceId) sourceId = undefined // NaN to undefined
-        message = colon.splice(5).join(':')
+
+        const message = colon.splice(5).join(':')
         return { ms, type, userId, duration, sourceId, message }
-      case BAN:
+      }
+      case BAN: {
         // TIMESEC:b:USERID:SOURCEID?:REASON
-        sourceId = colon[3] ? +colon[3] : undefined
+        let sourceId = colon[3] ? Number(colon[3]) : undefined
         if (!sourceId) sourceId = undefined // NaN to undefined
-        message = colon.splice(4).join(':')
+
+        const message = colon.splice(4).join(':')
         return { ms, type, userId, sourceId, message }
-      case SUB:
+      }
+      case SUB: {
         // TIMESEC:s:USERID:STREAK:TIER:MESSAGE
-        const streak = +colon[3]
+        const streak = Number(colon[3])
         if (!streak) return // Minimum streak would be 1 so 0 should not pass
-        tier = Math.floor(+colon[4])
+
+        const tier = Math.floor(Number(colon[4]))
         if (isNaN(tier) || tier < 1 || tier > 3) return
-        message = colon.splice(6).join(':')
+
+        const message = colon.splice(6).join(':')
         return { ms, type, userId, streak, tier: tier as 1 | 2 | 3, message }
-      case GIFT:
+      }
+      case GIFT: {
         // TIMESEC:g:USERID:TARGETID:TIER
-        const targetId = +colon[3]
+        const targetId = Number(colon[3])
         if (!targetId) return
-        tier = Math.floor(+colon[4])
+
+        const tier = Math.floor(Number(colon[4]))
         if (isNaN(tier) || tier < 1 || tier > 3) return
         return { ms, type, userId, targetId, tier: tier as 1 | 2 | 3 }
-      case MASSGIFT:
-          // TIMESEC:mg:USERID:COUNT:TIER
-        const count = +colon[3]
+      }
+      case MASSGIFT: {
+        // TIMESEC:mg:USERID:COUNT:TIER
+        const count = Number(colon[3])
         if (!count) return
-        tier = Math.floor(+colon[4])
+
+        const tier = Math.floor(Number(colon[4]))
         if (isNaN(tier) || tier < 1 || tier > 3) return
         return { ms, type, userId, count, tier: tier as 1 | 2 | 3 }
+      }
       default:
-        return
+        return undefined
     }
   }
 }
@@ -474,7 +499,7 @@ type LogLineData = {
   ms: number
   type: typeof SUB
   userId: number
-  streak: number,
+  streak: number
   tier: 1 | 2 | 3
   message: string
 } | {

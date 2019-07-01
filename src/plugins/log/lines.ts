@@ -1,7 +1,8 @@
 import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/PluginLib'
-import { LogExtension} from './log'
+
+import { LogExtension } from './log'
 
 export const options: PluginOptions = {
   type: 'command',
@@ -15,14 +16,11 @@ export const options: PluginOptions = {
       userCooldown: 30,
     },
   },
-  help: [
-    'Show the total amount of messages sent by you or user: {alias} [<USER>]',
-  ],
+  help: ['Show the total amount of messages sent by you or user: {alias} [<USER>]'],
   requirePlugins: ['log'],
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
   private log: LogExtension
 
@@ -41,7 +39,7 @@ export class Instance implements PluginInstance {
     if (typeof res === 'undefined') return 'Log data is unavailable at the moment'
 
     return params[1]
-      ? `${await this.l.api.getDisplay(uid) || 'UID:' + uid} has sent ${this.l.u.plural(res, 'message')}`
+      ? `${await this.l.api.getDisplay(uid) || `UID:${uid}`} has sent ${this.l.u.plural(res, 'message')}`
       : `You have sent ${this.l.u.plural(res, 'message')}`
   }
 }

@@ -14,13 +14,10 @@ export const options: PluginOptions = {
       userCooldown: 30,
     },
   },
-  help: [
-    'Tell when {channel} usually goes live and how long they stream (average of count): {alias} [<1-100>]',
-  ],
+  help: ['Tell when {channel} usually goes live and how long they stream (average of count): {alias} [<1-100>]'],
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
@@ -33,13 +30,13 @@ export class Instance implements PluginInstance {
       if (typeof recent !== 'object') return 'Cannot resolve recent broadcasts'
 
       let count = 30
-      if (params[1] && !isNaN(+params[1])) count = Math.round(+params[1])
+      if (params[1] && !isNaN(Number(params[1]))) count = Math.round(Number(params[1]))
       if (count < 1) count = 1 // Minimum of 1 stream
 
       const videos = recent.data.slice(0, count)
 
-      let total = 0
-      let totalDuration = 0
+      let total = 0,
+          totalDuration = 0
       const clockAngles: number[] = []
       for (const video of videos) {
         const date = new Date(video.created_at)
@@ -51,10 +48,10 @@ export class Instance implements PluginInstance {
 
       const averageDuration = totalDuration / total
       let averageAngle = meanAngleDeg(clockAngles)
-      if (averageAngle < 0) averageAngle = averageAngle + 360
+      if (averageAngle < 0) averageAngle += 360
 
-      let hours: number | string = Math.floor(averageAngle / 15)
-      let minutes: number | string = Math.round((averageAngle / 15 - hours) * 60)
+      let hours: number | string = Math.floor(averageAngle / 15),
+          minutes: number | string = Math.round((averageAngle / 15 - hours) * 60)
       if (hours.toString().length === 1) hours = `0${hours}`
       if (minutes.toString().length === 1) minutes = `0${minutes}`
 

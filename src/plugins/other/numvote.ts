@@ -13,30 +13,28 @@ export const options: PluginOptions = {
       hidden: true,
     },
   },
-  help: [
-    'Cast a vote for alias: {alias}',
-  ],
+  help: ['Cast a vote for alias: {alias}'],
 }
 
 export class Instance implements PluginInstance {
   private voteData: {
     [channel: string]: {
       voters: number[]
-      votes: {[vote: string]: number},
-      time: number,
-      timeout?: NodeJS.Timeout,
-    },
+      votes: {[vote: string]: number}
+      time: number
+      timeout?: NodeJS.Timeout
+    }
   }
 
   private opts: {
     /** Minimum votes on a number for it to show up */
-    minVotes: number,
+    minVotes: number
     /** Minimum votes for a vote to be shown */
-    minTotal: number,
+    minTotal: number
     /** Timeouts after this ms of no votes. Affected by `decay` */
-    time: number,
+    time: number
     /** For each vote the addPerVote value is multiplied with this */
-    decay: number,
+    decay: number
   }
 
   private l: PluginLibrary
@@ -76,6 +74,7 @@ export class Instance implements PluginInstance {
         this.voteData[channelId] = { voters: [], votes: {}, time: this.opts.time, timeout: undefined }
         return
       }
+
       const results = []
       for (const vote in accepted) {
         results.push(`${vote}: ${Math.round(accepted[vote] / total * 100)}%`)
@@ -86,6 +85,5 @@ export class Instance implements PluginInstance {
     }, voting.time)
     console.log(voting.time)
     voting.time *= this.opts.decay
-    return
   }
 }

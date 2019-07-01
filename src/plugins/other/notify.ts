@@ -22,14 +22,13 @@ export const options: PluginOptions = {
 
 interface NotifyData {
   [userId: number]: Array<{
-    msg: string,
-    time: number,
-    fromId: number,
+    msg: string
+    time: number
+    fromId: number
   }>
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
   private listener: any
 
@@ -51,6 +50,7 @@ export class Instance implements PluginInstance {
       if (params[2]) {
         const entry = await this.l.api.getId(params[2].toLowerCase())
         if (!entry) return 'Cannot find a user with that name'
+
         const preLength = data[entry].length
         data[entry] = data[entry].filter(v => v.fromId !== userId)
         deleteCount += preLength - data[entry].length
@@ -66,6 +66,7 @@ export class Instance implements PluginInstance {
       return `Deleted ${this.l.u.plural(deleteCount, 'notify', 'notifies')}`
     } else {
       if (!params[2]) return 'Define a message (params 2+)'
+
       const target = await this.l.api.getId(params[1].toLowerCase())
       if (!target) return 'Cannot find a user with that name'
 

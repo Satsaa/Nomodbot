@@ -1,7 +1,8 @@
 import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
 import PluginLibrary from '../../main/PluginLib'
-import { LogExtension} from './log'
+
+import { LogExtension } from './log'
 
 export const options: PluginOptions = {
   type: 'command',
@@ -15,14 +16,11 @@ export const options: PluginOptions = {
       userCooldown: 30,
     },
   },
-  help: [
-    'Show the total messages sent in {channel}: {alias}',
-  ],
+  help: ['Show the total messages sent in {channel}: {alias}'],
   requirePlugins: ['log'],
 }
 
 export class Instance implements PluginInstance {
-
   private l: PluginLibrary
   private log: LogExtension
 

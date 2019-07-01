@@ -130,12 +130,16 @@ export default class TwitchApi {
     this.displays[id] = display
   }
 
+  /** Gets the cached user ID for `login` */
+  public cachedId(login: string): number | undefined {
+    return this.ids[login]
+  }
   /** Gets the cached user ID for `login` or fetches it from the API */
-  public async getId(login: string, onlyCached = false): Promise<number | undefined> {
+  public async getId(login: string): Promise<number | undefined> {
     login = login.toLowerCase()
-    if (this.ids[login]) { return this.ids[login] } else {
-      if (onlyCached) return
-
+    if (this.ids[login]) {
+      return this.ids[login]
+    } else {
       const res = await this._users({ login })
       if (typeof res === 'object' && res.data[0]) {
         return this.ids[login] // now defined by cacheUser
@@ -143,11 +147,15 @@ export default class TwitchApi {
     }
   }
 
+  /** Gets the cached login name for `id` */
+  public cachedLogin(id: number): string | undefined {
+    return this.logins[id]
+  }
   /** Gets the cached login name for `id` or fetches it from the API */
-  public async getLogin(id: number, onlyCached = false): Promise<string | undefined> {
-    if (this.logins[id]) { return this.logins[id] } else {
-      if (onlyCached) return
-
+  public async getLogin(id: number): Promise<string | undefined> {
+    if (this.logins[id]) {
+      return this.logins[id]
+    } else {
       const res = await this._users({ id })
       if (typeof res === 'object' && res.data[0]) {
         return this.logins[id] // now defined by cacheUser
@@ -155,25 +163,36 @@ export default class TwitchApi {
     }
   }
 
-  /** Gets the cached display name for `id` or fetches it from the API */
-  public async getDisplay(id: number, onlyCached?: boolean): Promise<string | undefined>
-  /** Gets the cached display name for `login` or fetches it from the API */
-  public async getDisplay(login: string, onlyCached?: boolean): Promise<string | undefined>
-  /** Gets the cached display name for `user` or fetches it from the API */
-  public async getDisplay(user: number | string, onlyCached = false): Promise<string | undefined> {
+  /** Gets the cached display name for `id` */
+  public cachedDisplay(id: number): string | undefined
+  /** Gets the cached display name for `login` */
+  public cachedDisplay(login: string): string | undefined
+  /** Gets the cached display name for `user` */
+  public cachedDisplay(user: number | string): string | undefined {
     if (typeof user === 'string') {
-      user = user.toLowerCase()
-
-      const id = await this.getId(user)
+      const id = this.cachedId(user.toLowerCase())
+      if (!id) return
+      return this.displays[id]
+    }
+    return this.displays[user]
+  }
+  /** Gets the cached display name for `id` or fetches it from the API */
+  public async getDisplay(id: number): Promise<string | undefined>
+  /** Gets the cached display name for `login` or fetches it from the API */
+  public async getDisplay(login: string): Promise<string | undefined>
+  /** Gets the cached display name for `user` or fetches it from the API */
+  public async getDisplay(user: number | string): Promise<string | undefined> {
+    if (typeof user === 'string') {
+      const id = await this.getId(user.toLowerCase())
       if (!id) return
       return this.displays[id]
     }
 
     const id = user
 
-    if (this.displays[id]) { return this.displays[id] } else {
-      if (onlyCached) return
-
+    if (this.displays[id]) {
+      return this.displays[id]
+    } else {
       const res = await this._users({ id })
       if (typeof res === 'object' && res.data[0]) {
         return this.displays[id] // now defined by cacheUser
@@ -186,7 +205,7 @@ export default class TwitchApi {
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `logins` with the correspoding result
    */
-  public async getIds(logins: string[], onlyCached = false): Promise<{[login: string]: number | undefined}> {
+  public async getIds(logins: string[]): Promise<{[login: string]: number | undefined}> {
     logins = logins.map(v => v.toLowerCase())
 
     // Create return object which removes duplicates as a side effect
@@ -203,22 +222,20 @@ export default class TwitchApi {
       } else { notInCache.push(login) }
     }
 
-    if (!onlyCached) {
-      const hundreds: string[][] = []
-      for (let i = 0; i < notInCache.length / 100; i++) {
-        hundreds.push(notInCache.slice(i * 100, i * 100 + 100))
-      }
+    const hundreds: string[][] = []
+    for (let i = 0; i < notInCache.length / 100; i++) {
+      hundreds.push(notInCache.slice(i * 100, i * 100 + 100))
+    }
 
-      let first = true
-      for (const hundred of hundreds) {
-        if (!first) await util.timeout(1000)
-        first = false
+    let first = true
+    for (const hundred of hundreds) {
+      if (!first) await util.timeout(1000)
+      first = false
 
-        const users = await this._users({ login: hundred })
-        if (typeof users === 'object') {
-          for (const user of users.data) {
-            res[user.login] = ~~user.id
-          }
+      const users = await this._users({ login: hundred })
+      if (typeof users === 'object') {
+        for (const user of users.data) {
+          res[user.login] = ~~user.id
         }
       }
     }
@@ -231,7 +248,7 @@ export default class TwitchApi {
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `ids` with the correspoding result
    */
-  public async getLogins(ids: number[], onlyCached = false): Promise<{[id: number]: string | undefined}> {
+  public async getLogins(ids: number[]): Promise<{[id: number]: string | undefined}> {
     // Create return object which removes duplicates as a side effect
     const res: {[id: number]: string | undefined} = {}
     for (const id of ids) {
@@ -246,26 +263,23 @@ export default class TwitchApi {
       } else { notInCache.push(id) }
     }
 
-    if (!onlyCached) {
-      const hundreds: number[][] = []
-      for (let i = 0; i < notInCache.length / 100; i++) {
-        hundreds.push(notInCache.slice(i * 100, i * 100 + 100))
-      }
+    const hundreds: number[][] = []
+    for (let i = 0; i < notInCache.length / 100; i++) {
+      hundreds.push(notInCache.slice(i * 100, i * 100 + 100))
+    }
 
-      let first = true
-      for (const hundred of hundreds) {
-        if (!first) await util.timeout(1000)
-        first = false
+    let first = true
+    for (const hundred of hundreds) {
+      if (!first) await util.timeout(1000)
+      first = false
 
-        const users = await this._users({ id: hundred })
-        if (typeof users === 'object') {
-          for (const user of users.data) {
-            res[~~user.id] = user.login
-          }
+      const users = await this._users({ id: hundred })
+      if (typeof users === 'object') {
+        for (const user of users.data) {
+          res[~~user.id] = user.login
         }
       }
     }
-
     return res
   }
 
@@ -274,20 +288,20 @@ export default class TwitchApi {
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `ids` with the correspoding result
    */
-  public getDisplays(ids: number[], onlyCached?: boolean): Promise<{[id: number]: string | undefined}>
+  public getDisplays(ids: number[]): Promise<{[id: number]: string | undefined}>
   /**
    * Gets the display names for `logins`  
    * `logins` are converted to lowercase and it is reflected in the result  
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `logins` with the correspoding result
    */
-  public getDisplays(logins: string[], onlyCached?: boolean): Promise<{[login: string]: string | undefined}>
+  public getDisplays(logins: string[]): Promise<{[login: string]: string | undefined}>
   /**
    * Gets the display names for `users`  
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `users` with the correspoding result
    */
-  public async getDisplays(users: number[] | string[], onlyCached = false): Promise<{[user: string]: string | undefined}> {
+  public async getDisplays(users: number[] | string[]): Promise<{[user: string]: string | undefined}> {
     if (typeof users[0] === 'string') { // Using logins
       let logins = users as string[]
       logins = logins.map(v => v.toLowerCase())
@@ -306,22 +320,20 @@ export default class TwitchApi {
         } else { notInCache.push(login) }
       }
 
-      if (!onlyCached) {
-        const hundreds: string[][] = []
-        for (let i = 0; i < notInCache.length / 100; i++) {
-          hundreds.push(notInCache.slice(i * 100, i * 100 + 100))
-        }
+      const hundreds: string[][] = []
+      for (let i = 0; i < notInCache.length / 100; i++) {
+        hundreds.push(notInCache.slice(i * 100, i * 100 + 100))
+      }
 
-        let first = true
-        for (const hundred of hundreds) {
-          if (!first) await util.timeout(1000)
-          first = false
+      let first = true
+      for (const hundred of hundreds) {
+        if (!first) await util.timeout(1000)
+        first = false
 
-          const users = await this._users({ login: hundred })
-          if (typeof users === 'object') {
-            for (const user of users.data) {
-              res[user.login] = user.display_name
-            }
+        const users = await this._users({ login: hundred })
+        if (typeof users === 'object') {
+          for (const user of users.data) {
+            res[user.login] = user.display_name
           }
         }
       }
@@ -343,22 +355,20 @@ export default class TwitchApi {
         } else { notInCache.push(id) }
       }
 
-      if (!onlyCached) {
-        const hundreds: number[][] = []
-        for (let i = 0; i < notInCache.length / 100; i++) {
-          hundreds.push(notInCache.slice(i * 100, i * 100 + 100))
-        }
+      const hundreds: number[][] = []
+      for (let i = 0; i < notInCache.length / 100; i++) {
+        hundreds.push(notInCache.slice(i * 100, i * 100 + 100))
+      }
 
-        let first = true
-        for (const hundred of hundreds) {
-          if (!first) await util.timeout(1000)
-          first = false
+      let first = true
+      for (const hundred of hundreds) {
+        if (!first) await util.timeout(1000)
+        first = false
 
-          const users = await this._users({ id: hundred })
-          if (typeof users === 'object') {
-            for (const user of users.data) {
-              res[~~user.id] = user.display_name
-            }
+        const users = await this._users({ id: hundred })
+        if (typeof users === 'object') {
+          for (const user of users.data) {
+            res[~~user.id] = user.display_name
           }
         }
       }
