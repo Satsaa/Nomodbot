@@ -7,7 +7,7 @@ import deepClone from './lib/deepClone'
 import * as util from './lib/util'
 import { readDirRecursive } from './lib/util'
 import ParamValidator from './paramValidator'
-import PluginLibrary from './PluginLib'
+import PluginLibrary from './pluginLib'
 
 export type PluginOptions = (Command | Controller) & PluginBase
 

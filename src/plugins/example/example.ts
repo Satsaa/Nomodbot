@@ -1,6 +1,6 @@
 import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
-import PluginLibrary from '../../main/PluginLib'
+import PluginLibrary from '../../main/pluginLib'
 
 /*
 A plugin file usually has 1 plugin, but you can have multiple if you export an array like:

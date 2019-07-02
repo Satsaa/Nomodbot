@@ -1,5 +1,5 @@
 import Bot from './bot'
-import { Manager } from './Manager'
+import { Manager } from './manager'
 
 let managed = false
 for (const arg of process.argv) {

@@ -1,6 +1,6 @@
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import defaultKeys from '../../main/lib/defaultKeys'
-import PluginLibrary from '../../main/PluginLib'
+import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
   type: 'controller',

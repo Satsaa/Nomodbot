@@ -3,7 +3,7 @@ import util from 'util'
 
 import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
-import PluginLibrary from '../../main/PluginLib'
+import PluginLibrary from '../../main/pluginLib'
 
 
 const exec = util.promisify(_exec)
