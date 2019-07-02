@@ -1,5 +1,5 @@
 import { PRIVMSG } from '../../main/client/parser'
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
+import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/_commander'
 import PluginLibrary from '../../main/PluginLib'
 
 import { ACTION, CHAT, LogExtension } from './log'
@@ -34,8 +34,8 @@ export class Instance implements PluginInstance {
   }
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    let uid: number = userId,
-        index = 0
+    let uid: number = userId
+    let index = 0
     if (params[1]) {
       if (isNaN(Number(params[1]))) {
         uid = await this.l.api.getId(params[1]) || userId

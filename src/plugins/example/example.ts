@@ -1,5 +1,5 @@
 import { PRIVMSG } from '../../main/client/parser'
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
+import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/_commander'
 import PluginLibrary from '../../main/PluginLib'
 
 /*

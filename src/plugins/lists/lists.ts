@@ -1,4 +1,4 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
+import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/_commander'
 import defaultKeys from '../../main/lib/defaultKeys'
 import PluginLibrary from '../../main/PluginLib'
 

@@ -2,7 +2,7 @@ import fs from 'fs'
 import { promises as fsp } from 'fs'
 
 import { PRIVMSG } from '../../main/client/parser'
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
+import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/_commander'
 import PluginLibrary from '../../main/PluginLib'
 
 export const options: PluginOptions = {

@@ -1,5 +1,5 @@
 import { PRIVMSG } from '../../main/client/parser'
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
+import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/_commander'
 import PluginLibrary from '../../main/PluginLib'
 
 import { ACTION, CHAT, LogExtension } from './log'
@@ -32,8 +32,8 @@ export class Instance implements PluginInstance {
 
   public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
     if (params[1]) { // User specific message
-      let userIndex: number | undefined = userId,
-          index = 0
+      let userIndex: number | undefined = userId
+      let index = 0
       if (isNaN(Number(params[1]))) {
         userIndex = await this.l.api.getId(params[1])
         if (!userIndex) return this.l.insertAtUser('Cannot find a user with that name', extra)
@@ -56,8 +56,8 @@ export class Instance implements PluginInstance {
       const randomI = this.l.u.randomInt(0, data.messageCount - 1)
       let currentI = 0
       for (const uIdStr in data.users) {
-        const userId = ~~uIdStr,
-              length = data.users[userId].offsets.length
+        const userId = ~~uIdStr
+        const length = data.users[userId].offsets.length
 
         if (currentI + length > randomI) {
           const res = await this.log.getMsg(channelId, userId, randomI - currentI)

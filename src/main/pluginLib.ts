@@ -1,6 +1,6 @@
-import TwitchClient from './client/Client'
-import Commander, { CommandAlias, DefaultCommandAlias, Extra, PluginInstance, PluginOptions, userlvls } from './Commander'
-import Data from './Data'
+import TwitchClient from './client/_client'
+import Commander, { CommandAlias, DefaultCommandAlias, Extra, PluginInstance, PluginOptions, userlvls } from './_commander'
+import Data from './_data'
 import * as secretKey from './lib/secretKey'
 import * as util from './lib/util'
 

@@ -1,6 +1,6 @@
 
-import TwitchClient from './client/Client'
-import Commander, { Command } from './Commander'
+import TwitchClient from './client/_client'
+import Commander, { Command } from './_commander'
 import { addArticle, commaPunctuate, plural, uniquify } from './lib/util'
 
 interface CommandParameter {

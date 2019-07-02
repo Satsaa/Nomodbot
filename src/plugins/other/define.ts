@@ -1,7 +1,7 @@
 import https from 'https'
 
 import { PRIVMSG } from '../../main/client/parser'
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/Commander'
+import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/_commander'
 import PluginLibrary from '../../main/PluginLib'
 
 export const options: PluginOptions = {
@@ -46,12 +46,12 @@ export class Instance implements PluginInstance {
         return 'The API returned invalid data'
       }
 
-      let definition,
-          pronun, // pronunciation
-          category // noun, verb etc
-      const word = data.results[0].word,
+      let definition
+      let pronun // pronunciation
+      let category // noun, verb etc
+      const word = data.results[0].word
 
-            entry = (data.results[0].lexicalEntries || {})[0] || {} ? data.results[0].lexicalEntries[0] : {}
+      const entry = (data.results[0].lexicalEntries || {})[0] || {} ? data.results[0].lexicalEntries[0] : {}
 
       if ((((((entry.entries || {})[0] || {}).senses || {})[0] || {}).definitions || {})[0]) {
         definition = data.results[0].lexicalEntries[0].entries[0].senses[0].definitions[0]

@@ -1,11 +1,11 @@
-import Client from './client/Client'
+import Client from './client/_client'
 import { PRIVMSG } from './client/parser'
-import Commander from './Commander'
-import Data from './Data'
+import Commander from './_commander'
+import Data from './_data'
 import deepClone from './lib/deepClone'
 import * as secretKey from './lib/secretKey'
 import { onExit } from './lib/util'
-import ParamValidator from './ParamValidator'
+import ParamValidator from './_paramValidator'
 
 export interface BotOptions {
   masters: number[]
