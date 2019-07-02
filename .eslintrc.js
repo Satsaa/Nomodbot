@@ -191,7 +191,7 @@ module.exports = {
     'key-spacing': 'error',
     'keyword-spacing': 'error',
     'line-comment-position': 'off', // Too restrictive
-    'linebreak-style': 'error',
+    'linebreak-style': 'off',
     'lines-around-comment': 'off',
     'lines-between-class-members': 'off',
     'max-depth': 'off',
