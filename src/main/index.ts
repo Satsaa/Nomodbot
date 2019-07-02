@@ -1,4 +1,4 @@
-import Bot from './_bot'
+import Bot from './bot'
 import { Manager } from './Manager'
 
 let managed = false

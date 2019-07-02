@@ -7,10 +7,10 @@ import WebSocket from 'ws'
 import deepClone from '../lib/deepClone'
 import defaultKeys from '../lib/defaultKeys'
 import eventTimeout from '../lib/eventTimeout'
-import RateLimiter, { RateLimiterOptions } from '../lib/_rateLimiter'
+import RateLimiter, { RateLimiterOptions } from '../lib/rateLimiter'
 import * as u from '../lib/util'
 
-import TwitchApi from './_api'
+import TwitchApi from './api'
 import parse, { IrcMessage, PRIVMSG } from './parser'
 
 interface Events {

@@ -2,7 +2,7 @@ import { exec as _exec } from 'child_process'
 import util from 'util'
 
 import { PRIVMSG } from '../../main/client/parser'
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/_commander'
+import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/PluginLib'
 
 

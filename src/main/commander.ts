@@ -1,12 +1,12 @@
 import * as path from 'path'
 
-import TwitchClient from './client/_client'
+import TwitchClient from './client/client'
 import { IrcMessage, PRIVMSG } from './client/parser'
-import Data from './_data'
+import Data from './data'
 import deepClone from './lib/deepClone'
 import * as util from './lib/util'
 import { readDirRecursive } from './lib/util'
-import ParamValidator from './_paramValidator'
+import ParamValidator from './paramValidator'
 import PluginLibrary from './PluginLib'
 
 export type PluginOptions = (Command | Controller) & PluginBase
