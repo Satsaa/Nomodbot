@@ -156,7 +156,7 @@ export default class TwitchClient {
     this.channelCache = { mods: {}, users: {} }
     this.clientData = { global: { whisperTimes: [], msgTimes: [] }, channels: {} }
 
-    fs.mkdirSync(this.opts.dataRoot, { recursive: true })
+    fs.mkdirSync(`${this.opts.dataRoot}/global/`, { recursive: true })
     try {
       fs.accessSync(`${this.opts.dataRoot}/global/${this.opts.dataFile}`, fs.constants.R_OK | fs.constants.W_OK)
     } catch (err) {

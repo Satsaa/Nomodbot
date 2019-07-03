@@ -11,7 +11,7 @@ let cache: {[x: string]: any} = {}
    * Like (file,`'foo','bar')` -> file.`foo.bar`
    * @Return Undefined if the key is created, otherwise the key's value
    */
-export function getKey(file: string, ...keys: string[]) {
+export function getKey(file: string, ...keys: string[]): undefined | null | string {
   if (!cache.file) {
     fs.mkdirSync(file.replace(/\/[^/]*$/, ''), { recursive: true })
     if (!fs.existsSync(file)) {

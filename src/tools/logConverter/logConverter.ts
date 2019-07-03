@@ -3,35 +3,38 @@ import https from 'https'
 
 import * as secretKey from '../../main/lib/secretKey'
 
-const input = './src/main/tools/logConverter/log.txt',
-      output = './src/main/tools/logConverter/output.json',
+const input = './src/main/tools/logConverter/log.txt'
+const output = './src/main/tools/logConverter/output.json'
 
-  /*
+/*
   Converts a log file from nomodbot 0.2
   {id: display} -> [uid, login, display][]
 */
 
-      clientId = secretKey.getKey('./cfg/keys.json', 'twitch', 'client-id'),
+const _clientId = secretKey.getKey('./cfg/keys.json', 'twitch', 'client-id')
+if (!_clientId) throw new Error('ClientId required')
 
-      rawFile = fs.readFileSync(input, 'utf8')
+const clientId = _clientId
+
+const rawFile = fs.readFileSync(input, 'utf8')
 
 console.log('Parsing input')
 
-const seen: {[a: string]: 1} = {},
-      inputIds = rawFile
-        .split('\n') // Split to log lines
-        .map((v, i, arr) => (v.match(/:c:([^:]*)/) || [])[1]) // Extract id from log line
-        .filter(v => typeof v === 'string') // Remove non string
-        .filter((elem, index, self) => { // Remove duplicates (takes long)
-          if (seen[elem]) {
-            return false
-          } else {
-            seen[elem] = 1
-            return true
-          }
-        }),
+const seen: {[a: string]: 1} = {}
+const inputIds = rawFile
+  .split('\n') // Split to log lines
+  .map((v, i, arr) => (v.match(/:c:([^:]*)/) || [])[1]) // Extract id from log line
+  .filter(v => typeof v === 'string') // Remove non string
+  .filter((elem, index, self) => { // Remove duplicates (takes long)
+    if (seen[elem]) {
+      return false
+    } else {
+      seen[elem] = 1
+      return true
+    }
+  })
 
-      input100: string[][] = []
+const input100: string[][] = []
 inputIds.forEach((v, i) => {
   const index100 = Math.floor(i / 100)
   if (!input100[index100]) input100[index100] = []

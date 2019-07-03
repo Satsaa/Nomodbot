@@ -2,7 +2,7 @@
   "name": "nomodbot",
   "version": "1.0.0",
   "description": "twitch bot",
-  "main": "bin\\src\\index.js",
+  "main": "bin\\main\\index.js",
   "scripts": {
     "test": "test.bat"
   },

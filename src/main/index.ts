@@ -1,16 +1,12 @@
 import Bot from './bot'
 import { Manager } from './manager'
+import argRules from './argRules'
+import Args from './lib/args'
 
-let managed = false
-for (const arg of process.argv) {
-  if (arg === '-m' || arg === '--manager') {
-    console.log('asdasdad')
-    managed = true
-  }
-}
+const args = new Args(argRules)
 
-
-if (managed) {
+if (args.args.manager && !process.send) {
+  console.log('Launched managed bot instance')
   void new Manager()
 } else {
   process.on('multipleResolves', (e, p, v) => {
@@ -20,7 +16,7 @@ if (managed) {
     throw e
   })
 
-  const bot = new Bot({ masters: [61365582] })
+  const bot = new Bot({ masters: [61365582], args })
   // Pass reference to Bot for debugging if not a managed instance
   if (!process.send) {
     console.log(bot)

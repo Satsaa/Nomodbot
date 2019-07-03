@@ -347,7 +347,7 @@ export function fitStrings(options: number | FitStringOptions, ...strings: Array
  * @param comma String between all but the two last words
  * @param and String between two last words
  */
-export function commaPunctuate(words: string[], comma = ', ', and = ' and ') {
+export function commaPunctuate(words: any[], comma = ', ', and = ' and ') {
   let result = ''
   words.forEach((word, i) => {
     word = word.trim()

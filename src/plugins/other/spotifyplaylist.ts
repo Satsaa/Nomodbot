@@ -34,8 +34,8 @@ interface SpotifyPlaylistData {
 
 export class Instance implements PluginInstance {
   private l: PluginLibrary
-  private clientId?: string
-  private clientSecret?: string
+  private clientId?: string | null
+  private clientSecret?: string | null
   private accessToken?: string
   private timeout?: NodeJS.Timeout
 

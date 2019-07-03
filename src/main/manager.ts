@@ -81,7 +81,10 @@ export class Manager {
       this.gracedBirth()
     } else {
       console.log('Manager exiting. Autorestart disabled')
-      process.exit()
+      // Delay closing so the bot can finish writing data and thus shouldn't corrupt files
+      setTimeout(() => {
+        process.exit()
+      }, 5000)
     }
   }
 
@@ -100,7 +103,11 @@ export class Manager {
     function birth(this: Manager) {
       if (Date.now() - this.lastRestart < this.opts.minRestartInterval) {
         console.log('Too quick restarts')
-        process.exit()
+        // Delay closing so the bot can finish writing data and thus shouldn't corrupt files
+        setTimeout(() => {
+          process.exit()
+        }, 5000)
+        return
       }
       setTimeout(() => {
         this.lastRestart = Date.now()

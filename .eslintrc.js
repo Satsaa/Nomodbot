@@ -307,7 +307,15 @@ module.exports = {
     '@typescript-eslint/camelcase': ["error", {'properties': "never"}],
     '@typescript-eslint/class-name-casing': 'error',
     '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/explicit-member-accessibility': 'off',
+    '@typescript-eslint/explicit-member-accessibility': ['error', { "accessibility": "explicit",
+      overrides: {
+        accessors: 'explicit',
+        constructors: 'off',
+        methods: 'explicit',
+        properties: 'explicit',
+        parameterProperties: 'explicit'
+      }
+    }],
     '@typescript-eslint/func-call-spacing': 'error',
     '@typescript-eslint/generic-type-naming': 'off', // Type argument rule
     '@typescript-eslint/indent': [

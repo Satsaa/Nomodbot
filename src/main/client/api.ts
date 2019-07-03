@@ -99,7 +99,7 @@ export default class TwitchApi {
     try {
       fs.accessSync(`${this.opts.dataRoot}/global/apiData.json`, fs.constants.R_OK | fs.constants.W_OK)
     } catch (err) {
-      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataRoot}/global/apiData.json`, '{bearer: null, expire: 0, users: []}')
+      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataRoot}/global/apiData.json`, '{"bearer": null, "expire": 0, "users": []}')
       else throw err
     }
 
