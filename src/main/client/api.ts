@@ -229,7 +229,7 @@ export default class TwitchApi {
 
     let first = true
     for (const hundred of hundreds) {
-      if (!first) await util.timeout(1000)
+      if (!first) await util.asyncTimeout(1000)
       first = false
 
       const users = await this._users({ login: hundred })
@@ -270,7 +270,7 @@ export default class TwitchApi {
 
     let first = true
     for (const hundred of hundreds) {
-      if (!first) await util.timeout(1000)
+      if (!first) await util.asyncTimeout(1000)
       first = false
 
       const users = await this._users({ id: hundred })
@@ -327,7 +327,7 @@ export default class TwitchApi {
 
       let first = true
       for (const hundred of hundreds) {
-        if (!first) await util.timeout(1000)
+        if (!first) await util.asyncTimeout(1000)
         first = false
 
         const users = await this._users({ login: hundred })
@@ -362,7 +362,7 @@ export default class TwitchApi {
 
       let first = true
       for (const hundred of hundreds) {
-        if (!first) await util.timeout(1000)
+        if (!first) await util.asyncTimeout(1000)
         first = false
 
         const users = await this._users({ id: hundred })

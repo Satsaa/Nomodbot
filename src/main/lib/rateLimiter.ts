@@ -12,7 +12,7 @@ export interface RateLimiterOptions {
 }
 
 /**
- * Enables creating queuing for actions and keeping rates within limits  
+ * Enables creating queues for actions and keeping rates within provided limits  
  */
 export default class RateLimiter {
   public queueSize: null | number
@@ -24,7 +24,7 @@ export default class RateLimiter {
      * Enables queueing actions within limits
      * @param options Array or single instance of options.  
      * The delay is calculated for each and the highest delay is selected.  
-     * Lowest defined queueSize is selected.
+     * Lowest defined queueSize is selected.  
      * @param queueSize Maximum queued entries at once
      */
   constructor(options: DeepReadonly<RateLimiterOptions | RateLimiterOptions[]>) {
@@ -50,8 +50,8 @@ export default class RateLimiter {
 
   /**
      * Queue calling of `cb` with optional `args`  
-     * This entry will be placed last on the queue
-     * @param cb Callback function
+     * This entry will be placed last on the queue  
+     * @param cb Callback function 
      * @param args Function arguments for `cb`
      */
   public queue(cb: (...args: any[]) => void, ...args: any[]): Promise<boolean> {
@@ -71,7 +71,7 @@ export default class RateLimiter {
      * @param cb Callback function
      * @param args Function arguments for `cb`
      */
-  public queueFirst(cb: (...args: any[]) => void, ...args: any[]): Promise<boolean> {
+  public queueNext(cb: (...args: any[]) => void, ...args: any[]): Promise<boolean> {
     return new Promise((resolve) => {
       if (this.queueSize !== null && this.entries.length + 1 > this.queueSize) {
         const entry = this.entries.pop()

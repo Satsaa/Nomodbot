@@ -261,7 +261,7 @@ export default class TwitchClient {
       this.api.cacheUser(~~user.id, user.login, user.display_name)
       this.send(`JOIN #${user.login}`)
       promises.push(eventTimeout(this, 'join', { timeout: this.getLatency(), matchArgs: [~~user.id] }))
-      if (delay) await u.timeout(delay)
+      if (delay) await u.asyncTimeout(delay)
     }
     return (await Promise.all(promises)).every(v => v.timeout === false)
   }
@@ -277,7 +277,7 @@ export default class TwitchClient {
     for (const user of res.data) {
       this.send(`PART #${user.login}`)
       promises.push(eventTimeout(this, 'part', { timeout: this.getLatency(), matchArgs: [~~user.id] }))
-      if (delay) await u.timeout(delay)
+      if (delay) await u.asyncTimeout(delay)
     }
     return (await Promise.all(promises)).every(v => v.timeout === false)
   }
@@ -481,7 +481,7 @@ export default class TwitchClient {
     console.log(`Reconnecting in ${u.plural(Math.round(interval / 1000), 'second')}`)
     if (this.ws) this.ws.close()
     this.reconnecting = true
-    await u.timeout(interval)
+    await u.asyncTimeout(interval)
 
     const res = await this.connect()
     this.reconnecting = false

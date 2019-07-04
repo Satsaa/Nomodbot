@@ -10,7 +10,7 @@ export interface ExpectOptions {
   matchOptions?: MatchKeysOptions
 }
 
-export interface ExpectEntry {
+interface Entry {
   cb: CallBack
   id: number
   once: boolean
@@ -19,7 +19,7 @@ export interface ExpectEntry {
   timeout: null | NodeJS.Timeout
 }
 
-export type CallBack = (expired: boolean, match?: object) => void
+type CallBack = (expired: boolean, match?: object) => void
 
 /**
  * The `Expector` is used to check if an object sent through  
@@ -27,7 +27,7 @@ export type CallBack = (expired: boolean, match?: object) => void
  * `Expector.expect` and calls the supplied callback
  */
 export default class Expector {
-  private entries: ExpectEntry[]
+  private entries: Entry[]
   private id: number
 
   constructor() {
