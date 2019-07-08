@@ -52,6 +52,7 @@ export class Instance implements PluginInstance {
 
   private async exec(cmd: string) {
     try {
+      console.log(await exec(cmd))
       return true
     } catch (err) {
       console.error(err)
