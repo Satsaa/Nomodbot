@@ -102,7 +102,9 @@ function emotes(v: string) { // emotes=25:0-4/354:6-10/1:12-13
       emotes[emote[0]] = { start: ~~area[0], end: ~~area[1] }
     })
     return emotes
-  } else { return {} }
+  } else {
+    return {}
+  }
 }
 
 function badges(v: string) {
@@ -114,7 +116,9 @@ function badges(v: string) {
       badges[badge[0]] = ~~badge[1]
     })
     return badges
-  } else { return {} }
+  } else {
+    return {}
+  }
 }
 
 /**

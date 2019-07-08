@@ -50,7 +50,9 @@ export default class Expector {
     if (typeof options === 'function') {
       cb = options
       options = {}
-    } else { options = deepClone(options) }
+    } else {
+      options = deepClone(options)
+    }
     if (typeof cb !== 'function') throw new Error('Callback is not a function?')
 
     const id = this.id++

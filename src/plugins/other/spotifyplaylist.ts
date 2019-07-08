@@ -65,7 +65,7 @@ export class Instance implements PluginInstance {
     const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
     if (!data) return this.l.insertAtUser('Unavailable: required data is not present', extra)
 
-    if (!data.playlist) return this.l.insertAtUser(`Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${params[0]} set <id or link>`, extra)
+    if (!data.playlist) return this.l.insertAtUser(`Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${extra.words[0]} set <id or link>`, extra)
 
     const playlist = await this.getPlaylist(data.playlist)
     if (typeof playlist === 'string') return this.l.insertAtUser('Invalid playlist', extra)
@@ -85,7 +85,7 @@ export class Instance implements PluginInstance {
     if (!data) return this.l.insertAtUser('Unavailable: required data is not present', extra)
 
     // Show playlist link when only 1 string parameter given
-    if (!data.playlist) return this.l.insertAtUser(`Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${params[0]} set <id or link>`, extra)
+    if (!data.playlist) return this.l.insertAtUser(`Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${extra.words[0]} set <id or link>`, extra)
     return this.l.insertAtUser(`${data.name && data.creator ? `${data.name} by ${data.creator}` : 'Paylist'}: open.spotify.com/playlist/${data.playlist}`, extra)
   }
 

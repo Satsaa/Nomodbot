@@ -232,7 +232,9 @@ export default class ParamValidator {
       if (cmdParam.var) {
         if (typeof cmdParam.pure === 'object') possibleNames.push(...cmdParam.pure.map(v => getName(v, cmdParam.multi)))
         else possibleNames.push(getName(cmdParam.pure, cmdParam.multi))
-      } else { possibleNames.push(...typeof cmdParam.pure === 'object' ? cmdParam.pure.map(v => `"${v}"`) : [`"${cmdParam.pure}"`]) }
+      } else {
+        possibleNames.push(...typeof cmdParam.pure === 'object' ? cmdParam.pure.map(v => `"${v}"`) : [`"${cmdParam.pure}"`])
+      }
     }
     if (!paramNeeded) possibleNames.unshift('nothing')
 
@@ -254,9 +256,8 @@ export default class ParamValidator {
 
     /** Converts types like NUMBER, USER to number, user */
     function getName(name: string | string[], multi: boolean) {
-      if (typeof name === 'string') { return main(name, multi) } else {
-        return name.map(v => main(v, multi)).join(', ')
-      }
+      if (typeof name === 'string') return main(name, multi)
+      else return name.map(v => main(v, multi)).join(', ')
       function main(name: string, multi: boolean) {
         switch (name) {
           case 'NUMBER': return 'a number'
@@ -561,7 +562,9 @@ export default class ParamValidator {
             const split = element.split('/')
             _pure[i] = split[0]
             _regex[i] = new RegExp(split[1], split[2])
-          } else { _pure[i] = element }
+          } else {
+            _pure[i] = element
+          }
           if (_regex.length) regex = _regex
         })
         pure = _pure

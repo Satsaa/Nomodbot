@@ -21,7 +21,9 @@ export default function <T extends object | any[]>(obj: T): T {
       if (isObject(value)) {
         const index = sourceRefs.indexOf(value)
         returnVal[key] = index === -1 ? cloneObj(obj[key]) : returnVal[key] = outRefs[index]
-      } else { returnVal[key] = value }
+      } else {
+        returnVal[key] = value
+      }
     }
     return returnVal
   }

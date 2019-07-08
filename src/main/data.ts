@@ -146,7 +146,9 @@ export default class Data extends EventEmitter {
         this.emit('load', subType, name, result)
         this.save(subType, name).catch((err) => { throw err })
         return result
-      } else { throw new Error('Cannot load file that doesn\'t exist. Define defaultData if you want to create it if needed') }
+      } else {
+        throw new Error('Cannot load file that doesn\'t exist. Define defaultData if you want to create it if needed')
+      }
     }
 
     let data

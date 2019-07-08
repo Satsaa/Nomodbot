@@ -119,7 +119,9 @@ export default class RateLimiter {
       if (times[i] < now - options.duration) {
         times.shift()
         i--
-      } else { break }
+      } else {
+        break
+      }
     }
 
     let lastMsgTime = times[times.length - 1]

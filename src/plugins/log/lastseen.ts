@@ -37,7 +37,7 @@ export class Instance implements PluginInstance {
     const targetId = _targetId || userId
 
     const self = targetId === userId
-    const display = params[1] ? await this.l.api.getDisplay(targetId) : extra.irc.tags['display-name']
+    const display = extra.words[1] ? await this.l.api.getDisplay(targetId) : extra.irc.tags['display-name']
 
     if (!this.log.getData(channelId)) return 'Log data unavailable'
 

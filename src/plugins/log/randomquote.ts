@@ -53,7 +53,9 @@ export class Instance implements PluginInstance {
           return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`
         }
         return this.l.insertAtUser(`Logger returned an invalid type: ${res.type}`, extra)
-      } else { currentI += length }
+      } else {
+        currentI += length
+      }
     }
     if (currentI) {
       return this.l.insertAtUser('No message chosen?', extra)

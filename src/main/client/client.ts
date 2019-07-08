@@ -245,7 +245,9 @@ export default class TwitchClient {
       if (this.ws && this.ws.readyState === 1) {
         if (cb) this.ws.send(data, cb)
         else this.ws.send(data, (err) => { resolve(!err) }) // no error -> true
-      } else { resolve(false) }
+      } else {
+        resolve(false)
+      }
     })
   }
 
@@ -315,7 +317,9 @@ export default class TwitchClient {
         const res = await eventTimeout(this, isCommand ? 'notice' : 'userstate', {
           timeout: this.getLatency(), matchArgs: isCommand ? undefined : [channelId, { 'display-name': this.globaluserstate['display-name'] }],
         })
-        if (res.timeout) { console.error(`[${await this.api.getLogin(channelId)}] Failed to send message: ${msg}`) } else {
+        if (res.timeout) {
+          console.error(`[${await this.api.getLogin(channelId)}] Failed to send message: ${msg}`)
+        } else {
           // Emit own messages
           const botId = await this.api.getId(this.opts.username)
           if (!botId) return this.failHandle(undefined, 'BOT ID')
@@ -356,7 +360,9 @@ export default class TwitchClient {
         this.handleMessage(msg)
         this.doc(msg)
       })
-    } else { throw new TypeError('NON STRING DATA') }
+    } else {
+      throw new TypeError('NON STRING DATA')
+    }
   }
 
   // Collect info about messages
@@ -470,7 +476,9 @@ export default class TwitchClient {
     if ((await eventTimeout(this, 'pong', { timeout: this.getLatency() * 2 })).timeout) {
       console.log('Reconnecting because of ping timeout')
       this.reconnect()
-    } else { this.setLatency(Date.now() - start) }
+    } else {
+      this.setLatency(Date.now() - start)
+    }
   }
 
   /** Tries to reconnect until succeeding */
@@ -501,7 +509,9 @@ export default class TwitchClient {
       else this.channelCache.mods[channelId][user] = true
     } else if (this.channelCache.mods[channelId][user]) {
       delete this.channelCache.mods[channelId][user]
-    } else { return } // Not modded
+    } else {
+      return
+    }
     this.emit('mod', channelId, user, mod)
     this.ircLog(`${user} ${mod ? 'gains' : 'loses'} moderator in ${await this.api.getDisplay(channelId)}`)
   }
@@ -653,7 +663,9 @@ export default class TwitchClient {
           const targetId = await this.api.getId(msg.params[1].slice(0, -2))
           if (!targetId) return this.failHandle(msg, msg.cmd)
           this.emit('hosttarget', channelId, targetId, msg.params[2] === undefined ? undefined : ~~msg.params[2])
-        } else { this.emit('hosttarget', channelId, undefined, msg.params[2] === undefined ? undefined : ~~msg.params[2]) }
+        } else {
+          this.emit('hosttarget', channelId, undefined, msg.params[2] === undefined ? undefined : ~~msg.params[2])
+        }
         // HOSTTARGET #<channel> :<targetchannel> -
         // HOSTTARGET #<channel> :- 0
         // Host off has ":- 0"?
@@ -673,7 +685,9 @@ export default class TwitchClient {
         this.api.cacheUser(msg.tags['user-id']!, msg.user!, String(msg.tags['display-name']!))
         if (_msg.startsWith('ACTION ')) {
           this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as PRIVMSG['tags'], _msg.slice(8, -1), true, msg.user === this.opts.username, msg as PRIVMSG)
-        } else { this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as PRIVMSG['tags'], _msg, false, msg.user === this.opts.username, msg as PRIVMSG) }
+        } else {
+          this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as PRIVMSG['tags'], _msg, false, msg.user === this.opts.username, msg as PRIVMSG)
+        }
         break
       }
       case 'WHISPER': // @userstate :<user>!<user>@<user>.tmi.twitch.tv WHISPER <you> :<message>
@@ -823,7 +837,9 @@ export default class TwitchClient {
               'bad_unban_no_ban', 'usage_unhost', 'not_hosting', 'whisper_invalid_login', 'whisper_invalid_self', 'unrecognized_cmd',
               'no_permission', 'whisper_limit_per_min', 'whisper_limit_per_sec', 'whisper_restricted_recipient', 'host_target_went_offline',
             ]
-              .includes(msg.tags['msg-id'])) { this.ircLog(`${channel}: ${msg.params[1]}`) } else {
+              .includes(msg.tags['msg-id'])) {
+              this.ircLog(`${channel}: ${msg.params[1]}`)
+            } else {
               console.warn('COULDN\'T HANDLE THIS INCREDIBLE NOTICE:')
               console.log(msg)
             }

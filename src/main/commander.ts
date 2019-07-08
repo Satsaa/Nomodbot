@@ -394,7 +394,9 @@ export default class Commander {
     return Math.max(cd, ucd)
 
     function next(times: number[], opts: number | {duration?: number, delay?: number, limit?: number}) {
-      if (typeof opts === 'number') { opts = { duration: opts, delay: 0, limit: 1 } } else {
+      if (typeof opts === 'number') {
+        opts = { duration: opts, delay: 0, limit: 1 }
+      } else {
         if (typeof opts.delay === 'undefined') opts.delay = 0
         if (typeof opts.duration === 'undefined') opts.duration = 30000
         if (typeof opts.limit === 'undefined') opts.limit = 1
@@ -407,7 +409,9 @@ export default class Commander {
         if (times[i] < now - duration) { // time is expired
           times.shift()
           i--
-        } else { break }
+        } else {
+          break
+        }
       }
       // Calculate next time
       if (times.length < opts.limit!) { // Limit is not reached calculate needed wait for delay
@@ -459,7 +463,9 @@ export default class Commander {
         }
         this.instantiatePlugin(options, _plugin.Instance) // Maybe this should be awaited? !!!
         return options
-      } else { throw console.error(`Plugin lacks options export: ${path}`) }
+      } else {
+        throw console.error(`Plugin lacks options export: ${path}`)
+      }
     }
   }
 

@@ -146,7 +146,9 @@ export class Instance implements PluginInstance {
             }
             break
         }
-      } else { result += token } // Normal
+      } else {
+        result += token
+      } // Normal
     }
     return result
   }

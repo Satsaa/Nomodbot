@@ -41,7 +41,7 @@ export class Instance implements PluginInstance {
     const res = this.log.msgCount(channelId, targetId)
     if (typeof res === 'undefined') return 'Log data is unavailable at the moment'
 
-    return params[1]
+    return extra.words[1]
       ? `${await this.l.api.getDisplay(targetId)} has sent ${this.l.u.plural(res, 'message')}`
       : `You have sent ${this.l.u.plural(res, 'message')}`
   }

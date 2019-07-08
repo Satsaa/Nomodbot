@@ -143,7 +143,9 @@ export default class TwitchApi {
       const res = await this._users({ login })
       if (typeof res === 'object' && res.data[0]) {
         return this.ids[login] // now defined by cacheUser
-      } else { return undefined }
+      } else {
+        return undefined
+      }
     }
   }
 
@@ -159,7 +161,9 @@ export default class TwitchApi {
       const res = await this._users({ id })
       if (typeof res === 'object' && res.data[0]) {
         return this.logins[id] // now defined by cacheUser
-      } else { return undefined }
+      } else {
+        return undefined
+      }
     }
   }
 
@@ -196,7 +200,9 @@ export default class TwitchApi {
       const res = await this._users({ id })
       if (typeof res === 'object' && res.data[0]) {
         return this.displays[id] // now defined by cacheUser
-      } else { return undefined }
+      } else {
+        return undefined
+      }
     }
   }
 
@@ -219,7 +225,9 @@ export default class TwitchApi {
     for (const login of logins) {
       if (this.ids[login]) {
         res[login] = this.ids[login]
-      } else { notInCache.push(login) }
+      } else {
+        notInCache.push(login)
+      }
     }
 
     const hundreds: string[][] = []
@@ -260,7 +268,9 @@ export default class TwitchApi {
     for (const id of ids) {
       if (this.logins[id]) {
         res[id] = this.logins[id]
-      } else { notInCache.push(id) }
+      } else {
+        notInCache.push(id)
+      }
     }
 
     const hundreds: number[][] = []
@@ -352,7 +362,9 @@ export default class TwitchApi {
       for (const id of ids) {
         if (this.displays[id]) {
           res[id] = this.displays[id]
-        } else { notInCache.push(id) }
+        } else {
+          notInCache.push(id)
+        }
       }
 
       const hundreds: number[][] = []
@@ -447,7 +459,9 @@ export default class TwitchApi {
     } catch (err) {
       if (err.code === 'ENOENT') {
         defaultKeys(this.channelCaches[channelId], this.channelCacheDefault)
-      } else { throw err }
+      } else {
+        throw err
+      }
     }
     return true
   }

@@ -53,13 +53,15 @@ export class Instance implements PluginInstance {
     if (plugin.type !== 'command') { return 'That plugin is not a command plugin' }
 
     const res = this.l.setAlias(channelId, aliasName, { ...plugin.default.options, target: plugin.id })
-    if (res) { return `"${aliasName}" created` } else { return 'Command creation failed' }
+    if (res) return `"${aliasName}" created`
+    else return 'Command creation failed'
   }
 
   public async callDelete(channelId: number, userId: number, params: any, extra: Extra) {
     const [action, aliasName]: ['del', string] = params
 
-    if (this.l.delAlias(channelId, aliasName)) { return 'Command successfully deleted' } else { return 'Command deletion failed' }
+    if (this.l.delAlias(channelId, aliasName)) return 'Command successfully deleted'
+    else return 'Command deletion failed'
   }
 
   public async callEdit(channelId: number, userId: number, params: any, extra: Extra) {
@@ -69,7 +71,8 @@ export class Instance implements PluginInstance {
     if (!alias) return 'No command'
 
     const res = this.l.setAlias(channelId, pluginId, alias)
-    if (res) { return `"${aliasName}" edited` } else { return 'Command edit failed' }
+    if (res) return `"${aliasName}" edited`
+    else return 'Command edit failed'
   }
 
   public async callCopy(channelId: number, userId: number, params: any, extra: Extra) {
@@ -79,7 +82,8 @@ export class Instance implements PluginInstance {
     if (!alias) return 'No command'
 
     const res = this.l.setAlias(channelId, targetName, alias)
-    if (res) { return `"${sourceName}" copied to "${targetName}"` } else { return 'Command copy failed' }
+    if (res) return `"${sourceName}" copied to "${targetName}"`
+    else return 'Command copy failed'
   }
 
   public async callEnable(channelId: number, userId: number, params: any, extra: Extra) {
@@ -117,14 +121,16 @@ export class Instance implements PluginInstance {
         if (!alias) return 'No command'
 
         const res = this.l.modAlias(channelId, aliasName, { cooldown: cd || undefined })
-        if (res) { return `Cooldown of "${aliasName}" set to ${this.l.u.plural(cd, 'second')}. The per-user cooldown is ${this.l.u.plural(alias.userCooldown || 0, 'second')}` } else { return 'Failed to change cooldown' }
+        if (res) return `Cooldown of "${aliasName}" set to ${this.l.u.plural(cd, 'second')}. The per-user cooldown is ${this.l.u.plural(alias.userCooldown || 0, 'second')}`
+        else return 'Failed to change cooldown'
       }
       case 'ucd': {
         const alias = this.l.getAlias(channelId, aliasName)
         if (!alias) return 'No command'
 
         const res = this.l.modAlias(channelId, aliasName, { userCooldown: cd || undefined })
-        if (res) { return `User cooldown of "${aliasName}" set to ${this.l.u.plural(cd, 'second')}. The normal cooldown is ${this.l.u.plural(alias.cooldown || 0, 'second')}` } else { return 'Failed to change user cooldown' }
+        if (res) return `User cooldown of "${aliasName}" set to ${this.l.u.plural(cd, 'second')}. The normal cooldown is ${this.l.u.plural(alias.cooldown || 0, 'second')}`
+        else return 'Failed to change user cooldown'
       }
       default:
         return `What the heck? Unknown key ${action}`

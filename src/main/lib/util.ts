@@ -469,7 +469,9 @@ export function fontify(str: string, style: fontifyUnion) {
   for (let i = 0; i < str.length; i++) {
     if (fontifyAlpha.includes(str.charAt(i))) {
       out += fontifyStyles[style][fontifyAlpha.indexOf(str.charAt(i))]
-    } else { out += str.charAt(i) }
+    } else {
+      out += str.charAt(i)
+    }
   }
   return out
 }
