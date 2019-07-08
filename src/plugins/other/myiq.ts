@@ -34,44 +34,59 @@ interface MyIQData {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.l.autoLoad('myIq', { high: {}, low: {} }, true)
+
+    this.call = this.l.addCall(this, this.call, 'default', 'record', this.callRecord)
+    this.call = this.l.addCall(this, this.call, 'default', '[<USER>]', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+  public async callRecord(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action]: ['record'] = params
+
+    const data = this.l.getData(channelId, 'myIq') as MyIQData
+    if (!data) return 'Data unavailable'
+
+    const high = typeof data.high.value === 'number' ? data.high.value : Infinity
+    const low = typeof data.low.value === 'number' ? data.low.value : -Infinity
+
+    const byHigh = data.high.userId ? await this.l.api.getDisplay(data.high.userId) : 'God'
+    const byLow = data.low.userId ? await this.l.api.getDisplay(data.low.userId) : 'God'
+    return `@${extra.irc.tags['display-name']} The highest IQ is ${high} by ${byHigh} and the lowest IQ is ${low} by ${byLow}`
+  }
+
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [_targetId]: [number | undefined] = params
+    const recipientId = _targetId || userId
+
+    const recipient = extra.words[1] || extra.irc.tags['display-name']
+
     const data = this.l.getData(channelId, 'myIq') as MyIQData
     if (!data) return 'Data unavailable'
 
     const high = typeof data.high.value === 'number' ? data.high.value : -Infinity
     const low = typeof data.low.value === 'number' ? data.low.value : Infinity
 
-    if (params[1] && params[1].toLowerCase() === 'record') {
-      const byHigh = data.high.userId ? await this.l.api.getDisplay(data.high.userId) : 'God'
-      const byLow = data.low.userId ? await this.l.api.getDisplay(data.low.userId) : 'God'
-      return `@${tags['display-name']} The highest IQ is ${high} by ${byHigh} and the lowest IQ is ${low} by ${byLow}`
-    }
-
-    const recipient = params[1] || tags['display-name'] || 'Error'
-    const recipientId = params[1] ? userId : await this.l.api.getId(recipient)
-    if (!recipientId) return 'No user'
-
-    const iq = Math.round(this.l.u.randomNormal(-50, 1005, 3))
+    const iq = Math.round(this.l.u.randomNormal(-50, 1000, 3))
 
     if (iq > high) { // New record
+      const byDisplay = data.high.userId ? await this.l.api.getDisplay(data.high.userId) : 'God'
+
       data.high.value = iq
       data.high.userId = recipientId
 
-      const byDisplay = data.high.userId ? await this.l.api.getDisplay(data.high.userId) : 'God'
       return `${recipient}'s RealIQ is ${iq} ${this.getEmote(iq)} Beat the old record of ${high} IQ by ${byDisplay || 'UnknownUser'} PogChamp`
-    } else if (iq < low) { // New low record
+    } else if (iq < low) { // New low-record
+      const byDisplay = data.high.userId ? await this.l.api.getDisplay(data.high.userId) : 'God'
+
       data.low.value = iq
       data.low.userId = recipientId
 
-      const byDisplay = data.high.userId ? await this.l.api.getDisplay(data.high.userId) : 'God'
-      return `${recipient}'s RealIQ is ${iq} ${this.getEmote(iq)} Beat the old low record of ${low} IQ by ${byDisplay || 'UnknownUser'} LUL`
+      return `${recipient}'s RealIQ is ${iq} ${this.getEmote(iq)} Beat the old low-record of ${low} IQ by ${byDisplay || 'UnknownUser'} LUL`
     } else { // No new record
       return `${recipient}'s RealIQ is ${iq} ${this.getEmote(iq)}`
     }

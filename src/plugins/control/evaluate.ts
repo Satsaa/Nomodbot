@@ -13,23 +13,26 @@ export const options: PluginOptions = {
       userlvl: userlvls.master,
     },
   },
-  help: ['Evaluate a string, execute it and return the result: {alias} <evalString>'],
+  help: ['Evaluate a string, execute it and return the result: {alias} <evalString...>'],
   disableMention: true,
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', '<evalString...>', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    try {
-      if (!params[1]) return 'Define the evaluation string (params 1+)'
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [evalString]: [string[]] = params
 
+    try {
       // eslint-disable-next-line no-eval
-      let result = eval(params.slice(1).join(' '))
+      let result = eval(evalString.join(' '))
 
       if (typeof result === 'object' && typeof result.then === 'function') { // Thenable
         result = await result

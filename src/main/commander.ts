@@ -48,11 +48,8 @@ export interface Command {
     options: Omit<CommandAlias, 'target' | 'whitelist' | 'blacklist'>
   }
   /**
-   * Help strings (usage instructions)  
+   * Usage instructions  
    * Object form allows aliases to use specific groups of help strings with their `group` key  
-   * Format for entries should be: "Explaining the action: {command} add <COMMAND> <message...>"  
-   * Or just the explanation: "Explaining this and that"  
-   * @see `README.md`#parameter-validator for details
    */
   help: string[] | {default: string[], [group: string]: string[]}
   /**
@@ -96,10 +93,9 @@ export interface CommandAlias {
 
 type CommandAliasSource = CommandAlias | ReadonlyCommandAlias
 
-type ReadonlyCommandAlias = DeepReadonly<CommandAlias>
+export type ReadonlyCommandAlias = DeepReadonly<CommandAlias>
 
-/** Properties for default aliases */
-export type DefaultCommandAlias = Readonly<Omit<CommandAlias, 'blacklist' | 'whitelist'>>
+type DefaultCommandAlias = Readonly<Omit<CommandAlias, 'blacklist' | 'whitelist'>>
 
 type Source = MaybeArray<{options: PluginOptions, Instance: new() => PluginInstance}>
 
@@ -120,19 +116,6 @@ export enum userlvls {
   master = 10,
 }
 
-export interface Extra {
-  /** Used alias */
-  alias: DefaultCommandAlias
-  /** Full* chat message *Action headers are not included */
-  message: string
-  /** Message was an action (/me) */
-  me: boolean
-  /** Remaining cooldown when trying to trigger command */
-  cooldown: number
-  /** IRCv3 parsed message that  */
-  irc: PRIVMSG
-}
-
 interface AliasData {
   /** Channel aliases */
   aliases: { [x: string]: CommandAlias }
@@ -145,13 +128,48 @@ interface CooldownData {
   shared: { [commandId: string]: number[] }
 }
 
+export interface Extra {
+  /** Used alias */
+  alias: DefaultCommandAlias
+  /** Message split by spaces */
+  words: string[]
+  /**
+   * Full chat message  
+   * Action headers are not included
+   */
+  message: string
+  /** Message was an action (/me) */
+  me: boolean
+  /** Remaining cooldown when trying to trigger command */
+  cooldown: number
+  /** IRCv3 parsed message that caused this call */
+  irc: PRIVMSG
+}
+
+export interface CallInterface {
+  default: Array<{
+    params: string
+    handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+  }>
+  [group: string]: Array<{
+    params: string
+    handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+  }>
+}
+
 export interface PluginInstance {
   /** This plugin is being loaded, execute before enabling this plugin */
   init?: () => Promise<void>
-  /** An alias of this command plugin is called */
-  call?: (channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) => Promise<string | void>
-  /** An alias of this command is called but it was on cooldown */
-  cooldown?: (channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) => void
+  /**
+   * An alias of this command is called  
+   * The handler is called when an alias with the same group is called and the params are matched  
+   */
+  call?: CallInterface
+  /**
+   * An alias of this command is called but it was on cooldown  
+   * The handler is called when an alias with the same group is called and the params are matched  
+   */
+  cooldown?: CallInterface
   /** This plugin is being unloaded (not when the bot is shutting down). Creates are unloaded automatically after this */
   unload?: () => Promise<void>
 }
@@ -300,7 +318,7 @@ export default class Commander {
   public getAliases(channelId: number): {[x: string]: ReadonlyCommandAlias} | void {
     if (!(this.data.data[channelId] || {}).aliases) return
 
-    const defaults: {[x: string]: DefaultCommandAlias} = {}
+    const defaults: {[x: string]: ReadonlyCommandAlias} = {}
     for (const key in this.defaultAliases) {
       if (!this.data.data[channelId].aliases.deletes[key]) defaults[key] = this.defaultAliases[key]
     }
@@ -310,7 +328,7 @@ export default class Commander {
   public getAliasesById(channelId: number, pluginId: string): {[x: string]: ReadonlyCommandAlias} | void {
     if (!(this.data.data[channelId] || {}).aliases) return
 
-    const res: {[x: string]: DefaultCommandAlias} = {}
+    const res: {[x: string]: ReadonlyCommandAlias} = {}
     for (const key in this.defaultAliases) {
       if (!this.data.data[channelId].aliases.deletes[key] && this.defaultAliases[key].target === pluginId) {
         res[key] = this.defaultAliases[key]
@@ -426,15 +444,6 @@ export default class Commander {
         this.plugins[options.id] = options
         switch (options.type) {
           case 'command':
-            try {
-              this.validator.cacheHelp(options.id, options.help) // !!!
-            } catch (err) {
-              // !!!
-              console.log(`in id:${options.id}`)
-              console.error(err.message)
-              console.log(err.stack.split('\n')[4])
-              console.log(options.help)
-            }
             if (Array.isArray(options.default.alias)) {
               options.default.alias.forEach((alias) => {
                 this.defaultAliases[alias] = { ...deepClone(options.default.options), ...{ target: options.id } }
@@ -519,6 +528,8 @@ export default class Commander {
       return { success: false, code: 'REQUIREDDATA', message: `Other plugins require data created by this plugin (${reqData.join(', ')})` }
     }
 
+    this.validator.uncacheHelp(pluginId)
+
     if (this.instances[pluginId].unload) await this.instances[pluginId].unload!()
 
     // Disable default aliases
@@ -600,11 +611,12 @@ export default class Commander {
 
     const instance = new instantiator(this.pluginLib)
     if (typeof instance.init === 'function') await instance.init()
-    // console.log(`Instantiated ${options.id}`)
+    // Cache parameters
+    if (instance.call) this.validator.cacheHelp(options.id, instance.call)
     this.instances[options.id] = instance
     this.resolveWaits(options.id)
-    if (options.type === 'command' && typeof this.instances[options.id].call !== 'function') {
-      throw new Error(`Invalid call function on command plugin instance: ${this.plugins[options.id].id}`)
+    if (options.type === 'command' && !instance.call) {
+      throw new Error(`Call function required for command plugins: ${this.plugins[options.id].id}`)
     }
   }
 
@@ -629,15 +641,16 @@ export default class Commander {
     if (self) return // Bot shouldn't trigger commands
     if (!irc) return
 
-    let params = message.split(' ')
-    const alias = this.getAlias(channelId, params[0])
+    let words = message.split(' ')
+    const alias = this.getAlias(channelId, words[0])
     if (!alias || alias.disabled) return
 
     const instance = this.instances[alias.target]
     const plugin = this.plugins[alias.target]
+    if (!plugin || !instance) return // Unloaded or removed
     if (plugin.type !== 'command') return console.log(`Trying to call a non command: ${alias.target}`)
     if (!plugin.unignoreMentions) message = message.replace(/ @.*/, '') // Remove @user... from command calls
-    params = message.split(' ')
+    words = message.split(' ')
     // Make sure the plugin is loaded
     if (!instance) return console.log(`Cannot call unloaded command: ${alias.target}`)
     if (!this.plugins[alias.target]) return console.log(`Alias has an unknown target id ${alias.target}`)
@@ -646,12 +659,13 @@ export default class Commander {
     if (this.isPermitted(alias, userId, tags.badges)) {
       if (this.masters.includes(userId) || (tags.badges && (tags.badges.broadcaster || tags.badges.moderator))) {
         // Master users, mods and the broadcaster don't care about cooldowns
-        const validation = await this.validator.validate(channelId, plugin.id, alias.group || 'default', params.slice(1))
+        const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
         if (!validation.pass) {
           return this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, validation.message, irc)}${validation.message}`)
         }
 
-        const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown: 0, irc })
+        const extra: Extra = { alias, words, message, me, cooldown: 0, irc }
+        const res = await instance.call[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
         if (res) {
           this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
         }
@@ -665,15 +679,21 @@ export default class Commander {
             if (alias.userCooldown && alias.userCooldown > (alias.cooldown || 0)) cooldowns.user[alias.target][userId].push(Date.now())
           }
 
-          const validation = await this.validator.validate(channelId, plugin.id, alias.group || 'default', params.slice(1))
+          const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
           if (!validation.pass) {
             return this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, validation.message, irc)}${validation.message}`)
           }
 
-          const res = await instance.call(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
+          const extra: Extra = { alias, words, message, me, cooldown, irc }
+          const res = await instance.call[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
+          // channelId: number, userId: number, words: string[], params: any[], extra: Extra
           if (res) this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
         } else if (instance.cooldown) {
-          instance.cooldown(channelId, userId, tags, params, { alias, message, me, cooldown, irc })
+          const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
+          if (!validation.pass) return
+
+          const extra: Extra = { alias, words, message, me, cooldown, irc }
+          const res = await instance.cooldown[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
         }
       }
     }

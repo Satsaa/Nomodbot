@@ -21,22 +21,25 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
   private log: LogExtension
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.log = this.l.ext.log as LogExtension
+
+    this.call = this.l.addCall(this, this.call, 'default', '[<USER>]', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    const targetId = params[1] ? await this.l.api.getId(params[1]) : userId
-    if (!targetId) return 'Cannot find a user with that name'
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [_targetId]: [number | undefined] = params
+    const targetId = _targetId || userId
 
     const self = targetId === userId
-    const display = params[1] ? await this.l.api.getDisplay(targetId) : tags['display-name']
+    const display = params[1] ? await this.l.api.getDisplay(targetId) : extra.irc.tags['display-name']
 
-    if (!this.log.getData) return 'Log data unavailable'
+    if (!this.log.getData(channelId)) return 'Log data unavailable'
 
     if (!this.log.getUser(channelId, targetId)) return `${targetId === userId ? 'You have' : `${display} has`} not been seen here before`
 

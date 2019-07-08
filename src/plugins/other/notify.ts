@@ -16,7 +16,7 @@ export const options: PluginOptions = {
   creates: [['notifies']],
   help: [
     'Notify a user with a message when they type in chat: {alias} <USER> <message...>',
-    'Delete notifies you created: {alias} delete [<USER>]',
+    'Delete notifies you created: {alias} del [<USER>]',
   ],
 }
 
@@ -29,6 +29,7 @@ interface NotifyData {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
   private listener: any
 
@@ -38,47 +39,48 @@ export class Instance implements PluginInstance {
     this.l.autoLoad('notifies', {})
 
     this.l.emitter.on('chat', this.listener = this.onChat.bind(this))
+
+    this.call = this.l.addCall(this, this.call, 'default', 'del [<USER>]', this.callDelete)
+    this.call = this.l.addCall(this, this.call, 'default', '<USER> <message...>', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [targetId, message]: [number, string[]] = params
+
     const data = this.l.getData(channelId, 'notifies') as NotifyData
     if (!data) return 'Unavailable: required data is not present'
 
-    if (!params[1]) return 'Define a user (param 1)'
-    if (params[1].toLowerCase() === 'delete') {
-      let deleteCount = 0
-      if (params[2]) {
-        const entry = await this.l.api.getId(params[2].toLowerCase())
-        if (!entry) return 'Cannot find a user with that name'
+    if (!data[targetId]) data[targetId] = []
 
+    data[targetId].push({
+      msg: message.join(' '),
+      time: Date.now(),
+      fromId: userId,
+    })
+    return `${extra.words[1]} now has ${this.l.u.plural(data[targetId].length, 'notify', 'notifies')}`
+  }
+
+  public async callDelete(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, targetId]: ['del', number | undefined] = params
+
+    const data = this.l.getData(channelId, 'notifies') as NotifyData
+    if (!data) return 'Unavailable: required data is not present'
+
+    let deleteCount = 0
+    if (targetId) {
+      const preLength = data[targetId].length
+      data[targetId] = data[targetId].filter(v => v.fromId !== userId)
+      deleteCount += preLength - data[targetId].length
+      if (!data[targetId].length) delete data[targetId]
+    } else {
+      for (const entry in data) {
         const preLength = data[entry].length
         data[entry] = data[entry].filter(v => v.fromId !== userId)
         deleteCount += preLength - data[entry].length
         if (!data[entry].length) delete data[entry]
-      } else {
-        for (const entry in data) {
-          const preLength = data[entry].length
-          data[entry] = data[entry].filter(v => v.fromId !== userId)
-          deleteCount += preLength - data[entry].length
-          if (!data[entry].length) delete data[entry]
-        }
       }
-      return `Deleted ${this.l.u.plural(deleteCount, 'notify', 'notifies')}`
-    } else {
-      if (!params[2]) return 'Define a message (params 2+)'
-
-      const target = await this.l.api.getId(params[1].toLowerCase())
-      if (!target) return 'Cannot find a user with that name'
-
-      if (!data[target]) data[target] = []
-
-      data[target].push({
-        msg: params.slice(2).join(' '),
-        time: Date.now(),
-        fromId: userId,
-      })
-      return `${params[1]} now has ${this.l.u.plural(data[target].length, 'notify', 'notifies')}`
     }
+    return `Deleted ${this.l.u.plural(deleteCount, 'notify', 'notifies')}`
   }
 
   public async unload() {

@@ -17,13 +17,18 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', '', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const []: [] = params
+
     if (!process.send) return 'Process manager is not available'
 
     process.send({ cmd: 'AUTO_RESTART_NEXT', val: true })

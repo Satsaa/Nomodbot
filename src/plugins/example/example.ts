@@ -7,17 +7,12 @@ A plugin file usually has 1 plugin, but you can have multiple if you export an a
 
 const exp: Array<{options: PluginOptions, Instance: any}> = [
   {
-    options: {
-      ...
-    },
-
-    Instance: class implements PluginInstance {
-      ...
-    },
+    options: { ... },
+    Instance: class implements PluginInstance { ... },
   },
   {
-    options: {...},
-    Instance: class implements PluginInstance {...},
+    options: { ... },
+    Instance: class implements PluginInstance { ... },
   },
 ]
 module.exports = exp
@@ -53,26 +48,47 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
+  public cooldown: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', 'exact <var> [<opt_vars>]', this.callMain)
+    this.call = this.l.addCall(this, this.call, 'default', 'name/regex/flags <message...>', this.callSecondary)
+    this.call = this.l.addCall(this, this.call, 'default', 'join|part <CHANNELS...>', this.callTertiary)
+
+    this.cooldown = this.l.addCall(this, this.call, 'default', '<ting>', this.cooldownMain)
   }
 
   public async init() {
-    // Command was on cooldown
+    // Executed and awaited on plugin load
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    return 'example message'
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [exact, variable, optVar]: ['exact', string, string | undefined] = params // Inititalize params from the ParamValidator
+    return 'Example message 1'
+  }
+  public async callSecondary(channelId: number, userId: number, params: any, extra: Extra) {
+    const [match, message]: [string, string[]] = params
+    return 'Example message 2'
+  }
+  public async callTertiary(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, channelIds]: ['join' | 'part', number[]] = params
+    // join(channels)
+    return `${action}ed` // joined or parted
   }
 
-  public cooldown(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    // Command was on cooldown
+  public async cooldownMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [ting]: [string] = params
+    // Command was called but it was on cooldown
+    // Show a combined message for each of the users that called this when it was on cooldown?
+    return 'On cooldown' // Ignored return value
   }
 
   public async unload() {
     // Remove referecens (on events etc)
-    // No need to unload creates here
+    // No need to unload creates (options.creates) here
   }
 }

@@ -20,6 +20,7 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
   private appId?: null | string
   private appKey?: null | string
@@ -32,15 +33,18 @@ export class Instance implements PluginInstance {
     if (typeof this.appId !== 'string' || typeof this.appKey !== 'string') {
       console.error('[define] Disabled due to the lack of API keys for Oxford Dictionary')
     }
+
+    this.call = this.l.addCall(this, this.call, 'default', '<term...>', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    if (typeof this.appId !== 'string' || typeof this.appKey !== 'string') return 'This command disabled due to the lack of API keys'
-    if (!params[1]) return 'Define something to search (param 1)'
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [_term]: [string[]] = params
+    const term = _term.join(' ')
 
-    const words = params.slice(1).join(' ')
+    if (typeof this.appId !== 'string' || typeof this.appKey !== 'string') return 'This command is disabled due to the lack of API keys'
+
     try {
-      const data = await this.define(words, 'en-gb', this.appId, this.appKey)
+      const data = await this.define(term, 'en-gb', this.appId, this.appKey)
       if (typeof data !== 'object' || !Array.isArray(data.results)) {
         if (typeof data === 'string') return this.l.u.cap(data.toLowerCase())
         return 'The API returned invalid data'
@@ -76,12 +80,12 @@ export class Instance implements PluginInstance {
     }
   }
 
-  public define(words: string, lang: string, appId: string, appKey: string): Promise<string | {[x: string]: any}> {
+  public define(term: string, lang: string, appId: string, appKey: string): Promise<string | {[x: string]: any}> {
     return new Promise((resolve, reject) => {
       const options = {
         host: 'od-api.oxforddictionaries.com',
         port: 443,
-        path: `/api/v2/entries/${lang}/${encodeURIComponent(words)}`,
+        path: `/api/v2/entries/${lang}/${encodeURIComponent(term)}`,
         method: 'GET',
         headers: {
           accept: 'application/json',

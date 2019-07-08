@@ -19,9 +19,9 @@ export const options: PluginOptions = {
   creates: [['spotifyPlaylist']],
   help: [
     'Show the first or nth song on the playlist: {alias} [<1-Infinity>]',
-    'Show a link to the playlist: {alias} <list/list/i>',
+    'Show a link to the playlist: {alias} <list>',
     'Set the playlist: {alias} set <playlist_ID|playlist_link>',
-    'Delete the playlist: {alias} delete',
+    'Delete the playlist: {alias} del',
   ],
   disableMention: true,
 }
@@ -33,6 +33,7 @@ interface SpotifyPlaylistData {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
   private clientId?: string | null
   private clientSecret?: string | null
@@ -50,62 +51,74 @@ export class Instance implements PluginInstance {
       this.tokenLoop()
       this.l.autoLoad('spotifyPlaylist', {})
     }
+
+    this.call = this.l.addCall(this, this.call, 'default', '[<1-Infinity>]', this.callMain)
+    this.call = this.l.addCall(this, this.call, 'default', 'list/list/i', this.callList)
+    this.call = this.l.addCall(this, this.call, 'default', 'set <playlist_ID|playlist_link>', this.callSet)
+    this.call = this.l.addCall(this, this.call, 'default', 'del', this.callDelete)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    if (typeof this.clientId !== 'string' || typeof this.clientSecret !== 'string') return this.l.insertAtUser('This command disabled due to lack of API keys', extra)
-    if (!this.accessToken) return this.l.insertAtUser('Cannot handle requests at this time', extra)
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [_index]: [number | undefined] = params
+    const index = (_index || 1) - 1
 
     const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
     if (!data) return this.l.insertAtUser('Unavailable: required data is not present', extra)
-    try {
-      if (params[1] && params[1].toLowerCase() === 'delete') {
-        // Delete the playlist data
-        if (!this.l.isPermitted({ userlvl: userlvls.mod }, userId, tags.badges)) return this.l.insertAtUser('You are not permitted to do this operation', extra)
 
-        const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
-        if (!data) return this.l.insertAtUser('Unavailable: required data is not present', extra)
-        this.l.setData(channelId, 'spotifyPlaylist', {})
-        return this.l.insertAtUser('Deleted succesfully', extra)
-      } else if (params[1] && params[1].toLowerCase() === 'set') {
-        // Set track id
-        if (!this.l.isPermitted({ userlvl: userlvls.mod }, userId, tags.badges)) return this.l.insertAtUser('You are not permitted to do this operation', extra)
+    if (!data.playlist) return this.l.insertAtUser(`Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${params[0]} set <id or link>`, extra)
 
-        const inputId = (params[2].replace(/\/+$/, '').match(/[a-zA-Z0-9]*$/) || [])[0]
-        if (!inputId) return this.l.insertAtUser('Invalid input', extra)
+    const playlist = await this.getPlaylist(data.playlist)
+    if (typeof playlist === 'string') return this.l.insertAtUser('Invalid playlist', extra)
 
-        const playlist = await this.getPlaylist(inputId)
-        if (typeof playlist !== 'object') return this.l.insertAtUser('Invalid playlist', extra)
-        if (playlist.type !== 'playlist') return this.l.insertAtUser('Only playlists are supported', extra)
+    const maxLength = playlist.tracks.items.length
+    const track = playlist.tracks.items[maxLength > index ? index : maxLength - 1].track
+    if (!track) return this.l.insertAtUser('No track found at that position', extra)
 
-        const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
-        if (!data) return this.l.insertAtUser('Unavailable: required data is not present', extra)
-        data.playlist = playlist.id
-        data.creator = playlist.owner.display_name
-        data.name = playlist.name
-        return this.l.insertAtUser(`Playlist set to ${playlist.name} by ${playlist.owner.display_name}`, extra)
-      } else if (params[1] && params[1].toLowerCase().includes('list') && isNaN(Number(params[1]))) {
-        // Show playlist link when only 1 string parameter given
-        if (!data.playlist) return this.l.insertAtUser(`Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${params[0]} set <id or link>`, extra)
-        return this.l.insertAtUser(`${data.name && data.creator ? `${data.name} by ${data.creator}` : 'Paylist'}: open.spotify.com/playlist/${data.playlist}`, extra)
-      } else {
-        // Show recent track
-        if (!data.playlist) return this.l.insertAtUser(`Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${params[0]} set <id or link>`, extra)
+    const noFeat = track.name.replace(/ ?(\(with|\(feat).*\)/, '') // Remove feat stuff from track name
+    return `"${noFeat}" by ${this.l.u.commaPunctuate(track.artists.map((i: any) => i.name))}`
+  }
 
-        const pos = params[1] ? Math.floor(~~params[1] - 1) : 0
-        const playlist = await this.getPlaylist(data.playlist)
-        if (typeof playlist === 'string') return this.l.insertAtUser('Invalid playlist', extra)
+  public async callList(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action]: [string] = params
 
-        const track = playlist.tracks.items[pos].track
-        if (!track) return this.l.insertAtUser('No track found at that position', extra)
+    const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
+    if (!data) return this.l.insertAtUser('Unavailable: required data is not present', extra)
 
-        const noFeat = track.name.replace(/ ?(\(with|\(feat).*\)/, '') // Remove feat stuff from track name
-        return `"${noFeat}" by ${this.l.u.commaPunctuate(track.artists.map((i: any) => i.name))}`
-      }
-    } catch (err) {
-      console.error(err)
-      return this.l.insertAtUser('Catastrophic error', extra)
-    }
+    // Show playlist link when only 1 string parameter given
+    if (!data.playlist) return this.l.insertAtUser(`Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${params[0]} set <id or link>`, extra)
+    return this.l.insertAtUser(`${data.name && data.creator ? `${data.name} by ${data.creator}` : 'Paylist'}: open.spotify.com/playlist/${data.playlist}`, extra)
+  }
+
+  public async callSet(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, input]: [string, string] = params
+
+    if (!this.l.isPermitted({ userlvl: userlvls.mod }, userId, extra.irc.tags.badges)) return this.l.insertAtUser('You are not permitted to do this operation', extra)
+
+    const inputId = (input.replace(/\/+$/, '').match(/[a-zA-Z0-9]*$/) || [])[0]
+    if (!inputId) return this.l.insertAtUser('Invalid input', extra)
+
+    const playlist = await this.getPlaylist(inputId)
+    if (typeof playlist !== 'object') return this.l.insertAtUser('Invalid playlist', extra)
+    if (playlist.type !== 'playlist') return this.l.insertAtUser('Only playlists are supported', extra)
+
+    const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
+    if (!data) return this.l.insertAtUser('Unavailable: required data is not present', extra)
+    data.playlist = playlist.id
+    data.creator = playlist.owner.display_name
+    data.name = playlist.name
+    return this.l.insertAtUser(`Playlist set to ${playlist.name} by ${playlist.owner.display_name}`, extra)
+  }
+
+  public async callDelete(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action]: ['del'] = params
+
+    if (!this.l.isPermitted({ userlvl: userlvls.mod }, userId, extra.irc.tags.badges)) return this.l.insertAtUser('You are not permitted to do this operation', extra)
+
+    const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
+    if (!data) return this.l.insertAtUser('Unavailable: required data is not present', extra)
+
+    this.l.setData(channelId, 'spotifyPlaylist', {})
+    return this.l.insertAtUser('Deleted succesfully', extra)
   }
 
   public async unload() {

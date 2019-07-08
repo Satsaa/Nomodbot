@@ -1,5 +1,5 @@
 import TwitchClient from './client/client'
-import Commander, { CommandAlias, DefaultCommandAlias, Extra, PluginInstance, PluginOptions, userlvls } from './commander'
+import Commander, { CommandAlias, Extra, PluginInstance, PluginOptions, userlvls, CallInterface, ReadonlyCommandAlias } from './commander'
 import Data from './data'
 import * as secretKey from './lib/secretKey'
 import * as util from './lib/util'
@@ -200,6 +200,25 @@ export default class PluginLibrary {
     }
   }
 
+  public addCall(self: PluginInstance, call: undefined, group: 'default', params: string, handler: CallInterface[string][number]['handler']): CallInterface
+  public addCall(self: PluginInstance, call: CallInterface | undefined, group: string, params: string, handler: CallInterface[string][number]['handler']): CallInterface
+  /**
+   * Adds `params` and `handler` to the call objects `group` key and returns it  
+   * Can be used for PluginInstance#call and PluginInstance#cooldown atleast  
+   */
+  public addCall(self: PluginInstance, call: CallInterface | undefined, group: string, params: string, handler: CallInterface[string][number]['handler']): CallInterface {
+    if (call) {
+      if (!call[group]) call[group] = []
+      call[group].push({ params, handler: handler.bind(self) })
+      return call
+    } else {
+      const _call: any = {}
+      _call[group] = [{ params, handler: handler.bind(self) }]
+      call = _call
+      return call as CallInterface
+    }
+  }
+
   /** Throws if conflicts are found */
   public findConflicts() {
     this.commander.findConflicts(Object.values(this.commander.plugins), Object.values(this.commander.paths))
@@ -303,21 +322,21 @@ export default class PluginLibrary {
   }
 
   /** Returns active default aliases or active aliases of `channelId` */
-  public getEnabledAliases(channelId: number): {[alias: string]: CommandAlias} {
+  public getEnabledAliases(channelId: number): {[alias: string]: ReadonlyCommandAlias} {
     return this._getEnabledAliases(channelId)
   }
   /** Returns active default aliases */
-  public getEnabledGlobalAliases(): {[x: string]: DefaultCommandAlias} {
+  public getEnabledGlobalAliases(): {[x: string]: ReadonlyCommandAlias} {
     return this._getEnabledAliases()
   }
 
   /** Returns active aliases of `channelId` */
-  private _getEnabledAliases(channelId: number): {[alias: string]: CommandAlias}
+  private _getEnabledAliases(channelId: number): {[alias: string]: ReadonlyCommandAlias}
   /** Returns active default aliases */
-  private _getEnabledAliases(): {[x: string]: DefaultCommandAlias}
+  private _getEnabledAliases(): {[x: string]: ReadonlyCommandAlias}
   /** Returns active default aliases or active aliases of `channelId` */
-  private _getEnabledAliases(channelId?: number): {[alias: string]: CommandAlias} {
-    const result: { [alias: string]: CommandAlias } = {}
+  private _getEnabledAliases(channelId?: number): {[alias: string]: ReadonlyCommandAlias} {
+    const result: { [alias: string]: ReadonlyCommandAlias } = {}
     if (channelId) {
       // Channel aliases
       for (const alias in this.data.data[channelId].aliases.aliases) {

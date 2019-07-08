@@ -791,7 +791,6 @@ export default class TwitchClient {
           return this.failHandle(msg, msg.cmd)
         }
         this.emit('notice', channelId, msg.tags, msg.params[1])
-        if (msg.tags['msg-id'] === 'msg_ratelimit') this.ircLog('Rate limited')
         switch (msg.tags['msg-id']) {
           case 'msg_ratelimit':
             this.ircLog('Rate limited')

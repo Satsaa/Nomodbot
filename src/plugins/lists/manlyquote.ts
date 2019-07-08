@@ -20,7 +20,7 @@ export const options: PluginOptions = {
     'Add a new manly quote: {alias} add <quote...>',
     'Edit a manly quote at index: {alias} edit <INDEX> <quote...>',
     'Insert a new manly quote at index: {alias} insert <INDEX> <quote...>',
-    'Delete a manly quote at index: {alias} delete <INDEX>',
+    'Delete a manly quote at index: {alias} del <INDEX>',
     'Show a random or specific manly quote: {alias} [<INDEX>]',
   ],
   requirePlugins: ['lists'],
@@ -28,66 +28,80 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
   private lists: ListsExtension
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.lists = this.l.ext.lists as ListsExtension
+
+    this.call = this.l.addCall(this, this.call, 'default', 'add <quote...>', this.callAdd)
+    this.call = this.l.addCall(this, this.call, 'default', 'edit <INDEX> <quote...>', this.callEdit)
+    this.call = this.l.addCall(this, this.call, 'default', 'insert <INDEX> <quote...>', this.callInsert)
+    this.call = this.l.addCall(this, this.call, 'default', 'del <INDEX>', this.callDelete)
+    this.call = this.l.addCall(this, this.call, 'default', '[<INDEX>]', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    let newValue: string
-    let index
-    let value
-    const quotes = this.lists.getGlobalList(options.id, defaultQuotes)
+  public async callAdd(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, quote]: ['add', string[]] = params
+
+    const quotes = this.lists.getGlobalList<string>(options.id, defaultQuotes)
     if (!quotes) return 'Manlyquote data unavailable'
-    switch (params[1] ? params[1].toLowerCase() : undefined) {
-      case 'add':
-        if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
-        if (!params[2]) return 'Define the new manly quote (params 2+)'
-        newValue = params.slice(2).join(' ')
-        ;[index] = quotes.pushEntry(newValue)
-        if (index) return `Added new entry at index ${index}`
-        else return 'Something went horribly wrong!'
+    if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit manly quotes'
 
-      case 'edit':
-        if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
-        if (isNaN(Number(params[2]))) return 'Invalid index (param 2)'
-        if (!params[3]) return 'Define the new manly quote (params 3+)'
-        newValue = params.slice(3).join(' ')
-        ;[index] = quotes.setEntry(~~params[2], newValue)
-        if (index) return `Modified entry at index ${index}`
-        else return 'Invalid index'
+    const [finalIndex] = quotes.pushEntry(quote.join(' '))
+    if (finalIndex) return `Added new entry at index ${finalIndex}`
+    else return 'Something went horribly wrong!'
+  }
 
-      case 'insert':
-        if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
-        if (isNaN(Number(params[2]))) return 'Invalid index (param 2)'
-        if (!params[3]) return 'Define the new manly quote (params 3+)'
-        newValue = params.slice(3).join(' ')
-        ;[index] = quotes.insertEntry(~~params[2], newValue)
-        if (index) return `Added new entry at index ${index}`
-        else return 'Invalid index'
+  public async callEdit(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, index, quote]: ['edit', number, string[]] = params
 
-      case 'delete':
-        if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, tags.badges)) return 'You are not permitted to edit manly quotes'
-        if (isNaN(Number(params[2]))) return 'Invalid index (param 2)'
-        ;[index, value] = quotes.delEntry(~~params[2])
-        if (index) return `Deleted at ${index}: ${value}`
-        else return 'Invalid index'
+    const quotes = this.lists.getGlobalList<string>(options.id, defaultQuotes)
+    if (!quotes) return 'Manlyquote data unavailable'
+    if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit manly quotes'
 
-      case undefined:
-        if (!quotes.entries.length) return 'There are no manly quotes'
-        ;[index, value] = quotes.randomEntry()
-        if (index) return `${index}: ${value}`
-        else return 'Something went horribly wrong!'
+    const [finalIndex] = quotes.setEntry(index, quote.join(' '))
+    if (index) return `Modified entry at index ${finalIndex}`
+    else return 'Invalid index'
+  }
 
-      default:
-        if (!quotes.entries.length) return 'There are no manly quotes'
-        ;[index, value] = quotes.getEntry(~~params[1])
-        if (index) return `${index}: ${value}`
-        else return 'Something went horribly wrong!'
-    }
+  public async callInsert(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, index, quote]: ['insert', number, string[]] = params
+
+    const quotes = this.lists.getGlobalList<string>(options.id, defaultQuotes)
+    if (!quotes) return 'Manlyquote data unavailable'
+    if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit manly quotes'
+
+    const [finalIndex] = quotes.insertEntry(index, quote.join(' '))
+    if (finalIndex) return `Added new entry at index ${finalIndex}`
+    else return 'Invalid index'
+  }
+
+  public async callDelete(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, index]: ['del', number] = params
+
+    const quotes = this.lists.getGlobalList<string>(options.id, defaultQuotes)
+    if (!quotes) return 'Manlyquote data unavailable'
+    if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit manly quotes'
+
+    const [finalIndex, value] = quotes.delEntry(index)
+    if (finalIndex) return `Deleted at ${finalIndex}: ${value}`
+    else return 'Invalid index'
+  }
+
+
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [index]: [number | undefined] = params
+
+    const quotes = this.lists.getGlobalList<string>(options.id, defaultQuotes)
+    if (!quotes) return 'Manlyquote data unavailable'
+    if (!quotes.entries.length) return 'There are no manly quotes'
+
+    const [finalIndex, value] = index ? quotes.getEntry(index) : quotes.randomEntry()
+    if (finalIndex) return `${finalIndex}: ${value}`
+    else return 'Something went horribly wrong!'
   }
 }
 

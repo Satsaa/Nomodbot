@@ -18,22 +18,24 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', '[<1-100>]', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [_days]: [number | undefined] = params
+    const days = _days || 30
+
     try {
       const recent = await this.l.api.recentBroadcasts(channelId)
       if (typeof recent !== 'object') return 'Cannot resolve recent broadcasts'
 
-      let count = 30
-      if (params[1] && !isNaN(Number(params[1]))) count = Math.round(Number(params[1]))
-      if (count < 1) count = 1 // Minimum of 1 stream
-
-      const videos = recent.data.slice(0, count)
+      const videos = recent.data.slice(0, days)
 
       let total = 0
       let totalDuration = 0

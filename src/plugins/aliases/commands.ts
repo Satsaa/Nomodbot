@@ -2,6 +2,8 @@ import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
+type userlvlParam = undefined | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+
 export const options: PluginOptions = {
   type: 'command',
   id: 'commands',
@@ -22,32 +24,61 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', 'disabled [<0-10>]', this.callDisabled)
+    this.call = this.l.addCall(this, this.call, 'default', 'hidden [<0-10>]', this.callHidden)
+    this.call = this.l.addCall(this, this.call, 'default', '[<0-10>]', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    const aliases = { ...this.l.getEnabledGlobalAliases(), ...this.l.getEnabledAliases(channelId) }
-    const aliasArray = []
-    const disabled = params[1] && params[1].toLowerCase() === 'disabled'
-    const hidden = params[1] && params[1].toLowerCase() === 'hidden'
-    const userLvl = isNaN(Number(params[disabled || hidden ? 2 : 1])) ? undefined : Number(params[disabled || hidden ? 2 : 1])
-    for (const alias in aliases) {
-      if (userLvl !== undefined && (typeof aliases[alias].userlvl === 'undefined' ? userlvls.any : aliases[alias].userlvl) !== userLvl) continue
-      if (hidden) {
-        if (!aliases[alias].hidden) continue
-      } else if (disabled) {
-        if (!aliases[alias].disabled) continue
-      } else {
-        if (aliases[alias].hidden) continue
-        if (aliases[alias].disabled) continue
+
+  public async callDisabled(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, _userlvl]: ['disabled', userlvlParam] = params
+    const userlvl = _userlvl === undefined ? userlvls.any : _userlvl // Don't show master commands by default
+
+    const results = []
+    const aliases = this.l.getAliases(channelId)
+    if (!aliases) return 'No commands returned'
+    for (const aliasName in aliases) {
+      const alias = aliases[aliasName]
+      if ((alias.userlvl || 0) === userlvl && !alias.hidden && alias.disabled) {
+        results.push(aliasName)
       }
-      aliasArray.push(alias)
     }
-    if (disabled) return `Disabled commands: ${aliasArray.sort().join(', ')}`
-    if (hidden) return `Hidden commands: ${aliasArray.sort().join(', ')}`
-    return `Commands: ${aliasArray.sort().join(', ')}`
+    return `Disabled commands: ${this.l.u.commaPunctuate(results.sort())}`
+  }
+
+  public async callHidden(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, _userlvl]: ['hidden', userlvlParam] = params
+    const userlvl = _userlvl === undefined ? userlvls.any : _userlvl // Don't show master commands by default
+
+    const results = []
+    const aliases = { ...this.l.getEnabledGlobalAliases(), ...this.l.getEnabledAliases(channelId) }
+    for (const aliasName in aliases) {
+      const alias = aliases[aliasName]
+      if ((alias.userlvl || 0) === userlvl && alias.hidden && !alias.disabled) {
+        results.push(aliasName)
+      }
+    }
+    return `Hidden commands: ${this.l.u.commaPunctuate(results.sort())}`
+  }
+
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [_userlvl]: [userlvlParam] = params
+    const userlvl = _userlvl === undefined ? userlvls.any : _userlvl // Don't show master commands by default
+
+    const results = []
+    const aliases = { ...this.l.getEnabledGlobalAliases(), ...this.l.getEnabledAliases(channelId) }
+    for (const aliasName in aliases) {
+      const alias = aliases[aliasName]
+      if ((alias.userlvl || 0) === userlvl && !alias.hidden && !alias.disabled) {
+        results.push(aliasName)
+      }
+    }
+    return `Commands: ${this.l.u.commaPunctuate(results.sort())}`
   }
 }

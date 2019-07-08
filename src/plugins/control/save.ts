@@ -21,27 +21,38 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', '<subType> <name>', this.callGlobal)
+    this.call = this.l.addCall(this, this.call, 'default', '<name>', this.callLocal)
+    this.call = this.l.addCall(this, this.call, 'default', '', this.callAll)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    if (!params[1]) {
-      this.l.saveAllSync()
-      return 'Saved all data'
-    }
+  public async callGlobal(channelId: number, userId: number, params: any, extra: Extra) {
+    const [subType, name]: [string, string] = params
 
-    let subType = ~~params[1]
-    let name = params[2]
-    if (!params[2]) {
-      // Channel specific with single param
-      subType = channelId
-      name = params[1]
-    }
     if (!this.l.getData(subType, name)) return `\\${subType}\\${name} is not loaded`
     this.l.saveData(subType, name, false)
     return `Saved \\${subType}\\${name}`
+  }
+
+  public async callLocal(channelId: number, userId: number, params: any, extra: Extra) {
+    const [name]: [string] = params
+
+    const subType = channelId
+
+    if (!this.l.getData(subType, name)) return `\\${subType}\\${name} is not loaded`
+    this.l.saveData(subType, name, false)
+    return `Saved \\${subType}\\${name}`
+  }
+
+  public async callAll(channelId: number, userId: number, params: any, extra: Extra) {
+    const []: [] = params
+    this.l.saveAllSync()
+    return 'Saved all data'
   }
 }

@@ -49,6 +49,7 @@ interface ListData {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
@@ -98,7 +99,7 @@ class List<T = string> {
   }
 
   public getEntry(index: number, unSafe: true): [number, T | undefined]
-  public getEntry(index: number, unSafe?: false): [number, T]
+  public getEntry(index: number, unSafe?: false): [number, T | undefined]
   /** Gets an array entry */
   public getEntry(index: number, unSafe = false): [number, T | undefined] {
     index = Math.floor(index)

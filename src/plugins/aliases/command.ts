@@ -18,106 +18,116 @@ export const options: PluginOptions = {
     options: { userlvl: userlvls.mod },
   },
   help: [
-    'Add a command: {alias} add <!COMMAND> <PLUGIN>',
-    'Delete a command: {alias} delete <COMMAND>',
+    'Add a command: {alias} add <new command> <plugin>',
+    'Delete a command: {alias} del <command>',
     'Edit a command: {alias} edit <command> <PLUGIN>',
-    'Copy a command: {alias} copy <COMMAND> <!COMMAND>',
-    'Disable a command: {alias} disable <COMMAND>',
-    'Enable or disable a command: {alias} enable|disable <COMMAND>',
-    'Hide or unhide a command: {alias} hide|unhide <COMMAND>',
-    'Modify the cooldowns of a command: {alias} set <COMMAND> cd|ucd <0-300>',
-    'Display the cooldowns of a command: {alias} set <COMMAND> cd|ucd', // !!!
+    'Copy a command: {alias} copy <command> <new command>',
+    'Disable a command: {alias} disable <command>',
+    'Enable or disable a command: {alias} enable|disable <command>',
+    'Hide or unhide a command: {alias} hide|unhide <command>',
+    'Modify the cooldowns of a command: {alias} set <command> cd|ucd <0-300>',
   ],
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', 'add <!COMMAND> <PLUGIN>', this.callAdd)
+    this.call = this.l.addCall(this, this.call, 'default', 'del <COMMAND>', this.callDelete)
+    this.call = this.l.addCall(this, this.call, 'default', 'edit <command> <PLUGIN>', this.callEdit)
+    this.call = this.l.addCall(this, this.call, 'default', 'copy <COMMAND> <!COMMAND>', this.callCopy)
+    this.call = this.l.addCall(this, this.call, 'default', 'enable|disable <COMMAND>', this.callEnable)
+    this.call = this.l.addCall(this, this.call, 'default', 'hide|unhide <COMMAND>', this.callHide)
+    this.call = this.l.addCall(this, this.call, 'default', 'set <COMMAND> cd|ucd <0-300>', this.callSet)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    switch (params[1]) {
-      case 'add': {
-        const plugin = this.l.getPlugin(params[3])
-        if (!plugin) { return 'Invalid plugin' }
-        if (plugin.type !== 'command') { return 'That plugin is not a command plugin' }
+  public async callAdd(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, aliasName, pluginId]: ['add', string, string] = params
 
-        const res = this.l.setAlias(channelId, params[2], { ...plugin.default.options, target: plugin.id })
-        if (res) { return `"${params[2].toLowerCase()}" created` } else { return 'Command creation failed' }
-      }
-      case 'delete': {
-        const aliasName = params[2]
-        if (this.l.delAlias(channelId, aliasName)) { return 'Command successfully deleted' } else { return 'Command deletion failed' }
-      }
-      case 'edit': {
-        const alias = this.l.getAlias(channelId, params[2])
+    const plugin = this.l.getPlugin(pluginId)
+    if (!plugin) { return 'Invalid plugin' }
+    if (plugin.type !== 'command') { return 'That plugin is not a command plugin' }
+
+    const res = this.l.setAlias(channelId, aliasName, { ...plugin.default.options, target: plugin.id })
+    if (res) { return `"${aliasName}" created` } else { return 'Command creation failed' }
+  }
+
+  public async callDelete(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, aliasName]: ['del', string] = params
+
+    if (this.l.delAlias(channelId, aliasName)) { return 'Command successfully deleted' } else { return 'Command deletion failed' }
+  }
+
+  public async callEdit(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, aliasName, pluginId]: ['edit', string, string] = params
+
+    const alias = this.l.getAlias(channelId, aliasName)
+    if (!alias) return 'No command'
+
+    const res = this.l.setAlias(channelId, pluginId, alias)
+    if (res) { return `"${aliasName}" edited` } else { return 'Command edit failed' }
+  }
+
+  public async callCopy(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, sourceName, targetName]: ['copy', string, string] = params
+
+    const alias = this.l.getAlias(channelId, sourceName)
+    if (!alias) return 'No command'
+
+    const res = this.l.setAlias(channelId, targetName, alias)
+    if (res) { return `"${sourceName}" copied to "${targetName}"` } else { return 'Command copy failed' }
+  }
+
+  public async callEnable(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, aliasName]: ['enable' | 'disable', string] = params
+
+    const enable = action === 'enable'
+    const alias = this.l.getAlias(channelId, aliasName)
+    if (!alias) return 'No command'
+    if (enable ? !alias.disabled : alias.disabled) return `Already ${enable ? 'enabled' : 'disabled'}`
+
+    const res = this.l.modAlias(channelId, aliasName, { disabled: enable ? undefined : true })
+    if (res) return `"${aliasName.toLowerCase()}" ${action}d`
+    else return `Command ${enable ? 'enabling' : 'disabling'} failed`
+  }
+
+  public async callHide(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, aliasName]: ['hide' | 'unhide', string] = params
+
+    const hide = action === 'hide'
+    const alias = this.l.getAlias(channelId, aliasName)
+    if (!alias) return 'No command'
+    if (hide ? alias.hidden : !alias.hidden) return `Already ${hide ? 'hidden' : 'unhidden'}`
+
+    const res = this.l.modAlias(channelId, aliasName, { hidden: hide ? true : undefined })
+    if (res) return `"${aliasName.toLowerCase()}" ${hide ? 'hidden' : 'unhidden'}`
+    else return `Command ${hide ? 'hiding' : 'unhiding'} failed`
+  }
+
+  public async callSet(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, aliasName, key, cd]: ['set', string, 'cd' | 'ucd', number] = params
+
+    switch (key) {
+      case 'cd': {
+        const alias = this.l.getAlias(channelId, aliasName)
         if (!alias) return 'No command'
 
-        const res = this.l.setAlias(channelId, params[3], alias)
-        if (res) { return `"${params[2].toLowerCase()}" edited` } else { return 'Command edit failed' }
+        const res = this.l.modAlias(channelId, aliasName, { cooldown: cd || undefined })
+        if (res) { return `Cooldown of "${aliasName}" set to ${this.l.u.plural(cd, 'second')}. The per-user cooldown is ${this.l.u.plural(alias.userCooldown || 0, 'second')}` } else { return 'Failed to change cooldown' }
       }
-      case 'copy': {
-        const alias = this.l.getAlias(channelId, params[2])
+      case 'ucd': {
+        const alias = this.l.getAlias(channelId, aliasName)
         if (!alias) return 'No command'
 
-        const res = this.l.setAlias(channelId, params[3], alias)
-        if (res) { return `"${params[2].toLowerCase()}" copied to "${params[3].toLowerCase()}"` } else { return 'Command copy failed' }
+        const res = this.l.modAlias(channelId, aliasName, { userCooldown: cd || undefined })
+        if (res) { return `User cooldown of "${aliasName}" set to ${this.l.u.plural(cd, 'second')}. The normal cooldown is ${this.l.u.plural(alias.cooldown || 0, 'second')}` } else { return 'Failed to change user cooldown' }
       }
-      case 'disable': {
-        const alias = this.l.getAlias(channelId, params[2])
-        if (!alias) return 'No command'
-        if (alias.disabled) return 'Already disabled'
-
-        const res = this.l.modAlias(channelId, params[3], { disabled: true })
-        if (res) { return `"${params[2].toLowerCase()}" disabled` } else { return 'Command copy failed' }
-      }
-      case 'enable': {
-        const alias = this.l.getAlias(channelId, params[2])
-        if (!alias) return 'No command'
-        if (!alias.disabled) return 'Already enabled'
-
-        const res = this.l.modAlias(channelId, params[3], { disabled: undefined })
-        if (res) { return `"${params[2].toLowerCase()}" enabled` } else { return 'Command enabling failed' }
-      }
-      case 'hide': {
-        const alias = this.l.getAlias(channelId, params[2])
-        if (!alias) return 'No command'
-        if (alias.disabled) return 'Already hidden'
-
-        const res = this.l.modAlias(channelId, params[3], { hidden: true })
-        if (res) { return `"${params[2].toLowerCase()}" hidden` } else { return 'Command hiding failed' }
-      }
-      case 'unhide': {
-        const alias = this.l.getAlias(channelId, params[2])
-        if (!alias) return 'No command'
-        if (!alias.disabled) return 'Already unhidden'
-
-        const res = this.l.modAlias(channelId, params[3], { hidden: undefined })
-        if (res) { return `"${params[2].toLowerCase()}" unhidden` } else { return 'Command unhiding failed' }
-      }
-      case 'set': {
-        switch (params[3]) {
-          case 'cd': {
-            const cd = ~~params[4]
-            const alias = this.l.getAlias(channelId, params[2])
-            if (!alias) return 'No command'
-
-            const res = this.l.modAlias(channelId, params[2], { cooldown: cd || undefined })
-            if (res) { return `Cooldown of "${params[2].toLowerCase()}" set to ${this.l.u.plural(cd, 'second')}. The user cooldown is ${this.l.u.plural(alias.userCooldown || 0, 'second')}` } else { return 'Failed to change cooldown' }
-          }
-          case 'ucd': {
-            const cd = ~~params[4]
-            const alias = this.l.getAlias(channelId, params[2])
-            if (!alias) return 'No command'
-
-            const res = this.l.modAlias(channelId, params[2], { userCooldown: cd || undefined })
-            if (res) { return `User cooldown of "${params[2].toLowerCase()}" set to ${this.l.u.plural(cd, 'second')}. The normal cooldown is ${this.l.u.plural(alias.cooldown || 0, 'second')}` } else { return 'Failed to change user cooldown' }
-          }
-        }
-      }
+      default:
+        return `What the heck? Unknown key ${action}`
     }
-    return undefined
   }
 }

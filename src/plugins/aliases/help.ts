@@ -18,21 +18,25 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', '<COMMAND>', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    if (!params[1]) return 'Define a command (param 1)'
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [aliasName]: [string] = params
+    if (!aliasName) return 'Define a command (param 1)'
 
-    const input = params[1].toLowerCase()
+    const input = aliasName.toLowerCase()
     const alias = this.l.getAlias(channelId, input)
     if (!alias) return 'Cannot find that command'
 
     const helps = this.l.getHelp(alias, true)
-    if (!helps || !helps.length) return `${params[1]} has no usage instructions`
+    if (!helps || !helps.length) return `${aliasName} has no usage instructions`
 
     return helps.join('. ')
   }

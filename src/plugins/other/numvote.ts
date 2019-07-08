@@ -17,6 +17,9 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
+  private l: PluginLibrary
+
   private voteData: {
     [channel: string]: {
       voters: number[]
@@ -37,30 +40,32 @@ export class Instance implements PluginInstance {
     decay: number
   }
 
-  private l: PluginLibrary
-
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
     this.voteData = {}
     this.opts = {
-      minVotes: 3,
+      minVotes: 2,
       minTotal: 10,
       time: 3000,
       decay: 0.94,
     }
+
+    this.call = this.l.addCall(this, this.call, 'default', '', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const []: [] = params
+
     if (!this.voteData[channelId]) this.voteData[channelId] = { voters: [], votes: {}, time: this.opts.time, timeout: undefined }
 
     const voting = this.voteData[channelId]
 
-    if (voting.voters.includes(tags['user-id'])) return // Single vote per user
-    voting.voters.push(tags['user-id'])
+    // if (voting.voters.includes(extra.irc.tags['user-id'])) return // Single vote per user
+    // voting.voters.push(extra.irc.tags['user-id'])
 
-    if (!voting.votes[params[0]]) voting.votes[params[0]] = 0
-    voting.votes[params[0]]++
+    if (!voting.votes[extra.words[0]]) voting.votes[extra.words[0]] = 0
+    voting.votes[extra.words[0]]++
 
     if (voting.timeout) clearTimeout(voting.timeout)
     voting.timeout = setTimeout(() => {

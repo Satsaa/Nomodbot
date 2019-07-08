@@ -64,22 +64,14 @@ export default class Bot {
 
     this.commander = new Commander(this.client, this.data, this.opts.masters)
 
+    // Debug parameter validation
     // this.validator = new ParamValidator(this.commander, this.client)
     // this.validator.consoleInteract()
-    // this.client.on('chat', this.onChat.bind(this))
 
     this.commander.init().then((pluginIds) => {
       this.client.connect()
       console.log(`Instantiated plugins: ${pluginIds.join(', ')}`)
     })
-  }
-
-  private async onChat(cid: number, uid: number, userstate: PRIVMSG['tags'], message: string, me: boolean, self: boolean, irc: PRIVMSG | null) {
-    if (!this.validator) return
-    console.log('\n>>>')
-
-    const params = message.split(' ')
-    console.log(await this.validator.validate(61365582, 'VALIDATOR_TEST', 'default', params.slice(1)))
   }
 
   private onExit(code: number) {

@@ -73,6 +73,7 @@ export interface LogExtension {
   getTime(channelId: number, userId: number, messageIndex: number): number | undefined
 }
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
   private streams: { [channelId: number]: fs.WriteStream }
   /** File descriptors of each channel */

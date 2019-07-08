@@ -25,30 +25,52 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
   private log: LogExtension
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.log = this.l.ext.log as LogExtension
+
+    this.call = this.l.addCall(this, this.call, 'default', '<INDEX>', this.callIndex)
+    this.call = this.l.addCall(this, this.call, 'default', '<USER> [<INDEX>]', this.callUser)
+    this.call = this.l.addCall(this, this.call, 'default', '', this.callRandom)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    let uid: number = userId
-    let index = 0
-    if (params[1]) {
-      if (isNaN(Number(params[1]))) {
-        uid = await this.l.api.getId(params[1]) || userId
+  public async callRandom(channelId: number, userId: number, params: any, extra: Extra) {
+    const []: [] = params
+    const targetId = userId
+    let index
 
-        const count = this.log.msgCount(channelId, uid) || 0
-        if (typeof count === 'undefined') return this.l.insertAtUser('Log data unavailable', extra)
-        index = isNaN(Number(params[2])) ? this.l.u.randomInt(0, count) : Number(params[2])
-      } else {
-        index = Number(params[1])
-      }
-    } else { index = this.l.u.randomInt(0, this.log.msgCount(channelId, userId) || 0) }
+    if (!index) index = this.l.u.randomInt(0, this.log.msgCount(channelId, userId) || 0)
 
-    const res = await this.log.getSmartIndexMsg(channelId, uid, index)
+    const res = await this.log.getSmartIndexMsg(channelId, targetId, index)
+    if (!res) return this.l.insertAtUser('That user has no logged messages', extra)
+    if (res.type === CHAT || res.type === ACTION) {
+      return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`
+    }
+    return this.l.insertAtUser(`Logger returned an invalid type: ${res.type}`, extra)
+  }
+
+  public async callIndex(channelId: number, userId: number, params: any, extra: Extra) {
+    const [index]: [number] = params
+    const targetId = userId
+
+    const res = await this.log.getSmartIndexMsg(channelId, targetId, index)
+    if (!res) return this.l.insertAtUser('That user has no logged messages', extra)
+    if (res.type === CHAT || res.type === ACTION) {
+      return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`
+    }
+    return this.l.insertAtUser(`Logger returned an invalid type: ${res.type}`, extra)
+  }
+
+  public async callUser(channelId: number, userId: number, params: any, extra: Extra) {
+    const [targetId, _index]: [number, number | undefined] = params
+
+    const index = _index === undefined ? this.l.u.randomInt(0, this.log.msgCount(channelId, userId) || 0) : _index
+
+    const res = await this.log.getSmartIndexMsg(channelId, targetId, index)
     if (!res) return this.l.insertAtUser('That user has no logged messages', extra)
     if (res.type === CHAT || res.type === ACTION) {
       return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`

@@ -17,23 +17,26 @@ export const options: PluginOptions = {
       userlvl: userlvls.sub,
     },
   },
-  help: [
-    'Get a random urban definition: {alias}',
-    'Get the urban definition of term: {alias} <term...>',
-  ],
+  help: ['Get a random or specific urban definition: {alias} [<term...>]'],
   disableMention: true,
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', '[<term...>]', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [_term]: [string[]] = params
+    const term = _term ? _term.join(' ') : undefined
+
     try {
-      const data = await this.getUrban(params.slice(1).join(' '))
+      const data = await this.getUrban(term)
       if (typeof data !== 'object' || !Array.isArray(data.list)) {
         if (typeof data === 'string') return data
         return 'The API returned invalid data'
@@ -67,12 +70,12 @@ export class Instance implements PluginInstance {
     return this.l.u.fontify(match.substring(1, match.length - 1), 'mathSansBold')
   }
 
-  public getUrban(terms: string): Promise<{[x: string]: any} | string> {
+  public getUrban(term?: string): Promise<{[x: string]: any} | string> {
     return new Promise((resolve, reject) => {
-      const options = terms.length
+      const options = term
         ? {
           host: 'api.urbandictionary.com',
-          path: `/v0/define?term=${encodeURIComponent(terms)}`,
+          path: `/v0/define?term=${encodeURIComponent(term)}`,
           headers: { accept: 'application/json' },
         }
         : {

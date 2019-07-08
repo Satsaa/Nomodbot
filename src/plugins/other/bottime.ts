@@ -18,14 +18,18 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', '', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    const ms = process.uptime() * 1000
-    return `The bot has been running for ${this.l.u.timeDuration(ms, 2)}`
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const []: [] = params
+
+    return `The bot has been running for ${this.l.u.timeDuration(process.uptime() * 1000, 2)}`
   }
 }

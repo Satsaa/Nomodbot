@@ -84,6 +84,10 @@ Plural versions are also accepted, INDEX -> INDEXES or USER -> USERS and so on.
 
 Bold parameters are accepted
 
+**Help string are no longer used for parameter validation in this way**  
+**You should now use PluginLibary#addCall**(*this*, *this.call*, *group*, ***helpString***, *handler*) **for each help entry**  
+**Replace *helpString* with a string like `add <quote...>` (The explanation and {alias} should not not included)**
+
 Help strings, like in the quote command plugin:  
 ```javascript
 help: [  

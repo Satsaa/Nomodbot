@@ -1,28 +1,10 @@
 
 # Source
 
-## Make parameter validation better
-Per help string functions
-
-- Call object form
-- Separates checked help strings from user shows help strings
-- Also support cooldown methods
-- Test that functions have the required arguments
-
-<pre>
-class {
-  ctor() {
-    this.call = {
-      'echo <...message>'(command: string, message: string[]){...},
-      'echo'(command: string){...},
-      ...
-    }
-  }
-  public 'echo <...message>'(command: string, message: string[]) {
-
-  }
-}
-</pre>
+## Vital flag for commands
+Prevent extinction of commands that have this flag enabled  
+E.g. dont allow deletion of the last alias of the "command" plugin  
+- If there is no alias for command, commands cannot be created nor edited  
 
 ## Data file types
 Support file types and derive types from the file type
@@ -130,4 +112,5 @@ The "accepts" key might have a value like: `"string", "number", "positive", "boo
 
 Allows creating timed messages via the extension api  
 Timers should be paused when chat is not active  
-A command should be added for getting the list of plugins supporting timed messages  
+Timers shouldn't activate if last message is from bot (prevent spam when dead chat)
+extend $plugins to display plugins with   

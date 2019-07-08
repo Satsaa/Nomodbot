@@ -21,18 +21,21 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', '<subject...>', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    if (!params[1]) return 'Define something to search (params 1+)'
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [_subject]: [string[]] = params
+    const subject = _subject.join(' ')
 
-    const words = params.slice(1).join(' ')
     try {
-      const data = await this.wiki(words)
+      const data = await this.wiki(subject)
       if (typeof data !== 'object') {
         if (typeof data === 'string') return this.l.u.cap(data.toLowerCase())
         return 'The API returned invalid data'

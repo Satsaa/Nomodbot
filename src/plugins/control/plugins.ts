@@ -18,17 +18,22 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', '[<type>]', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    let [type]: [string | undefined] = params
+
     let pluginOpts = this.l.getPlugins()
     const availableTypes = this.l.u.uniquify(pluginOpts.map(v => v.type), true)
-    if (params[1]) {
-      const type = params[1].toLowerCase()
+    if (type) {
+      type = type.toLowerCase()
       pluginOpts = pluginOpts.filter(v => v.type === type)
     }
     if (pluginOpts.length === 0) return `No plugins of that type. Available types: ${availableTypes.join(', ')}`

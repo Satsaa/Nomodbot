@@ -15,34 +15,36 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
           userlvl: userlvls.mod,
         },
       },
-      help: ['Forbid a user from using a command: {alias} <USER> <COMMAND>'],
+      help: ['Forbid user from using command: {alias} <user> <command>'],
     },
 
     Instance: class implements PluginInstance {
+      public call: PluginInstance['call']
       private l: PluginLibrary
 
       constructor(pluginLib: PluginLibrary) {
         this.l = pluginLib
+
+        this.call = this.l.addCall(this, this.call, 'default', '<USER> <COMMAND>', this.callMain)
       }
 
-      public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-        const aliasName = params[2].toLowerCase()
+      private async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+        const [targetId, aliasName]: [number, string] = params
+
         const alias = this.l.getAlias(channelId, aliasName)
         if (alias) { // Channel alias
-          if (!this.l.isPermitted(alias, userId, tags.badges, { ignoreWhiteList: true })) return 'You cannot edit the blacklist of a command you are not permitted to use'
+          if (!this.l.isPermitted(alias, userId, extra.irc.tags.badges, { ignoreWhiteList: true })) return 'You cannot edit the blacklist of a command you are not permitted to use'
 
-          const uid = await this.l.api.getId(params[1])
-          if (!uid) return 'Cannot find that user'
-          if (uid === channelId) return 'You cannot blacklist the broadcaster'
-          if (this.l.isMod(channelId, params[1])) return 'You cannot blacklist a moderator'
+          if (targetId === channelId) return 'You cannot blacklist the broadcaster'
+          if (this.l.isMod(channelId, extra.words[1])) return 'You cannot blacklist a moderator'
 
-          if (alias.blacklist && alias.blacklist.includes(uid)) return `${params[2]} is already blacklisted from using ${aliasName}`
+          if (alias.blacklist && alias.blacklist.includes(targetId)) return `${extra.words[2]} is already blacklisted from using ${aliasName}`
 
           let out: number[] = []
           if (alias.blacklist) out = [...alias.blacklist]
-          out.push(uid)
+          out.push(targetId)
           this.l.modAlias(channelId, aliasName, { blacklist: out })
-          return `Blacklisted ${params[1]} from using ${aliasName}`
+          return `Blacklisted ${extra.words[1]} from using ${aliasName}`
         }
         return 'Cannot find that command'
       }
@@ -65,26 +67,25 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
     },
 
     Instance: class implements PluginInstance {
+      public call: PluginInstance['call']
       private l: PluginLibrary
 
       constructor(pluginLib: PluginLibrary) {
         this.l = pluginLib
+
+        this.call = this.l.addCall(this, this.call, 'default', '<USER> <COMMAND>', this.callMain)
       }
 
-      public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-        if (!params[1]) return 'Define a user (param 1)'
-        if (!params[2]) return 'Define a command (param 2)'
+      public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+        const [targetId, aliasName]: [number, string] = params
 
-        const aliasName = params[2].toLowerCase()
         const alias = this.l.getAlias(channelId, aliasName)
         if (alias) { // Channel alias
-          if (!this.l.isPermitted(alias, userId, tags.badges, { ignoreWhiteList: true })) return 'You cannot edit the blacklist of a command you are not permitted to use'
+          if (!this.l.isPermitted(alias, userId, extra.irc.tags.badges, { ignoreWhiteList: true })) return 'You cannot edit the blacklist of a command you are not permitted to use'
 
-          const uid = await this.l.api.getId(params[1])
-          if (!uid) return 'Cannot find that user'
-          if (!alias.blacklist || !alias.blacklist.includes(uid)) return `${params[1]} is not blacklisted from using ${aliasName}`
-          this.l.modAlias(channelId, aliasName, { blacklist: alias.blacklist.filter(v => v !== uid) })
-          return `Removed ${params[1]} from ${aliasName}'s blacklist`
+          if (!alias.blacklist || !alias.blacklist.includes(targetId)) return `${extra.words[1]} is not blacklisted from using ${aliasName}`
+          this.l.modAlias(channelId, aliasName, { blacklist: alias.blacklist.filter(v => v !== targetId) })
+          return `Removed ${extra.words[1]} from ${aliasName}'s blacklist`
         }
         return 'Cannot find that command'
       }

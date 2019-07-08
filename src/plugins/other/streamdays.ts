@@ -21,18 +21,23 @@ export const options: PluginOptions = {
 const DAY = 86400000
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', '[<1-8>]', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [_weeks]: [number | undefined] = params
+    const weeks = _weeks || 8
+
     try {
       const recent = await this.l.api.recentBroadcasts(channelId)
       if (typeof recent !== 'object') return 'Cannot resolve recent broadcasts'
 
-      const weeks = Number(params[1]) || 8 // 8 months for affiliates
       const videos = recent.data
       if (videos.length < 1) return 'There are no vods :('
 

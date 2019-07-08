@@ -21,25 +21,28 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
   private log: LogExtension
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.log = this.l.ext.log as LogExtension
+
+    this.call = this.l.addCall(this, this.call, 'default', '[<USER>]', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    const uid = params[1] ? await this.l.api.getId(params[1]) : userId
-    if (!uid) return 'Cannot find that user'
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [_targetId]: [number | undefined] = params
+    const targetId = _targetId || userId
 
-    if (!this.log.getUser(channelId, uid)) return 'That user has not been seen here before'
+    if (!this.log.getUser(channelId, targetId)) return 'That user has not been seen here before'
 
-    const res = this.log.msgCount(channelId, uid)
+    const res = this.log.msgCount(channelId, targetId)
     if (typeof res === 'undefined') return 'Log data is unavailable at the moment'
 
     return params[1]
-      ? `${await this.l.api.getDisplay(uid) || `UID:${uid}`} has sent ${this.l.u.plural(res, 'message')}`
+      ? `${await this.l.api.getDisplay(targetId)} has sent ${this.l.u.plural(res, 'message')}`
       : `You have sent ${this.l.u.plural(res, 'message')}`
   }
 }

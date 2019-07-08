@@ -22,14 +22,19 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', '[<branch>]', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    const branch = params[2] || 'master'
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [_branch]: [string | undefined] = params
+    const branch = _branch || 'master'
+
     if (!process.send) return 'Process manager is not available'
 
     if (!await this.exec(`git pull origin ${branch}`)) return 'An error occurred while updating repository'

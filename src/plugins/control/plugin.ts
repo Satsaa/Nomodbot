@@ -19,7 +19,7 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Load plugin: {alias} load <PLUGIN>',
+    'Load plugin: {alias} load <!PLUGIN>',
     'Reload plugin: {alias} reload <PLUGIN>',
     'Unload plugin: {alias} unload <PLUGIN>',
     'Load new plugin from path: {alias} path <path>',
@@ -27,51 +27,58 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', 'load <!PLUGIN>', this.callLoad)
+    this.call = this.l.addCall(this, this.call, 'default', 'reload <PLUGIN>', this.callReload)
+    this.call = this.l.addCall(this, this.call, 'default', 'unload <PLUGIN>', this.callUnload)
+    this.call = this.l.addCall(this, this.call, 'default', 'path <path>', this.callPath)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    if (!params[1]) return 'Define an action (param 1)'
-    if (!params[2]) return `Define a ${params[1].toLowerCase() === 'path' ? 'path' : 'plugin'} (param 2)`
+  public async callLoad(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, pluginId]: ['load', string] = params
 
-    let resMsg
-    switch (params[1].toLowerCase()) {
-      case 'load':
-        if (!await this.compile()) return 'An error occurred during compilation'
-        resMsg = (await this.l.loadPlugin(params[2])).message
-        return resMsg || `Loaded ${params[2]} succesfully`
+    if (!await this.compile()) return 'An error occurred during compilation'
 
-      case 'reload':
-        if (!await this.compile()) return 'An error occurred during compilation'
-        resMsg = (await this.l.reloadPlugin(params[2])).message
-        return resMsg || `Reloaded ${params[2]} succesfully`
+    const resMsg = (await this.l.loadPlugin(pluginId)).message
+    return resMsg || `Loaded ${pluginId} succesfully`
+  }
+  public async callReload(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, pluginId]: ['reload', string] = params
 
-      case 'unload':
-        resMsg = (await this.l.unloadPlugin(params[2])).message
-        return resMsg || `Unloaded ${params[2]} succesfully`
+    if (!await this.compile()) return 'An error occurred during compilation'
 
-      case 'path':
-        try {
-          if (!await this.compile()) return 'An error occurred during compilation'
+    const resMsg = (await this.l.reloadPlugin(pluginId)).message
+    return resMsg || `Reloaded ${pluginId} succesfully`
+  }
+  public async callUnload(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, pluginId]: ['unload', string] = params
 
-          const options = await this.l.loadFromPath(params[2])
-          const names = options.map(v => v.id)
-          const all = await Promise.all(options.map(v => this.l.waitPlugin(v.id), 5000))
-          const results: string[] = []
-          if (all.every(v => v)) return `Loaded ${names.join(', ')}`
-          names.forEach((v, i) => {
-            results.push(`${v} (${all[i] ? 'loaded' : 'timeout'})`)
-          })
-          return results.join(', ')
-        } catch (err) {
-          console.error(err)
-          return `An error occurred: ${err.code}`
-        }
-      default:
-        return 'Unknown action'
+    const resMsg = (await this.l.unloadPlugin(pluginId)).message
+    return resMsg || `Unloaded ${pluginId} succesfully`
+  }
+  public async callPath(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, path]: ['path', string] = params
+
+    try {
+      if (!await this.compile()) return 'An error occurred during compilation'
+
+      const options = await this.l.loadFromPath(path)
+      const names = options.map(v => v.id)
+      const all = await Promise.all(options.map(v => this.l.waitPlugin(v.id), 5000))
+      const results: string[] = []
+      if (all.every(v => v)) return `Loaded ${names.join(', ')}`
+      names.forEach((v, i) => {
+        results.push(`${v} (${all[i] ? 'loaded' : 'timeout'})`)
+      })
+      return results.join(', ')
+    } catch (err) {
+      console.error(err)
+      return `An error occurred: ${err.code}`
     }
   }
 

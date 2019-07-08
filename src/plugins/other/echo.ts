@@ -21,13 +21,18 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
+  public call: PluginInstance['call']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
+
+    this.call = this.l.addCall(this, this.call, 'default', '[<echo...>]', this.callMain)
   }
 
-  public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-    return params.splice(1).join(' ') || 'echo'
+  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+    const [echo]: [string[] | undefined] = params
+
+    return echo ? echo.join(' ') : 'echo'
   }
 }

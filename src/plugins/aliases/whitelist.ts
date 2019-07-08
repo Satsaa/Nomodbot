@@ -15,34 +15,35 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
           userlvl: userlvls.mod,
         },
       },
-      help: ['Whitelist user to use command: {alias} <USER> <COMMAND>'],
+      help: ['Whitelist user to use command: {alias} <user> <command>'],
     },
 
     Instance: class implements PluginInstance {
+      public call: PluginInstance['call']
       private l: PluginLibrary
 
       constructor(pluginLib: PluginLibrary) {
         this.l = pluginLib
+
+        this.call = this.l.addCall(this, this.call, 'default', '<USER> <COMMAND>', this.callMain)
       }
 
-      public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-        const aliasName = params[2].toLowerCase()
+      public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+        const [targetId, aliasName]: [number, string] = params
+
         const alias = this.l.getAlias(channelId, aliasName)
         if (alias) { // Channel alias
-          if (!this.l.isPermitted(alias, userId, tags.badges, { ignoreWhiteList: true })) return 'You cannot edit the whitelist of a command you are not permitted to use'
-
-          const uid = await this.l.api.getId(params[1])
-          if (!uid) return 'Cannot find that user'
+          if (!this.l.isPermitted(alias, userId, extra.irc.tags.badges, { ignoreWhiteList: true })) return 'You cannot edit the whitelist of a command you are not permitted to use'
 
           let out: number[] = []
           if (alias.whitelist) out = [...alias.whitelist]
-          if (alias.blacklist && alias.blacklist.includes(uid)) {
-            out = alias.blacklist.filter(listUid => listUid !== uid)
+          if (alias.blacklist && alias.blacklist.includes(targetId)) {
+            out = alias.blacklist.filter(listUid => listUid !== targetId)
           }
-          if (out.includes(uid)) return `${params[1]} is already whitelisted to use ${aliasName}`
-          out.push(uid)
+          if (out.includes(targetId)) return `${extra.words[1]} is already whitelisted to use ${aliasName}`
+          out.push(targetId)
           this.l.modAlias(channelId, aliasName, { whitelist: out })
-          return `Added ${params[1]} to the whitelist of ${aliasName}`
+          return `Added ${extra.words[1]} to the whitelist of ${aliasName}`
         }
         return 'Cannot find that command'
       }
@@ -65,23 +66,26 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
     },
 
     Instance: class implements PluginInstance {
+      public call: PluginInstance['call']
       private l: PluginLibrary
 
       constructor(pluginLib: PluginLibrary) {
         this.l = pluginLib
+
+        this.call = this.l.addCall(this, this.call, 'default', '<USER> <COMMAND>', this.callMain)
       }
 
-      public async call(channelId: number, userId: number, tags: PRIVMSG['tags'], params: string[], extra: Extra) {
-        const aliasName = params[2].toLowerCase()
+      public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+        const [targetId, aliasName]: [number, string] = params
+
         const alias = this.l.getAlias(channelId, aliasName)
         if (alias) { // Channel alias
-          if (!this.l.isPermitted(alias, userId, tags.badges, { ignoreWhiteList: true })) return 'You cannot edit the whitelist of a command you are not permitted to use'
+          if (!this.l.isPermitted(alias, userId, extra.irc.tags.badges, { ignoreWhiteList: true })) return 'You cannot edit the whitelist of a command you are not permitted to use'
 
-          const uid = await this.l.api.getId(params[1])
-          if (!uid) return 'Cannot find that user'
-          if (!alias.whitelist || !alias.whitelist.includes(uid)) return `${params[1]} is not whitelisted for ${aliasName}`
-          this.l.modAlias(channelId, aliasName, { whitelist: alias.whitelist.filter(listUid => listUid !== uid) })
-          return `Removed ${params[1]} from the whitelist of ${aliasName}`
+          if (!targetId) return 'Cannot find that user'
+          if (!alias.whitelist || !alias.whitelist.includes(targetId)) return `${extra.words[1]} is not whitelisted for ${aliasName}`
+          this.l.modAlias(channelId, aliasName, { whitelist: alias.whitelist.filter(listUid => listUid !== targetId) })
+          return `Removed ${extra.words[1]} from the whitelist of ${aliasName}`
         }
         return 'Cannot find that command'
       }
