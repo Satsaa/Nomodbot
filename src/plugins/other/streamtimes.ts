@@ -62,20 +62,20 @@ export class Instance implements PluginInstance {
       const nowMins = date.getUTCMinutes()
       const ms = (hours - nowHours) * 3600000 + (minutes - nowMins) * 60000
       const invert = ms < 0
-      let remaningTime = ''
-      if (invert) remaningTime = `(${timeDuration(-ms)} ago) `
-      else remaningTime = `(in ${timeDuration(ms)}) `
+      let relativeString = ''
+      if (invert) relativeString = `(${timeDuration(-ms)} ago) `
+      else relativeString = `(in ${timeDuration(ms)}) `
 
       if (hours.toString().length === 1) hours = `0${hours}`
       if (minutes.toString().length === 1) minutes = `0${minutes}`
 
       if (total === 1) {
-        return `${await this.l.api.getDisplay(channelId) || channelId}'s previous stream started at ${hours}:${minutes} UTC and `
+        return `${await this.l.api.getDisplay(channelId) || channelId}'s previous stream started at ${hours}:${minutes} UTC ${relativeString} and `
           + `lasted for ${this.l.u.timeDuration(averageDuration, 2)}`
       }
 
 
-      return `${await this.l.api.getDisplay(channelId) || channelId} streams at ${hours}:${minutes} UTC ${remaningTime}`
+      return `${await this.l.api.getDisplay(channelId) || channelId} streams at ${hours}:${minutes} UTC ${relativeString}`
         + `for ${this.l.u.timeDuration(averageDuration, 2)} (average of previous ${this.l.u.plural(total, 'stream')})`
     } catch (err) {
       console.error(err)
