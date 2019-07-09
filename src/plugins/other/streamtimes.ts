@@ -1,6 +1,7 @@
 import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
+import { timeDuration } from '../../main/lib/util'
 
 export const options: PluginOptions = {
   type: 'command',
@@ -54,6 +55,17 @@ export class Instance implements PluginInstance {
 
       let hours: number | string = Math.floor(averageAngle / 15)
       let minutes: number | string = Math.round((averageAngle / 15 - hours) * 60)
+
+      // Make (in 1h), (3h 5m ago) string
+      const date = new Date()
+      const nowHours = date.getUTCHours()
+      const nowMins = date.getUTCMinutes()
+      const ms = (hours - nowHours) * 3600000 + (minutes - nowMins) * 60000
+      const invert = ms < 0
+      let remaningTime = ''
+      if (invert) remaningTime = `(${timeDuration(-ms)} ago) `
+      else remaningTime = `(in ${timeDuration(ms)}) `
+
       if (hours.toString().length === 1) hours = `0${hours}`
       if (minutes.toString().length === 1) minutes = `0${minutes}`
 
@@ -62,8 +74,9 @@ export class Instance implements PluginInstance {
           + `lasted for ${this.l.u.timeDuration(averageDuration, 2)}`
       }
 
-      return `${await this.l.api.getDisplay(channelId) || channelId} usually streams at ${hours}:${minutes} UTC `
-        + `for ${this.l.u.timeDuration(averageDuration, 2)} (previous ${this.l.u.plural(total, 'stream', 'streams')})`
+
+      return `${await this.l.api.getDisplay(channelId) || channelId} streams at ${hours}:${minutes} UTC ${remaningTime}`
+        + `for ${this.l.u.timeDuration(averageDuration, 2)} (average of previous ${this.l.u.plural(total, 'stream')})`
     } catch (err) {
       console.error(err)
       return `Error occurred: ${err.name}`
