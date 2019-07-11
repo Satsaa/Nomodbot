@@ -47,7 +47,7 @@ export class Instance implements PluginInstance {
         totalDuration += this.l.u.parseTimeStr(video.duration)
         total++
       }
-      if (total < 1) return `${await this.l.api.getDisplay(channelId) || channelId} usually doesn't stream :/`
+      if (total < 1) return `${await this.l.api.getDisplay(channelId) || channelId} has not recently streamed :/`
 
       const averageDuration = totalDuration / total
       let averageAngle = meanAngleDeg(clockAngles)
@@ -70,13 +70,11 @@ export class Instance implements PluginInstance {
       if (minutes.toString().length === 1) minutes = `0${minutes}`
 
       if (total === 1) {
-        return `${await this.l.api.getDisplay(channelId) || channelId}'s previous stream started at ${hours}:${minutes} UTC ${relativeString} and `
-          + `lasted for ${this.l.u.timeDuration(averageDuration, 2)}`
+        return `${await this.l.api.getDisplay(channelId) || channelId}'s previous stream started at ${hours}:${minutes} UTC and lasted for ${this.l.u.timeDuration(averageDuration, 2)}`
       }
 
 
-      return `${await this.l.api.getDisplay(channelId) || channelId} streams at ${hours}:${minutes} UTC ${relativeString}`
-        + `for ${this.l.u.timeDuration(averageDuration, 2)} (average of previous ${this.l.u.plural(total, 'stream')})`
+      return `${await this.l.api.getDisplay(channelId) || channelId} streams at ${hours}:${minutes} UTC ${relativeString}for ${this.l.u.timeDuration(averageDuration, 2)} (average of previous ${this.l.u.plural(total, 'stream')})`
     } catch (err) {
       console.error(err)
       return `Error occurred: ${err.name}`

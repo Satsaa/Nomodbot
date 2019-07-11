@@ -1,9 +1,11 @@
 import { EventEmitter } from 'events'
 import * as fs from 'fs'
+import { parse as pathParse } from 'path'
 
 import StrictEventEmitter from 'strict-event-emitter-types'
 import WebSocket from 'ws'
 
+import * as afs from '../lib/AtomicFS'
 import deepClone from '../lib/deepClone'
 import defaultKeys from '../lib/defaultKeys'
 import eventTimeout from '../lib/eventTimeout'
@@ -160,8 +162,15 @@ export default class TwitchClient {
     try {
       fs.accessSync(`${this.opts.dataRoot}/global/${this.opts.dataFile}`, fs.constants.R_OK | fs.constants.W_OK)
     } catch (err) {
-      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataRoot}/global/${this.opts.dataFile}`, '{}')
-      else throw err
+      if (err.code === 'ENOENT') {
+        const path = `${this.opts.dataRoot}/global/${this.opts.dataFile}`
+        const parsed = pathParse(path)
+        const tempPath = `${this.opts.dataRoot}/global/${parsed.name}_temp.${parsed.ext}`
+        fs.writeFileSync(tempPath, '{}')
+        fs.renameSync(tempPath, path)
+      } else {
+        throw err
+      }
     }
     fs.accessSync(`${this.opts.dataRoot}/global/${this.opts.dataFile}`)
     defaultKeys(this.clientData, JSON.parse(fs.readFileSync(`${this.opts.dataRoot}/global/${this.opts.dataFile}`, 'utf8')))
@@ -216,8 +225,8 @@ export default class TwitchClient {
 
     setTimeout(this.pingLoop.bind(this), this.opts.pingInterval * u.randomFloat(0.9, 1.0))
     setInterval(() => {
-      fs.writeFileSync('./misc/seenMessageTypes.json', JSON.stringify(this.messageTypes, null, 2))
-    }, 10 * 1000)
+      afs.writeFile('./misc/seenMessageTypes.json', JSON.stringify(this.messageTypes, null, 2))
+    }, 30 * 1000)
   }
 
   public get joinedChannels(): number[] {
@@ -263,7 +272,7 @@ export default class TwitchClient {
       this.api.cacheUser(~~user.id, user.login, user.display_name)
       this.send(`JOIN #${user.login}`)
       promises.push(eventTimeout(this, 'join', { timeout: this.getLatency(), matchArgs: [~~user.id] }))
-      if (delay) await u.asyncTimeout(delay)
+      if (delay) await u.promiseTimeout(delay)
     }
     return (await Promise.all(promises)).every(v => v.timeout === false)
   }
@@ -279,7 +288,7 @@ export default class TwitchClient {
     for (const user of res.data) {
       this.send(`PART #${user.login}`)
       promises.push(eventTimeout(this, 'part', { timeout: this.getLatency(), matchArgs: [~~user.id] }))
-      if (delay) await u.asyncTimeout(delay)
+      if (delay) await u.promiseTimeout(delay)
     }
     return (await Promise.all(promises)).every(v => v.timeout === false)
   }
@@ -448,7 +457,11 @@ export default class TwitchClient {
       return
     }
     try {
-      fs.writeFileSync(`${this.opts.dataRoot}/global/${this.opts.dataFile}`, JSON.stringify(this.clientData, replacer, 2))
+      const path = `${this.opts.dataRoot}/global/${this.opts.dataFile}`
+      const parsed = pathParse(path)
+      const tempPath = `${this.opts.dataRoot}/global/${parsed.name}_temp.${parsed.ext}`
+      fs.writeFileSync(tempPath, JSON.stringify(this.clientData, replacer, 2))
+      fs.renameSync(tempPath, path)
     } catch (err) {
       console.log('[Client] Could not save clientData:', err)
       console.warn('[Client] clientData:', JSON.stringify(this.clientData, null, 2))
@@ -489,7 +502,7 @@ export default class TwitchClient {
     console.log(`Reconnecting in ${u.plural(Math.round(interval / 1000), 'second')}`)
     if (this.ws) this.ws.close()
     this.reconnecting = true
-    await u.asyncTimeout(interval)
+    await u.promiseTimeout(interval)
 
     const res = await this.connect()
     this.reconnecting = false

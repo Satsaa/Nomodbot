@@ -1,8 +1,8 @@
 import fs from 'fs'
-import { promises as fsp } from 'fs'
 
+import * as afs from '../../main/lib/AtomicFS'
 import { PRIVMSG } from '../../main/client/parser'
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -289,7 +289,7 @@ export class Instance implements PluginInstance {
   /** Initializes the write stream. Testing for errors and retracking if necessary */
   private async initStream(channelId: number) {
     const path = this.l.getPath(channelId, 'log', 'txt')
-    await fsp.mkdir(path.replace('log.txt', ''), { recursive: true })
+    await afs.mkdir(path.replace('log.txt', ''), { recursive: true })
 
     const stream = fs.createWriteStream(path, { flags: 'a+' })
     stream.once('open', (fd) => {
@@ -299,7 +299,7 @@ export class Instance implements PluginInstance {
 
     let fileSize = 0
     try {
-      fileSize = (await fsp.stat(path)).size
+      fileSize = (await afs.stat(path)).size
     } catch (err) {
       if (err.code !== 'ENOENT') throw err
     }
@@ -353,7 +353,7 @@ export class Instance implements PluginInstance {
 
         const data = this.l.getData(channelId, 'log')
         if (!data) throw new Error('Uh oh can\'t set size when data is unloaded')
-        data.offset = (await fsp.stat(path)).size
+        data.offset = (await afs.stat(path)).size
         console.log(`[LOG] Tracked ${this.l.u.plural(tracked, 'line')} ${failed ? this.l.u.plural(tracked, 'line ', 'lines ') : ''}in ${await this.l.api.getDisplay(channelId)} in ${Date.now() - start} ms`)
         resolve()
       })

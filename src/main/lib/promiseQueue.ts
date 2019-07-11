@@ -1,6 +1,3 @@
-import { promises as fsp } from 'fs'
-
-import { asyncTimeout } from './util'
 
 interface Entry {
   func: (...a: any[]) => Promise<any>

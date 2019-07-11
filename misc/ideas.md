@@ -36,11 +36,6 @@ Run unloader on a clone of the data before unloading
 - Hints showing partial answer
 - Custom hints for hardcoded questions allowed
 
-## Backup
-$backup  
-
-- Backups data folder to root/backup/YYYY-MM-DD-hh-mm-ss
-
 ## Crime count
 !crimes  
 

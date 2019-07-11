@@ -1,6 +1,6 @@
 
 import TwitchClient from './client/client'
-import Commander, { Command, PluginInstance } from './commander'
+import Commander, { PluginInstance } from './commander'
 import { addArticle, commaPunctuate, plural, uniquify } from './lib/util'
 
 interface Bit {

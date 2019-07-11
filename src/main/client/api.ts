@@ -1,10 +1,11 @@
 import fs from 'fs'
-import { promises as fsp } from 'fs'
 import https from 'https'
 import path from 'path'
 
+
 import deepClone from '../lib/deepClone'
 import defaultKeys from '../lib/defaultKeys'
+import * as afs from '../lib/AtomicFS'
 import * as util from '../lib/util'
 
 interface GenericCache {
@@ -35,8 +36,8 @@ interface ApiOptions {
 }
 
 interface ApiData {
-  bearer: null
-  expire: 0
+  bearer: null | string
+  expire: number
   users: Array<[number, string, string]>
 }
 
@@ -99,8 +100,14 @@ export default class TwitchApi {
     try {
       fs.accessSync(`${this.opts.dataRoot}/global/apiData.json`, fs.constants.R_OK | fs.constants.W_OK)
     } catch (err) {
-      if (err.code === 'ENOENT') fs.writeFileSync(`${this.opts.dataRoot}/global/apiData.json`, '{"bearer": null, "expire": 0, "users": []}')
-      else throw err
+      if (err.code === 'ENOENT') {
+        const path = `${this.opts.dataRoot}/global/apiData.json`
+        const tempPath = `${this.opts.dataRoot}/global/apiData_temp.json`
+        fs.writeFileSync(tempPath, '{"bearer": null, "expire": 0, "users": []}')
+        fs.renameSync(tempPath, path)
+      } else {
+        throw err
+      }
     }
 
     // Cached file has uid, login, display tuples
@@ -237,7 +244,7 @@ export default class TwitchApi {
 
     let first = true
     for (const hundred of hundreds) {
-      if (!first) await util.asyncTimeout(1000)
+      if (!first) await util.promiseTimeout(1000)
       first = false
 
       const users = await this._users({ login: hundred })
@@ -280,7 +287,7 @@ export default class TwitchApi {
 
     let first = true
     for (const hundred of hundreds) {
-      if (!first) await util.asyncTimeout(1000)
+      if (!first) await util.promiseTimeout(1000)
       first = false
 
       const users = await this._users({ id: hundred })
@@ -337,7 +344,7 @@ export default class TwitchApi {
 
       let first = true
       for (const hundred of hundreds) {
-        if (!first) await util.asyncTimeout(1000)
+        if (!first) await util.promiseTimeout(1000)
         first = false
 
         const users = await this._users({ login: hundred })
@@ -374,7 +381,7 @@ export default class TwitchApi {
 
       let first = true
       for (const hundred of hundreds) {
-        if (!first) await util.asyncTimeout(1000)
+        if (!first) await util.promiseTimeout(1000)
         first = false
 
         const users = await this._users({ id: hundred })
@@ -451,9 +458,9 @@ export default class TwitchApi {
     const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`
     const dir = `${this.opts.dataRoot}/${channelId}/`
     try {
-      await fsp.mkdir(dir, { recursive: true })
+      await afs.mkdir(dir, { recursive: true })
 
-      const cache = JSON.parse(await fsp.readFile(path, 'utf8'))
+      const cache = JSON.parse(await afs.readFile(path, 'utf8'))
       this.channelCaches[channelId] = cache
       defaultKeys(cache, this.channelCacheDefault) // Make sure source file has all required keys
     } catch (err) {
@@ -471,8 +478,8 @@ export default class TwitchApi {
 
     const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`
     const dir = `${this.opts.dataRoot}/${channelId}/`
-    await fsp.mkdir(dir, { recursive: true })
-    await fsp.writeFile(path, JSON.stringify(this.channelCaches[channelId], null, '\t'))
+    await afs.mkdir(dir, { recursive: true })
+    await afs.writeFile(path, JSON.stringify(this.channelCaches[channelId], null, '\t'))
     delete this.channelCaches[channelId]
     return true
   }
@@ -612,15 +619,22 @@ export default class TwitchApi {
       }
     }
     if (failed) console.log(`[TWITCHAPI] Skipped ${failed} ${util.plural(failed, 'users')} on apiData.json save`)
-    // Folders must be created at this points
-    fs.writeFileSync(`${this.opts.dataRoot}/global/apiData.json`, JSON.stringify({ bearer: this.bearer, expire: this.expire, users: saveData } as ApiData))
+
+    // Save API data
+    const data: ApiData = { bearer: this.bearer || null, expire: this.expire, users: saveData }
+    const path = `${this.opts.dataRoot}/global/apiData.json`
+    const tempPath = `${this.opts.dataRoot}/global/apiData_temp.json`
+    fs.writeFileSync(tempPath, JSON.stringify(data))
+    fs.renameSync(tempPath, path)
 
     // Save loaded channel caches
     for (const channelId in this.channelCaches) {
-      const path = `${this.opts.dataRoot}/${channelId}/apiCache.json`
       const dir = `${this.opts.dataRoot}/${channelId}/`
+      const path = `${dir}apiCache.json`
+      const tempPath = `${dir}apiCache_temp.json`
       fs.mkdirSync(dir, { recursive: true })
-      fs.writeFileSync(path, JSON.stringify(this.channelCaches[channelId], null, '\t'))
+      fs.writeFileSync(tempPath, JSON.stringify(this.channelCaches[channelId], null, '\t'))
+      fs.renameSync(tempPath, path)
     }
   }
 }

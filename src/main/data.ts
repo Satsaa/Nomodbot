@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events'
 import * as fs from 'fs'
-import { promises as fsp } from 'fs'
 
+import * as afs from './lib/AtomicFS'
 import TwitchClient from './client/client'
 import defaultKeys from './lib/defaultKeys'
 
@@ -74,8 +74,19 @@ export default class Data extends EventEmitter {
     for (const subType in this.data) {
       for (const name in this.data[subType]) {
         const data = this.getData(subType, name)
-        if (typeof data === 'object') fs.writeFileSync(`${this.dataPath}/${subType}/${name}.json`, JSON.stringify(data, null, 0))
-        else console.error(new Error(`Failed to save ${subType}\\${name} because it's type was ${typeof data}`))
+        if (typeof data === 'object') {
+          try {
+            const path = `${this.dataPath}/${subType}/${name}.json`
+            const tempPath = `${this.dataPath}/${subType}/${name}_temp.json`
+            fs.writeFileSync(tempPath, JSON.stringify(data, null, 0))
+            fs.renameSync(tempPath, path)
+          } catch (err) {
+            console.error(new Error(`Failed to save ${subType}\\${name}:`))
+            console.error(err)
+          }
+        } else {
+          console.error(new Error(`Failed to save ${subType}\\${name} because it's type was ${typeof data}`))
+        }
       }
     }
   }
@@ -93,7 +104,7 @@ export default class Data extends EventEmitter {
       return false
     }
     try {
-      await fsp.writeFile(`${this.dataPath}/${subType}/${name}.json`, JSON.stringify(data, null, 2))
+      await afs.writeFile(`${this.dataPath}/${subType}/${name}.json`, JSON.stringify(data, null, 2))
       if (unload) this.delData(subType, name)
       return true
     } catch (err) {
@@ -130,16 +141,16 @@ export default class Data extends EventEmitter {
 
     const file = `${this.dataPath}/${subType}/${name}.json`
     try { // Check if file is already created
-      await fsp.access(file, fs.constants.F_OK)
+      await afs.access(file, fs.constants.F_OK)
     } catch (err) {
       if (err.code !== 'ENOENT') throw err
       if (defaultData) {
         const pathOnly = file.slice(0, file.lastIndexOf('/'))
         try { // Ensure directory exists
-          await fsp.access(file, fs.constants.F_OK)
+          await afs.access(file, fs.constants.F_OK)
         } catch (err) {
           if (err.code !== 'ENOENT') throw err
-          await fsp.mkdir(pathOnly, { recursive: true })
+          await afs.mkdir(pathOnly, { recursive: true })
         }
 
         const result = this.setData(subType, name, defaultData)
@@ -153,7 +164,7 @@ export default class Data extends EventEmitter {
 
     let data
     try {
-      data = JSON.parse(await fsp.readFile(file, 'utf8'))
+      data = JSON.parse(await afs.readFile(file, 'utf8'))
     } catch (err) {
       throw new Error(`${file} is corrupted: ${err.name}`)
     }

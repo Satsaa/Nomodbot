@@ -1,5 +1,4 @@
 import Client from './client/client'
-import { PRIVMSG } from './client/parser'
 import Commander from './commander'
 import Data from './data'
 import deepClone from './lib/deepClone'
