@@ -11,7 +11,7 @@ export default class Data extends EventEmitter {
 
   public dataPath: string
   /** Reserved data names. No data can be loaded or autoloaded with one of these names */
-  private reserved: string[]
+  private reserved: readonly string[]
   private client: TwitchClient
   /** Loading data to these files are blocked and throws */
   private blocks: {[subType: string]: {[name: string]: true}}

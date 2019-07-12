@@ -218,7 +218,7 @@ export default class TwitchApi {
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `logins` with the correspoding result
    */
-  public async getIds(logins: string[]): Promise<{[login: string]: number | undefined}> {
+  public async getIds(logins: readonly string[]): Promise<{[login: string]: number | undefined}> {
     logins = logins.map(v => v.toLowerCase())
 
     // Create return object which removes duplicates as a side effect
@@ -263,7 +263,7 @@ export default class TwitchApi {
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `ids` with the correspoding result
    */
-  public async getLogins(ids: number[]): Promise<{[id: number]: string | undefined}> {
+  public async getLogins(ids: readonly number[]): Promise<{[id: number]: string | undefined}> {
     // Create return object which removes duplicates as a side effect
     const res: {[id: number]: string | undefined} = {}
     for (const id of ids) {
@@ -305,20 +305,20 @@ export default class TwitchApi {
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `ids` with the correspoding result
    */
-  public getDisplays(ids: number[]): Promise<{[id: number]: string | undefined}>
+  public getDisplays(ids: readonly number[]): Promise<{[id: number]: string | undefined}>
   /**
    * Gets the display names for `logins`  
    * `logins` are converted to lowercase and it is reflected in the result  
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `logins` with the correspoding result
    */
-  public getDisplays(logins: string[]): Promise<{[login: string]: string | undefined}>
+  public getDisplays(logins: readonly string[]): Promise<{[login: string]: string | undefined}>
   /**
    * Gets the display names for `users`  
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `users` with the correspoding result
    */
-  public async getDisplays(users: number[] | string[]): Promise<{[user: string]: string | undefined}> {
+  public async getDisplays(users: readonly number[] | readonly string[]): Promise<{[user: string]: string | undefined}> {
     if (typeof users[0] === 'string') { // Using logins
       let logins = users as string[]
       logins = logins.map(v => v.toLowerCase())

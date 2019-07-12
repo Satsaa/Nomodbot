@@ -8,7 +8,7 @@ import ParamValidator from './paramValidator'
 import { getArgs } from './argRules'
 
 export interface BotOptions {
-  masters: number[]
+  masters: readonly number[]
 }
 
 export default class Bot {

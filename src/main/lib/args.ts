@@ -290,7 +290,7 @@ export default function parse<T extends ArgsOptions>(options: T | ArgsOptions): 
 }
 
 /** Creates an array where `main` and **all** immediately following values are removed from `args`. */
-export function removeOption(main: string, args: string[], rules: ArgsOptions) {
+export function removeOption(main: string, args: readonly string[], rules: ArgsOptions) {
   const aliases = [...rules.rules[main].aliases || [], main]
 
   const res = []

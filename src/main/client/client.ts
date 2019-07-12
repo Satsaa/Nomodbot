@@ -75,7 +75,7 @@ export interface TwitchClientOptions {
   dupeAffix?: string
   maxMsgLength?: number
   /** Array of channelIds to join on startup */
-  join?: number[]
+  join?: readonly number[]
   /** Send `message` in `channelId` when the channel is joined (active for 30 sec) */
   joinMessage?: null | {[channelId: number]: string}
   readonly msgRLOpts?: DeepReadonly<RateLimiterOptions>

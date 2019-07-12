@@ -13,7 +13,7 @@ let cache: {[x: string]: any} = {}
    * Like (file,`'foo','bar')` -> file.`foo.bar`
    * @Return Undefined if the key is created, otherwise the key's value
    */
-export function getKey(path: string, ...keys: string[]): undefined | null | string {
+export function getKey(path: string, ...keys: readonly string[]): undefined | null | string {
   path = resolve(path)
   if (!cache.file) {
     const parsed = parse(path)
@@ -71,7 +71,7 @@ export function getKey(path: string, ...keys: string[]): undefined | null | stri
    * Like (file,`'foo','bar','value')` -> file.`foo.bar = 'value'`
    * @Return Undefined if the key is created, otherwise the key's previous value
    */
-export function setKey(path: string, ...keysAndVal: string[]): any {
+export function setKey(path: string, ...keysAndVal: readonly string[]): any {
   path = resolve(path)
   if (!cache.file) {
     const parsed = parse(path)
@@ -84,17 +84,17 @@ export function setKey(path: string, ...keysAndVal: string[]): any {
     cache[path] = JSON.parse(fs.readFileSync(path).toString())
   }
 
-  const keys = keysAndVal.splice(0, keysAndVal.length - 1)
+  const _keys = keysAndVal.slice(0, keysAndVal.length - 1)
   const val = keysAndVal
 
   let current = cache[path]
-  for (let i = 0; i < keys.length - 1; i++) {
-    if (typeof current[keys[i]] !== 'object' || current[keys[i]] === null) current[keys[i]] = {}
-    current = current[keys[i]]
+  for (let i = 0; i < _keys.length - 1; i++) {
+    if (typeof current[_keys[i]] !== 'object' || current[_keys[i]] === null) current[_keys[i]] = {}
+    current = current[_keys[i]]
   }
 
-  const prevVal = current[keys[keys.length - 1]]
-  current[keys[keys.length - 1]] = val
+  const prevVal = current[_keys[_keys.length - 1]]
+  current[_keys[_keys.length - 1]] = val
 
   const parsed = parse(path)
   const tempPath = `${parsed.dir}/${parsed.name}_temp.${parsed.ext}`

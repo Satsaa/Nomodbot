@@ -272,7 +272,7 @@ export default class PluginLibrary {
    * Gets a key from the config/keys.json file.  
    * `keys` is a path to a key (e.g. 'myService', 'oauth' would result in FILE.myService.oauth key value being returned)
    */
-  public getKey(...keys: string[]) {
+  public getKey(...keys: readonly string[]) {
     return secretKey.getKey('./cfg/keys.json', ...keys)
   }
 

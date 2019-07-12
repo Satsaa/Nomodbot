@@ -3,7 +3,7 @@
  * Deeply clones `obj`  
  * Only own keys are cloned
  */
-export default function <T extends object | any[]>(obj: T): T {
+export default function <T extends object | readonly any[]>(obj: T): T {
   const sourceRefs: any[] = [] // Avoid circular reasoning
   const outRefs: {[x: string]: any} = [] // Avoid circular reasoning
 

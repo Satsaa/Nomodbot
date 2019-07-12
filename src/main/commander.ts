@@ -180,14 +180,14 @@ export default class Commander {
   public plugins: {[pluginId: string]: PluginOptions}
   public instances: {[pluginId: string]: PluginInstance}
   /** Big bois with big privileges */
-  public masters: number[]
+  public masters: readonly number[]
   private client: TwitchClient
   private data: Data
   private pluginLib: PluginLibrary
   private waits: {[pluginId: string]: Array<(result: boolean) => any>}
   private validator: ParamValidator
 
-  constructor(client: TwitchClient, data: Data, masters: number[]) {
+  constructor(client: TwitchClient, data: Data, masters: readonly number[]) {
     this.defaultAliases = {}
     this.paths = {}
     this.plugins = {}

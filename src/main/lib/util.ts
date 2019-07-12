@@ -29,7 +29,7 @@ export function randomNormal(min = 0, max = 100, skew = 1) {
  * Returns first value that is not undefined
  * @param `values`
  */
-export function get(...values: any[]) { for (const key of values) { if (key !== undefined) return key } }
+export function get(...values: readonly any[]) { for (const key of values) { if (key !== undefined) return key } }
 
 /** Capitalizes the character at `pos` */
 export function cap(str: string, pos = 0) { return str.slice(0, pos) + str.charAt(pos).toUpperCase() + str.slice(pos + 1) }
@@ -64,7 +64,7 @@ export function getRandomKey(obj: {[x: string]: any}) {
  * @param index Input index
  * @param max Maximum index. Can also use an array for max index
  */
-export function smartIndex(index: number, max: number | any[] = Infinity) {
+export function smartIndex(index: number, max: number | readonly any[] = Infinity) {
   if (typeof max !== 'number') max = max.length
   if (index < 0) {
     if (index < -max) return 0
@@ -80,7 +80,7 @@ export function smartIndex(index: number, max: number | any[] = Infinity) {
  * @param array Target array
  * @param table You are being forced to enable this for some arrays
  */
-export function uniquify<T extends any[]>(array: T, table: T extends (boolean[] | number[] | string[]) ? true : false): T {
+export function uniquify<T extends any[]>(array: T, table: T extends (readonly boolean[] | readonly number[] | readonly string[]) ? true : false): T {
   const result: any[] = []
   if (table) {
     const seen: {[x: string]: true} = {}
@@ -140,7 +140,7 @@ export function timeSince(ms: number, top = 4, long = false) { return timeDurati
  * @param top How many time units to return
  * @param long Use long units (d or days)
  */
-export function timeDuration(t: number | number[], top = 4, long = false) {
+export function timeDuration(t: number | readonly number[], top = 4, long = false) {
   let exists = 0
   const untill = []
   const dateStrLong = [' day', ' hour', ' minute', ' second']
@@ -273,10 +273,13 @@ export function onExit(cb: (code: number) => void) { onExitCbs.push(cb) }
  * File paths may not converted by the Typescript compiler so use the __module variable to build dynamic file paths
  * @param dir A directory path
  */
-export async function readDirRecursive(dir: string, allFiles: string[] = []) {
+export async function readDirRecursive(dir: string) {
+  return _readDirRecursive(dir)
+}
+async function _readDirRecursive(dir: string, allFiles: string[] = []) {
   const files = (await fsp.readdir(dir)).map(file => path.resolve(dir, file))
   allFiles.push(...files)
-  await Promise.all(files.map(async file => (await fsp.stat(file)).isDirectory() && readDirRecursive(file, allFiles)
+  await Promise.all(files.map(async file => (await fsp.stat(file)).isDirectory() && _readDirRecursive(file, allFiles)
   ))
   return allFiles
 }
@@ -347,7 +350,7 @@ export function fitStrings(options: number | FitStringOptions, ...strings: Array
  * @param comma String between all but the two last words
  * @param and String between two last words
  */
-export function commaPunctuate(words: any[], comma = ', ', and = ' and ') {
+export function commaPunctuate(words: readonly any[], comma = ', ', and = ' and ') {
   let result = ''
   words.forEach((word, i) => {
     word = word.trim()
