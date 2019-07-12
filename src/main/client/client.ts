@@ -74,8 +74,10 @@ export interface TwitchClientOptions {
   pingInterval?: number
   dupeAffix?: string
   maxMsgLength?: number
-  /** Send a message in channel when client is connected */
-  joinMessage?: null | {channelId: number, message: string}
+  /** Array of channelIds to join on startup */
+  join?: number[]
+  /** Send `message` in `channelId` when the channel is joined (active for 30 sec) */
+  joinMessage?: null | {[channelId: number]: string}
   readonly msgRLOpts?: DeepReadonly<RateLimiterOptions>
   readonly whisperRLOpts?: DeepReadonly<RateLimiterOptions | RateLimiterOptions[]>
 }
@@ -139,6 +141,7 @@ export default class TwitchClient {
       pingInterval: 60000,
       dupeAffix: ' 󠀀', // E0000,
       maxMsgLength: 499,
+      join: [],
       joinMessage: null,
       msgRLOpts: {
         duration: 30000,
@@ -565,7 +568,8 @@ export default class TwitchClient {
       case '001': // <prefix> 001 <you> :Welcome, GLHF!
         this.reconnects = 0
         this.ircLog('Bot is welcome')
-        this.join(Object.keys(this.clientData.channels).map(v => Number(v)))
+        this.join([...Object.keys(this.clientData.channels).map(v => Number(v)), ...this.opts.join])
+        this.opts.join = [] // Join only once
         this.emit('welcome')
         break
       case '002': // <prefix> 002 <you> :Your host is tmi.twitch.tv
@@ -600,9 +604,9 @@ export default class TwitchClient {
           this.ids[channel] = channelId
           this.api.loadChannelCache(channelId)
           this.emit('join', channelId)
-          if (this.opts.joinMessage && this.opts.joinMessage.channelId === channelId) {
-            this.chat(channelId, this.opts.joinMessage.message)
-            this.opts.joinMessage = null
+          if (this.opts.joinMessage && this.opts.joinMessage[channelId]) {
+            this.chat(channelId, this.opts.joinMessage[channelId])
+            delete this.opts.joinMessage[channelId]
           }
         }
         this.userJoin(channelId, msg.user || 'undefined')

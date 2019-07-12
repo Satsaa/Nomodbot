@@ -2,19 +2,21 @@ import { ChildProcess, fork } from 'child_process'
 import path from 'path'
 
 import deepClone from './lib/deepClone'
+import { removeOption } from './lib/args'
+import { rules } from './argRules'
 
 interface ManagerOptions {
   childPath?: string
   args?: string[]
   /** Exit process if restarting too often */
   minRestartInterval?: number
-  autoRestart?: boolean
+  noAutoRestart?: boolean
   autoRestartNext?: boolean
 }
 
 export class Manager {
   public opts: Required<ManagerOptions>
-  private args: string[]
+  private extraArgs: string[]
   private child: ChildProcess
   private lastRestart: number
 
@@ -22,16 +24,18 @@ export class Manager {
     console.log('Manager started')
     this.opts = {
       childPath: path.join(__dirname, '/index'),
-      args: [],
+      args: process.argv,
       minRestartInterval: 10 * 1000,
-      autoRestart: true,
+      noAutoRestart: false,
       autoRestartNext: false,
       ...deepClone(options),
     }
 
-    this.args = []
+    this.extraArgs = []
 
     this.child = fork(this.opts.childPath, this.getArgs(), { cwd: process.cwd(), stdio: 'inherit' })
+    this.opts.args = removeOption('join-message', this.opts.args, rules)
+    this.opts.args = removeOption('manager', this.opts.args, rules)
     console.log('Child birth')
 
     this.lastRestart = 0
@@ -55,13 +59,13 @@ export class Manager {
           this.opts.autoRestartNext = typeof val === undefined ? true : val
           break
         case 'AUTO_RESTART':
-          this.opts.autoRestart = typeof val === undefined ? true : val
+          this.opts.noAutoRestart = typeof val === undefined ? false : !val
           break
-        case 'SET_ARGS':
-          this.args = Array.isArray(val) ? val : []
+        case 'REMOVE_ARG':
+          this.extraArgs = removeOption(val, this.extraArgs, rules)
           break
         case 'PUSH_ARGS':
-          if (Array.isArray(val)) this.args.push(...val.map(v => `${v}`))
+          if (Array.isArray(val)) this.extraArgs.push(...val.map(v => `${v}`))
           break
         default:
           console.log('Invalid message')
@@ -76,7 +80,7 @@ export class Manager {
 
   private onChildClose(this: Manager) {
     console.log('Child death')
-    if (this.opts.autoRestart || this.opts.autoRestartNext) {
+    if (!this.opts.noAutoRestart || this.opts.autoRestartNext) {
       this.opts.autoRestartNext = false
       this.gracedBirth()
     } else {
@@ -113,13 +117,13 @@ export class Manager {
         this.lastRestart = Date.now()
         this.child = fork(this.opts.childPath, this.getArgs(), { cwd: process.cwd(), stdio: 'inherit' })
         console.log('Child birth')
-        this.args = []
+        this.extraArgs = []
         this.registerEvents()
       }, 1000)
     }
   }
 
   private getArgs(this: Manager) {
-    return [...this.opts.args, ...this.args]
+    return [...this.opts.args, ...this.extraArgs]
   }
 }

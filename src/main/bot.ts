@@ -5,11 +5,10 @@ import deepClone from './lib/deepClone'
 import * as secretKey from './lib/secretKey'
 import { onExit } from './lib/util'
 import ParamValidator from './paramValidator'
-import Args from './lib/args'
+import { getArgs } from './argRules'
 
 export interface BotOptions {
   masters: number[]
-  args: Args
 }
 
 export default class Bot {
@@ -18,15 +17,21 @@ export default class Bot {
   private opts: Required<BotOptions>
   private commander: Commander
   private validator?: ParamValidator
+  private args: ReturnType<typeof getArgs>
 
   constructor(options: BotOptions) {
     onExit(this.onExit.bind(this))
 
+    this.args = getArgs()
+    if (Array.isArray(this.args)) throw this.args
+
     // Launch args
-    let joinMessage = null
-    if (options.args.args['join-message']) {
-      const split: string[] = options.args.args['join-message'][0].split(/:/)
-      joinMessage = { channelId: ~~split[0], message: split.slice(1).join(' ').replace(/\_/g, ' ') }
+    const joinMessage: {[channelId: number]: string} = {}
+    if (this.args.args['join-message']) {
+      for (const element of this.args.args['join-message']) {
+        const split: string[] = element.split(/:/)
+        joinMessage[~~split[0]] = split.slice(1).join(':').replace(/(?<!\\)_/g, ' ').replace(/\\_/g, '_')
+      }
     }
     this.opts = {
       masters: [],
@@ -56,6 +61,7 @@ export default class Bot {
       dataRoot: './data/',
       logInfo: true,
       // logAll: true,
+      join: this.args.args['join-channel'] || [],
       joinMessage,
     })
 

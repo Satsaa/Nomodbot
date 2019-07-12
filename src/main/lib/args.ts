@@ -1,76 +1,235 @@
-import { uniquify } from './util'
+import { uniquify, commaPunctuate, addArticle } from './util'
 
 export interface ArgsOptions {
   /** Use these arguments instead of `process.argv` */
-  args?: string[]
-  /** Output errors and exit if errors are encountered */
-  strict?: boolean
-  /** Don't use builtin help functionality */
-  noHelp?: boolean
+  readonly args?: readonly string[]
+  /** Don't use builtin help functionality. Process exits if --help is used */
+  readonly noHelp?: boolean
   /** Don't show usage with --help with no value */
-  smallHelp?: boolean
+  readonly smallHelp?: boolean
   /** Extra messages shown at the bottom when using --help with no value */
-  helpUsage?: string[]
+  readonly helpUsage?: readonly string[]
+  /** Put extra values in to strays instead of returning errors */
+  readonly allowExtraValues?: boolean
   /** Rules and more for arguments */
-  rules: {
-    [main: string]: {
+  readonly rules: {
+    readonly [main: string]: {
       /** Secondary command aliases */
-      aliases?: string[]
+      readonly aliases?: readonly string[]
       /** Mix of argument usage and usage description */
-      usage?: string[]
-      /** Require value to match provided type */
-      value?: 'any' | 'number' | 'integer' | 'boolean'
-      /** Require value to be defined */
-      requireValue?: boolean
-      /** Require that no value is defined */
-      noValue?: boolean
+      readonly usage?: readonly string[]
+      /** 
+       * Require value to match provided type. Provide an array of strings to restrict values.
+       * Values are handled as strings by default 
+       * 
+       * When a function is provided, each value is validated by it.
+       * If the function returns undefined the value is rejected, otherwise the return value replaces the value.
+       * Use `typeError` for custom errors when the validator function rejects the value.
+       * 
+       * Use *const* for stricter return types e.g. ['a', 'b'] **as const**.
+       */
+      readonly type?: 'number' | 'integer' | 'boolean' | readonly string[] | ((v: string) => any)
+      /** If a validator function was defined for `type` and the value is rejected, give this error message  */
+      readonly typeError?: string
+      /** Value requirements. Optional is default */
+      readonly value?: 'required' | 'optional' | 'never'
+      /** Whether or not to accept multiple values */
+      readonly multi?: boolean
       /** Require other arguments to be present. Use main names */
-      requireArgs?: string[]
+      readonly requireArgs?: readonly string[]
     }
   }
 }
 
+type Multize<T, M> = M extends true ? T[] : [T]
 
-interface Result {
-  /** Arguments and their values */
-  args: {[arg: string]: string[]}
-  /** Values that weren't paired with an option */
-  strays: string[]
-  /** Errors encountered */
-  errors: string[]
-}
+type Optionalize<T1, V, M> =
+  V extends 'required' ? Multize<T1, M>
+    : V extends 'optional' ? Multize<T1, M> | []
+      : V extends 'never' ? []
+        : Multize<T1, M> | []
+
+type Validitize<T extends (v: string) => any, V, M> =
+  keyof ReturnType<T> extends any ? Optionalize<Exclude<ReturnType<T>, undefined>, V, M>
+    : keyof ReturnType<T> extends undefined ? Optionalize<Exclude<ReturnType<T>, undefined>, V, M>
+      : Multize<ReturnType<T>, M>
+
+type Typify<T, V, M> =
+  T extends 'number' ? Optionalize<number, V, M>
+    : T extends 'integer' ? Optionalize<number, V, M>
+      : T extends 'boolean' ? Optionalize<boolean, V, M>
+        : T extends readonly string[] ? Optionalize<T[number], V, M>
+          : T extends (v: string) => any ? Validitize<T, V, M>
+            : Optionalize<string, V, M>
 
 /**
- * Parses the current process' arguments and handles --help  
+ * Parses command line arguments. Tries to follow posix conventions.  
+ * Syntax is like `-o` *value* `--option` *value*. --option=*value* is not supported.  
+ * @param options
+ * @return array of errors or object with `args` and `strays` properties:  
+ * `args`: Contains array of values (0 or more) for every option defined in the arguments.  
+ * `strays`: Array of arguments that did not get paired with an option.  
  */
-export default class Args {
-  public options: ArgsOptions;
-  public args: Result['args'];
-  public strays: Result['strays'];
-  public errors: Result['errors'];
-  constructor(options: ArgsOptions) {
-    this.options = options
+export default function parse<T extends ArgsOptions>(options: T | ArgsOptions): string[] | {
+  /** Arguments and their values */
+  args: { [P in keyof T['rules']]?: Typify<T['rules'][P]['type'], T['rules'][P]['value'], T['rules'][P]['multi']> }
+  /**
+   * Values that weren't paired with an option.  
+   * Usually contains the target path and possibly extra values.
+   */
+  strays: string[]
+} {
+  const result: { args: {[arg: string]: any[]}, strays: string[] } = { args: {}, strays: [] }
+  const errors = []
 
-    const result = this.parse(options)
-    this.args = result.args
-    this.strays = result.strays
-    this.errors = result.errors
-
-    if (options.strict && result.errors.length) {
-      console.log(result.errors.join('\n'))
-      process.exit(1)
+  const aliasSpread: {[alias: string]: ArgsOptions['rules'][number]} = {}
+  for (const main in options.rules) {
+    const arg = options.rules[main]
+    aliasSpread[main] = arg
+    if (!arg.aliases) continue
+    for (const alias of arg.aliases) {
+      aliasSpread[alias] = arg
     }
+  }
 
-    if (!options.noHelp && result.args.help) {
-      this.help(result.args.help[0])
+  let prevOpt: undefined | string
+  for (const arg of options.args || process.argv) {
+    if (arg.startsWith('-') && !arg.startsWith('--')) { // Short argument(s)
+      if (arg.length === 1) { // Invalid
+        errors.push('Invalid argument "-"')
+        prevOpt = undefined
+      } else if (arg.length === 2) { // Single (value allowed)
+        const pure = arg.slice(1)
+        if (getMain(pure)) result.args[getMain(pure)!] = result.args[getMain(pure)!] || [] // Preserve
+        else errors.push(`-${pure} unknown argument`)
+        prevOpt = getMain(pure) || pure
+      } else { // Multi (-abcdef)
+        for (const char of arg.slice(1)) {
+          if (getMain(char)) result.args[getMain(char)!] = result.args[getMain(char)!] || [] // Preserve
+          else errors.push(`-${char} unknown argument`)
+          prevOpt = undefined
+        }
+      }
+    } else if (arg.startsWith('--')) { // Long argument
+      if (arg.length === 2) { // Invalid
+        errors.push('Invalid argument "--"')
+        prevOpt = undefined
+      } else { // Valid
+        const pure = arg.slice(2)
+        if (getMain(pure)) result.args[getMain(pure)!] = result.args[getMain(pure)!] || [] // Preserve
+        else errors.push(`--${pure} unknown argument`)
+        prevOpt = getMain(pure) || pure
+      }
+    } else if (prevOpt) { // Value
+      result.args[prevOpt].push(arg)
+    } else { // Stray
+      result.strays.push(arg)
     }
+  }
+
+
+  for (const main in result.args) {
+    if (options.rules[main]) {
+      const rule = options.rules[main]
+
+      if (!rule.multi && result.args[main].length > 1) {
+        if (!options.allowExtraValues) errors.push(`${getSuffix(main)}${main} does not accept multiple values`)
+        result.strays.push(...result.args[main].splice(1))
+      }
+
+      if (rule.value === 'never' && result.args[main].length) errors.push(`${getSuffix(main)}${main} requires no value`)
+      if (rule.value === 'required' && !result.args[main].length) {
+        if (Array.isArray(rule.type)) {
+          errors.push(`${getSuffix(main)}${main} requires a value that is "${commaPunctuate(rule.type, '", "', '" or "')}"`)
+        } else if (typeof rule.type === 'string') {
+          errors.push(`${getSuffix(main)}${main} requires ${addArticle(rule.type)} value`)
+        } else {
+          errors.push(`${getSuffix(main)}${main} requires a value`)
+        }
+      }
+
+      if (rule.requireArgs) {
+        for (const req of rule.requireArgs) {
+          if (!result.args[req]) errors.push(`${getSuffix(main)}${main} requires ${getSuffix(req)}${req} to be present`)
+        }
+      }
+
+      if (rule.type) {
+        const vals: any[] = []
+        for (const value of result.args[main]) {
+          switch (typeof rule.type) {
+            case 'function': {
+              const res = rule.type(value)
+              if (res === undefined) errors.push(rule.typeError || `Value "${value}" is invalid for ${getSuffix(main)}${main}`)
+              vals.push(res)
+              break
+            }
+            case 'object': // Array
+              if (!rule.type.includes(value)) {
+                if (rule.multi) errors.push(`Values for ${getSuffix(main)}${main} must be "${commaPunctuate(rule.type, '", "', '" or "')}"`)
+                else errors.push(`Value for ${getSuffix(main)}${main} must be "${commaPunctuate(rule.type, '", "', '" or "')}"`)
+              }
+              vals.push(value)
+              break
+            case 'string':
+              switch (rule.type) {
+                case 'number':
+                  if (!value.match(/^\d+(.?\d+)?$/)) {
+                    if (rule.multi) errors.push(`Values for ${getSuffix(main)}${main} must be numbers`)
+                    else errors.push(`Value for ${getSuffix(main)}${main} must be a number`)
+                  }
+                  vals.push(Number(value))
+                  break
+                case 'integer':
+                  if (!value.match(/\d+/)) {
+                    if (rule.multi) errors.push(`Values for ${getSuffix(main)}${main} must be integers`)
+                    else errors.push(`Value for ${getSuffix(main)}${main} must be an integer`)
+                  }
+                  vals.push(~~value)
+                  break
+                case 'boolean':
+                  if (value !== 'true' && value !== 'false' && value !== '1' && value !== '0') {
+                    if (rule.multi) errors.push(`Values for ${getSuffix(main)}${main} must be booleans`)
+                    else errors.push(`Value for ${getSuffix(main)}${main} must be a boolean`)
+                  }
+                  vals.push(value === 'true' || value === '1')
+                  break
+              }
+              break
+          }
+        }
+        result.args[main] = vals
+      }
+    }
+  }
+
+
+  if (errors.length) {
+    return uniquify(errors, true)
+  }
+
+  if (!options.noHelp && result.args.help) {
+    help(result.args.help[0])
+  }
+
+  return result as any
+
+  function getMain(aliasOrMain: string) {
+    if (!options.noHelp && (aliasOrMain === 'help' || aliasOrMain === 'h')) return 'help'
+    return getKeyByValue(options.rules, aliasSpread[aliasOrMain])
+  }
+  function getKeyByValue(object: {[x: string]: any}, value: any) {
+    return Object.keys(object).find(key => object[key] === value)
+  }
+  function getSuffix(main: string) {
+    return main.length === 1 ? '-' : '--'
   }
 
   /** Make help string */
-  public help(target?: string) {
+  function help(target?: string) {
     const aliasSpread: {[alias: string]: ArgsOptions['rules'][number]} = {}
-    for (const main in this.options.rules) {
-      const arg = this.options.rules[main]
+    for (const main in options.rules) {
+      const arg = options.rules[main]
       aliasSpread[main] = arg
       if (!arg.aliases) continue
       for (const alias of arg.aliases) {
@@ -88,14 +247,14 @@ export default class Args {
         process.exit(1)
       }
     } else {
-      if (this.options.smallHelp) { // Small list
+      if (options.smallHelp) { // Small list
         console.log(`Available commands:\n${fit(Object.keys(aliasSpread))}`)
       } else { // Big list with usage
-        for (const main in this.options.rules) {
+        for (const main in options.rules) {
           console.log(`\n${' '.repeat(4)}${main.padEnd(16)}${(aliasSpread[main].usage || []).join(`\n${' '.repeat(20)}`)}`)
         }
       }
-      if (this.options.helpUsage) console.log(`\n${this.options.helpUsage.join('\n')}`)
+      if (options.helpUsage) console.log(`\n${options.helpUsage.join('\n')}`)
     }
     process.exit(0)
 
@@ -128,110 +287,57 @@ export default class Args {
       return res
     }
   }
+}
 
+/** Creates an array where `main` and **all** immediately following values are removed from `args`. */
+export function removeOption(main: string, args: string[], rules: ArgsOptions) {
+  const aliases = [...rules.rules[main].aliases || [], main]
 
-  /**
-   * Parser for command line arguments  
-   * Tries to follow the posix conventions  
-   * Syntax is -o (value) --option (value). --option=value is not supported  
-   * @param args Array of string arguments  
-   * @param options   
-   */
-  private parse(options: ArgsOptions): Result {
-    const result: Result = { args: {}, strays: [], errors: [] }
+  const res = []
+  let removeNext = false
 
-
-    const aliasSpread: {[alias: string]: ArgsOptions['rules'][number]} = {}
-    for (const main in options.rules) {
-      const arg = options.rules[main]
-      aliasSpread[main] = arg
-      if (!arg.aliases) continue
-      for (const alias of arg.aliases) {
-        aliasSpread[alias] = arg
-      }
-    }
-
-    let prevOpt: undefined | string
-    for (const arg of options.args || process.argv) {
-      if (arg.startsWith('-') && !arg.startsWith('--')) { // Short argument(s)
-        if (arg.length === 1) { // Invalid
-          result.errors.push('Invalid argument "-"')
-          prevOpt = undefined
-        } else if (arg.length === 2) { // Single (value allowed)
-          const pure = arg.slice(1)
-          if (getMain(pure)) result.args[getMain(pure)!] = result.args[getMain(pure)!] || [] // Preserve
-          else result.errors.push(`-${pure} unknown argument`)
-          prevOpt = getMain(pure) || pure
-        } else { // Multi (-abcdef)
-          for (const char of arg.slice(1)) {
-            if (getMain(char)) result.args[getMain(char)!] = result.args[getMain(char)!] || [] // Preserve
-            else result.errors.push(`-${char} unknown argument`)
-            prevOpt = undefined
+  for (const arg of args) {
+    if (arg.startsWith('-')) {
+      if (arg.startsWith('--')) {
+        if (aliases.includes(arg.slice(2))) {
+          removeNext = true
+        } else {
+          res.push(arg)
+          removeNext = false
+        }
+      } else {
+        const matches = []
+        for (const char of arg.slice(1)) {
+          if (aliases.includes(char)) {
+            matches.push(char)
           }
         }
-      } else if (arg.startsWith('--')) { // Long argument
-        if (arg.length === 2) { // Invalid
-          result.errors.push('Invalid argument "--"')
-          prevOpt = undefined
-        } else { // Valid
-          const pure = arg.slice(2)
-          if (getMain(pure)) result.args[getMain(pure)!] = result.args[getMain(pure)!] || [] // Preserve
-          else result.errors.push(`--${pure} unknown argument`)
-          prevOpt = getMain(pure) || pure
-        }
-      } else if (prevOpt) { // Value
-        result.args[prevOpt].push(arg)
-      } else { // Stray
-        result.strays.push(arg)
-      }
-    }
-
-
-    for (const main in result.args) {
-      if (options.rules[main]) {
-        const rule = options.rules[main]
-        if (rule.noValue && result.args[main].length) result.errors.push(`${this.getSuffix(main)}${main} requires no value`)
-        if (rule.requireValue && !result.args[main].length) result.errors.push(`${this.getSuffix(main)}${main} requires a value`)
-
-        if (rule.requireArgs) {
-          for (const req of rule.requireArgs) {
-            if (!result.args[req]) result.errors.push(`${this.getSuffix(main)}${main} requires ${this.getSuffix(req)}${req} to be present`)
-          }
-        }
-
-        if (rule.value && rule.value !== 'any') {
-          for (const value of result.args[main]) {
-            switch (rule.value) { // 'any' | 'number' | 'integer' | 'boolean'
-              case 'number':
-                if (!value.match(/^\d+(.?\d+)?$/)) result.errors.push(`Values for ${this.getSuffix(main)}${main} must be numbers`)
-                break
-              case 'integer':
-                if (!value.match(/\d+/))result.errors.push(`Values for ${this.getSuffix(main)}${main} must be integers`)
-                break
-              case 'boolean':
-                if (value !== 'true' && value !== 'false') result.errors.push(`Values for ${this.getSuffix(main)}${main} must be booleans`)
-                break
+        if (arg.length > 2) {
+          if (matches.length) {
+            let _arg = arg
+            for (const match of matches) {
+              _arg = _arg.replace(match, '')
             }
+            if (_arg.length > 2) {
+              res.push(_arg)
+            } else {
+              res.push(_arg)
+              console.log(arg)
+              removeNext = true
+              continue
+            }
+          } else {
+            res.push(arg)
           }
+          removeNext = false
+        } else if (matches.length) {
+          removeNext = true
+        } else {
+          res.push(arg)
+          removeNext = false
         }
       }
-    }
-
-
-    result.errors = uniquify(result.errors, true)
-
-    return result
-
-    function getMain(aliasOrMain: string) {
-      if (!options.noHelp && (aliasOrMain === 'help' || aliasOrMain === 'h')) return 'help'
-      return getKeyByValue(options.rules, aliasSpread[aliasOrMain])
-    }
-    function getKeyByValue(object: {[x: string]: any}, value: any) {
-      return Object.keys(object).find(key => object[key] === value)
-    }
+    } else if (!removeNext) { res.push(arg) }
   }
-
-  private getSuffix(main: string) {
-    return main.length === 1 ? '-' : '--'
-  }
+  return res
 }
