@@ -1,6 +1,6 @@
 import fs from 'fs'
 
-import * as afs from '../../main/lib/AtomicFS'
+import * as afs from '../../main/lib/atomicFS'
 import { PRIVMSG } from '../../main/client/parser'
 import { PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'

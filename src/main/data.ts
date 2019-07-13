@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events'
 import * as fs from 'fs'
 
-import * as afs from './lib/AtomicFS'
+import * as afs from './lib/atomicFS'
 import TwitchClient from './client/client'
 import defaultKeys from './lib/defaultKeys'
 

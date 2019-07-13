@@ -5,7 +5,7 @@ import path from 'path'
 
 import deepClone from '../lib/deepClone'
 import defaultKeys from '../lib/defaultKeys'
-import * as afs from '../lib/AtomicFS'
+import * as afs from '../lib/atomicFS'
 import * as util from '../lib/util'
 
 interface GenericCache {

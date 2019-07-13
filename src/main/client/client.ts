@@ -5,7 +5,7 @@ import { parse as pathParse } from 'path'
 import StrictEventEmitter from 'strict-event-emitter-types'
 import WebSocket from 'ws'
 
-import * as afs from '../lib/AtomicFS'
+import * as afs from '../lib/atomicFS'
 import deepClone from '../lib/deepClone'
 import defaultKeys from '../lib/defaultKeys'
 import eventTimeout from '../lib/eventTimeout'
