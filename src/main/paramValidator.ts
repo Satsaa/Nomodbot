@@ -1,7 +1,7 @@
 
 import TwitchClient from './client/client'
 import Commander, { PluginInstance } from './commander'
-import { addArticle, commaPunctuate, plural, uniquify } from './lib/util'
+import { addArticle, commaPunctuate, plural, deduplicate } from './lib/util'
 
 interface Bit {
   // Whether or not the field is optional
@@ -152,7 +152,7 @@ export default class ParamValidator {
             else notFound.push(users[user])
           }
 
-          const allNotFound = uniquify([...notFound, ...dupUserIndexes.filter(i => !res[words[i]])], true).map(v => v + 1)
+          const allNotFound = deduplicate([...notFound, ...dupUserIndexes.filter(i => !res[words[i]])], true).map(v => v + 1)
           if (notFound.length) return { pass: false, message: `Cannot find that ${plural(allNotFound.length, 'user', true)} (param ${allNotFound.join('|')})` }
 
           for (const index of dupUserIndexes) {
@@ -219,7 +219,7 @@ export default class ParamValidator {
         }
       }
     }
-    possibleCmdParams = uniquify(possibleCmdParams, false)
+    possibleCmdParams = deduplicate(possibleCmdParams, false)
 
     // Get data for no param message
     const possibleNames = []

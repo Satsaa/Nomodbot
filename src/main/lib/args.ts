@@ -1,4 +1,4 @@
-import { uniquify, commaPunctuate, addArticle } from './util'
+import { deduplicate, commaPunctuate, addArticle } from './util'
 
 export interface ArgsOptions {
   /** Use these arguments instead of `process.argv` */
@@ -25,8 +25,6 @@ export interface ArgsOptions {
        * When a function is provided, each value is validated by it.
        * If the function returns undefined the value is rejected, otherwise the return value replaces the value.
        * Use `typeError` for custom errors when the validator function rejects the value.
-       * 
-       * Use *const* for stricter return types e.g. ['a', 'b'] **as const**.
        */
       readonly type?: 'number' | 'integer' | 'boolean' | readonly string[] | ((v: string) => any)
       /** If a validator function was defined for `type` and the value is rejected, give this error message  */
@@ -65,9 +63,9 @@ type Typify<T, V, M> =
 /**
  * Parses command line arguments. Tries to follow posix conventions.  
  * Syntax is like `-o` *value* `--option` *value*. --option=*value* is not supported.  
- * @param options
+ * @param options Use *const* `{ args:[], rules: { ... } } as const`
  * @return array of errors or object with `args` and `strays` properties:  
- * `args`: Contains array of values (0 or more) for every option defined in the arguments.  
+ * `args`: Contains an array of values (0 or more) for every defined option.  
  * `strays`: Array of arguments that did not get paired with an option.  
  */
 export default function parse<T extends ArgsOptions>(options: T | ArgsOptions): string[] | {
@@ -83,14 +81,23 @@ export default function parse<T extends ArgsOptions>(options: T | ArgsOptions): 
   const errors = []
 
   const aliasSpread: {[alias: string]: ArgsOptions['rules'][number]} = {}
+  const aliases: string[] = []
   for (const main in options.rules) {
+    aliases.push(main)
+
     const arg = options.rules[main]
     aliasSpread[main] = arg
     if (!arg.aliases) continue
     for (const alias of arg.aliases) {
+      aliases.push(alias)
       aliasSpread[alias] = arg
     }
   }
+  if (deduplicate(aliases, true).length !== aliases.length) {
+    errors.push('Invalid argument "-"')
+  }
+
+  const a = deduplicate([1, 2, 3] as const, true)
 
   let prevOpt: undefined | string
   for (const arg of options.args || process.argv) {
@@ -205,7 +212,7 @@ export default function parse<T extends ArgsOptions>(options: T | ArgsOptions): 
 
 
   if (errors.length) {
-    return uniquify(errors, true)
+    return deduplicate(errors, true)
   }
 
   if (!options.noHelp && result.args.help) {

@@ -25,8 +25,16 @@ export default class Bot {
     this.args = getArgs()
     if (Array.isArray(this.args)) throw this.args
 
-    // Launch args
     const joinMessage: {[channelId: number]: string} = {}
+    if (this.args.args.global) {
+      const _global = global as any
+      if (_global[this.args.args.global[0] || 'bot']) {
+        throw new Error(`global[${this.args.args.global[0] || 'bot'}] is already defined, define a different value for --global`)
+      } else {
+        _global[this.args.args.global[0] || 'bot'] = this
+      }
+    }
+
     if (this.args.args['join-message']) {
       for (const element of this.args.args['join-message']) {
         const split: string[] = element.split(/:/)

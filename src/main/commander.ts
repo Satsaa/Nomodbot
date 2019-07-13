@@ -524,8 +524,8 @@ export default class Commander {
       }
     }
 
-    util.uniquify(reqPlugin, true)
-    util.uniquify(reqData, true)
+    util.deduplicate(reqPlugin, true)
+    util.deduplicate(reqData, true)
     if (reqPlugin.length && reqData.length) {
       return { success: false, code: 'REQUIRED', message: `Other plugins require this plugin (${reqPlugin.join(', ')}) and data created by this plugin (${reqData.join(', ')})` }
     } else if (reqPlugin.length) {

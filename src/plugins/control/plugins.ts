@@ -31,7 +31,7 @@ export class Instance implements PluginInstance {
     let [type]: [string | undefined] = params
 
     let pluginOpts = this.l.getPlugins()
-    const availableTypes = this.l.u.uniquify(pluginOpts.map(v => v.type), true)
+    const availableTypes = this.l.u.deduplicate(pluginOpts.map(v => v.type), true)
     if (type) {
       type = type.toLowerCase()
       pluginOpts = pluginOpts.filter(v => v.type === type)

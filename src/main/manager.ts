@@ -5,13 +5,15 @@ import deepClone from './lib/deepClone'
 import { removeOption } from './lib/args'
 import { rules } from './argRules'
 
-interface ManagerOptions {
+export interface ManagerOptions {
   childPath?: string
   args?: string[]
   /** Exit process if restarting too often */
   minRestartInterval?: number
   noAutoRestart?: boolean
   autoRestartNext?: boolean
+  /** Add --inspect flag to child processes */
+  inspect?: boolean
 }
 
 export class Manager {
@@ -28,14 +30,19 @@ export class Manager {
       minRestartInterval: 10 * 1000,
       noAutoRestart: false,
       autoRestartNext: false,
+      inspect: false,
       ...deepClone(options),
     }
 
     this.extraArgs = []
 
-    this.child = fork(this.opts.childPath, this.getArgs(), { cwd: process.cwd(), stdio: 'inherit' })
-    this.opts.args = removeOption('join-message', this.opts.args, rules)
+    console.log(process.execArgv)
+    this.opts.args.splice(0, 2) // Remove target path
+    console.log(this.getArgs())
+    this.opts.args = removeOption('inspect-child', this.opts.args, rules)
     this.opts.args = removeOption('manager', this.opts.args, rules)
+    this.child = fork(this.opts.childPath, this.getArgs(), { cwd: process.cwd(), stdio: 'inherit', execArgv: this.getExecArgs() })
+    this.opts.args = removeOption('join-message', this.opts.args, rules)
     console.log('Child birth')
 
     this.lastRestart = 0
@@ -115,7 +122,7 @@ export class Manager {
       }
       setTimeout(() => {
         this.lastRestart = Date.now()
-        this.child = fork(this.opts.childPath, this.getArgs(), { cwd: process.cwd(), stdio: 'inherit' })
+        this.child = fork(this.opts.childPath, this.getArgs(), { cwd: process.cwd(), stdio: 'inherit', execArgv: this.getExecArgs() })
         console.log('Child birth')
         this.extraArgs = []
         this.registerEvents()
@@ -124,6 +131,11 @@ export class Manager {
   }
 
   private getArgs(this: Manager) {
+    console.log([...this.opts.args, ...this.extraArgs])
     return [...this.opts.args, ...this.extraArgs]
+  }
+
+  private getExecArgs(this: Manager) {
+    return this.opts.inspect ? ['--inspect'] : []
   }
 }

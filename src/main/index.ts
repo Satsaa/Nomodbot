@@ -1,15 +1,18 @@
 import Bot from './bot'
-import { Manager } from './manager'
+import { Manager, ManagerOptions } from './manager'
 import { getArgs } from './argRules'
 
 const args = getArgs()
 if (Array.isArray(args)) throw args
 
-const test = args.args.manager
-
 if (args.args.manager && !process.send) {
-  console.log('Launched managed bot instance')
-  void new Manager(args.args['no-auto-restart'] ? { noAutoRestart: true } : undefined)
+  console.log('Launched using manager')
+
+  const opts: ManagerOptions = {
+    noAutoRestart: Boolean(args.args['no-auto-restart']),
+    inspect: Boolean(args.args['inspect-child']),
+  }
+  void new Manager(opts)
 } else {
   process.on('multipleResolves', (e, p, v) => {
     throw new Error(`Mutiple ${e}s\nvalue: ${v}`)
@@ -19,8 +22,4 @@ if (args.args.manager && !process.send) {
   })
 
   const bot = new Bot({ masters: [61365582] })
-  // Pass reference to Bot for debugging if not a managed instance
-  if (!process.send) {
-    console.log(bot)
-  }
 }

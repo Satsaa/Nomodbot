@@ -80,7 +80,7 @@ export function smartIndex(index: number, max: number | readonly any[] = Infinit
  * @param array Target array
  * @param table You are being forced to enable this for some arrays
  */
-export function uniquify<T extends any[]>(array: T, table: T extends (readonly boolean[] | readonly number[] | readonly string[]) ? true : false): T {
+export function deduplicate<S extends T[number], T extends readonly any[]>(array: T, table: T extends (readonly boolean[] | readonly number[] | readonly string[]) ? true : false): S[] {
   const result: any[] = []
   if (table) {
     const seen: {[x: string]: true} = {}
@@ -95,7 +95,7 @@ export function uniquify<T extends any[]>(array: T, table: T extends (readonly b
       seen.push(element)
     }
   }
-  return result as T
+  return result as S[]
 }
 
 /**
