@@ -1,4 +1,3 @@
-import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 import { timeDuration } from '../../main/lib/util'
@@ -30,7 +29,7 @@ export class Instance implements PluginInstance {
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
     const [_days]: [number | undefined] = params
-    const days = _days || 30
+    const days = _days || 7
 
     try {
       const recent = await this.l.api.recentBroadcasts(channelId)
@@ -38,11 +37,18 @@ export class Instance implements PluginInstance {
 
       const videos = recent.data.slice(0, days)
 
+      // Ignore identical stream dates
+      let dateString = ''
+      let _dateString = ''
+
       let total = 0
       let totalDuration = 0
       const clockAngles: number[] = []
       for (const video of videos) {
         const date = new Date(video.created_at)
+        dateString = _dateString
+        _dateString = date.toString()
+        if (dateString === _dateString) continue // Ignore additional streams from the same day
         clockAngles.push(date.getUTCHours() * 15 + date.getUTCMinutes() * (15 / 60))
         totalDuration += this.l.u.parseTimeStr(video.duration)
         total++

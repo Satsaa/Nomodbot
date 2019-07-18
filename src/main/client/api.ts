@@ -2,7 +2,7 @@ import fs from 'fs'
 import https from 'https'
 import path from 'path'
 
-
+import logger from '../logger'
 import deepClone from '../lib/deepClone'
 import defaultKeys from '../lib/defaultKeys'
 import * as afs from '../lib/atomicFS'
@@ -506,23 +506,23 @@ export default class TwitchApi {
           data += chunk
         }).on('end', () => {
           const result = JSON.parse(data)
-          console.log('Bearer refreshed')
+          logger.apiInfo('Bearer refreshed')
           this.bearer = result.access_token
           this.expire = Date.now() + result.expires_in * 1000
 
           const timeout = Math.min(2 ** 31 - 1, Math.max(this.expire - Date.now(), 5 * 60 * 1000))
-          console.log(`Next refresh in: ${util.timeUntil(Date.now() + Math.max(this.expire - Date.now(), 5 * 60 * 1000))}`)
+          logger.apiInfo(`Next refresh in: ${util.timeUntil(Date.now() + Math.max(this.expire - Date.now(), 5 * 60 * 1000))}`)
           if (!this.bearerTimeout) this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), timeout)
           this.blockBearerTimeout = false
         }).on('error', (err) => {
-          console.error('Bearer refresh failed')
-          console.error(err)
+          logger.apiError('Bearer refresh failed')
+          logger.apiError(err)
           if (!this.bearerTimeout) this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), 1 * 60 * 1000)
           this.blockBearerTimeout = false
         })
       } else {
-        console.error('Bearer refresh failed')
-        console.error(res.statusMessage)
+        logger.apiError('Bearer refresh failed')
+        logger.apiError(res.statusMessage)
         if (!this.bearerTimeout) this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), 1 * 60 * 1000)
         this.blockBearerTimeout = false
       }
@@ -532,7 +532,7 @@ export default class TwitchApi {
   private get(path: string, params: {[param: string]: any}): Promise<object | string | undefined> {
     return new Promise((resolve) => {
       if (this.rlRemaining < 3 && this.rlReset > Date.now()) {
-        console.log('API being ratelimited')
+        logger.apiInfo('API being ratelimited')
         return
       }
       if (!path.endsWith('?')) path += '?'
@@ -546,7 +546,7 @@ export default class TwitchApi {
         else queryP += `${param}=${encodeURIComponent(paramVal)}&`
       }
 
-      console.log(path + queryP)
+      logger.apiDebug(path + queryP)
 
       const options = {
         host: 'api.twitch.tv',
@@ -562,7 +562,7 @@ export default class TwitchApi {
       https.get(options, (res) => {
         if (typeof res.headers['ratelimit-limit'] === 'string') this.rlLimit = ~~res.headers['ratelimit-limit']!
         if (typeof res.headers['ratelimit-remaining'] === 'string') this.rlRemaining = ~~res.headers['ratelimit-remaining']!
-        console.log(res.headers['ratelimit-remaining'])
+        logger.apiDebug(`Ratelimit remaning: ${res.headers['ratelimit-remaining']}`)
         if (typeof res.headers['ratelimit-reset'] === 'string') this.rlReset = ~~res.headers['ratelimit-reset']! * 1000
         if (res.statusCode === 200) { // success!
           let data = ''
@@ -572,7 +572,7 @@ export default class TwitchApi {
             const result = JSON.parse(data)
             resolve(result)
           }).on('error', (err) => {
-            console.error(err)
+            logger.apiError(err)
             resolve(undefined)
           })
         } else {
@@ -599,7 +599,7 @@ export default class TwitchApi {
     if (generic.maxAge) if (cache.time + generic.maxAge > now) return // Too old
     if (generic.preferUpdate) if (this.rlRemaining < 3 && this.rlReset > now) return // Prefer update -> Check if possible
     if (cache.time + deprecate < now && (this.rlRemaining >= 3 || this.rlReset < now)) return // Timed update
-    console.log('cached')
+    logger.apiDebug('cached')
     return cache.res
   }
 
@@ -618,7 +618,7 @@ export default class TwitchApi {
         failed++
       }
     }
-    if (failed) console.log(`[TWITCHAPI] Skipped ${failed} ${util.plural(failed, 'users')} on apiData.json save`)
+    if (failed) logger.apiInfo(`Skipped ${util.plural(failed, `${failed} user`)} on apiData.json save`)
 
     // Save API data
     const data: ApiData = { bearer: this.bearer || null, expire: this.expire, users: saveData }

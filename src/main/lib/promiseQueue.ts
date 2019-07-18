@@ -1,4 +1,4 @@
-
+import { log } from '../logger'
 interface Entry {
   func: (...a: any[]) => Promise<any>
   args: any[]
@@ -50,7 +50,7 @@ export default class PromiseQueue {
   }
 
   private async loop() {
-    // console.log('Loop start')
+    log('debug', 'Loop start')
     while (this.stack.length) {
       const entry = this.stack[0]
 
@@ -63,6 +63,10 @@ export default class PromiseQueue {
         entry.reject(err)
       }
     }
-    // console.log('Loop end')
+    log('debug', 'Loop end')
   }
 }
+console.log(1)
+console.log(undefined)
+console.log('')
+console.log(1)

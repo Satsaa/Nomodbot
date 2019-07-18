@@ -1,4 +1,5 @@
 import * as path from 'path'
+import { error } from 'util'
 
 import TwitchClient from './client/client'
 import { IrcMessage, PRIVMSG } from './client/parser'
@@ -8,6 +9,7 @@ import * as util from './lib/util'
 import { readDirRecursive } from './lib/util'
 import ParamValidator from './paramValidator'
 import PluginLibrary from './pluginLib'
+import logger from './logger'
 
 export type PluginOptions = (Command | Controller) & PluginBase
 
@@ -58,7 +60,7 @@ export interface Command {
    */
   disableMention?: true
   /** Disable removal of @user and the following words when calling this command */
-  unignoreMentions?: true
+  allowMentions?: true
 }
 
 interface IsPermittedOptions {
@@ -369,7 +371,7 @@ export default class Commander {
         // Handled above
         return false
       default:
-        console.warn(`Unknown permission level: ${alias.userlvl}`)
+        logger.warn(`Unknown permission level: ${alias.userlvl}`)
         return true
     }
   }
@@ -464,7 +466,7 @@ export default class Commander {
         this.instantiatePlugin(options, _plugin.Instance) // Maybe this should be awaited? !!!
         return options
       } else {
-        throw console.error(`Plugin lacks options export: ${path}`)
+        throw new Error(`Plugin lacks options export: ${path}`)
       }
     }
   }
@@ -603,13 +605,13 @@ export default class Commander {
   }
 
   private async instantiatePlugin(options: PluginOptions, instantiator: new(pluginLib: PluginLibrary) => PluginInstance) {
-    // console.log(`Instantiating ${options.id}`)
+    // logger.info(`Instantiating ${options.id}`)
     let res: Array<object | undefined> = []
     // Wait for requirements. Do not wait for channel data requirements
     if (options.requireDatas && options.requireDatas.map(v => typeof v === 'string').length === 3) {
       res = await Promise.all(options.requireDatas.map(v => this.data.waitData(v[0], v[1], v[2] || 3000)))
       if (res.some(v => v === undefined)) { // A wait promise timedout
-        console.log(`${options.id} instantiation still waiting for data.`)
+        logger.warn(`${options.id} instantiation still waiting for data.`)
         await Promise.all(options.requireDatas.map(v => this.data.waitData(v[0], v[1])))
       }
     }
@@ -653,13 +655,12 @@ export default class Commander {
 
     const instance = this.instances[alias.target]
     const plugin = this.plugins[alias.target]
-    if (!plugin || !instance) return // Unloaded or removed
-    if (plugin.type !== 'command') return console.log(`Trying to call a non command: ${alias.target}`)
-    if (!plugin.unignoreMentions) message = message.replace(/ @.*/, '') // Remove @user... from command calls
+    if (!plugin || !instance) return logger.info('Nonexisting target:', alias.target)
+    if (plugin.type !== 'command') return logger.info(`Tryed to call a non command plugin: ${alias.target}`)
+    if (!plugin.allowMentions) message = message.replace(/ @.*/, '') // Remove @user... from command calls
     words = message.split(' ')
     // Make sure the plugin is loaded
-    if (!instance) return console.log(`Cannot call unloaded command: ${alias.target}`)
-    if (!this.plugins[alias.target]) return console.log(`Alias has an unknown target id ${alias.target}`)
+    if (!instance) return logger.info(`Cannot call unloaded command: ${alias.target}`)
     if (!instance.call) throw new Error(`No call function on command plugin: ${alias.target}`)
     // Check permissions (master users always have permissions)
     if (this.isPermitted(alias, userId, tags.badges)) {
@@ -692,7 +693,6 @@ export default class Commander {
 
           const extra: Extra = { alias, words, message, me, cooldown, irc }
           const res = await instance.call[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
-          // channelId: number, userId: number, words: string[], params: any[], extra: Extra
           if (res) this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
         } else if (instance.cooldown) {
           const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)

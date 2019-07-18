@@ -46,8 +46,14 @@ export const rules = {
     },
     'global': {
       aliases: ['g'],
-      usage: ['--global [<key>]', 'Set global[key] to bot instance. Defaults to global.bot'],
+      usage: ['--global [<key>]', 'Set global[key] to bot instance. Defaults to "bot".'],
       value: 'optional',
+    },
+    'preserve-log': {
+      aliases: ['p'],
+      usage: ['--preserve-log', 'Preserves line numbers in logs but disables saving of logs on disk.'],
+      value: 'optional',
+      type: 'boolean',
     },
   },
 } as const

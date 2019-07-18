@@ -6,6 +6,7 @@ import * as secretKey from './lib/secretKey'
 import { onExit } from './lib/util'
 import ParamValidator from './paramValidator'
 import { getArgs } from './argRules'
+import logger, { options as logOpts } from './logger'
 
 export interface BotOptions {
   masters: readonly number[]
@@ -24,6 +25,8 @@ export default class Bot {
 
     this.args = getArgs()
     if (Array.isArray(this.args)) throw this.args
+
+    if (this.args.args['preserve-log']) logOpts.noSave = true
 
     const joinMessage: {[channelId: number]: string} = {}
     if (this.args.args.global) {
@@ -67,8 +70,6 @@ export default class Bot {
       clientId,
       clientSecret,
       dataRoot: './data/',
-      logInfo: true,
-      // logAll: true,
       join: this.args.args['join-channel'] || [],
       joinMessage,
     })
@@ -83,7 +84,7 @@ export default class Bot {
 
     this.commander.init().then((pluginIds) => {
       this.client.connect()
-      console.log(`Instantiated plugins: ${pluginIds.join(', ')}`)
+      logger.info(`Instantiated plugins: ${pluginIds.join(', ')}`)
     })
   }
 

@@ -94,7 +94,7 @@ export default function parse<T extends ArgsOptions>(options: T | ArgsOptions): 
     }
   }
   if (deduplicate(aliases, true).length !== aliases.length) {
-    errors.push('Invalid argument "-"')
+    errors.push('Duplicate option defined in rules')
   }
 
   const a = deduplicate([1, 2, 3] as const, true)
@@ -329,7 +329,6 @@ export function removeOption(main: string, args: readonly string[], rules: ArgsO
               res.push(_arg)
             } else {
               res.push(_arg)
-              console.log(arg)
               removeNext = true
               continue
             }

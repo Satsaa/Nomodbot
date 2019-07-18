@@ -97,6 +97,16 @@ export function deduplicate<S extends T[number], T extends readonly any[]>(array
   }
   return result as S[]
 }
+/**
+ * Returns a new object with each value from `arr` as property with value `value`
+ * @param arr Source for properties
+ * @param value Value for each property
+ */
+export function ArrayToObject<T1 extends readonly any[], T2>(arr: T1, value: T2): {[P in T1[number]]: T2 } {
+  const res: any = {}
+  for (const element of arr) res[element] = value
+  return res
+}
 
 /**
  * Converts `ms` to an array of time units

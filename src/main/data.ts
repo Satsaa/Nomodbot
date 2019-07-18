@@ -4,6 +4,7 @@ import * as fs from 'fs'
 import * as afs from './lib/atomicFS'
 import TwitchClient from './client/client'
 import defaultKeys from './lib/defaultKeys'
+import logger from './logger'
 
 export default class Data extends EventEmitter {
   /** This data changes when events happen */
@@ -81,11 +82,11 @@ export default class Data extends EventEmitter {
             fs.writeFileSync(tempPath, JSON.stringify(data, null, 0))
             fs.renameSync(tempPath, path)
           } catch (err) {
-            console.error(new Error(`Failed to save ${subType}\\${name}:`))
-            console.error(err)
+            logger.error(`Failed to save ${subType}\\${name}:`)
+            logger.error(err)
           }
         } else {
-          console.error(new Error(`Failed to save ${subType}\\${name} because it's type was ${typeof data}`))
+          logger.error(new Error(`Failed to save ${subType}\\${name} because it's type was ${typeof data}`))
         }
       }
     }
@@ -100,7 +101,7 @@ export default class Data extends EventEmitter {
   public async save(subType: string | number, name: string, unload: boolean = false) {
     const data = this.getData(subType, name)
     if (typeof data !== 'object') {
-      console.error(new Error(`Failed to save ${subType}\\${name} because it's type was ${typeof data}`))
+      logger.warn(new Error(`Failed to save ${subType}\\${name} because it's type was ${typeof data}`))
       return false
     }
     try {
@@ -108,7 +109,7 @@ export default class Data extends EventEmitter {
       if (unload) this.delData(subType, name)
       return true
     } catch (err) {
-      console.log(`Could not save ${name}:`, err)
+      logger.warn(`Could not save ${name}:`, err)
       return false
     }
   }
@@ -244,10 +245,10 @@ export default class Data extends EventEmitter {
     for (const autoLoad of this.autoLoads) {
       if (this.data[channelId] && typeof this.data[channelId][autoLoad.name] === 'object') {
         this.save(channelId, autoLoad.name, true).catch((err) => {
-          console.log(`[Data.autoLoad] Error unloading ${channelId}`, err)
+          logger.error(`[Data.autoLoad] Error unloading ${channelId}`, err)
         })
       } else {
-        console.warn(`Already unloaded: ${channelId}/${autoLoad.name}`)
+        logger.warn(`Data already unloaded: ${channelId}/${autoLoad.name}`)
       }
     }
   }

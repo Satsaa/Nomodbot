@@ -1,4 +1,3 @@
-import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -44,7 +43,7 @@ export const options: PluginOptions = {
     'nother example',
   ],
   disableMention: true,
-  unignoreMentions: true,
+  allowMentions: true,
 }
 
 export class Instance implements PluginInstance {

@@ -1,7 +1,6 @@
 import { exec as _exec } from 'child_process'
 import util from 'util'
 
-import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -19,13 +18,14 @@ export const options: PluginOptions = {
   },
   help: [
     'Add a command: {alias} add <new command> <plugin>',
+    'Copy a command: {alias} copy <command> <new command>',
     'Delete a command: {alias} del <command>',
     'Edit a command: {alias} edit <command> <PLUGIN>',
-    'Copy a command: {alias} copy <command> <new command>',
     'Disable a command: {alias} disable <command>',
     'Enable or disable a command: {alias} enable|disable <command>',
     'Hide or unhide a command: {alias} hide|unhide <command>',
     'Modify the cooldowns of a command: {alias} set <command> cd|ucd <0-300>',
+    'Get a stat or all stats of command: {alias} get <command> cd|ucd',
   ],
 }
 
@@ -43,6 +43,7 @@ export class Instance implements PluginInstance {
     this.call = this.l.addCall(this, this.call, 'default', 'enable|disable <COMMAND>', this.callEnable)
     this.call = this.l.addCall(this, this.call, 'default', 'hide|unhide <COMMAND>', this.callHide)
     this.call = this.l.addCall(this, this.call, 'default', 'set <COMMAND> cd|ucd <0-300>', this.callSet)
+    this.call = this.l.addCall(this, this.call, 'default', 'get <COMMAND> [blacklist|bl|cd|cooldown|disabled|enabled|group|hidden|plugin|ucd|userCooldown|ul|userlevel|userlvl|whitelist|wl]', this.callGet)
   }
 
   public async callAdd(channelId: number, userId: number, params: any, extra: Extra) {
@@ -121,7 +122,7 @@ export class Instance implements PluginInstance {
         if (!alias) return 'No command'
 
         const res = this.l.modAlias(channelId, aliasName, { cooldown: cd || undefined })
-        if (res) return `Cooldown of "${aliasName}" set to ${this.l.u.plural(cd, 'second')}. The per-user cooldown is ${this.l.u.plural(alias.userCooldown || 0, 'second')}`
+        if (res) return `Cooldown of ${aliasName} set to ${this.l.u.plural(cd, 'second')}. The per-user cooldown is ${this.l.u.plural(alias.userCooldown || 0, 'second')}`
         else return 'Failed to change cooldown'
       }
       case 'ucd': {
@@ -129,8 +130,58 @@ export class Instance implements PluginInstance {
         if (!alias) return 'No command'
 
         const res = this.l.modAlias(channelId, aliasName, { userCooldown: cd || undefined })
-        if (res) return `User cooldown of "${aliasName}" set to ${this.l.u.plural(cd, 'second')}. The normal cooldown is ${this.l.u.plural(alias.cooldown || 0, 'second')}`
+        if (res) return `User cooldown of ${aliasName} set to ${this.l.u.plural(cd, 'second')}. The global cooldown is ${this.l.u.plural(alias.cooldown || 0, 'second')}`
         else return 'Failed to change user cooldown'
+      }
+      default:
+        return `What the heck? Unknown key ${action}`
+    }
+  }
+
+  public async callGet(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, aliasName, key]: ['set', string, 'blacklist' | 'bl' | 'cd' | 'cooldown' | 'disabled' | 'enabled' | 'group' | 'hidden' | 'plugin' | 'ucd' | 'userCooldown' | 'ul' | 'userlevel' | 'userlvl' | 'whitelist' | 'wl' | undefined] = params
+
+    const alias = this.l.getAlias(channelId, aliasName)
+    if (!alias) return 'No command'
+    switch (key) {
+      case 'bl':
+      case 'blacklist': {
+        if (!alias.blacklist || !alias.blacklist.length) return `${aliasName} has no blacklist entries`
+        return `Blacklisted users for ${aliasName}: ${this.l.u.commaPunctuate(alias.blacklist)}`
+      }
+      case 'cd':
+      case 'cooldown': {
+        const cd = alias.cooldown || 0
+        return `${aliasName} has a cooldown of ${this.l.u.plural(cd, `${cd} second`)}}`
+      }
+      case 'enabled':
+      case 'disabled': {
+        return `${aliasName} is ${alias.disabled ? 'disabled' : 'enabled'}}`
+      }
+      case 'group': {
+        return `${aliasName} is in the group ${alias.group || 'default'}}`
+      }
+      case 'hidden': {
+        return `${aliasName} is ${alias.hidden ? 'hidden' : 'not hidden'}}`
+      }
+      case 'plugin': {
+        return `${aliasName} is a command of ${alias.target}}`
+      }
+      case 'ucd':
+      case 'userCooldown': {
+        const ucd = alias.userCooldown || 0
+        return `${aliasName} has a user cooldown of ${this.l.u.plural(ucd, `${ucd} second`)}}`
+      }
+      case 'ul':
+      case 'userlvl':
+      case 'userlevel': {
+        const lvl = alias.userlvl || 0
+        return `${aliasName} has a userlevel of ${lvl}/${this.l.userlvlString(lvl) || 'unknown'}}`
+      }
+      case 'wl':
+      case 'whitelist': {
+        if (!alias.whitelist || !alias.whitelist.length) return `${aliasName} has no whitelist entries`
+        return `Whitelisted users for ${aliasName}: ${this.l.u.commaPunctuate(alias.whitelist)}`
       }
       default:
         return `What the heck? Unknown key ${action}`

@@ -1,4 +1,3 @@
-import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 import { fitStrings } from '../../main/lib/util'
@@ -21,19 +20,19 @@ export const options: PluginOptions = {
   title: 'Suggest',
   description: 'Create bug reports, suggest features, etc.',
   default: {
-    alias: '?suggest',
+    alias: '$suggest',
     options: {
       cooldown: 10,
       userCooldown: 30,
     },
   },
   help: [
-    'Send a reply to the suggester: {alias} REPLY <INDEX> <message...>',
-    'Show entry at index: {alias} GET <INDEX>',
+    'Send a suggestion (bugs, features, etc.): {alias} <message...>',
+    'Send a reply to the suggester: {alias} REPLY <messageId> <message...>',
+    'Show entry at index: {alias} GET <messageId>',
     'Show newest suggestions that hasn\'t been read: {alias} NEW',
     'Show oldest suggestions that hasn\'t been read: {alias} OLD',
     'Count of unread suggestions: {alias} COUNT',
-    'Send a suggestion (bugs, features, etc.): {alias} <message...>',
   ],
   requirePlugins: ['lists'],
   disableMention: true,
@@ -110,7 +109,7 @@ export class Instance implements PluginInstance {
       const suggestion = suggestions.entries[i]
       if (!suggestion.read) {
         suggestion.read = true
-        return `[${await this.l.api.getDisplay(suggestion.channelId)}] ${await this.l.api.getDisplay(suggestion.userId)}: ${suggestion.message}`
+        return `[${await this.l.api.getDisplay(suggestion.channelId)}] Suggestion #${i + 1} ${await this.l.api.getDisplay(suggestion.userId)}: ${suggestion.message}`
       }
     }
     return 'No unread suggestions'
@@ -123,11 +122,14 @@ export class Instance implements PluginInstance {
     if (!suggestions) return 'Suggestion data unavailable'
 
     if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to read suggestions'
+
+    let i = 0
     for (const suggestion of suggestions.entries) {
       if (!suggestion.read) {
         suggestion.read = true
-        return `[${await this.l.api.getDisplay(suggestion.channelId)}] ${await this.l.api.getDisplay(suggestion.userId)}: ${suggestion.message}`
+        return `[${await this.l.api.getDisplay(suggestion.channelId)}] Suggestion #${i + 1} ${await this.l.api.getDisplay(suggestion.userId)}: ${suggestion.message}`
       }
+      i++
     }
     return 'No unread suggestions'
   }

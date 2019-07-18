@@ -2,6 +2,7 @@
 import TwitchClient from './client/client'
 import Commander, { PluginInstance } from './commander'
 import { addArticle, commaPunctuate, plural, deduplicate } from './lib/util'
+import logger from './logger'
 
 interface Bit {
   // Whether or not the field is optional
@@ -469,11 +470,11 @@ export default class ParamValidator {
           }
           this.cacheHelp('VALIDATOR_TEST', converted)
         } catch (err) {
-          console.error(err.message)
+          logger.error(err.message)
         }
       } else if (str.startsWith('<')) {
         const res = await this.validate(61365582, 'VALIDATOR_TEST', str.slice(1).split(' '))
-        if (res) console.log(res)
+        if (res) logger.info(res)
       } else {
         try {
           let logMsg = ''
@@ -489,9 +490,9 @@ export default class ParamValidator {
             i++
           }
           logMsg = logMsg.slice(0, -1)
-          console.log(logMsg)
+          logger.info(logMsg)
         } catch (err) {
-          console.error(err)
+          logger.error(err)
         }
       }
     }

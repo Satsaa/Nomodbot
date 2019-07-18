@@ -1,4 +1,3 @@
-import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -59,8 +58,9 @@ export class Instance implements PluginInstance {
         prevDateString = dateString
       }
 
+      const today = new Date().getUTCDay()
       const percentages = streamCounts.map((v, i) => `${Math.round(v / weeks * 100)}%`)
-      return `Likelihood of stream (average of ${this.l.u.plural(Math.ceil(total / 7), 'week')}): Mon: ${percentages[1]}, tue: ${percentages[2]}, wed: ${percentages[3]}, thu: ${percentages[4]}, fri: ${percentages[5]}, sat: ${percentages[6]}, sun: ${percentages[0]}`
+      return `Likelihood of stream today ${percentages[today]} (average of ${this.l.u.plural(Math.ceil(total / 7), 'week')}): Mon: ${percentages[1]}, tue: ${percentages[2]}, wed: ${percentages[3]}, thu: ${percentages[4]}, fri: ${percentages[5]}, sat: ${percentages[6]}, sun: ${percentages[0]}`
     } catch (err) {
       console.error(err)
       return `Error occurred: ${err.name}`

@@ -36,9 +36,7 @@ export class Manager {
 
     this.extraArgs = []
 
-    console.log(process.execArgv)
     this.opts.args.splice(0, 2) // Remove target path
-    console.log(this.getArgs())
     this.opts.args = removeOption('inspect-child', this.opts.args, rules)
     this.opts.args = removeOption('manager', this.opts.args, rules)
     this.child = fork(this.opts.childPath, this.getArgs(), { cwd: process.cwd(), stdio: 'inherit', execArgv: this.getExecArgs() })

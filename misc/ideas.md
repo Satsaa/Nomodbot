@@ -1,6 +1,19 @@
 
 # Source
 
+## Local user database 
+
+## Start using maps
+
+## Make whitelist & blacklist grouped and per plugin
+
+## Allow @user for user parameters
+!notify @user
+!notify user
+
+## Provide max length when calling command plugins
+Helps plugins limiting message lengths with accurate variables
+
 ## Vital flag for commands
 Prevent extinction of commands that have this flag enabled  
 E.g. dont allow deletion of the last alias of the "command" plugin  
@@ -17,8 +30,25 @@ Options for loader and unloader functions
 Run loader on the loaded data
 Run unloader on a clone of the data before unloading
 
+## Optional per alias cooldowns
+Aliases created by ?response share cooldown
+
+- Add alias property cooldownId
+- Value is a string
+- generate unique id, so copies share cooldown?
+
+## Cleanup for expired cooldowns
+- Onexit and/or intervalled cleaner function
+- Removes cooldown entries that don't matter anymore
 
 # Command Plugins
+
+## vanish
+!vanish
+Timeouts the user for 1 sec duh
+
+## Long timeouts
+More than 2 weeks timeout
 
 ## Trivia
 !trivia start [\<category>]  

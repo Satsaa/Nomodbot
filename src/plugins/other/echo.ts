@@ -1,4 +1,3 @@
-import { PRIVMSG } from '../../main/client/parser'
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -17,7 +16,7 @@ export const options: PluginOptions = {
   },
   help: ['Reply with echo: {alias} [<echo...>]'],
   disableMention: true,
-  unignoreMentions: true,
+  allowMentions: true,
 }
 
 export class Instance implements PluginInstance {
