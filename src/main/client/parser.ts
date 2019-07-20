@@ -49,8 +49,6 @@ export interface IrcMessage {
     // @ts-ignore
     'msg-param-cumulative-months'?: number
     // @ts-ignore
-    'msg-param-sub-plan'?: number
-    // @ts-ignore
     'msg-param-origin-id'?: number
     // @ts-ignore
     'msg-param-recipient-id'?: number

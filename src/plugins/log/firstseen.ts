@@ -42,9 +42,11 @@ export class Instance implements PluginInstance {
     const user = this.log.getUser(channelId, targetId)
     if (!user) return `${targetId === userId ? 'You have' : `${display} has`} not been seen here before`
 
-    if (!user.times[0]) return `${targetId === userId ? 'You have' : `${display} has`} no logged messages`
+    const seenSec = user.events.chat ? user.events.chat.times[0] : 0
 
-    const date = this.l.u.dateString(user.times[0] * 1000)
+    if (!seenSec) return `${targetId === userId ? 'You have' : `${display} has`} no logged messages`
+
+    const date = this.l.u.dateString(seenSec * 1000)
     if (targetId === userId) return `You were first seen on ${date}`
     else return `${display} was first seen on ${date}`
   }

@@ -37,8 +37,8 @@ export class Instance implements PluginInstance {
 
     if (!this.log.getUser(channelId, targetId)) return 'That user has not been seen here before'
 
-    const res = this.log.msgCount(channelId, targetId)
-    if (typeof res === 'undefined') return 'Log data is unavailable at the moment'
+    const res = this.log.eventCount(channelId, targetId, 'chat')
+    if (res === undefined) return 'Log data is unavailable at the moment'
 
     return extra.words[1]
       ? `${await this.l.api.getDisplay(targetId)} has sent ${this.l.u.plural(res, 'message')}`

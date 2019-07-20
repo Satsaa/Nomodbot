@@ -1,7 +1,7 @@
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
-import { ACTION, CHAT, LogExtension } from './log'
+import { events, LogExtension } from './log'
 
 export const options: PluginOptions = {
   type: 'command',
@@ -42,12 +42,12 @@ export class Instance implements PluginInstance {
     const targetId = userId
     let index
 
-    if (!index) index = this.l.u.randomInt(0, this.log.msgCount(channelId, userId) || 0)
+    if (!index) index = this.l.u.randomInt(0, this.log.eventCount(channelId, userId, 'chat') || 0)
 
-    const res = await this.log.getSmartIndexMsg(channelId, targetId, index)
-    if (!res) return this.l.insertAtUser('That user has no logged messages', extra)
-    if (res.type === CHAT || res.type === ACTION) {
-      return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`
+    const res = await this.log.getSmartEvent(channelId, targetId, 'chat', index)
+    if (!res) return this.l.insertAtUser('Selected user had no messages', extra)
+    if (res.type === events.chat) {
+      return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.action ? ' /me' : ''} ${res.message}`
     }
     return this.l.insertAtUser(`Logger returned an invalid type: ${res.type}`, extra)
   }
@@ -56,10 +56,10 @@ export class Instance implements PluginInstance {
     const [index]: [number] = params
     const targetId = userId
 
-    const res = await this.log.getSmartIndexMsg(channelId, targetId, index)
+    const res = await this.log.getSmartEvent(channelId, targetId, 'chat', index)
     if (!res) return this.l.insertAtUser('That user has no logged messages', extra)
-    if (res.type === CHAT || res.type === ACTION) {
-      return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`
+    if (res.type === events.chat) {
+      return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.action ? ' /me' : ''} ${res.message}`
     }
     return this.l.insertAtUser(`Logger returned an invalid type: ${res.type}`, extra)
   }
@@ -67,12 +67,12 @@ export class Instance implements PluginInstance {
   public async callUser(channelId: number, userId: number, params: any, extra: Extra) {
     const [targetId, _index]: [number, number | undefined] = params
 
-    const index = _index === undefined ? this.l.u.randomInt(0, this.log.msgCount(channelId, userId) || 0) : _index
+    const index = _index === undefined ? this.l.u.randomInt(0, this.log.eventCount(channelId, userId, 'chat') || 0) : _index
 
-    const res = await this.log.getSmartIndexMsg(channelId, targetId, index)
-    if (!res) return this.l.insertAtUser('That user has no logged messages', extra)
-    if (res.type === CHAT || res.type === ACTION) {
-      return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`
+    const res = await this.log.getSmartEvent(channelId, targetId, 'chat', index)
+    if (!res) return this.l.insertAtUser(`${extra.words[1]} has no logged messages`, extra)
+    if (res.type === events.chat) {
+      return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.action ? ' /me' : ''} ${res.message}`
     }
     return this.l.insertAtUser(`Logger returned an invalid type: ${res.type}`, extra)
   }

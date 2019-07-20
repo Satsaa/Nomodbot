@@ -26,9 +26,8 @@ export interface Events {
   chat: (channelId: number, userId: number, userstate: PRIVMSG['tags'], message: string, me: boolean, self: boolean, irc: PRIVMSG | undefined) => void
   whisper: (userId: number, message: string) => void
   hosttarget: (channelId: number, hostChannelId: number | undefined, viewerCount: number | undefined) => void
-  timeout: (channelId: number, userId: number, duration: number) => void
+  timeout: (channelId: number, userId: number, duration?: number) => void
   clearmsg: (channelId: number, targetMsgId: IrcMessage['tags']['target-msg-id'], tags: IrcMessage['tags'], message: string) => void
-  ban: (channelId: number, userId: number) => void
   clear: (channelId: number) => void
   roomstate: (channelId: number, roomstate: IrcMessage['tags']) => void
   userstate: (channelId: number, userstate: IrcMessage['tags']) => void
@@ -37,10 +36,11 @@ export interface Events {
   pong: () => void
 
   // usernotice
-  sub: (channelId: number, userId: number, streak: number | undefined, cumulative: number | undefined, tier: 1 | 2 | 3, gifted: boolean, message: string | undefined) => void
-  subgift: (channelId: number, gifterId: number | undefined, targetId: number, tier: 1 | 2 | 3, total: number) => void
-  massgift: (channelId: number, gifterId: number | undefined, count: number, tier: 1 | 2 | 3) => void
+  sub: (channelId: number, userId: number, streak: number | undefined, cumulative: number | undefined, tier: 1 | 2 | 3, prime: boolean, gifted: boolean, message: string | undefined) => void
+  gift: (channelId: number, gifterId: number | undefined, targetId: number, tier: 1 | 2 | 3, total?: number) => void
+  massgift: (channelId: number, gifterId: number | undefined, count: number, tier: 1 | 2 | 3, total?: number) => void
   raid: (channelId: number, targetId: number | undefined, viewerCount: number | undefined) => void
+  unraid: (channelId: number) => void
   ritual: (channelId: number, userId: number, ritualName: string, message: string) => void
 
   // websocket
@@ -630,7 +630,7 @@ export default class TwitchClient {
         const userId = await this.api.getId(msg.params[1])
         if (!userId) return logger.strange('no userId', msg)
         if (typeof msg.tags['ban-duration'] === 'number') this.emit('timeout', channelId, userId, msg.tags['ban-duration'])
-        else this.emit('ban', channelId, userId)
+        else this.emit('timeout', channelId, userId)
         break
       }
       case 'ROOMSTATE': // <tags> :tmi.twitch.tv ROOMSTATE #<channel>
@@ -683,7 +683,7 @@ export default class TwitchClient {
         const _msg = msg.params[1].endsWith(this.opts.dupeAffix)
           ? msg.params[1].substring(0, msg.params[1].length - this.opts.dupeAffix.length)
           : msg.params[1]
-        logger.channelInfo(`{${channel}} ${msg.tags['display-name']}: ${_msg}`)
+        logger.chat(`{${channel}} ${msg.tags['display-name']}: ${_msg}`)
         this.api.cacheUser(msg.tags['user-id']!, msg.user!, String(msg.tags['display-name']!))
         if (_msg.startsWith('ACTION ')) {
           this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as PRIVMSG['tags'], _msg.slice(8, -1), true, msg.user === this.opts.username, msg as PRIVMSG)
@@ -729,9 +729,10 @@ export default class TwitchClient {
             const userId = msg.tags['user-id']
             const streak = msg.tags['msg-param-months']
             const cumulative = msg.tags['msg-param-cumulative-months']
-            const tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
+            const prime = msg.tags['msg-param-sub-plan'].includes('Prime') || msg.tags['msg-param-sub-plan'].includes('prime')
+            const tier = msg.tags['msg-param-sub-plan'] === '2000' ? 2 : msg.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
             if (!userId) return logger.strange('no userId', msg)
-            this.emit('sub', channelId, userId, streak, cumulative, tier, false, msg.params[1])
+            this.emit('sub', channelId, userId, streak, cumulative, tier, false, prime, msg.params[1])
             break
           }
           case 'subgift':
@@ -740,27 +741,30 @@ export default class TwitchClient {
             const targetId = msg.tags['msg-param-recipient-id']
             const streak = msg.tags['msg-param-months']
             const total = msg.tags['msg-param-sender-count']
-            const tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
+            const prime = false
+            const tier = msg.tags['msg-param-sub-plan'] === '2000' ? 2 : msg.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
             if (!targetId) return logger.strange('Subgift notice had no "msg-param-recipient-id"', msg)
             if (!total) return logger.strange('Subgift notice had no "msg-param-sender-count"', msg)
             if (!targetId || !total) return
-            this.emit('subgift', channelId, gifterId, targetId, tier, total)
-            this.emit('sub', channelId, targetId, streak, undefined, tier, true, undefined)
+            this.emit('gift', channelId, gifterId, targetId, tier, total)
+            this.emit('sub', channelId, targetId, streak, undefined, tier, prime, true, undefined)
             break
           }
           case 'submysterygift':
           case 'anonsubmysterygift': {
             const gifterId = msg.tags['msg-param-origin-id']
-            const total = msg.tags['msg-param-mass-gift-count']
-            const tier = msg.tags['msg-param-sub-plan'] === 2000 ? 2 : msg.tags['msg-param-sub-plan'] === 3000 ? 3 : 1
-            if (!total) return logger.strange('Submysterygift notice had no "msg-param-sender-count"', msg)
-            this.emit('massgift', channelId, gifterId, total, tier)
+            const count = msg.tags['msg-param-mass-gift-count']
+            const total = msg.tags['msg-param-sender-count']
+            const tier = msg.tags['msg-param-sub-plan'] === '2000' ? 2 : msg.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
+            if (!count) return logger.strange('Submysterygift notice had no "msg-param-sender-count"', msg)
+            this.emit('massgift', channelId, gifterId, count, tier, total)
             break
           }
           case 'charity':
+            logger.strange('CHARITY', msg)
             break
           case 'unraid':
-            this.emit('raid', channelId, undefined, undefined)
+            this.emit('unraid', channelId)
             break
           case 'raid': {
             const viewerCount = msg.tags['viewer-count']
@@ -807,21 +811,19 @@ export default class TwitchClient {
         this.emit('notice', channelId, msg.tags, msg.params[1])
         switch (msg.tags['msg-id']) {
           case 'msg_ratelimit':
-            logger.botInfo('Rate limited')
+            logger.warn('Rate limited')
             break
           case 'msg_timedout': {
             const duration = typeof msg.params[1] === 'string' ? ~~msg.params[1].match(/(\d*)[a-zA-Z .]*$/)![1] : 0
             const userId = await this.api.getId(this.opts.username)
             if (!userId) return logger.strange(msg, msg.tags['msg-id'])
-            this.emit('timeout', channelId, userId, duration)
-            logger.botInfo(`{${channel}} Timedout for ${duration}`)
+            logger.warn(`{${channel}} Timedout for ${duration}`)
             break
           }
           case 'msg_banned': {
             const userId = await this.api.getId(this.opts.username)
             if (!userId) return logger.strange(msg, msg.tags['msg-id'])
-            this.emit('ban', channelId, userId)
-            logger.botInfo(`{${channel}} Banned`)
+            logger.warn(`{${channel}} Banned`)
             break
           }
           default: // Handled in the near to infinite future
@@ -840,7 +842,7 @@ export default class TwitchClient {
               'no_permission', 'whisper_limit_per_min', 'whisper_limit_per_sec', 'whisper_restricted_recipient', 'host_target_went_offline',
             ]
               .includes(msg.tags['msg-id'])) {
-              logger.botInfo(`${channel}: ${msg.params[1]}`)
+              logger.channelInfo(`${channel}: ${msg.params[1]}`)
             } else {
               logger.strange('unknown NOTICE', msg)
             }

@@ -1,7 +1,7 @@
 import fs from 'fs'
 
-import * as afs from '../../main/lib/atomicFS'
 import { PRIVMSG } from '../../main/client/parser'
+import * as afs from '../../main/lib/atomicFS'
 import { PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -14,64 +14,153 @@ export const options: PluginOptions = {
 }
 
 interface LogData {
+  /** Tracked offset for the next log event */
   offset: number
-  messageCount: number
+  /** Total log events */
+  eventCount: number
+  /** Total log users */
   userCount: number
+  /** Time in **seconds** of the *first* log event */
   firstSec: number
+  /** Time in **seconds** of the *last* log event */
   lastSec: number
+  /** Event specifid info */
+  events: {
+    -readonly [P in Events]: {
+      /** Total log events of this type */
+      eventCount: number
+      /** Time in **seconds** of the *first* log event of this event */
+      firstSec: number
+      /** Time in **seconds** of the *last* log event of this event */
+      lastSec: number
+    }
+  }
   users: {
     [userId: number]: {
-      /** Byte offset where the log is in log.txt. The actual value is the sum of all previous values in the array */
-      offsets: number[]
-      /** The offset of the last logged action */
-      offset: number
-      /** When the logged action happenened in SECONDS. The actual value is the sum of all previous values in the array */
-      times: number[]
-      /** Time in SECONDS when the last logged action happened */
-      time: number
+      /** Total log events for this user */
+      eventCount: number
+      /** Time in **seconds** of the *first* log event for this user */
+      firstSec: number
+      /** Time in **seconds** of the *last* log event for this user */
+      lastSec: number
+      /** Event specific data */
+      events: {
+        -readonly [P in Events]?: {
+          /** Byte offset where the log event is in log.txt. Sum with all previous values */
+          offsets: number[]
+          /** The offset of the last event */
+          offset: number
+          /** When the event happenened in **seconds**. Sum with all previous values */
+          times: number[]
+          /** Time in **seconds** when the last event happened */
+          time: number
+        }
+      }
     }
   }
 }
 
-// Log msg type constants
-export const CHAT = 'c'
-export const ACTION = 'a'
-export const TIMEOUT = 't'
-export const BAN = 'b'
-export const SUB = 's'
-export const GIFT = 'g'
-export const MASSGIFT = 'mg'
-export type TYPES = typeof CHAT | typeof ACTION | typeof TIMEOUT | typeof BAN | typeof SUB | typeof GIFT | typeof MASSGIFT
+export const events = {
+  /** Generic chat message. Actions included, which use 'a' in log.txt! */
+  chat: 'c',
+  /** Used is timedout. Includes bans. */
+  timeout: 't',
+  /** Sub from any source */
+  sub: 's',
+  /** User gifts someone a sub */
+  gift: 'g',
+  /** User massgifts */
+  massGift: 'm',
+} as const
+
+const _toLong: {[x: string]: string} = {}
+for (const event in events) {
+  const small = events[event as Events] // Why oh why
+  _toLong[small] = event
+}
+
+const reverseEvents: {[P in typeof events[Events]]: Events} = _toLong as any
+
+export type Events = keyof typeof events
+
+type EventData = EventTypes[keyof EventTypes]
+
+interface EventTypes {
+  chat: ChatEvent
+  timeout: TimeoutEvent
+  sub: SubEvent
+  gift: GiftEvent
+  massGift: MassGiftEvent
+}
+
+interface ChatEvent {
+  ms: number
+  type: typeof events.chat
+  action: boolean
+  userId: number
+  message: string
+}
+interface TimeoutEvent {
+  ms: number
+  type: typeof events.timeout
+  userId: number
+  data: {duration?: number, reason?: string}
+}
+interface SubEvent {
+  ms: number
+  type: typeof events.sub
+  userId: number
+  data: {streak?: number, cumulative?: number, tier: 1|2|3, prime: boolean, gifted: boolean, message?: string}
+}
+interface GiftEvent {
+  ms: number
+  type: typeof events.gift
+  userId?: number
+  data: {targetId: number, tier: 1 | 2 | 3, total?: number}
+}
+interface MassGiftEvent {
+  ms: number
+  type: typeof events.massGift
+  userId?: number
+  data: {count: number, tier: 1 | 2 | 3, total?: number}
+}
+
 
 export interface LogExtension {
   /**
-   * Retrieves a chat message from `userId` in `channelId` if log data is loaded
-   * @param messageIndex Index of message returned
+   * Retrieves a log event from `userId` in `channelId`, if log data is loaded.
+   * @param index Index of the event returned.
    */
-  getMsg(channelId: number, userId: number, messageIndex: number): Promise<LogLineData | undefined>
+  getEvent<T extends Events>(channelId: number, userId: number, event: T, index: number): Promise<EventTypes[T] | undefined>
   /**
-   * Retrieves a chat message from `userId` in `channelId` if log data is loaded
-   * @param oneBasedMessageIndex Smart index of the returend message
-   * Smart index uses one based indexes and constraints the index to valid message indexes. Negative indexes return the -nth last message
+   * Retrieves a log event from `userId` in `channelId`, if log data is loaded.
+   * @param oneIndex Smart index of the returned event.
+   * Uses one based indexes and constraints the index to valid indexes. Negative indexes return the -nth most last event.
    */
-  getSmartIndexMsg(channelId: number, userId: number, oneBasedMessageIndex: number): Promise<LogLineData | undefined>
-  /** Parses the log line at `offset` in `channelId` if log data is loaded */
-  readOffset(channelId: number, offset: number): Promise<LogLineData | undefined>
-  /** Returns the total count of messages sent in `channelId` optionally by `userId` if log data is loaded */
-  msgCount(channelId: number, userId?: number): number | undefined
-  /** Returns the tracked userIds of `channelId` if log data is loaded */
+  getSmartEvent(channelId: number, userId: number, event: Events, oneIndex: number): Promise<EventData | undefined>
+  /** Parses the log line at `offset` in `channelId`, if log data is loaded. */
+  readOffset(channelId: number, offset: number): Promise<EventData | undefined>
+  /** Returns the channel event data, if log data is loaded. */
+  eventData(channelId: number, event: Events): undefined | LogData['events'][Events]
+  /** Returns the total count of events logged in `channelId` optionally by `userId` and/or `event, if log data is loaded. */
+  eventCount(channelId: number, userId: number, event?: Events): undefined | number
+  eventCount(channelId: number, event: Events, userId?: number): undefined | number
+  eventCount(channelId: number): undefined | number
+  eventCount(channelId: number, arg1?: number | Events, arg2?: Events | number): undefined | number
+  /** Returns the tracked userIds of `channelId`, if log data is loaded. */
   users(channelId: number): undefined | number[]
-  /** Returns the tracking data of `userId` in `channelId` if log data is loaded */
+  /** Returns the tracking data of `userId` in `channelId`, if log data is loaded. */
   getUser(channelId: number, userId: number): LogData['users'][number] | undefined
-  /** Returns the log data of `channelId` if its loaded */
+  /** Returns the log data of `channelId` if its loaded. */
   getData(channelId: number): LogData | undefined
-  /** Validates the tracked data for `userId` in `channelId` if log data is loaded  Returns true if no problems were found, a string on problem found */
-  validate(channelId: number, userId: number): Promise<true | string | undefined>
-  /** Returns the offset for the message if log data is loaded */
-  getOffset(channelId: number, userId: number, messageIndex: number): number | undefined
-  /** Returns the time in ms for the message if log data is loaded */
-  getTime(channelId: number, userId: number, messageIndex: number): number | undefined
+  /** Returns sorted event offsets of `events` from `userId` in `channelId`, if log data is loaded. `events` defaults to all events. */
+  getInterlacedEventOffsets(channelId: number, userId: number, events?: Events[]): number[] | undefined
+  /** Returns the offset for the event, if log data is loaded. */
+  getOffset(channelId: number, userId: number, event: Events, index: number): number | undefined
+  /** Returns the time in ms for the event, if log data is loaded. */
+  getTime(channelId: number, userId: number, event: Events, index: number): number | undefined
 }
+
 export class Instance implements PluginInstance {
   public call: PluginInstance['call']
   private l: PluginLibrary
@@ -79,40 +168,55 @@ export class Instance implements PluginInstance {
   /** File descriptors of each channel */
   private fds: { [channelId: number]: number }
 
-  private chatListener: any
-  private joinListener: any
-  private partListener: any
+  private chatListener?: Instance['onChat']
+  private joinListener?: Instance['onJoin']
+  private partListener?: Instance['onPart']
+  private timeoutListener?: Instance['onTimeout']
+  private subListener?: Instance['onSub']
+  private giftListener?: Instance['onGift']
+  private massGiftListener?: Instance['onMassGift']
+
+  private defaultData: LogData
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.streams = {}
     this.fds = {}
-  }
 
-  private get defaultData(): LogData {
-    return { offset: 0, messageCount: 0, userCount: 0, firstSec: 0, lastSec: 0, users: {} }
+    const data: any = { offset: 0, eventCount: 0, userCount: 0, firstSec: 0, lastSec: 0, events: {}, users: {} }
+    for (const event in events) {
+      const _event = event as Events
+      data.events[_event] = { eventCount: 0, firstSec: 0, lastSec: 0 }
+    }
+    this.defaultData = data
   }
-
+  // !!! Consider merging with constructor
   public async init() {
     this.l.autoLoad('log', this.defaultData, true)
 
     this.l.emitter.on('chat', this.chatListener = this.onChat.bind(this))
     this.l.emitter.on('join', this.joinListener = this.onJoin.bind(this))
     this.l.emitter.on('part', this.partListener = this.onPart.bind(this))
+    this.l.emitter.on('timeout', this.timeoutListener = this.onTimeout.bind(this))
+    this.l.emitter.on('sub', this.subListener = this.onSub.bind(this))
+    this.l.emitter.on('gift', this.giftListener = this.onGift.bind(this))
+    this.l.emitter.on('massgift', this.massGiftListener = this.onMassGift.bind(this))
+
     // Join existing channels
     for (const channelId of this.l.joinedChannels) {
       this.onJoin(channelId)
     }
 
     const extensions: LogExtension = {
-      getMsg: this.getMsg.bind(this),
-      getSmartIndexMsg: this.getSmartIndexMsg.bind(this),
+      getEvent: this.getEvent.bind(this),
+      getSmartEvent: this.getSmartEvent.bind(this),
       readOffset: this.readOffset.bind(this),
-      msgCount: this.msgCount.bind(this),
+      getInterlacedEventOffsets: this.getInterlacedEventOffsets.bind(this),
+      eventData: this.eventData.bind(this),
+      eventCount: this.eventCount.bind(this),
       users: this.users.bind(this),
       getUser: this.getUser.bind(this),
       getData: this.getData.bind(this),
-      validate: this.validate.bind(this),
       getOffset: this.getOffset.bind(this),
       getTime: this.getTime.bind(this),
     }
@@ -122,59 +226,46 @@ export class Instance implements PluginInstance {
   }
 
   public async unload() {
-    this.l.emitter.removeListener('chat', this.chatListener)
-    this.l.emitter.removeListener('join', this.joinListener)
-    this.l.emitter.removeListener('part', this.partListener)
+    if (this.chatListener) this.l.emitter.removeListener('chat', this.chatListener)
+    if (this.joinListener) this.l.emitter.removeListener('join', this.joinListener)
+    if (this.partListener) this.l.emitter.removeListener('part', this.partListener)
+    if (this.timeoutListener) this.l.emitter.removeListener('timeout', this.timeoutListener)
+    if (this.subListener) this.l.emitter.removeListener('sub', this.subListener)
+    if (this.giftListener) this.l.emitter.removeListener('gift', this.giftListener)
+    if (this.massGiftListener) this.l.emitter.removeListener('massgift', this.massGiftListener)
+
+    this.chatListener = undefined
+    this.joinListener = undefined
+    this.partListener = undefined
+    this.timeoutListener = undefined
+    this.subListener = undefined
+    this.giftListener = undefined
+    this.massGiftListener = undefined
 
     this.l.unextend(options.id)
 
     this.onExit()
   }
 
-  public async validate(channelId: number, userId: number) {
-    const data = this.l.getData(channelId, 'log') as LogData
-    if (!data || !data.users[userId]) return
-
-    const user = data.users[userId]
-    if (user.offsets.length !== user.times.length) return 'offsets times length mismatch'
-
-    if (!user.offsets.every(v => typeof v === 'number')) return 'Not all offsets are numbers'
-    if (!user.times.every(v => typeof v === 'number')) return 'Not all times are numbers'
-
-    if (user.offset !== user.offsets.reduce((prev, cur) => prev + cur)) return 'offset does not match offsets sum'
-    if (user.time !== user.times.reduce((prev, cur) => prev + cur)) return 'time does not match times sum'
-
-    let start = Date.now()
-    for (let i = 0; i < user.offsets.length; i++) {
-      if (i % 10000 === 0) {
-        const end = Date.now()
-        console.log(`${Math.round((end - start) / 1000)} ms`)
-        start = Date.now()
-      }
-
-      const res = await this.getMsg(channelId, userId, i)
-      if (!res) {
-        return `Invalid message at index ${i}`
-      }
-      if (!(res.type === CHAT || res.type === ACTION)) {
-        return `Not a logged type ${res.type}`
-      }
-      if (Math.round(res.ms / 1000) !== user.times.slice(0, i + 1).reduce((prev, cur) => prev + cur)) {
-        return `Tracked message time does not match log.txt message time: ${i}`
-      }
-      if (res.userId !== userId) {
-        return `UserIds don't match ${res.userId} !== ${userId}: ${i}`
-      }
-    }
-
-    return true
-  }
-
-  public msgCount(channelId: number, userId?: number) {
+  public eventData(channelId: number, event: Events) {
     const data = this.l.getData(channelId, 'log') as LogData
     if (!data) return
-    if (userId) return data.users[userId] ? data.users[userId].offsets.length : 0
-    return data.messageCount
+    return data.events[event]
+  }
+
+  public eventCount(channelId: number, userId: number, event?: Events): undefined | number
+  public eventCount(channelId: number, event: Events, userId?: number): undefined | number
+  public eventCount(channelId: number): undefined | number
+  public eventCount(channelId: number, arg1?: number | Events, arg2?: Events | number): undefined | number {
+    const data = this.l.getData(channelId, 'log') as LogData
+    if (!data) return
+
+    const userId: undefined | number = typeof arg1 === 'number' ? arg1 : typeof arg2 === 'number' ? arg2 : undefined
+    const event: undefined | Events = typeof arg1 === 'string' ? arg1 : typeof arg2 === 'string' ? arg2 : undefined
+    if (event && userId) return data.users[userId] && data.users[userId].events[event] ? data.users[userId].events[event]!.offsets.length : 0
+    if (event) return data.events[event].eventCount
+    if (userId) return data.users[userId] ? data.users[userId].eventCount : 0
+    return data.eventCount
   }
 
   public users(channelId: number) {
@@ -183,7 +274,7 @@ export class Instance implements PluginInstance {
     return Object.keys(data.users).map(v => Number(v))
   }
 
-  public getUser(channelId: number, userId: number) {
+  public getUser(channelId: number, userId: number): LogData['users'][number] | undefined {
     const data = this.l.getData(channelId, 'log') as LogData
     if (!data) return
     return data.users[userId]
@@ -193,73 +284,95 @@ export class Instance implements PluginInstance {
     return this.l.getData(channelId, 'log') as LogData | undefined
   }
 
-  public getSmartIndexMsg(channelId: number, userId: number, oneIndex: number): Promise<LogLineData | undefined> {
-    return new Promise((resolve) => {
-      const data = this.l.getData(channelId, 'log') as LogData
-      if (!data) return resolve()
-      if (!data.users[userId]) return resolve()
+  public async getSmartEvent(channelId: number, userId: number, event: Events, oneIndex: number): Promise<EventData | undefined> {
+    const data = this.l.getData(channelId, 'log') as LogData
+    if (!((data || {}).users[userId] || {}).events[event]) return
 
-      const user = data.users[userId]
-      const index = this.l.u.smartIndex(oneIndex, user.offsets)
-      if (index > user.offsets.length - 1) return resolve()
+    const events = data.users[userId].events[event]!
+    const index = this.l.u.smartIndex(oneIndex, events.offsets)
+    if (index > events.offsets.length - 1) return
 
-      const offset = user.offsets.slice(0, index + 1).reduce((prev, cur) => prev + cur)
-      this.readOffset(channelId, offset).then(resolve)
-    })
+    const offset = events.offsets.slice(0, index + 1).reduce((prev, cur) => prev + cur)
+    return this.readOffset(channelId, offset)
   }
 
-  public getMsg(channelId: number, userId: number, index: number): Promise<LogLineData | undefined> {
-    return new Promise((resolve) => {
-      const data = this.l.getData(channelId, 'log') as LogData
-      if (!data) return resolve()
-      if (!data.users[userId]) return resolve()
+  public async getEvent<T extends Events>(channelId: number, userId: number, event: T, index: number): Promise<EventTypes[T] | undefined> {
+    const data = this.l.getData(channelId, 'log') as LogData
+    if (!((data || {}).users[userId] || {}).events[event]) return
 
-      const user = data.users[userId]
-      if (index > user.offsets.length - 1) return resolve()
+    const events = data.users[userId].events[event]!
+    if (index > events.offsets.length - 1) return
 
-      const offset = user.offsets.slice(0, index + 1).reduce((prev, cur) => prev + cur)
-      this.readOffset(channelId, offset).then(resolve)
-    })
+    const offset = events.offsets.slice(0, index + 1).reduce((prev, cur) => prev + cur)
+    const res = await this.readOffset(channelId, offset) as EventTypes[T] | undefined
+    if (res && reverseEvents[res.type] !== event) return
+    return res
   }
 
-  public async readOffset(channelId: number, offset: number): Promise<LogLineData | undefined> {
+  public getInterlacedEventOffsets(channelId: number, userId: number, _events?: readonly Events[]): number[] | undefined {
+    const user = this.getUser(channelId, userId)
+    if (!user) return
+
+    if (_events) _events = this.l.u.deduplicate(_events, true)
+    else _events = Object.keys(events) as Events[]
+
+    const offsets: {[P in Events]?: number[]} = { }
+    for (const event of _events) {
+      if (user.events[event]) offsets[event] = user.events[event]!.offsets
+    }
+
+    const normalized: {[P in Events]?: number[]} = {}
+    for (const _event in offsets) {
+      const event = _event as Events
+      const current: number[] = []
+      normalized[event] = current
+
+      let added = 0
+      for (const time of offsets[event]!) {
+        added += time
+        current.push(added)
+      }
+    }
+
+    let merged: number[] = []
+    for (const normal in normalized) {
+      merged = [...merged, ...(normalized[normal as Events] as number[])]
+    }
+    return merged.sort((a, b) => a - b)
+  }
+
+  public readOffset(channelId: number, offset: number): Promise<EventData | undefined> {
     return new Promise((resolve) => {
       if (!this.fds[channelId]) return resolve()
 
-      let stream: undefined | fs.ReadStream = fs.createReadStream('', { start: offset, highWaterMark: 64, encoding: 'utf8', fd: this.fds[channelId], autoClose: false })
+      const stream = fs.createReadStream('', { start: offset, end: offset + 1028, encoding: 'utf8', fd: this.fds[channelId], autoClose: false })
 
-      let line = ''
-      stream.on('data', (chunk: string) => {
-        const split = chunk.split('\n')
-        line += split[0]
-        if (split.length === 1) return
-        stream!.pause()
-        stream = undefined
-        resolve(this.parseLogLine(line))
+      stream.once('data', (chunk: string) => {
+        resolve(this.parseLogLine(chunk.split('\n')[0]))
       })
     })
   }
 
-  public getOffset(channelId: number, userId: number, index: number) {
+  public getOffset(channelId: number, userId: number, event: Events, index: number) {
     const data = this.l.getData(channelId, 'log') as LogData
-    if (!data || !data.users[userId]) return
+    if (!((data || {}).users[userId] || {}).events[event]) return
 
     let total = 0
     let i = 0
-    for (const offset of data.users[userId].offsets) {
+    for (const offset of data.users[userId].events[event]!.offsets) {
       total += offset
       if (++i >= index) return total
     }
     return undefined
   }
 
-  public getTime(channelId: number, userId: number, index: number) {
+  public getTime(channelId: number, userId: number, event: Events, index: number) {
     const data = this.l.getData(channelId, 'log') as LogData
-    if (!data || !data.users[userId]) return
+    if (!((data || {}).users[userId] || {}).events[event]) return
 
     let total = 0
     let i = 0
-    for (const time of data.users[userId].times) {
+    for (const time of data.users[userId].events[event]!.times) {
       total += time
       if (++i >= index) return total * 1000
     }
@@ -267,9 +380,9 @@ export class Instance implements PluginInstance {
   }
 
   private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean) {
-    if (!this.streams[channelId]) return console.warn(`[${options.title}] {${channelId}} Message dropped: writeStream not ready`)
-    if (!this.l.getData(channelId, 'log')) return console.warn(`[${options.title}] {${channelId}} Message dropped: writeStream not ready`)
-    this.track(channelId, Date.now(), me ? ACTION : CHAT, userId, message)
+    if (!this.streams[channelId]) return console.error(`[${options.title}] {${channelId}} Message dropped: writeStream not ready`)
+    if (!this.l.getData(channelId, 'log')) return console.error(`[${options.title}] {${channelId}} Message dropped: Data not ready`)
+    this.track(channelId, Date.now(), me ? 'actionOverride' : reverseEvents[events.chat], userId, message)
   }
 
   private async onJoin(channelId: number) {
@@ -278,6 +391,38 @@ export class Instance implements PluginInstance {
 
   private async onPart(channelId: number) {
     if (this.streams[channelId]) this.endStream(channelId)
+  }
+
+  private async onTimeout(channelId: number, userId: number, duration?: number) {
+    if (!this.streams[channelId]) return console.error(`[${options.title}] {${channelId}} Timeout dropped: writeStream not ready`)
+    if (!this.l.getData(channelId, 'log')) return console.error(`[${options.title}] {${channelId}} Timeout dropped: Data not ready`)
+
+    const data: TimeoutEvent['data'] = { duration }
+    this.track(channelId, Date.now(), 'timeout', userId, JSON.stringify(data, null, 0))
+  }
+
+  private async onSub(channelId: number, userId: number, streak: number | undefined, cumulative: number | undefined, tier: 1 | 2 | 3, prime: boolean, gifted: boolean, message: string | undefined) {
+    if (!this.streams[channelId]) return console.error(`[${options.title}] {${channelId}} Sub dropped: writeStream not ready`)
+    if (!this.l.getData(channelId, 'log')) return console.error(`[${options.title}] {${channelId}} Sub dropped: Data not ready`)
+
+    const data: SubEvent['data'] = { streak, cumulative, tier, prime, gifted, message }
+    this.track(channelId, Date.now(), 'sub', userId, JSON.stringify(data, null, 0))
+  }
+
+  private async onGift(channelId: number, gifterId: number | undefined, targetId: number, tier: 1 | 2 | 3, total?: number) {
+    if (!this.streams[channelId]) return console.error(`[${options.title}] {${channelId}} Gift dropped: writeStream not ready`)
+    if (!this.l.getData(channelId, 'log')) return console.error(`[${options.title}] {${channelId}} Gift dropped: Data not ready`)
+
+    const data: GiftEvent['data'] = { targetId, tier, total }
+    this.track(channelId, Date.now(), 'gift', gifterId || 0, JSON.stringify(data, null, 0))
+  }
+
+  private async onMassGift(channelId: number, gifterId: number | undefined, count: number, tier: 1 | 2 | 3, total?: number) {
+    if (!this.streams[channelId]) return console.error(`[${options.title}] {${channelId}} MassGift dropped: writeStream not ready`)
+    if (!this.l.getData(channelId, 'log')) return console.error(`[${options.title}] {${channelId}} MassGift dropped: Data not ready`)
+
+    const data: MassGiftEvent['data'] = { count, tier, total }
+    this.track(channelId, Date.now(), 'gift', gifterId || 0, JSON.stringify(data, null, 0))
   }
 
   private onExit(code?: number) {
@@ -332,7 +477,7 @@ export class Instance implements PluginInstance {
 
       const start = Date.now()
       const path = this.l.getPath(channelId, 'log', 'txt')
-      const stream = fs.createReadStream(path, { start: offset, highWaterMark: 1000000, encoding: 'utf8' })
+      const stream = fs.createReadStream(path, { start: offset, highWaterMark: 4194304, encoding: 'utf8' })
       let splitEnd = ''
       let tracked = 0
       let failed = 0
@@ -354,7 +499,7 @@ export class Instance implements PluginInstance {
         const data = this.l.getData(channelId, 'log')
         if (!data) throw new Error('Uh oh can\'t set size when data is unloaded')
         data.offset = (await afs.stat(path)).size
-        console.log(`[LOG] Tracked ${this.l.u.plural(tracked, 'line')} ${failed ? this.l.u.plural(tracked, 'line ', 'lines ') : ''}in ${await this.l.api.getDisplay(channelId)} in ${Date.now() - start} ms`)
+        console.log(`[LOG] Tracked ${this.l.u.plural(tracked, 'line')} ${failed ? `skipped ${this.l.u.plural(tracked, 'line ', 'lines ')}` : ''}in ${await this.l.api.getDisplay(channelId)} in ${Date.now() - start} ms`)
         resolve()
       })
     })
@@ -363,156 +508,150 @@ export class Instance implements PluginInstance {
   /** Adds a log line into log.json */
   private trackLine(channelId: number, line: string): boolean {
     const res = this.parseLogLine(line)
-    if (!res) {
-      return false
-    }
-    if (res.type !== CHAT && res.type !== ACTION) return true
-    this.track(channelId, res.ms, res.type, res.userId, res.message, true)
+    if (!res) return false
+
+    const colonSep = line.split(':')
+    const trailerData = colonSep.slice(3).join(':')
+    this.track(channelId, res.ms, reverseEvents[res.type], res.userId || 0, trailerData, true)
     return true
   }
 
-  /** Writes the log message to log.txt and updates log data */
-  private track(channelId: number, time: number, type: TYPES, userId: number, message: string, noWrite = false) {
-    time = Math.round(time / 1000)
+  /** Writes a log event to log.txt and updates log data */
+  private track(channelId: number, ms: number, event: Events | 'actionOverride', userId: number, trailerData: string, noWrite = false) {
+    const timeSec = Math.floor(ms / 1000)
 
-    const final = `${time}:${type}:${userId}:${message.replace(/\n/g, '')}\n`
+    const _event: Events = event === 'actionOverride' ? 'chat' : event
+
+    const smallEvent = event === 'actionOverride' ? 'a' : events[_event]
+
+    const final = `${timeSec}:${smallEvent}:${userId || ''}:${trailerData.replace(/\n/, ' ')}\n`
     if (!noWrite) this.streams[channelId].write(final)
 
     const data = this.l.getData(channelId, 'log') as LogData
     if (!(data || {}).users) throw new Error('Data is unloaded or fully or partially') // Rare?
-    if (!data.firstSec) data.firstSec = time
-    data.lastSec = time
-    data.messageCount++
-    if (data.users[userId]) {
-      const user = data.users[userId]
-      user.offsets.push(data.offset - user.offset)
-      user.offset = data.offset
-      user.times.push(time - user.time)
-      user.time = time
-    } else {
+    if (!data.firstSec) data.firstSec = timeSec
+    data.lastSec = timeSec
+    data.eventCount++
+
+    // Global event data
+    const gEvent = data.events[_event]
+    gEvent.lastSec = timeSec
+    if (!gEvent.firstSec) gEvent.firstSec = timeSec
+    gEvent.eventCount++
+
+    // User event data
+
+    if (!data.users[userId]) {
       data.userCount++
       data.users[userId] = {
-        offsets: [data.offset],
-        offset: data.offset,
-        times: [time],
-        time,
+        eventCount: 0,
+        firstSec: timeSec,
+        lastSec: timeSec,
+        events: {},
       }
     }
+
+    const user = data.users[userId]
+
+    user.eventCount++
+    user.lastSec = timeSec
+
+    if (user.events[_event]) {
+      const eventPosData = user.events[_event]!
+      eventPosData.offsets.push(data.offset - eventPosData.offset)
+      eventPosData.offset = data.offset
+      eventPosData.times.push(timeSec - eventPosData.time)
+      eventPosData.time = timeSec
+    } else {
+      user.events[_event] = {
+        offsets: [data.offset],
+        offset: data.offset,
+        times: [timeSec],
+        time: timeSec,
+      }
+    }
+
     data.offset += Buffer.byteLength(final, 'utf8')
   }
 
-  /** Parses a log message and returns the resulting `LogMessage` or undefined if the log message is deemed invalid */
-  private parseLogLine(line: string): LogLineData | undefined {
+  /** Parses a log event and returns the resulting `EventData` or undefined if the log message is deemed invalid */
+  private parseLogLine(line: string): EventData | undefined {
     const nextNewLine = line.indexOf('\n')
     if (nextNewLine !== -1) line = line.slice(0, line.indexOf('\n'))
 
-    const colon = line.split(':')
+    const colonSep = line.split(':')
 
-    const ms = Number(colon[0]) * 1000
+    const ms = Number(colonSep[0]) * 1000
     if (!ms) return
 
-    const type = colon[1]
+    const type = colonSep[1]
     if (!type) return
 
-    const userId = Number(colon[2])
+    const userId = Number(colonSep[2])
     if (!userId) return
 
+    const data = colonSep.splice(3).join(':')
+
     switch (type) {
-      case CHAT:
-      case ACTION: {
-        // TIMESEC:c|a:USERID:MESSAGE
-        const message = colon.splice(3).join(':')
-        return { ms, type, userId, message }
+      case events.chat:
+        // TIMESEC:c:USERID:MESSAGE
+        return { ms, type, userId, action: false, message: data }
+      case 'a':
+        // TIMESEC:a:USERID:MESSAGE
+        return { ms, type: events.chat, userId, action: true, message: data }
+      case events.sub: {
+        // TIMESEC:c|a:USERID:{streak?: number, cumulative?: number, tier: 1|2|3, prime?: true, gifted?: true, message?: string}
+        try {
+          const parsed = JSON.parse(data)
+          if (typeof parsed !== 'object' || parsed === null || !parsed.tier) return void console.error(`Invalid JSON in sub event: ${data}`)
+          return { ms, type, userId, data: parsed }
+        } catch (err) {
+          console.error(`Invalid JSON in sub event: ${line}:`, err)
+          return
+        }
       }
-      case TIMEOUT: {
-        // TIMESEC:t:USERID:DURATION:SOURCEID?:REASON
-        const duration = Number(colon[3])
-        if (!duration) return
-
-        let sourceId = colon[4] ? Number(colon[4]) : undefined
-        if (!sourceId) sourceId = undefined // NaN to undefined
-
-        const message = colon.splice(5).join(':')
-        return { ms, type, userId, duration, sourceId, message }
+      case events.gift: {
+        // TIMESEC:c|a:USERID?:{targetId: number, tier: 1 | 2 | 3, total?: number}
+        try {
+          const parsed = JSON.parse(data)
+          if (typeof parsed !== 'object' || parsed === null || !parsed.targetId || !parsed.tier) {
+            return void console.error(`Invalid JSON in gift event: ${data}`)
+          }
+          return { ms, type, userId: colonSep[2] ? userId : undefined, data: parsed }
+        } catch (err) {
+          console.error(`Invalid JSON in gift event: ${line}:`, err)
+          return
+        }
       }
-      case BAN: {
-        // TIMESEC:b:USERID:SOURCEID?:REASON
-        let sourceId = colon[3] ? Number(colon[3]) : undefined
-        if (!sourceId) sourceId = undefined // NaN to undefined
-
-        const message = colon.splice(4).join(':')
-        return { ms, type, userId, sourceId, message }
+      case events.massGift: {
+        // TIMESEC:c|a:USERID?:{count: number, tier: 1 | 2 | 3, total?: number}
+        try {
+          const parsed = JSON.parse(data)
+          if (typeof parsed !== 'object' || parsed === null || !parsed.count || !parsed.tier) {
+            return void console.error(`Invalid JSON in massGift event: ${data}`)
+          }
+          return { ms, type, userId: colonSep[2] ? userId : undefined, data: parsed }
+        } catch (err) {
+          console.error(`Invalid JSON in massGift event: ${line}:`, err)
+          return
+        }
       }
-      case SUB: {
-        // TIMESEC:s:USERID:STREAK:TIER:MESSAGE
-        const streak = Number(colon[3])
-        if (!streak) return // Minimum streak would be 1 so 0 should not pass
-
-        const tier = Math.floor(Number(colon[4]))
-        if (isNaN(tier) || tier < 1 || tier > 3) return
-
-        const message = colon.splice(6).join(':')
-        return { ms, type, userId, streak, tier: tier as 1 | 2 | 3, message }
-      }
-      case GIFT: {
-        // TIMESEC:g:USERID:TARGETID:TIER
-        const targetId = Number(colon[3])
-        if (!targetId) return
-
-        const tier = Math.floor(Number(colon[4]))
-        if (isNaN(tier) || tier < 1 || tier > 3) return
-        return { ms, type, userId, targetId, tier: tier as 1 | 2 | 3 }
-      }
-      case MASSGIFT: {
-        // TIMESEC:mg:USERID:COUNT:TIER
-        const count = Number(colon[3])
-        if (!count) return
-
-        const tier = Math.floor(Number(colon[4]))
-        if (isNaN(tier) || tier < 1 || tier > 3) return
-        return { ms, type, userId, count, tier: tier as 1 | 2 | 3 }
+      case events.timeout: {
+        // TIMESEC:c|a:USERID:{duration?: number, reason?: string}
+        try {
+          const parsed = JSON.parse(data)
+          if (typeof parsed !== 'object' || parsed === null) {
+            return void console.error(`Invalid JSON in timeout event: ${data}`)
+          }
+          return { ms, type, userId, data: parsed }
+        } catch (err) {
+          console.error(`Invalid JSON in timeout event: ${line}:`, err)
+          return
+        }
       }
       default:
         return undefined
     }
   }
 }
-
-type LogLineData = {
-  ms: number
-  type: typeof CHAT | typeof ACTION
-  userId: number
-  message: string
-} | {
-  ms: number
-  type: typeof TIMEOUT
-  userId: number
-  duration: number
-  sourceId?: number
-  message: string
-} | {
-  ms: number
-  type: typeof BAN
-  userId: number
-  sourceId?: number
-  message: string
-} | {
-  ms: number
-  type: typeof SUB
-  userId: number
-  streak: number
-  tier: 1 | 2 | 3
-  message: string
-} | {
-  ms: number
-  type: typeof GIFT
-  userId: number
-  targetId: number
-  tier: 1 | 2 | 3
-} | {
-  ms: number
-  type: typeof MASSGIFT
-  userId: number
-  count: number
-  tier: 1 | 2 | 3
-}
+Buffer.from

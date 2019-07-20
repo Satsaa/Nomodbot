@@ -95,18 +95,50 @@ export const chown = async (path: string, uid: number, gid: number): Promise<voi
  */
 export const copyFile = async (src: string, dest: fs.PathLike, flags?: number): Promise<void> => queue.queue(fsp.copyFile, src, dest, flags)
 
+/**
+ * Asynchronous fchmod(2) - Change permissions of a file.
+ * @param handle A `FileHandle`.
+ * @param mode A file mode. If a string is passed, it is parsed as an octal integer.
+ */
 export const fchmod = fsp.fchmod
 
+/**
+ * Asynchronous fchown(2) - Change ownership of a file.
+ * @param handle A `FileHandle`.
+ */
 export const fchown = fsp.fchown
 
+/**
+ * Asynchronous fdatasync(2) - synchronize a file's in-core state with storage device.
+ * @param handle A `FileHandle`.
+ */
 export const fdatasync = fsp.fdatasync
 
+/**
+ * Asynchronous fstat(2) - Get file status.
+ * @param handle A `FileHandle`.
+ */
 export const fstat = fsp.fstat
 
+/**
+ * Asynchronous fsync(2) - synchronize a file's in-core state with the underlying storage device.
+ * @param handle A `FileHandle`.
+ */
 export const fsync = fsp.fsync
 
+/**
+ * Asynchronous ftruncate(2) - Truncate a file to a specified length.
+ * @param handle A `FileHandle`.
+ * @param len If not specified, defaults to `0`.
+ */
 export const ftruncate = fsp.ftruncate
 
+/**
+ * Asynchronously change file timestamps of the file referenced by the supplied `FileHandle`.
+ * @param handle A `FileHandle`.
+ * @param atime The last access time. If a string is provided, it will be coerced to number.
+ * @param mtime The last modified time. If a string is provided, it will be coerced to number.
+ */
 export const futimes = fsp.futimes
 
 /**
@@ -153,6 +185,11 @@ export const lstat = async (path: string): Promise<fs.Stats> => queue.queue(fsp.
  */
 export const mkdir = async (path: string, options?: number | string | fs.MakeDirectoryOptions | null): Promise<void> => queue.queue(fsp.mkdir, path, options)
 
+/**
+ * Asynchronously creates a unique temporary directory.
+ * Generates six random characters to be appended behind a required `prefix` to create a unique temporary directory.
+ * @param options The encoding (or an object specifying the encoding), used as the encoding of the result. If not provided, `'utf8'` is used.
+ */
 export const mkdtemp = fsp.mkdtemp
 
 /**
@@ -165,6 +202,15 @@ export const mkdtemp = fsp.mkdtemp
  */
 export const open = async (path: string, flags: string | number, mode?: string | number): Promise<fsp.FileHandle> => queue.queue(fsp.open, path, flags, mode)
 
+/**
+ * Asynchronously reads data from the file referenced by the supplied `FileHandle`.
+ * @param handle A `FileHandle`.
+ * @param buffer The buffer that the data will be written to.
+ * @param offset The offset in the buffer at which to start writing.
+ * @param length The number of bytes to read.
+ * @param position The offset from the beginning of the file from which data should be read. If
+ * `null`, data will be read from the current position.
+ */
 export const read = fsp.read
 
 /**
@@ -210,6 +256,11 @@ export async function readlink(path: string, options?: { encoding?: string | nul
   return queue.queue(fsp.readlink, path, options)
 }
 
+/**
+ * Asynchronous realpath(3) - return the canonicalized absolute pathname.
+ * @param path A path to a file. If a URL is provided, it must use the `file:` protocol.
+ * @param options The encoding (or an object specifying the encoding), used as the encoding of the result. If not provided, `'utf8'` is used.
+ */
 export const realpath = fsp.realpath
 
 /**
@@ -237,6 +288,13 @@ export const rmdir = async (path: string): Promise<void> => queue.queue(fsp.rmdi
  */
 export const stat = async (path: string): Promise<fs.Stats> => queue.queue(fsp.stat, path)
 
+/**
+ * Asynchronous symlink(2) - Create a new symbolic link to an existing file.
+ * @param target A path to an existing file. If a URL is provided, it must use the `file:` protocol.
+ * @param path A path to the new symlink. If a URL is provided, it must use the `file:` protocol.
+ * @param type May be set to `'dir'`, `'file'`, or `'junction'` (default is `'file'`) and is only available on Windows (ignored on other platforms).
+ * When using `'junction'`, the `target` argument will automatically be normalized to an absolute path.
+ */
 export const symlink = fsp.symlink
 
 /**
@@ -266,13 +324,23 @@ export const unlink = async (path: string): Promise<void> => queue.queue(fsp.unl
  */
 export const utimes = async (path: string, atime: string | number | Date, mtime: string | number | Date): Promise<void> => queue.queue(fsp.utimes, path, atime, mtime)
 
+/**
+ * Asynchronously writes `buffer` to the file referenced by the supplied `FileHandle`.
+ * It is unsafe to call `fsPromises.write()` multiple times on the same file without waiting for the `Promise`
+ * to be resolved (or rejected). For this scenario, `fs.createWriteStream` is strongly recommended.
+ * @param handle A `FileHandle`.
+ * @param buffer The buffer that the data will be written to.
+ * @param offset The part of the buffer to be written. If not supplied, defaults to `0`.
+ * @param length The number of bytes to write. If not supplied, defaults to `buffer.length - offset`.
+ * @param position The offset from the beginning of the file where this data should be written. If not supplied, defaults to the current position.
+ */
 export const write = fsp.write
 
 /**
  * `Queued`: This action is executed after previous actions are finished on target file.
  * `Temp`: Changes are first applied to a temporary file. Temporary file name is like `name_temp.json`.
  * If the write fails (e.g. due to process kill) the actual file is not overwritten and empty file errors are avoided.
- * If the rename fails with code 'EPERM', the rename will be retried up to 3 times after a delay of [1, 10, 100] ms.
+ * If the rename fails with code 'EPERM', the rename will be retried up to 4 times after a delay of [1, 10, 100, 2000] ms.
  * 
  * Asynchronously writes data to a file, replacing the file if it already exists.
  * @param path A path to a file.
@@ -310,6 +378,13 @@ export const writeFile = async (path: string, data: any, options?: { encoding?: 
       if (err.code !== 'EPERM') throw err
     }
     await promiseTimeout(100)
+    try {
+      const res = await fsp.rename(tempPath, path)
+      return res
+    } catch (err) {
+      if (err.code !== 'EPERM') throw err
+    }
+    await promiseTimeout(2000)
     return fsp.rename(tempPath, path)
   }, path, data, options)
 }

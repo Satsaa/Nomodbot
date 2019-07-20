@@ -1,7 +1,7 @@
 import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
-import { ACTION, CHAT, LogExtension } from './log'
+import { events, LogExtension } from './log'
 
 export const options: PluginOptions = {
   type: 'command',
@@ -29,7 +29,7 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
     this.log = this.l.ext.log as LogExtension
 
-    this.call = this.l.addCall(this, this.call, 'default', '[<USER>]', this.callTarget)
+    this.call = this.l.addCall(this, this.call, 'default', '<USER>', this.callTarget)
     this.call = this.l.addCall(this, this.call, 'default', '', this.callMain)
   }
 
@@ -39,27 +39,28 @@ export class Instance implements PluginInstance {
     const data = this.log.getData(channelId)
     if (!data) return this.l.insertAtUser('Log data unavailable', extra)
 
-    const randomI = this.l.u.randomInt(0, data.messageCount - 1)
-    let currentI = 0
-    for (const uIdStr in data.users) {
-      const randomId = ~~uIdStr
-      const length = data.users[randomId].offsets.length
+    const total = data.events.chat.eventCount
+    if (!total) return this.l.insertAtUser('There are not logged messages?', extra)
 
-      if (currentI + length > randomI) {
-        const res = await this.log.getMsg(channelId, randomId, randomI - currentI)
-        if (!res) return this.l.insertAtUser('The logger unexpectedly didn\'t return a message', extra)
-        if (res.type === CHAT || res.type === ACTION) {
-          return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`
-        }
-        return this.l.insertAtUser(`Logger returned an invalid type: ${res.type}`, extra)
+    const randomI = this.l.u.randomInt(0, total)
+
+    let msgI = 0
+    for (const userKey in data.users) {
+      const userData = data.users[userKey]
+      const eventPosData = userData.events.chat
+      if (!eventPosData) continue
+      //            100               < 977 - 950 = 27
+      // Selected
+      if (eventPosData.offsets.length > randomI - msgI) {
+        const res = await this.log.getEvent(channelId, ~~userKey, 'chat', randomI - msgI)
+        if (!res) return this.l.insertAtUser('No quote received :(', extra)
+
+        return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.action ? ' /me' : ''} ${res.message}`
       } else {
-        currentI += length
+        msgI += eventPosData.offsets.length
       }
     }
-    if (currentI) {
-      return this.l.insertAtUser('No message chosen?', extra)
-    }
-    return this.l.insertAtUser('There are no logged messages', extra)
+    return this.l.insertAtUser('No quote selected :(', extra)
   }
 
   public async callTarget(channelId: number, userId: number, params: any, extra: Extra) {
@@ -68,16 +69,14 @@ export class Instance implements PluginInstance {
     const data = this.log.getData(channelId)
     if (!data) return this.l.insertAtUser('Log data unavailable', extra)
 
-    const count = this.log.msgCount(channelId, targetId)
-    if (!count) return this.l.insertAtUser(`${extra.words[1]} has no logs`, extra)
+    const total = this.log.eventCount(channelId, targetId, 'chat') || 0
+    if (!total) return this.l.insertAtUser(`${extra.words[1]} has no logged messages`, extra)
 
-    const randomIndex = this.l.u.randomInt(0, count - 1)
+    const randomI = this.l.u.randomInt(0, total)
 
-    const res = await this.log.getMsg(channelId, targetId, randomIndex)
-    if (!res) return this.l.insertAtUser('The logger unexpectedly didn\'t return a message', extra)
-    if (res.type === CHAT || res.type === ACTION) {
-      return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.type === ACTION ? '/me' : ''} ${res.message}`
-    }
-    return this.l.insertAtUser(`Logger returned an invalid type: ${res.type}`, extra)
+    const res = await this.log.getEvent(channelId, targetId, 'chat', randomI)
+    if (!res) return this.l.insertAtUser(`${extra.words[1]} ceased to exist 👻`, extra)
+
+    return `${await this.l.api.getDisplay(res.userId)} ${this.l.u.timeSince(res.ms, 1, true)} ago:${res.action ? ' /me' : ''} ${res.message}`
   }
 }

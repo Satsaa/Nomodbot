@@ -34,6 +34,15 @@ const fgColors = {
   magenta: '\x1b[35m',
   cyan: '\x1b[36m',
   white: '\x1b[37m',
+
+  gray: '\x1b[90m',
+  brightRed: '\x1b[91m',
+  brightGreen: '\x1b[92m',
+  brightYellow: '\x1b[93m',
+  brightBlue: '\x1b[94m',
+  brightMagenta: '\x1b[95m',
+  brightCyan: '\x1b[96m',
+  brightWhite: '\x1b[97m',
 } as const
 
 const bgColors = {
@@ -45,6 +54,15 @@ const bgColors = {
   magenta: '\x1b[45m',
   cyan: '\x1b[46m',
   white: '\x1b[47m',
+
+  gray: '\x1b[100m',
+  brightRed: '\x1b[101m',
+  brightGreen: '\x1b[102m',
+  brightYellow: '\x1b[103m',
+  brightBlue: '\x1b[104m',
+  brightMagenta: '\x1b[105m',
+  brightCyan: '\x1b[106m',
+  brightWhite: '\x1b[107m',
 } as const
 
 /**
@@ -93,7 +111,7 @@ function makeLogger<T extends {[cat: string]: Category}>(cats: T, path: string, 
             if (colorPrefix) return handler.bind(handler, colorPrefix)
             else return handler
           } else if (colorPrefix) {
-            return handler.bind(colorPrefix, handler, cats[cat].prefix)
+            return handler.bind(handler, colorPrefix, cats[cat].prefix)
           } else {
             return handler.bind(handler, cats[cat].prefix)
           }
@@ -144,20 +162,20 @@ const categories = {
   error: { saved: true, handler: console.error },
   warn: { handler: console.error, color: 'yellow' },
   info: {},
-  debug: {},
+  debug: { disabled: true },
 
-  raw: { prefix: '' },
+  raw: { prefix: '', disabled: true },
   strange: { saved: true, handler: console.error },
-  chat: { prefix: '[CHAT]' },
-  botChat: { prefix: '[BOT]', color: 'blue' },
+  chat: { prefix: '[CHAT]', color: 'gray' },
+  botChat: { prefix: '[BOT]', color: 'green' },
 
   apiError: { saved: true, handler: console.error },
   apiInfo: {},
   apiDebug: {},
 
   botInfo: {},
-  userInfo: {},
-  channelInfo: {},
+  userInfo: { color: 'gray' },
+  channelInfo: { color: 'gray' },
 
   pluginError: { saved: true, handler: console.error },
   pluginInfo: {},
@@ -189,5 +207,3 @@ const logger = makeLogger(categories, './data/logs/', options)
  * `pluginDebug`: Debugging from plugins.  
  */
 export default logger
-
-logger.error('asdadasd')

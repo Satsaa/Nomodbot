@@ -42,11 +42,10 @@ export class Instance implements PluginInstance {
 
     if (!this.log.getUser(channelId, targetId)) return `${targetId === userId ? 'You have' : `${display} has`} not been seen here before`
 
-    const length = this.log.msgCount(channelId, targetId)
-    if (!length) return 'Bad length returned'
-    if (length <= 1) return `${targetId === userId ? 'You have' : `${display} has`} no logged messages`
+    const length = this.log.eventCount(channelId, targetId, 'chat')
+    if (!length) return `${targetId === userId ? 'You have' : `${display} has`} no logged messages`
 
-    const ms = this.log.getTime(channelId, targetId, self ? length > 0 ? length - 1 : length : length)
+    const ms = this.log.getTime(channelId, targetId, 'chat', self ? length > 0 ? length - 1 : length : length)
     if (!ms) return 'Bad time returned'
 
     const since = this.l.u.timeSince(ms, 1, true)

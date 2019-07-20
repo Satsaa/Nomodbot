@@ -36,6 +36,6 @@ export class Instance implements PluginInstance {
 
     const data = this.log.getData(channelId)
     if (!data) return 'Log data unavailable'
-    return `A total of ${this.l.u.plural(data.messageCount, 'message has', 'messages have')} been sent`
+    return `A total of ${this.l.u.plural(data.events.chat.eventCount, 'message has', 'messages have')} been sent`
   }
 }

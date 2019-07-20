@@ -573,7 +573,7 @@ export default class Commander {
     return true
   }
 
-  /** Returns the @user string */
+  /** Returns the `'@<user> '` string */
   public getAtUser(display: string): string {
     return `@${display} `
   }
@@ -656,7 +656,7 @@ export default class Commander {
     const instance = this.instances[alias.target]
     const plugin = this.plugins[alias.target]
     if (!plugin || !instance) return logger.info('Nonexisting target:', alias.target)
-    if (plugin.type !== 'command') return logger.info(`Tryed to call a non command plugin: ${alias.target}`)
+    if (plugin.type !== 'command') return logger.info(`Tried to call a non command plugin: ${alias.target}`)
     if (!plugin.allowMentions) message = message.replace(/ @.*/, '') // Remove @user... from command calls
     words = message.split(' ')
     // Make sure the plugin is loaded
@@ -672,8 +672,9 @@ export default class Commander {
         }
 
         const extra: Extra = { alias, words, message, me, cooldown: 0, irc }
-        const res = await instance.call[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
+        let res = await instance.call[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
         if (res) {
+          res = res.replace(/\n/, ' ')
           this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
         }
       } else {
@@ -692,19 +693,22 @@ export default class Commander {
           }
 
           const extra: Extra = { alias, words, message, me, cooldown, irc }
-          const res = await instance.call[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
-          if (res) this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
+          let res = await instance.call[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
+          if (res) {
+            res = res.replace(/\n/, ' ')
+            this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
+          }
         } else if (instance.cooldown) {
           const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
           if (!validation.pass) return
 
           const extra: Extra = { alias, words, message, me, cooldown, irc }
-          const res = await instance.cooldown[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
+          instance.cooldown[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
         }
       }
     }
     async function addUser(this: Commander, atUser: true | undefined, message: string, irc: PRIVMSG): Promise<string> {
-      return this.shouldAtUser(atUser, message, irc) ? `${this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown')} ` : ''
+      return this.shouldAtUser(atUser, message, irc) ? `${this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown')}` : ''
     }
   }
 }

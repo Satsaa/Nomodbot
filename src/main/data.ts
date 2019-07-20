@@ -105,7 +105,7 @@ export default class Data extends EventEmitter {
       return false
     }
     try {
-      await afs.writeFile(`${this.dataPath}/${subType}/${name}.json`, JSON.stringify(data, null, 2))
+      await afs.writeFile(`${this.dataPath}/${subType}/${name}.json`, JSON.stringify(data, null, 0))
       if (unload) this.delData(subType, name)
       return true
     } catch (err) {

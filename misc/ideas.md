@@ -14,10 +14,10 @@
 ## Provide max length when calling command plugins
 Helps plugins limiting message lengths with accurate variables
 
-## Vital flag for commands
-Prevent extinction of commands that have this flag enabled  
+## Vital flag for command plugins
+Prevent extinction of command plugins that have this flag enabled  
 E.g. dont allow deletion of the last alias of the "command" plugin  
-- If there is no alias for command, commands cannot be created nor edited  
+- (If there is no alias for command, commands cannot be created nor edited)  
 
 ## Data file types
 Support file types and derive types from the file type
@@ -70,7 +70,6 @@ More than 2 weeks timeout
 !crimes  
 
 Tells and tracks the amount of times a user has been timedout
-- Implement log line types (eg timeouts subs and such)
 
 ## afk
 !afk [<message...>]  
