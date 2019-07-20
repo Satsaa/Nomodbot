@@ -238,8 +238,8 @@ export function dateString(ms: number, separator = '-') {
 export function insert(str: string, index: number, insert: string) { return str.substr(0, index) + insert + str.substr(index) }
 
 /**
- * Returns `value` `singular` or `value` `plural` based on `value`
- * @param v If this is 1, '1' or 'one' `singular` is returned
+ * Returns '`value` ' + '`singular`' or '`value` ' + '`plural`' based on `value`
+ * @param v If this is 1, '1' or 'one' singular version is returned is returned
  * @param singular Singular form
  * @param plural Plural form. Defaults to `singular + 's'`
  * @param noValue `value` wont be returned with the result
