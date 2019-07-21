@@ -265,7 +265,7 @@ export class Instance implements PluginInstance {
     const event: undefined | Events = typeof arg1 === 'string' ? arg1 : typeof arg2 === 'string' ? arg2 : undefined
     if (event && userId) return data.users[userId] && data.users[userId].events[event] ? data.users[userId].events[event]!.offsets.length : 0
     if (event) return data.events[event].eventCount
-    if (userId) return (data.users[userId] || {}).eventCount || 0
+    if (userId) return data.users[userId] ? data.users[userId].eventCount : 0
     return data.eventCount
   }
 
@@ -529,7 +529,7 @@ export class Instance implements PluginInstance {
     if (!noWrite) this.streams[channelId].write(final)
 
     const data = this.l.getData(channelId, 'log') as LogData
-    if (!data || !data.users) throw new Error('Data is unloaded or fully or partially') // Rare?
+    if (!data || !data.users) throw new Error('Data is unloaded fully or partially') // Rare?
     if (!data.firstSec) data.firstSec = timeSec
     data.lastSec = timeSec
     data.eventCount++

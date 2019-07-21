@@ -380,7 +380,7 @@ export default class TwitchClient {
       // tag types. Types are now in a predefined list
       // noticeIds
       if (msg.cmd === 'NOTICE' && typeof msg.tags['msg-id'] === 'string') {
-        const tag3 = msg.tags['msg-id'].toString()
+        const tag3 = msg.tags['msg-id']!.toString()
         if (!this.messageTypes.userNoticeIds) this.messageTypes.userNoticeIds = {}
         if (this.messageTypes.userNoticeIds[tag3]) this.messageTypes.userNoticeIds[tag3].__count__++
         else this.messageTypes.userNoticeIds[tag3] = { __count__: 1 }
@@ -392,7 +392,7 @@ export default class TwitchClient {
           }
         }
       } else if (msg.cmd === 'USERNOTICE' && typeof msg.tags['msg-id'] === 'string') {
-        const tag3 = msg.tags['msg-id'].toString()
+        const tag3 = msg.tags['msg-id']!.toString()
         if (tag3 === 'rewardgift') { // !!! Inspect reward gifts
           logger.strange('rewardgift', msg)
         }
@@ -731,8 +731,13 @@ export default class TwitchClient {
             const cumulative = msg.tags['msg-param-cumulative-months']
             const tier = msg.tags['msg-param-sub-plan'] === '2000' ? 2 : msg.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
             let prime = false
-            if (msg.tags['msg-param-sub-plan']) prime = Boolean(msg.tags['msg-param-sub-plan'].match(/prime/i))
+            if (msg.tags['msg-param-sub-plan']) prime = Boolean((msg.tags['msg-param-sub-plan'] || '').match(/prime/i))
             if (!userId) return logger.strange('no userId', msg)
+            logger.userInfo(`${msg.tags['display-name']} subbed`
+              + `${prime ? ' with Twitch Prime' : ''}`
+              + `${tier ? ` at tier ${tier}` : ''}`
+              + `${streak ? ` (streak ${streak})` : ''}`
+              + `${cumulative ? ` (total ${cumulative})` : ''}`)
             this.emit('sub', channelId, userId, streak, cumulative, tier, false, prime, msg.params[1])
             break
           }
@@ -747,6 +752,11 @@ export default class TwitchClient {
             if (!targetId) return logger.strange('Subgift notice had no "msg-param-recipient-id"', msg)
             if (!total) return logger.strange('Subgift notice had no "msg-param-sender-count"', msg)
             if (!targetId || !total) return
+            logger.userInfo(`${msg.tags['display-name'] || 'Anonymous'} gifted a `
+              + `${tier ? `tier ${tier} ` : ''}`
+              + `sub to ${msg.tags['msg-param-recipient-display-name']} `
+              + `${total ? `(total ${total}) ` : ''}`
+              + `${streak ? `(streak ${streak}) ` : ''}`)
             this.emit('gift', channelId, gifterId, targetId, tier, total)
             this.emit('sub', channelId, targetId, streak, undefined, tier, prime, true, undefined)
             break
@@ -758,6 +768,9 @@ export default class TwitchClient {
             const total = msg.tags['msg-param-sender-count']
             const tier = msg.tags['msg-param-sub-plan'] === '2000' ? 2 : msg.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
             if (!count) return logger.strange('Submysterygift notice had no "msg-param-sender-count"', msg)
+            logger.userInfo(`${msg.tags['display-name'] || 'Anonymous'} gifted ${total} `
+              + `${tier === 1 ? '' : `tier ${tier} `}subs to the community `
+              + `${total ? `(total ${total})` : ''}`)
             this.emit('massgift', channelId, gifterId, count, tier, total)
             break
           }
@@ -776,8 +789,11 @@ export default class TwitchClient {
           }
           case 'ritual': {
             const id = await this.api.getId(`${msg.tags.login}`)
+            const ritual = msg.tags['msg-param-ritual-name']
             if (!id) return logger.strange('invalid login', msg)
-            this.emit('ritual', channelId, id, `${msg.tags['msg-param-ritual-name']}`, msg.params[1])
+            if (!ritual) return logger.strange('invalid ritual', msg)
+            logger.userInfo(`${msg.tags.login} coming in hot with a ${msg.tags['msg-param-ritual-name']} ritual`)
+            this.emit('ritual', channelId, id, ritual, msg.params[1])
             break
           }
           // Not actual subscriptions? Advertisement of sorts. Subtember
@@ -828,7 +844,7 @@ export default class TwitchClient {
             break
           }
           default: // Handled in the near to infinite future
-            if ([
+            if (msg.tags['msg-id'] && [
               'subs_on', 'subs_off', 'emote_only_on', 'emote_only_off', 'slow_on', 'slow_off', 'followers_on_zero', 'invalid_user ',
               'followers_on', 'followers_off', 'r9k_on', 'r9k_off', 'host_on', 'host_off', 'room_mods', 'no_mods', 'msg_channel_suspended',
               'already_banned', 'bad_ban_admin', 'bad_ban_broadcaster', 'bad_ban_global_mod', 'bad_ban_self', 'bad_ban_staff', 'usage_ban',
@@ -842,7 +858,7 @@ export default class TwitchClient {
               'bad_unban_no_ban', 'usage_unhost', 'not_hosting', 'whisper_invalid_login', 'whisper_invalid_self', 'unrecognized_cmd',
               'no_permission', 'whisper_limit_per_min', 'whisper_limit_per_sec', 'whisper_restricted_recipient', 'host_target_went_offline',
             ]
-              .includes(msg.tags['msg-id'])) {
+              .includes(msg.tags['msg-id']!)) {
               logger.channelInfo(`${channel}: ${msg.params[1]}`)
             } else {
               logger.strange('unknown NOTICE', msg)
