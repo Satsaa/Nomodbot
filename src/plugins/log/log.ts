@@ -500,7 +500,7 @@ export class Instance implements PluginInstance {
         const data = this.l.getData(channelId, 'log')
         if (!data) throw new Error('Uh oh can\'t set size when data is unloaded')
         data.offset = (await afs.stat(path)).size
-        console.log(`[LOG] Tracked ${this.l.u.plural(tracked, 'line')} ${failed ? `skipped ${this.l.u.plural(tracked, 'line ', 'lines ')}` : ''}in ${await this.l.api.getDisplay(channelId)} in ${Date.now() - start} ms`)
+        console.log(`[LOG] Tracked ${this.l.u.plural(tracked, 'line')} ${failed ? `and skipped ${this.l.u.plural(failed, 'line ', 'lines ')}` : ''}in ${await this.l.api.getDisplay(channelId)} in ${Date.now() - start} ms`)
         resolve()
       })
     })
