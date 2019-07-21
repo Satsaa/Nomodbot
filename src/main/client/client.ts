@@ -729,8 +729,9 @@ export default class TwitchClient {
             const userId = msg.tags['user-id']
             const streak = msg.tags['msg-param-months']
             const cumulative = msg.tags['msg-param-cumulative-months']
-            const prime = msg.tags['msg-param-sub-plan'].includes('Prime') || msg.tags['msg-param-sub-plan'].includes('prime')
             const tier = msg.tags['msg-param-sub-plan'] === '2000' ? 2 : msg.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
+            let prime = false
+            if (msg.tags['msg-param-sub-plan']) prime = Boolean(msg.tags['msg-param-sub-plan'].match(/prime/i))
             if (!userId) return logger.strange('no userId', msg)
             this.emit('sub', channelId, userId, streak, cumulative, tier, false, prime, msg.params[1])
             break

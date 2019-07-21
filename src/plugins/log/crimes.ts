@@ -15,7 +15,7 @@ export const options: PluginOptions = {
       userCooldown: 30,
     },
   },
-  help: ['Show how many crimes you or user has committed {channel}: {alias} [<user>]'],
+  help: ['Show how many crimes you or user has committed in {channel}: {alias} [<user>]'],
   requirePlugins: ['log'],
 }
 
@@ -36,11 +36,9 @@ export class Instance implements PluginInstance {
 
     const targetId = _targetId || userId
 
-    const total = this.log.eventCount(channelId, targetId, 'chat')
-    if (total === undefined) return 'Log data unavailable'
+    const total = this.log.eventCount(channelId, targetId, 'chat') || 0
 
-    const crimes = this.log.eventCount(channelId, targetId, 'timeout')
-    if (crimes === undefined) return 'Log data unavailable'
+    const crimes = this.log.eventCount(channelId, targetId, 'timeout') || 0
 
     const part1 = `${targetId === userId ? 'You have' : `${extra.words[1]} has`} committed ${this.l.u.plural(crimes, 'crime')}`
     return `${part1} (${this.getPctString(crimes / total)})${this.getCrimeEmoji(total / crimes)}`

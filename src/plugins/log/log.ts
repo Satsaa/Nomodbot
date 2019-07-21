@@ -1,8 +1,9 @@
 import fs from 'fs'
 
 import { PRIVMSG } from '../../main/client/parser'
+import logger from '../../main/logger'
 import * as afs from '../../main/lib/atomicFS'
-import { PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { PluginInstance, PluginOptions } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -262,9 +263,9 @@ export class Instance implements PluginInstance {
 
     const userId: undefined | number = typeof arg1 === 'number' ? arg1 : typeof arg2 === 'number' ? arg2 : undefined
     const event: undefined | Events = typeof arg1 === 'string' ? arg1 : typeof arg2 === 'string' ? arg2 : undefined
-    if (event && userId) return data.users[userId] && data.users[userId].events[event] ? data.users[userId].events[event]!.offsets.length : 0
+    if (event && userId) return (data.users[userId] || {}).events[event] || {} ? data.users[userId].events[event]!.offsets.length : 0
     if (event) return data.events[event].eventCount
-    if (userId) return data.users[userId] ? data.users[userId].eventCount : 0
+    if (userId) return (data.users[userId] || {}).eventCount || 0
     return data.eventCount
   }
 
@@ -517,12 +518,12 @@ export class Instance implements PluginInstance {
   }
 
   /** Writes a log event to log.txt and updates log data */
-  private track(channelId: number, ms: number, event: Events | 'actionOverride', userId: number, trailerData: string, noWrite = false) {
+  private track(channelId: number, ms: number, _event: Events | 'actionOverride', userId: number, trailerData: string, noWrite = false) {
     const timeSec = Math.floor(ms / 1000)
 
-    const _event: Events = event === 'actionOverride' ? 'chat' : event
+    const event: Events = _event === 'actionOverride' ? 'chat' : _event
 
-    const smallEvent = event === 'actionOverride' ? 'a' : events[_event]
+    const smallEvent = _event === 'actionOverride' ? 'a' : events[event]
 
     const final = `${timeSec}:${smallEvent}:${userId || ''}:${trailerData.replace(/\n/, ' ')}\n`
     if (!noWrite) this.streams[channelId].write(final)
@@ -534,7 +535,7 @@ export class Instance implements PluginInstance {
     data.eventCount++
 
     // Global event data
-    const gEvent = data.events[_event]
+    const gEvent = data.events[event]
     gEvent.lastSec = timeSec
     if (!gEvent.firstSec) gEvent.firstSec = timeSec
     gEvent.eventCount++
@@ -556,14 +557,21 @@ export class Instance implements PluginInstance {
     user.eventCount++
     user.lastSec = timeSec
 
-    if (user.events[_event]) {
-      const eventPosData = user.events[_event]!
+    // Debug 
+    if (!user || !user.events) {
+      logger.warn('EVENTS OR USER NOT DEFINED')
+      logger.warn('user: ', user)
+      logger.warn('event: ', event)
+    }
+
+    if (user.events[event]) {
+      const eventPosData = user.events[event]!
       eventPosData.offsets.push(data.offset - eventPosData.offset)
       eventPosData.offset = data.offset
       eventPosData.times.push(timeSec - eventPosData.time)
       eventPosData.time = timeSec
     } else {
-      user.events[_event] = {
+      user.events[event] = {
         offsets: [data.offset],
         offset: data.offset,
         times: [timeSec],
@@ -654,4 +662,3 @@ export class Instance implements PluginInstance {
     }
   }
 }
-Buffer.from
