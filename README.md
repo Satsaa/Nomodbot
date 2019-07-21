@@ -1,5 +1,5 @@
 # Nomodbot
-
+((((Under construction))))  
 Twitch bot with not bad things in mind (name is up for reconsideration).
 
 # Parameter Validator
