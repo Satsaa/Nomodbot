@@ -263,7 +263,7 @@ export class Instance implements PluginInstance {
 
     const userId: undefined | number = typeof arg1 === 'number' ? arg1 : typeof arg2 === 'number' ? arg2 : undefined
     const event: undefined | Events = typeof arg1 === 'string' ? arg1 : typeof arg2 === 'string' ? arg2 : undefined
-    if (event && userId) return (data.users[userId] || {}).events[event] || {} ? data.users[userId].events[event]!.offsets.length : 0
+    if (event && userId) return data.users[userId] && data.users[userId].events[event] ? data.users[userId].events[event]!.offsets.length : 0
     if (event) return data.events[event].eventCount
     if (userId) return (data.users[userId] || {}).eventCount || 0
     return data.eventCount
@@ -287,7 +287,7 @@ export class Instance implements PluginInstance {
 
   public async getSmartEvent(channelId: number, userId: number, event: Events, oneIndex: number): Promise<EventData | undefined> {
     const data = this.l.getData(channelId, 'log') as LogData
-    if (!((data || {}).users[userId] || {}).events[event]) return
+    if (!data || !data.users[userId] || !data.users[userId].events[event]) return
 
     const events = data.users[userId].events[event]!
     const index = this.l.u.smartIndex(oneIndex, events.offsets)
@@ -299,7 +299,7 @@ export class Instance implements PluginInstance {
 
   public async getEvent<T extends Events>(channelId: number, userId: number, event: T, index: number): Promise<EventTypes[T] | undefined> {
     const data = this.l.getData(channelId, 'log') as LogData
-    if (!((data || {}).users[userId] || {}).events[event]) return
+    if (!data || !data.users[userId] || !data.users[userId].events[event]) return
 
     const events = data.users[userId].events[event]!
     if (index > events.offsets.length - 1) return
@@ -356,7 +356,7 @@ export class Instance implements PluginInstance {
 
   public getOffset(channelId: number, userId: number, event: Events, index: number) {
     const data = this.l.getData(channelId, 'log') as LogData
-    if (!((data || {}).users[userId] || {}).events[event]) return
+    if (!data || !data.users[userId] || !data.users[userId].events[event]) return
 
     let total = 0
     let i = 0
@@ -369,7 +369,7 @@ export class Instance implements PluginInstance {
 
   public getTime(channelId: number, userId: number, event: Events, index: number) {
     const data = this.l.getData(channelId, 'log') as LogData
-    if (!((data || {}).users[userId] || {}).events[event]) return
+    if (!data || !data.users[userId] || !data.users[userId].events[event]) return
 
     let total = 0
     let i = 0
@@ -529,7 +529,7 @@ export class Instance implements PluginInstance {
     if (!noWrite) this.streams[channelId].write(final)
 
     const data = this.l.getData(channelId, 'log') as LogData
-    if (!(data || {}).users) throw new Error('Data is unloaded or fully or partially') // Rare?
+    if (!data || !data.users) throw new Error('Data is unloaded or fully or partially') // Rare?
     if (!data.firstSec) data.firstSec = timeSec
     data.lastSec = timeSec
     data.eventCount++

@@ -650,7 +650,7 @@ export default class TwitchClient {
         channelId = await this.api.getId(channel)
         if (!channelId) return logger.strange('no channelId', msg)
         this.clientData.channels[channelId].userstate = { ...this.clientData.channels[channelId].userstate, ...msg ? msg.tags : {} }
-        if ((msg.tags || {}).badges) this.mod(channelId, this.opts.username, Boolean(msg.tags.badges!.moderator))
+        if (msg.tags && msg.tags.badges) this.mod(channelId, this.opts.username, Boolean(msg.tags.badges.moderator))
         this.emit('userstate', channelId, msg.tags)
         break
       case 'GLOBALUSERSTATE': // <tags> <prefix> GLOBALUSERSTATE
@@ -676,8 +676,8 @@ export default class TwitchClient {
         channel = msg.params[0].slice(1)
         channelId = await this.api.getId(channel)
         if (!channelId) return logger.strange('no channelId', msg)
-        if (((msg.tags || {}).badges || {}).moderator && msg.user) {
-          this.mod(channelId, msg.user, Boolean(msg.tags.badges!.moderator))
+        if (msg.user && msg.tags.badges && msg.tags.badges.moderator) {
+          this.mod(channelId, msg.user, Boolean(msg.tags.badges.moderator))
         }
 
         const _msg = msg.params[1].endsWith(this.opts.dupeAffix)
