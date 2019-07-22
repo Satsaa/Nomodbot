@@ -18,13 +18,13 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
     },
 
     Instance: class implements PluginInstance {
-      public call: PluginInstance['call']
+      public handlers: PluginInstance['handlers']
       private l: PluginLibrary
 
       constructor(pluginLib: PluginLibrary) {
         this.l = pluginLib
 
-        this.call = this.l.addCall(this, this.call, 'default', '<USER> <COMMAND>', this.callMain)
+        this.handlers = this.l.addHandlers(this, this.handlers, 'default', '<USER> <COMMAND>', this.callMain)
       }
 
       private async callMain(channelId: number, userId: number, params: any, extra: Extra) {
@@ -66,13 +66,13 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
     },
 
     Instance: class implements PluginInstance {
-      public call: PluginInstance['call']
+      public handlers: PluginInstance['handlers']
       private l: PluginLibrary
 
       constructor(pluginLib: PluginLibrary) {
         this.l = pluginLib
 
-        this.call = this.l.addCall(this, this.call, 'default', '<USER> <COMMAND>', this.callMain)
+        this.handlers = this.l.addHandlers(this, this.handlers, 'default', '<USER> <COMMAND>', this.callMain)
       }
 
       public async callMain(channelId: number, userId: number, params: any, extra: Extra) {

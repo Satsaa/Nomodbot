@@ -32,7 +32,7 @@ interface SpotifyPlaylistData {
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private clientId?: string | null
   private clientSecret?: string | null
@@ -51,10 +51,10 @@ export class Instance implements PluginInstance {
       this.l.autoLoad('spotifyPlaylist', {})
     }
 
-    this.call = this.l.addCall(this, this.call, 'default', '[<1-Infinity>]', this.callMain)
-    this.call = this.l.addCall(this, this.call, 'default', 'list/list/i', this.callList)
-    this.call = this.l.addCall(this, this.call, 'default', 'set <playlist_ID|playlist_link>', this.callSet)
-    this.call = this.l.addCall(this, this.call, 'default', 'del', this.callDelete)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<1-Infinity>]', this.callMain, this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'list/list/i', this.callList, this.callList)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'set <playlist_ID|playlist_link>', this.callSet)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'del', this.callDelete)
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {

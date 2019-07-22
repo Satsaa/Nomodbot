@@ -44,28 +44,27 @@ export const options: PluginOptions = {
   ],
   disableMention: true,
   allowMentions: true,
+  // whisperOnCd: true, // Send whisper if alias was on cooldown
+  // Defined cooldown handlers are ignored and call handlers are used instead
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
-  public cooldown: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
-    this.call = this.l.addCall(this, this.call, 'default', 'exact <var> [<opt_vars>]', this.callMain)
-    this.call = this.l.addCall(this, this.call, 'default', 'name/regex/flags <message...>', this.callSecondary)
-    this.call = this.l.addCall(this, this.call, 'default', 'join|part <CHANNELS...>', this.callTertiary)
-
-    this.cooldown = this.l.addCall(this, this.call, 'default', '<ting>', this.cooldownMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'exact <var> [<opt_vars>]', this.callPrimary, this.cooldownPrimary)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'name/regex/flags <message...>', this.callSecondary)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'join|part <CHANNELS...>', this.callTertiary)
   }
 
   public async init() {
     // Executed and awaited on plugin load
   }
 
-  public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
+  public async callPrimary(channelId: number, userId: number, params: any, extra: Extra) {
     const [exact, variable, optVar]: ['exact', string, string | undefined] = params // Inititalize params from the ParamValidator
     return 'Example message 1'
   }
@@ -79,11 +78,11 @@ export class Instance implements PluginInstance {
     return `${action}ed` // joined or parted
   }
 
-  public async cooldownMain(channelId: number, userId: number, params: any, extra: Extra) {
+  public async cooldownPrimary(channelId: number, userId: number, params: any, extra: Extra) {
     const [ting]: [string] = params
     // Command was called but it was on cooldown
     // Show a combined message for each of the users that called this when it was on cooldown?
-    return 'On cooldown' // Ignored return value
+    return 'On cooldown' // Whispered to user because this was defined as a cooldown handler
   }
 
   public async unload() {

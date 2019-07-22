@@ -26,16 +26,16 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
-    this.call = this.l.addCall(this, this.call, 'default', 'load <!PLUGIN>', this.callLoad)
-    this.call = this.l.addCall(this, this.call, 'default', 'reload <PLUGIN>', this.callReload)
-    this.call = this.l.addCall(this, this.call, 'default', 'unload <PLUGIN>', this.callUnload)
-    this.call = this.l.addCall(this, this.call, 'default', 'path <path>', this.callPath)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'load <!PLUGIN>', this.callLoad)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'reload <PLUGIN>', this.callReload)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'unload <PLUGIN>', this.callUnload)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'path <path>', this.callPath)
   }
 
   public async callLoad(channelId: number, userId: number, params: any, extra: Extra) {

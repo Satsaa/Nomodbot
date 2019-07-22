@@ -49,7 +49,7 @@ interface ListData {
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {

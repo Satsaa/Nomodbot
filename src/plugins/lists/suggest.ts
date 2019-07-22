@@ -36,10 +36,11 @@ export const options: PluginOptions = {
   ],
   requirePlugins: ['lists'],
   disableMention: true,
+  whisperOnCd: true,
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private lists: ListsExtension
 
@@ -47,12 +48,12 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
     this.lists = this.l.ext.lists as ListsExtension
 
-    this.call = this.l.addCall(this, this.call, 'default', 'REPLY <INDEX> <message...>', this.callReply)
-    this.call = this.l.addCall(this, this.call, 'default', 'GET <INDEX>', this.callGet)
-    this.call = this.l.addCall(this, this.call, 'default', 'NEW', this.callNew)
-    this.call = this.l.addCall(this, this.call, 'default', 'OLD', this.callOld)
-    this.call = this.l.addCall(this, this.call, 'default', 'COUNT', this.callCount)
-    this.call = this.l.addCall(this, this.call, 'default', '<message...>', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'REPLY <INDEX> <message...>', this.callReply)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'GET <INDEX>', this.callGet)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'NEW', this.callNew)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'OLD', this.callOld)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'COUNT', this.callCount)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '<message...>', this.callMain)
   }
 
   public async callReply(channelId: number, userId: number, params: any, extra: Extra) {

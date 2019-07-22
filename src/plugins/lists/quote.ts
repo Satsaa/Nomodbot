@@ -16,18 +16,17 @@ export const options: PluginOptions = {
     },
   },
   help: [
+    'Show a random or specific quote: {alias} [<INDEX>]',
     'Add a new quote: {alias} add <quote...>',
     'Edit a quote at index: {alias} edit <INDEX> <quote...>',
     'Insert a new quote at index: {alias} insert <INDEX> <quote...>',
     'Delete a quote at index: {alias} del <INDEX>',
-    'Show a random or specific quote: {alias} [<INDEX>]',
   ],
   requirePlugins: ['lists'],
-  disableMention: true,
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private lists: ListsExtension
 
@@ -35,11 +34,11 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
     this.lists = this.l.ext.lists as ListsExtension
 
-    this.call = this.l.addCall(this, this.call, 'default', 'add <quote...>', this.callAdd)
-    this.call = this.l.addCall(this, this.call, 'default', 'edit <INDEX> <quote...>', this.callEdit)
-    this.call = this.l.addCall(this, this.call, 'default', 'insert <INDEX> <quote...>', this.callInsert)
-    this.call = this.l.addCall(this, this.call, 'default', 'del <INDEX>', this.callDelete)
-    this.call = this.l.addCall(this, this.call, 'default', '[<INDEX>]', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'add <quote...>', this.callAdd)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'edit <INDEX> <quote...>', this.callEdit)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'insert <INDEX> <quote...>', this.callInsert)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'del <INDEX>', this.callDelete)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<INDEX>]', this.callMain, this.callMain)
   }
 
   public async callAdd(channelId: number, userId: number, params: any, extra: Extra) {

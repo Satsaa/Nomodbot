@@ -1,6 +1,6 @@
 
 import TwitchClient from './client/client'
-import Commander, { PluginInstance } from './commander'
+import Commander, { PluginInstance, Handlers } from './commander'
 import { addArticle, commaPunctuate, plural, deduplicate } from './lib/util'
 import logger from './logger'
 
@@ -61,7 +61,7 @@ export default class ParamValidator {
 
     group = group || 'default'
 
-    if (!grouped[group] || grouped[group].length === 0) return { pass: true, index: 0, values: [] } // No help strings, so ignore
+    if (!grouped[group] || grouped[group].length === 0) return { pass: true, index: 0, values: [] } // No validator strings, so ignore
 
 
     let maxValidDepth = 0
@@ -413,10 +413,10 @@ export default class ParamValidator {
   }
 
   /** Handle command plugin's instance#call field. Caching parameter types. Throws on invalid params strings */
-  public cacheHelp(pluginId: string, call: PluginInstance['call']) {
+  public cacheHelp(pluginId: string, callHandlers: Handlers['call']) {
     const res: {[group: string]: Bundle} = {}
 
-    const source = call
+    const source = callHandlers
 
     for (const group in source) {
       res[group] = []
@@ -436,12 +436,12 @@ export default class ParamValidator {
 
   /**
    * Enable reading console input for testing parameter checking and validation  
-   * \> + help string: Next tests will check against this  
+   * \> + validator string: Next tests will check against this  
    * < + test string: Get parameter complaint for users  
-   * Test string: Check parameters against the help string  
+   * Test string: Check parameters against the validator string  
    * 
    * Examples:  
-   * Help string: >Show current time in city: {command} <city> \[12|24]  
+   * validator string: >Show current time in city: {command} <city> \[12|24]  
    * Test strig: Tokyo 44  
    * Outputs: <city> (green) \[12|24] (red)
    */
@@ -460,7 +460,7 @@ export default class ParamValidator {
         splitInputs = splits.map(v => v.split(' '))
         inputCmdParams = { default: splits.map(v => this.parse(v).data || []) }
         try {
-          const converted: PluginInstance['call'] = {
+          const converted: Handlers['call'] = {
             default: rawHelps.map((v) => {
               return {
                 params: v,
@@ -539,8 +539,8 @@ export default class ParamValidator {
   }
 
   /**
-   * Parses a help string and adds the result to memory for checking if no errors were found  
-   * @param input Help string in the formats: <var> [optional...] OR Description of action: {command} <delete|add> <message...>
+   * Parses a validator string and adds the result to memory for checking if no errors were found  
+   * @param input validator string in the formats: <var> [optional...] OR Description of action: {command} <delete|add> <message...>
    */
   private parse(input: string): AdvancedResult<Params> {
     const output: Params = []

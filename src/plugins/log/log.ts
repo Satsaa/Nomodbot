@@ -163,7 +163,7 @@ export interface LogExtension {
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private streams: { [channelId: number]: fs.WriteStream }
   /** File descriptors of each channel */

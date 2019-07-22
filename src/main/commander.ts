@@ -61,6 +61,8 @@ export interface Command {
   disableMention?: true
   /** Disable removal of @user and the following words when calling this command */
   allowMentions?: true
+  /** Whisper on cooldown */
+  whisperOnCd?: true
 }
 
 interface IsPermittedOptions {
@@ -148,30 +150,34 @@ export interface Extra {
   irc: PRIVMSG
 }
 
-export interface CallInterface {
-  default: Array<{
-    params: string
-    handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
-  }>
-  [group: string]: Array<{
-    params: string
-    handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
-  }>
+export interface Handlers {
+  call: {
+    default: Array<{
+      params: string
+      handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+    }>
+    [group: string]: Array<{
+      params: string
+      handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+    }>
+  }
+  cd: {
+    default: Array<{
+      handler?: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+    }>
+    [group: string]: Array<{
+      handler?: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+    }>
+  }
 }
 
 export interface PluginInstance {
   /** This plugin is being loaded, execute before enabling this plugin */
   init?: () => Promise<void>
   /**
-   * An alias of this command is called  
-   * The handler is called when an alias with the same group is called and the params are matched  
+   * Use PluginLib#addHandlers  
    */
-  call?: CallInterface
-  /**
-   * An alias of this command is called but it was on cooldown  
-   * The handler is called when an alias with the same group is called and the params are matched  
-   */
-  cooldown?: CallInterface
+  handlers?: Handlers
   /** This plugin is being unloaded (not when the bot is shutting down). Creates are unloaded automatically after this */
   unload?: () => Promise<void>
 }
@@ -620,11 +626,11 @@ export default class Commander {
     const instance = new instantiator(this.pluginLib)
     if (typeof instance.init === 'function') await instance.init()
     // Cache parameters
-    if (instance.call) this.validator.cacheHelp(options.id, instance.call)
+    if (instance.handlers && instance.handlers.call) this.validator.cacheHelp(options.id, instance.handlers.call)
     this.instances[options.id] = instance
     this.resolveWaits(options.id)
-    if (options.type === 'command' && !instance.call) {
-      throw new Error(`Call function required for command plugins: ${this.plugins[options.id].id}`)
+    if (options.type === 'command' && (!instance.handlers || !instance.handlers.call)) {
+      throw new Error(`Handlers required for command plugins: ${this.plugins[options.id].id}`)
     }
   }
 
@@ -646,13 +652,13 @@ export default class Commander {
   }
 
   private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean, self: boolean, irc: PRIVMSG | undefined) {
-    if (self) return // Bot shouldn't trigger commands
-    if (!irc) return
+    if (self || !irc) return
 
     let words = message.split(' ')
     const alias = this.getAlias(channelId, words[0])
     if (!alias || alias.disabled) return
 
+    const group = alias.group || 'default'
     const instance = this.instances[alias.target]
     const plugin = this.plugins[alias.target]
     if (!plugin || !instance) return logger.info('Nonexisting target:', alias.target)
@@ -661,7 +667,7 @@ export default class Commander {
     words = message.split(' ')
     // Make sure the plugin is loaded
     if (!instance) return logger.info(`Cannot call unloaded command: ${alias.target}`)
-    if (!instance.call) throw new Error(`No call function on command plugin: ${alias.target}`)
+    if (!instance.handlers || !instance.handlers.call) throw new Error(`No handlers on command plugin: ${alias.target}`)
     // Check permissions (master users always have permissions)
     if (this.isPermitted(alias, userId, tags.badges)) {
       if (this.masters.includes(userId) || (tags.badges && (tags.badges.broadcaster || tags.badges.moderator))) {
@@ -672,16 +678,21 @@ export default class Commander {
         }
 
         const extra: Extra = { alias, words, message, me, cooldown: 0, irc }
-        let res = await instance.call[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
+        let res = await instance.handlers.call[group][validation.index].handler(channelId, userId, validation.values, extra)
         if (res) {
           res = res.replace(/\n/, ' ')
           this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
         }
       } else {
         const cooldown = this.getCooldown(channelId, userId, alias)
-        if (cooldown <= 0) { // Passing
+
+        // Whisper on cooldown and use callHandler
+        let whisperCall = false
+        if (cooldown > 0 && plugin.whisperOnCd) whisperCall = true
+
+        if (cooldown <= 0 || whisperCall) { // Passing
           const cooldowns = this.data.getData(channelId, 'cooldowns') as CooldownData
-          if (cooldowns) {
+          if (cooldowns && !whisperCall) {
             // Add entries to cooldowns
             if (alias.cooldown) cooldowns.shared[alias.target].push(Date.now())
             if (alias.userCooldown && alias.userCooldown > (alias.cooldown || 0)) cooldowns.user[alias.target][userId].push(Date.now())
@@ -689,21 +700,27 @@ export default class Commander {
 
           const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
           if (!validation.pass) {
-            return this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, validation.message, irc)}${validation.message}`)
+            if (whisperCall) this.client.whisper(userId, validation.message)
+            else this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, validation.message, irc)}${validation.message}`)
+            return
           }
 
           const extra: Extra = { alias, words, message, me, cooldown, irc }
-          let res = await instance.call[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
+          let res = await instance.handlers.call[group][validation.index].handler(channelId, userId, validation.values, extra)
           if (res) {
             res = res.replace(/\n/, ' ')
-            this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
+            if (whisperCall) this.client.whisper(userId, res)
+            else this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
           }
-        } else if (instance.cooldown) {
+        } else if (instance.handlers.cd[group]) { // Call cooldown handlers if defined
           const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
           if (!validation.pass) return
 
+          if (!instance.handlers.cd[group][validation.index].handler) return
+
           const extra: Extra = { alias, words, message, me, cooldown, irc }
-          instance.cooldown[alias.group || 'default'][validation.index].handler(channelId, userId, validation.values, extra)
+          const res = await instance.handlers.cd[group][validation.index].handler!(channelId, userId, validation.values, extra)
+          if (res) this.client.whisper(userId, res)
         }
       }
     }

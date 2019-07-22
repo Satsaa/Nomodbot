@@ -3,13 +3,21 @@
 Twitch bot with not bad things in mind (name is up for reconsideration).
 
 # Parameter Validator
-The Parameter Validator validates input messages against the usage instructions defined in a command plugin's `options.help` property.  
+The Parameter Validator validates user command calls against strings which describe what parameters are required.  
 
-Each help string is validated from the first index to last. The first complete match will be accepted (some advanced variables are validated now).  
+Each help string is validated from the first index to last. The first complete match will be accepted.  
 
-The typing for `options.help` can either be `helpString[]` or with grouping `{[group: string]: helpString[]}`. An alias with it's "group" property defined, will be matched against the appropriate group (default group is "default").  
+Each command plugin should define validator strings and corresponding handlers with PluginLib#addCall. The command plugin has the following validator implementation in the constructor:  
+```typescript
+this.call = this.l.addCall(this, this.call, 'default', 'add <!COMMAND> <PLUGIN>', this.callAdd, this.cdAdd)
+this.call = this.l.addCall(this, this.call, 'default', 'del <COMMAND>', this.callDelete, this.cdDelete)
+```
+The fourth parameters are the strings validated by the validator.  
 
-If a help string doesn't have the character ":", it will be ignored for validating.
+`this.callAdd` is called when a user invokes !command with params "add", a nonexisting alias name, and a plugin id.
+For example: `!command Add !usage help`.
+`this.callDelete` is called when a user chats something like: `!command del !usage`.
+Optionally if the alias was on cooldown `this.cdAdd` or `this.cdDelete` is called instead. 
 
 ## Syntax
 
@@ -82,20 +90,15 @@ Plural versions are also accepted, INDEX -> INDEXES or USER -> USERS and so on.
 
 <details><summary>Expand</summary>
 
-Bold parameters are accepted
+Bold parameters are accepted by the validator. Row marked with ✅ is the matched validator string. Some parameters have further checks after this (e.g. "\<USER\>" is accepted for candidate if any string was defined in its place, but the existence of the user is checked aftwerwards).  
 
-**Help string are no longer used for parameter validation in this way**  
-**You should now use PluginLibary#addCall**(*this*, *this.call*, *group*, ***helpString***, *handler*) **for each help entry**  
-**Replace *helpString* with a string like `add <quote...>` (The explanation and {alias} should not not included)**
+Below only the validator string is shown  
 
-Help strings, like in the quote command plugin:  
+Validator strings, like in the quote command plugin:  
 ```javascript
-help: [  
-  'Add a new quote: {alias} add <quote...>',
-  'Delete a quote: {alias} del <INDEX>',
-  'Show quote: {alias} [<INDEX>]',
-  'Edit quotes', // Ignored for validation (has no ':')
-]  
+'add <quote...>'
+'del <INDEX>'
+'[<INDEX>]'
 ```
 Input: `"add "99 problems but physics aint one" - Albert Einstein, 1923"`  
 
@@ -110,10 +113,8 @@ Input: `"add "99 problems but physics aint one" - Albert Einstein, 1923"`
 ### Order matters
 
 ```javascript
-help: [  
-  'Define a new default message: {alias} <message...>',
-  'Define a new number message: {alias} <NUMBER> <message...>',
-]  
+'<message...>'
+'<NUMBER> <message...>',
 ```
 Input: `"999 My cool message"`  
 
@@ -124,13 +125,11 @@ Input: `"999 My cool message"`
 
 Because of the order that the help strings were inputted, the second one can never be selected.
 
-Now with reverse order of help strings:
+Now with reverse order of validator strings:
 
 ```javascript
-help: [  
-  'Define a new number message: {alias} <NUMBER> <message...>',
-  'Define a new default message: {alias} <message...>',
-]  
+'<NUMBER> <message...>'
+'<message...>',
 ```
 Input: `"999 My 999th message"`  
 
@@ -151,10 +150,8 @@ Input: `"The defaultly cool message"`
 ### USER parameter
 
 ```javascript
-help: [  
-  'Ping user: {alias} <USER>',
-  'Something else: {alias} <not_user>', // Never reached
-]  
+'<USER>'
+'<not_user>', // Never reached
 ```
 
 Input: `"archimo"`  
@@ -183,10 +180,8 @@ Output: `"Cannot find user (param 1)"`
 ### Tuple parameter
 
 ```javascript
-help: [  
-  'Binary data: {alias} 0|1...',
-  'Decimals: {alias} 0|1|2|3|4|5|6|7|8|9...',
-]  
+'0|1...'
+'0|1|2|3|4|5|6|7|8|9...',
 ```
 
 Input: `"0 0 1 1 1 0 1 0 0 0 1 0 1 0 0 1"`  
@@ -208,10 +203,8 @@ Input: `"0 1 9"`
 ### Regular Expressions
 
 ```javascript
-help: [  
-  'Byte data: {alias} <byte/^[01]{8}$/i>...',
-  'Hex data: {alias} </([0-9a-f]{2}/i>...',
-]  
+'<byte/^[01]{8}$/i>...'
+'</([0-9a-f]{2}/i>...',
 ```
 
 Input: `"00111010 00101001"`  

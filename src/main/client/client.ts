@@ -347,6 +347,7 @@ export default class TwitchClient {
     const login = await this.api.getLogin(userId)
     if (!login) return false
     return this.whisperRateLimiter.queue(() => {
+      logger.whisper(`bot -> ${login}: ${msg}`)
       this.send(`PRIVMSG #${this.opts.username} :/w ${login} ${msg}`)
     })
   }
@@ -694,6 +695,7 @@ export default class TwitchClient {
       }
       case 'WHISPER': // @userstate :<user>!<user>@<user>.tmi.twitch.tv WHISPER <you> :<message>
         if (!msg.tags['user-id']) return logger.strange('no userId:', msg)
+        logger.whisper(`${msg.tags['display-name']} -> bot: ${msg}`)
         this.emit('whisper', msg.tags['user-id'], msg.params[1])
         break
       case 'PING':

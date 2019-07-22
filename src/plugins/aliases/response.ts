@@ -25,7 +25,7 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private variables: string[]
 
@@ -33,12 +33,12 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
     this.variables = ['channel', 'user', 'command', 'paramN']
 
-    this.call = this.l.addCall(this, this.call, 'default', 'add <!COMMAND> <message...>', this.callAddEdit) // Same handler
-    this.call = this.l.addCall(this, this.call, 'default', 'edit <COMMAND> <message...>', this.callAddEdit) // Same handler
-    this.call = this.l.addCall(this, this.call, 'default', 'raw <COMMAND>', this.callRaw)
-    this.call = this.l.addCall(this, this.call, 'default', 'del <COMMAND>', this.callDelete)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'add <!COMMAND> <message...>', this.callAddEdit) // Same handler
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'edit <COMMAND> <message...>', this.callAddEdit) // Same handler
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'raw <COMMAND>', this.callRaw)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'del <COMMAND>', this.callDelete)
 
-    this.call = this.l.addCall(this, this.call, 'response', '[<parameters...>]', this.callResponse)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'response', '[<parameters...>]', this.callResponse)
   }
 
 

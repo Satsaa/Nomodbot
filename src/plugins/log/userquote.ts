@@ -24,7 +24,7 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private log: LogExtension
 
@@ -32,9 +32,9 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
     this.log = this.l.ext.log as LogExtension
 
-    this.call = this.l.addCall(this, this.call, 'default', '<INDEX>', this.callIndex)
-    this.call = this.l.addCall(this, this.call, 'default', '<USER> [<INDEX>]', this.callUser)
-    this.call = this.l.addCall(this, this.call, 'default', '', this.callRandom)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '<INDEX>', this.callIndex)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '<USER> [<INDEX>]', this.callUser)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '', this.callRandom)
   }
 
   public async callRandom(channelId: number, userId: number, params: any, extra: Extra) {

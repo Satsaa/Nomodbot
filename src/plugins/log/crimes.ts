@@ -17,10 +17,11 @@ export const options: PluginOptions = {
   },
   help: ['Show how many crimes you or user has committed in {channel}: {alias} [<user>]'],
   requirePlugins: ['log'],
+  whisperOnCd: true,
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private log: LogExtension
 
@@ -28,7 +29,7 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
     this.log = this.l.ext.log as LogExtension
 
-    this.call = this.l.addCall(this, this.call, 'default', '[<USER>]', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<USER>]', this.callMain)
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {

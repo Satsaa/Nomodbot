@@ -1,5 +1,5 @@
 import TwitchClient from './client/client'
-import Commander, { CommandAlias, Extra, PluginInstance, PluginOptions, userlvls, CallInterface, ReadonlyCommandAlias } from './commander'
+import Commander, { CommandAlias, Extra, PluginInstance, PluginOptions, userlvls, Handlers, ReadonlyCommandAlias } from './commander'
 import Data from './data'
 import * as secretKey from './lib/secretKey'
 import * as util from './lib/util'
@@ -200,24 +200,56 @@ export default class PluginLibrary {
     }
   }
 
-  public addCall(self: PluginInstance, call: undefined, group: 'default', params: string, handler: CallInterface[string][number]['handler']): CallInterface
-  public addCall(self: PluginInstance, call: CallInterface | undefined, group: string, params: string, handler: CallInterface[string][number]['handler']): CallInterface
+  public addHandlers(self: PluginInstance, handler: undefined, group: 'default', params: string, callHandler: Handlers['call'][string][number]['handler'], cdHandler?: Handlers['cd'][string][number]['handler']): Handlers
+  public addHandlers(self: PluginInstance, handler: Handlers | undefined, group: string, params: string, callHandler: Handlers['call'][string][number]['handler'], cdHandler?: Handlers['cd'][string][number]['handler']): Handlers
   /**
-   * Adds `params` and `handler` to the call objects `group` key and returns it  
-   * Can be used for PluginInstance#call and PluginInstance#cooldown atleast  
+   * Adds `callHandler` for `group` to `handler` and returns it.
+   * The callHandler is called when a user calls the alias with matching `params`.
+   * If defined the `cdHandler`  is called when the alias was on cooldown.
+   * `callHandler` is bound to `self`.
    */
-  public addCall(self: PluginInstance, call: CallInterface | undefined, group: string, params: string, handler: CallInterface[string][number]['handler']): CallInterface {
-    if (call) {
-      if (!call[group]) call[group] = []
-      call[group].push({ params, handler: handler.bind(self) })
-      return call
-    } else {
-      const _call: any = {}
-      _call[group] = [{ params, handler: handler.bind(self) }]
-      call = _call
-      return call as CallInterface
+  public addHandlers(self: PluginInstance, handler: PluginInstance['handlers'], group: string, params: string, callHandler: Handlers['call'][string][number]['handler'], cdHandler?: Handlers['cd'][string][number]['handler']): Handlers {
+    if (handler) {
+      if (!handler.call[group]) handler.call[group] = []
+      handler.call[group].push({ params, handler: callHandler.bind(self) })
+      if (!handler.cd[group]) handler.cd[group] = []
+      handler.cd[group].push({ handler: cdHandler ? cdHandler.bind(self) : cdHandler })
+      return handler
+    } else { // initialize
+      if (group !== 'default') throw new Error('The first created handler must have the \'default\' group!')
+
+      const _handler: any = {}
+      _handler.call = {}
+      _handler.call[group] = [{ params, handler: callHandler.bind(self) }]
+      _handler.cd = {}
+      _handler.cd[group] = [{ handler: cdHandler ? cdHandler.bind(self) : cdHandler }]
+      return _handler as Handlers
     }
   }
+
+  /** 
+   * @example 
+   * {
+   *   call: {
+   *     default: Array<{
+   *       params: string
+   *       handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+   *     }>
+   *     [group: string]: Array<{
+   *       params: string
+   *       handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+   *     }>
+   *   }
+   *   cd: {
+   *     default: Array<{
+   *       handler?: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+   *     }>
+   *     [group: string]: Array<{
+   *       handler?: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+   *     }>
+   *   }
+   * } 
+   */
 
   /** Throws if conflicts are found */
   public findConflicts() {

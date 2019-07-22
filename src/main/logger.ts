@@ -168,6 +168,7 @@ const categories = {
   strange: { saved: true, handler: console.error },
   chat: { prefix: '[CHAT]', color: 'gray' },
   botChat: { prefix: '[BOT]', color: 'green' },
+  whisper: {},
 
   apiError: { saved: true, handler: console.error },
   apiInfo: {},
