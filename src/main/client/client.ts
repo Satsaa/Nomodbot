@@ -550,9 +550,14 @@ export default class TwitchClient {
 
     logger.raw(msg)
 
+    if (typeof msg.tags['user-id'] === 'number' && typeof msg.user === 'string' && typeof msg.tags['display-name'] === 'string') {
+      this.api.cacheUser(msg.tags['user-id'], msg.user, msg.tags['display-name'])
+    }
+
     switch (msg.cmd) {
       case '001': // <prefix> 001 <you> :Welcome, GLHF!
         this.reconnects = 0
+        if (msg.params[0] !== this.opts.username) throw new Error('Username doesn\'t match with username reported by the server. It is possible that this is happening because the oauth token isn\'t from the username\'s account')
         logger.botInfo('Bot is welcome')
         this.join([...Object.keys(this.clientData.channels).map(v => Number(v)), ...this.opts.join])
         this.opts.join = [] // Join only once
@@ -685,7 +690,6 @@ export default class TwitchClient {
           ? msg.params[1].substring(0, msg.params[1].length - this.opts.dupeAffix.length)
           : msg.params[1]
         logger.chat(`{${channel}} ${msg.tags['display-name']}: ${_msg}`)
-        this.api.cacheUser(msg.tags['user-id']!, msg.user!, String(msg.tags['display-name']!))
         if (_msg.startsWith('ACTION ')) {
           this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as PRIVMSG['tags'], _msg.slice(8, -1), true, msg.user === this.opts.username, msg as PRIVMSG)
         } else {

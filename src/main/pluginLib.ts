@@ -3,6 +3,7 @@ import Commander, { CommandAlias, Extra, PluginInstance, PluginOptions, userlvls
 import Data from './data'
 import * as secretKey from './lib/secretKey'
 import * as util from './lib/util'
+import logger from './logger'
 
 export default class PluginLibrary {
   /** util library */
@@ -315,6 +316,33 @@ export default class PluginLibrary {
       res.push(message.slice(emotes[emote].start, emotes[emote].end + 1))
     }
     return res
+  }
+
+  /**
+   * Returns mentions without '@' from `messsage`.
+   */
+  public getMentions(message: string): string[] {
+    let currentI = 0
+    const mentions = []
+    let i = 0
+    while (currentI < message.length) {
+      if (++i > 1000) {
+        logger.error(`extractMentions: string '${message}' caused an infinite loop`)
+        break
+      }
+
+      const atIndex = currentI ? message.indexOf(' @', currentI) + 1 : message.indexOf('@', currentI)
+      if (atIndex === (currentI ? 0 : -1)) break
+
+      let spaceIndex = message.indexOf(' ', atIndex)
+      if (spaceIndex === -1) spaceIndex = message.length
+
+      const mention = message.slice(atIndex + 1, spaceIndex)
+      if (mention.length) mentions.push(mention)
+
+      currentI = spaceIndex
+    }
+    return mentions
   }
 
   /**

@@ -83,7 +83,7 @@ export class Instance implements PluginInstance {
     if (!overwrite && this.l.getAlias(channelId, aliasName)) return 'That command already exists'
 
     this.l.setAlias(channelId, aliasName, { target: options.id, cooldown: 10, userCooldown: 30, group: 'response', data })
-    return `Response created: ${aliasName}`
+    return `Response ${action === 'add' ? 'created' : 'edited'}: ${aliasName}`
   }
 
   public async callRaw(channelId: number, userId: number, params: any, extra: Extra) {

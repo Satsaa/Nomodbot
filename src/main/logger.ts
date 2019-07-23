@@ -2,7 +2,7 @@
 import fs from 'fs'
 import { resolve } from 'path'
 
-interface Category {
+export interface Category {
   /** Whether or not this category is saved on disk */
   saved?: boolean
   /**
@@ -158,7 +158,7 @@ export const options: Options = {
   noSave: false,
 }
 
-const categories = {
+export const categories = {
   error: { saved: true, handler: console.error },
   warn: { handler: console.error, color: 'yellow' },
   info: {},

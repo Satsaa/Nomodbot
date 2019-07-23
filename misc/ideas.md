@@ -22,7 +22,7 @@ E.g. dont allow deletion of the last alias of the "command" plugin, because that
 ## Data file types
 Support file types and derive types from the file type  
 
-- .txt: string, .json: object, ~~.map: map~~,  .table: map?
+- .txt: string, .json: object, ~~.map: map~~, .table: map?
 
 ## Data loaders and unloaders
 
@@ -69,16 +69,6 @@ More than 2 weeks timeout
 - Custom categories per channel
 - Hints showing partial answer
 - Custom hints for hardcoded questions allowed
-
-## afk
-!afk [<message...>]  
-
-Notify afk users with a custom message
-- !afk marks a user as afk until they write again in chat
-- Notify users that directly mention an afk user
-- Like: *mentioner* *afkuser* is afk(: *message*)
-- Should not notify if already done so recently (minimum lines between notifies? or time)
-- Don't notify a user that already received a notify?
 
 ## slots
 !slots \<bet>  

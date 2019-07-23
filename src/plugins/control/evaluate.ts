@@ -48,5 +48,3 @@ export class Instance implements PluginInstance {
     }
   }
 }
-
-export const test = 99999
