@@ -33,15 +33,15 @@ interface MyIQData {
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.l.autoLoad('myIq', { high: {}, low: {} }, true)
 
-    this.call = this.l.addCall(this, this.call, 'default', 'record', this.callRecord)
-    this.call = this.l.addCall(this, this.call, 'default', '[<USER>]', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'record', this.callRecord)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<USER>]', this.callMain)
   }
 
   public async callRecord(channelId: number, userId: number, params: any, extra: Extra) {

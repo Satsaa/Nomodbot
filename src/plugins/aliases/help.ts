@@ -14,16 +14,17 @@ export const options: PluginOptions = {
     },
   },
   help: ['Display usage instructions of command: {alias} <COMMAND>'],
+  whisperOnCd: true,
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
-    this.call = this.l.addCall(this, this.call, 'default', '<COMMAND>', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '<COMMAND>', this.callMain)
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {

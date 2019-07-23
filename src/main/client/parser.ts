@@ -23,7 +23,7 @@ export interface IrcMessage {
   raw: string
   // The most elegant solution
   tags: {
-    [x: string]: string
+    [x: string]: string | undefined
     // @ts-ignore
     badges?: { [badge: string]: number }
     // @ts-ignore
@@ -78,7 +78,6 @@ const conversions: {[tag: string]: (v: string) => any} = {
   'ban-duration': num,
   'msg-param-months': num,
   'msg-param-cumulative-months': num,
-  'msg-param-sub-plan': num,
   'msg-param-origin-id': num,
   'msg-param-recipient-id': num,
   'msg-param-sender-count': num,

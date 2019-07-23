@@ -15,18 +15,19 @@ export const options: PluginOptions = {
   },
   help: ['Tell the days {channel} usually streams on: {alias} [<1-8>]'],
   disableMention: true,
+  whisperOnCd: true,
 }
 
 const DAY = 86400000
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
-    this.call = this.l.addCall(this, this.call, 'default', '[<1-8>]', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<1-8>]', this.callMain)
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
@@ -40,13 +41,16 @@ export class Instance implements PluginInstance {
       const videos = recent.data
       if (videos.length < 1) return 'There are no vods :('
 
+      const toDate = new Date()
       const toDay = new Date().getTime() / DAY
+      const toDayString = `${toDate.getUTCFullYear()}.${toDate.getUTCMonth()}.${toDate.getUTCDate()}`
       const streamCounts = [0, 0, 0, 0, 0, 0, 0]
 
       let prevDateString = ''
       let total = 0
-      for (let i = 1; i < weeks * 7 || i < videos.length; i++) {
+      for (let i = 0; i < weeks * 7 || i < videos.length; i++) {
         const date = new Date(videos[i].created_at)
+        if (toDayString === `${date.getUTCFullYear()}.${date.getUTCMonth()}.${date.getUTCDate()}`) continue // Ignore today
         if (date.getTime() / DAY < toDay - weeks * 7) { // Stop on too old entries
           total = i
           break

@@ -28,6 +28,7 @@ if (args.args.manager && !process.send) {
   })
   process.on('unhandledRejection', (e) => {
     logError(e)
+    throw e
   })
 
   const bot = new Bot({ masters: [61365582] })

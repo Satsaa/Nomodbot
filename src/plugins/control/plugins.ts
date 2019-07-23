@@ -14,16 +14,17 @@ export const options: PluginOptions = {
     },
   },
   help: ['Display enabled plugins: {alias} [<type>]'],
+  whisperOnCd: true,
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
-    this.call = this.l.addCall(this, this.call, 'default', '[<type>]', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<type>]', this.callMain)
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {

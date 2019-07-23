@@ -15,16 +15,17 @@ export const options: PluginOptions = {
     },
   },
   help: ['Tell when {channel} usually goes live and how long they stream (average of count): {alias} [<1-100>]'],
+  whisperOnCd: true,
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
-    this.call = this.l.addCall(this, this.call, 'default', '[<1-100>]', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<1-100>]', this.callMain)
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {

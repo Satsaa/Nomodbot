@@ -19,7 +19,7 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private appId?: null | string
   private appKey?: null | string
@@ -33,7 +33,7 @@ export class Instance implements PluginInstance {
       console.error('[define] Disabled due to the lack of API keys for Oxford Dictionary')
     }
 
-    this.call = this.l.addCall(this, this.call, 'default', '<term...>', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '<term...>', this.callMain)
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {

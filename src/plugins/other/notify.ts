@@ -18,6 +18,7 @@ export const options: PluginOptions = {
     'Notify a user with a message when they type in chat: {alias} <USER> <message...>',
     'Delete notifies you created: {alias} del [<USER>]',
   ],
+  whisperOnCd: true,
 }
 
 interface NotifyData {
@@ -29,7 +30,7 @@ interface NotifyData {
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private listener: any
 
@@ -40,8 +41,8 @@ export class Instance implements PluginInstance {
 
     this.l.emitter.on('chat', this.listener = this.onChat.bind(this))
 
-    this.call = this.l.addCall(this, this.call, 'default', 'del [<USER>]', this.callDelete)
-    this.call = this.l.addCall(this, this.call, 'default', '<USER> <message...>', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'del [<USER>]', this.callDelete)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '<USER> <message...>', this.callMain)
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {

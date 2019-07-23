@@ -16,13 +16,13 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
-    this.call = this.l.addCall(this, this.call, 'default', '[<CHANNELS...>]', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<CHANNELS...>]', this.callMain)
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {

@@ -30,20 +30,20 @@ export const options: PluginOptions = {
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
-    this.call = this.l.addCall(this, this.call, 'default', 'add <!COMMAND> <PLUGIN>', this.callAdd)
-    this.call = this.l.addCall(this, this.call, 'default', 'del <COMMAND>', this.callDelete)
-    this.call = this.l.addCall(this, this.call, 'default', 'edit <command> <PLUGIN>', this.callEdit)
-    this.call = this.l.addCall(this, this.call, 'default', 'copy <COMMAND> <!COMMAND>', this.callCopy)
-    this.call = this.l.addCall(this, this.call, 'default', 'enable|disable <COMMAND>', this.callEnable)
-    this.call = this.l.addCall(this, this.call, 'default', 'hide|unhide <COMMAND>', this.callHide)
-    this.call = this.l.addCall(this, this.call, 'default', 'set <COMMAND> cd|ucd <0-300>', this.callSet)
-    this.call = this.l.addCall(this, this.call, 'default', 'get <COMMAND> [blacklist|bl|cd|cooldown|disabled|enabled|group|hidden|plugin|ucd|userCooldown|ul|userlevel|userlvl|whitelist|wl]', this.callGet)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'add <!COMMAND> <PLUGIN>', this.callAdd)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'del <COMMAND>', this.callDelete)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'edit <command> <PLUGIN>', this.callEdit)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'copy <COMMAND> <!COMMAND>', this.callCopy)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'enable|disable <COMMAND>', this.callEnable)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'hide|unhide <COMMAND>', this.callHide)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'set <COMMAND> cd|ucd <0-300>', this.callSet)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'get <COMMAND> [blacklist|bl|cd|cooldown|disabled|enabled|group|hidden|plugin|ucd|userCooldown|ul|userlevel|userlvl|whitelist|wl]', this.callGet)
   }
 
   public async callAdd(channelId: number, userId: number, params: any, extra: Extra) {

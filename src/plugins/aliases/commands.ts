@@ -20,18 +20,19 @@ export const options: PluginOptions = {
     'Display hidden commands: {alias} hidden [<0-10>]',
     'Display enabled commands: {alias} [<0-10>]',
   ],
+  whisperOnCd: true,
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
-    this.call = this.l.addCall(this, this.call, 'default', 'disabled [<0-10>]', this.callDisabled)
-    this.call = this.l.addCall(this, this.call, 'default', 'hidden [<0-10>]', this.callHidden)
-    this.call = this.l.addCall(this, this.call, 'default', '[<0-10>]', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'disabled [<0-10>]', this.callDisabled)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'hidden [<0-10>]', this.callHidden)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<0-10>]', this.callMain)
   }
 
 

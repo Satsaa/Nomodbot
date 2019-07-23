@@ -2,50 +2,54 @@
 # Source
 
 ## Local user database 
+MySql?
 
 ## Start using maps
 
 ## Make whitelist & blacklist grouped and per plugin
 
 ## Allow @user for user parameters
-!notify @user
-!notify user
+!notify @user  
+!notify user  
 
 ## Provide max length when calling command plugins
-Helps plugins limiting message lengths with accurate variables
+Helps plugins limiting message lengths with accurate variables  
 
 ## Vital flag for command plugins
 Prevent extinction of command plugins that have this flag enabled  
-E.g. dont allow deletion of the last alias of the "command" plugin  
-- (If there is no alias for command, commands cannot be created nor edited)  
+E.g. dont allow deletion of the last alias of the "command" plugin, because that command is needed for editing commands and without it you couldn't
 
 ## Data file types
-Support file types and derive types from the file type
+Support file types and derive types from the file type  
 
-- .txt: string, .json: object, .map: map,  
+- .txt: string, .json: object, ~~.map: map~~, .table: map?
 
 ## Data loaders and unloaders
 
-Options for loader and unloader functions
-Run loader on the loaded data
-Run unloader on a clone of the data before unloading
+Options for loader and unloader functions  
+Run loader on the loaded data  
+~~Run unloader on a clone of the data before unloading~~  
+Run unloader on the object but remove object from Data#data to  
 
 ## Optional per alias cooldowns
-Aliases created by ?response share cooldown
+Aliases created by ?response share cooldown  
 
-- Add alias property cooldownId
-- Value is a string
-- generate unique id, so copies share cooldown?
+- Add alias property cooldownId  
+- Value is a string  
+- generate unique id, so copies share cooldown?  
 
 ## Cleanup for expired cooldowns
-- Onexit and/or intervalled cleaner function
-- Removes cooldown entries that don't matter anymore
+- Onexit and/or intervalled cleaner function  
+- Removes cooldown entries that don't matter anymore  
 
 # Command Plugins
 
+##remind create reminders
+!remind \<timeString>  
+
 ## vanish
-!vanish
-Timeouts the user for 1 sec duh
+!vanish  
+Timeouts the user for 1 sec duh  
 
 ## Long timeouts
 More than 2 weeks timeout
@@ -65,21 +69,6 @@ More than 2 weeks timeout
 - Custom categories per channel
 - Hints showing partial answer
 - Custom hints for hardcoded questions allowed
-
-## Crime count
-!crimes  
-
-Tells and tracks the amount of times a user has been timedout
-
-## afk
-!afk [<message...>]  
-
-Notify afk users with a custom message
-- !afk marks a user as afk until they write again in chat
-- Notify users that directly mention an afk user
-- Like: *mentioner* *afkuser* is afk(: *message*)
-- Should not notify if already done so recently (minimum lines between notifies? or time)
-- Don't notify a user that already received a notify?
 
 ## slots
 !slots \<bet>  
@@ -136,5 +125,5 @@ The "accepts" key might have a value like: `"string", "number", "positive", "boo
 
 Allows creating timed messages via the extension api  
 Timers should be paused when chat is not active  
-Timers shouldn't activate if last message is from bot (prevent spam when dead chat)
-extend $plugins to display plugins with   
+Timers shouldn't activate if last message is from bot (prevent spam when dead chat)  
+extend $plugins to display plugins with  

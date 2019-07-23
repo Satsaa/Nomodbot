@@ -17,10 +17,11 @@ export const options: PluginOptions = {
   },
   help: ['Show how many crimes you or user has committed in {channel}: {alias} [<user>]'],
   requirePlugins: ['log'],
+  whisperOnCd: true,
 }
 
 export class Instance implements PluginInstance {
-  public call: PluginInstance['call']
+  public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private log: LogExtension
 
@@ -28,7 +29,7 @@ export class Instance implements PluginInstance {
     this.l = pluginLib
     this.log = this.l.ext.log as LogExtension
 
-    this.call = this.l.addCall(this, this.call, 'default', '[<USER>]', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<USER>]', this.callMain)
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
@@ -41,7 +42,7 @@ export class Instance implements PluginInstance {
     const crimes = this.log.eventCount(channelId, targetId, 'timeout') || 0
 
     const part1 = `${targetId === userId ? 'You have' : `${extra.words[1]} has`} committed ${this.l.u.plural(crimes, 'crime')}`
-    return `${part1} (${this.getPctString(crimes / total)})${this.getCrimeEmoji(total / crimes)}`
+    return `${part1}${crimes ? ` (${this.getPctString(crimes / total)})` : ''}${this.getCrimeEmoji(crimes / total)}`
   }
 
   private getCrimeEmoji(crimePercent: number) {
@@ -53,13 +54,8 @@ export class Instance implements PluginInstance {
   }
 
   /** 0.50 -> 50% | 0.005555 -> 0.5% | 0.000050 -> 0.005% | 0.000... -> 0% */
-  private getPctString(percentage: number) {
-    if (percentage >= 0.01) return `${Math.round(percentage * 100)}%`
-
-    const percentStr = String(percentage)
-
-    const index = percentStr.search(/[1-9]/)
-
-    return `${Number(`${`${percentStr.slice(0, index + 1)}` || '0'}`) * 100}%`
+  private getPctString(num: number) {
+    num *= 100
+    return `${num.toFixed(Math.floor(Math.log(num) / Math.log(10)))}%`
   }
 }
