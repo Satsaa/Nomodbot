@@ -50,9 +50,13 @@ export class Instance implements PluginInstance {
   public async callSetId(channelId: number, userId: number, params: any, extra: Extra) {
     const [action, steamId]: ['set', number] = params
 
+    if (!this.l.isPermitted({ userlvl: userlvls.mod }, userId, extra.irc.tags.badges)) {
+      return `You must be a ${this.l.userlvlString(userlvls.mod)} change the Steam ID`
+    }
+
     const res = this.ext.setUserSteamId(channelId, steamId)
 
-    if (res) return `Steam id for ${await this.l.api.getDisplay(channelId)} set! Some commands require the bot to be added as a friend on steam by the streamer`
+    if (res) return `Steam ID for ${await this.l.api.getDisplay(channelId)} set! Some commands require the bot (NoModBot) to be added as a friend on Steam by the streamer`
     return 'Setting steam id failed :/'
   }
 }

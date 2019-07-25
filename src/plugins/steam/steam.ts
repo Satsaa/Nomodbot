@@ -60,27 +60,22 @@ export class Instance implements PluginInstance {
 
   // This promise does not resolve if required config keys are not available
   // and causes other steam plugins to not load which is intended
-  public init(): Promise<void> {
-    return new Promise((resolve) => {
-      this.username = this.l.getKey('steam', 'username') || undefined
-      this.password = this.l.getKey('steam', 'password') || undefined
+  public async init(): Promise<void> {
+    this.username = this.l.getKey('steam', 'username') || undefined
+    this.password = this.l.getKey('steam', 'password') || undefined
 
-      if (!this.username || !this.password) {
-        console.error('Username and password required for steam in keys.json file')
-      } else {
-        this.client = new SteamUser()
+    if (!this.username || !this.password) {
+      console.error('Username and password required for steam in keys.json file')
+    } else {
+      this.client = new SteamUser()
 
-        this.client.on('loggedOn', this.onLoggedOn.bind(this))
-        this.client.on('error', this.onError.bind(this))
-        this.client.on('user', this.onUser.bind(this))
-        this.client.on('disconnected', this.onDisconnected.bind(this))
+      this.client.on('loggedOn', this.onLoggedOn.bind(this))
+      this.client.on('error', this.onError.bind(this))
+      this.client.on('user', this.onUser.bind(this))
+      this.client.on('disconnected', this.onDisconnected.bind(this))
 
-        this.logOn().then((res) => {
-          if (res) resolve()
-          else console.error('Steam couldn\'t be loaded')
-        })
-      }
-    })
+      await this.logOn()
+    }
   }
 
   public async unload() {
@@ -92,14 +87,14 @@ export class Instance implements PluginInstance {
     this.client.logOff()
   }
 
-  private async logOn() {
+  private async logOn(timeout?: number) {
     if (!this.username || !this.password) throw new Error('No username and/or no password when trying to logon steam')
     this.client.logOn({
       accountName: this.username,
       password: this.password,
     })
 
-    const res = await eventTimeout(this.client, 'loggedOn', { timeout: 5000 })
+    const res = await eventTimeout(this.client, 'loggedOn', timeout ? { timeout } : undefined)
     if (res.timeout) return false
     else return res.args
   }
@@ -122,7 +117,6 @@ export class Instance implements PluginInstance {
   }
 
   private onLoggedOn(details: any) {
-    console.log(details)
     console.log(`Logged into Steam as ${this.client.steamID.getSteam3RenderedID()}`)
     this.client.setPersona(SteamUser.EPersonaState.Online)
     if (this.reconnectTimeout) {
