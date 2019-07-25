@@ -651,8 +651,8 @@ export default class Commander {
     }
   }
 
-  private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean, self: boolean, irc: PRIVMSG | undefined) {
-    if (self || !irc) return
+  private async onChat(channelId: number, userId: number, message: string, irc: PRIVMSG, me: boolean, self: boolean) {
+    if (self) return
 
     let words = message.split(' ')
     const alias = this.getAlias(channelId, words[0])
@@ -669,8 +669,8 @@ export default class Commander {
     if (!instance) return logger.info(`Cannot call unloaded command: ${alias.target}`)
     if (!instance.handlers || !instance.handlers.call) throw new Error(`No handlers on command plugin: ${alias.target}`)
     // Check permissions (master users always have permissions)
-    if (this.isPermitted(alias, userId, tags.badges)) {
-      if (this.masters.includes(userId) || (tags.badges && (tags.badges.broadcaster || tags.badges.moderator))) {
+    if (this.isPermitted(alias, userId, irc.tags.badges)) {
+      if (this.masters.includes(userId) || (irc.tags.badges && (irc.tags.badges.broadcaster || irc.tags.badges.moderator))) {
         // Master users, mods and the broadcaster don't care about cooldowns
         const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
         if (!validation.pass) {

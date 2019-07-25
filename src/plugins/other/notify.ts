@@ -88,13 +88,14 @@ export class Instance implements PluginInstance {
     this.l.emitter.removeListener('chat', this.listener)
   }
 
-  private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean) {
+  private async onChat(channelId: number, userId: number, message: string, irc: PRIVMSG, me: boolean, self: boolean) {
     const data = this.l.getData(channelId, 'notifies') as NotifyData
     if (data === undefined) return
     if (data[userId]) {
       for (const notify of data[userId]) {
         const fromDisplay = await this.l.api.getDisplay(notify.fromId)
-        this.l.chat(channelId, `${fromDisplay || 'error'} -> ${tags['display-name']} ${this.l.u.timeSince(notify.time, 1, false)} ago: ${notify.msg}`)
+        const username = (irc ? irc.tags['display-name'] : await this.l.api.getDisplay(userId)) || 'unknown'
+        this.l.chat(channelId, `${fromDisplay || 'error'} -> ${username} ${this.l.u.timeSince(notify.time, 1, false)} ago: ${notify.msg}`)
       }
       delete data[userId]
     }

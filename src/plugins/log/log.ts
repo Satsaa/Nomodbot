@@ -380,7 +380,7 @@ export class Instance implements PluginInstance {
     return undefined
   }
 
-  private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean) {
+  private async onChat(channelId: number, userId: number, message: string, irc: PRIVMSG, me: boolean, self: boolean) {
     if (!this.streams[channelId]) return console.error(`[${options.title}] {${channelId}} Message dropped: writeStream not ready`)
     if (!this.l.getData(channelId, 'log')) return console.error(`[${options.title}] {${channelId}} Message dropped: Data not ready`)
     this.track(channelId, Date.now(), me ? 'actionOverride' : reverseEvents[events.chat], userId, message)

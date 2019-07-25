@@ -26,3 +26,5 @@ type DeepReadonlyObject<T> = { readonly [P in keyof T]: DeepReadonly<T[P]> }
 type MaybeArray<T> = T | T[]
 
 type MaybeObject<T> = T | {[x: string]: T}
+
+declare module 'steam-user';

@@ -33,6 +33,7 @@
     "typescript": "^3.5.2"
   },
   "dependencies": {
+    "steam-user": "^4.12.2",
     "strict-event-emitter-types": "^2.0.0",
     "ws": "^6.2.1"
   }

@@ -16,6 +16,7 @@ export const options: PluginOptions = {
     },
   },
   help: ['Go AFK and inform others when they mention you with @user: {alias} [<message...>]'],
+  creates: [['afk']],
   allowMentions: true,
   whisperOnCd: true,
 }
@@ -55,15 +56,15 @@ export class Instance implements PluginInstance {
       lastMs: Date.now(),
     }
 
-    return `You are now afk. Users will be informed that you are afk${message ? ' and shown your message' : ''}`
+    return `Users will be informed that you are afk ${message ? 'and shown your message ' : ''}when they at you`
   }
 
   public async unload() {
     this.l.emitter.removeListener('chat', this.listener)
   }
 
-  private async onChat(channelId: number, userId: number, tags: PRIVMSG['tags'], message: string, me: boolean) {
-    // if (me) return
+  private async onChat(channelId: number, userId: number, message: string, irc: PRIVMSG, me: boolean, self: boolean) {
+    if (self) return
 
     const data = this.l.getData(channelId, 'afk') as AfkData
     if (data === undefined) return
@@ -94,11 +95,15 @@ export class Instance implements PluginInstance {
         const afkData = data[afkerIds[0]]
         if (afkData && afkData.lastMs < Date.now() - MIN_INTERVAL) {
           afkData.lastMs = Date.now()
-          this.l.chat(channelId, `@${tags['display-name']} ${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${afkData.message ? `: ${afkData.message}` : ''}`)
+          this.l.chat(channelId, `@${irc.tags['display-name']} ${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${afkData.message ? `: ${afkData.message}` : ''}`)
+        } else {
+          this.l.whisper(userId, `${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${afkData.message ? `: ${afkData.message}` : ''}`)
         }
-      } else if (!afkerIds.every(v => data[v].lastMs > Date.now() - MIN_INTERVAL)) { // Ignore if all are on cooldown
+      } else if (afkerIds.every(v => data[v].lastMs < Date.now() - MIN_INTERVAL)) { // Ignore if all are on cooldown
         for (const uid of afkerIds) data[uid].lastMs = Date.now()
-        this.l.chat(channelId, `@${tags['display-name']} ${this.l.u.commaPunctuate(afkerDisplays)} are afk`)
+        this.l.chat(channelId, `@${irc.tags['display-name']} ${this.l.u.commaPunctuate(afkerDisplays)} are afk`)
+      } else {
+        this.l.whisper(userId, `${this.l.u.commaPunctuate(afkerDisplays)} are afk`)
       }
     }
   }

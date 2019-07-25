@@ -17,13 +17,15 @@ import TwitchApi from './api'
 import parse, { IrcMessage, PRIVMSG } from './parser'
 
 export interface Events {
+  raw: (irc: IrcMessage) => void
+
   join: (channelId: number) => void
   part: (channelId: number) => void
   welcome: () => void
   userjoin: (channelId: number, user: string) => void
   userpart: (channelId: number, user: string) => void
   mod: (channelId: number, user: string, mod: boolean) => void
-  chat: (channelId: number, userId: number, userstate: PRIVMSG['tags'], message: string, me: boolean, self: boolean, irc: PRIVMSG | undefined) => void
+  chat: (channelId: number, userId: number, message: string, irc: PRIVMSG, me: boolean, self: boolean) => void
   whisper: (userId: number, message: string) => void
   hosttarget: (channelId: number, hostChannelId: number | undefined, viewerCount: number | undefined) => void
   timeout: (channelId: number, userId: number, duration?: number) => void
@@ -85,7 +87,7 @@ export interface TwitchClientOptions {
  */
 export default class TwitchClient {
   public opts: Required<TwitchClientOptions>
-  public globaluserstate: {[x: string]: any}
+  public globaluserstate: Pick<Required<IrcMessage['tags']>, 'badge-info' | 'badges' | 'color' | 'display-name' | 'emote-sets' | 'user-id'> & Pick<IrcMessage['tags'], 'user-type'>
   /** To provide accurate userjoin and userpart events, channel users must be tracked */
   public channelCache: {
     mods: {[channelId: number]: {[user: string]: true}}
@@ -153,7 +155,7 @@ export default class TwitchClient {
       ...deepClone(options),
     }
 
-    this.globaluserstate = {}
+    this.globaluserstate = {} as any
     this.channelCache = { mods: {}, users: {} }
     this.clientData = { global: { whisperTimes: [], msgTimes: [] }, channels: {} }
 
@@ -322,9 +324,11 @@ export default class TwitchClient {
         }
         this.send(`PRIVMSG #${login} :${msg}`)
 
-        const res = await eventTimeout(this, isCommand ? 'notice' : 'userstate', {
-          timeout: this.getLatency(), matchArgs: isCommand ? undefined : [channelId, { 'display-name': this.globaluserstate['display-name'] }],
+        const res = await eventTimeout(this, isCommand ? 'notice' : 'raw', {
+          timeout: this.getLatency(),
+          matchArgs: isCommand ? undefined : [{ tags: { 'display-name': this.globaluserstate['display-name'] } }],
         })
+
         resolve(!res.timeout)
         if (res.timeout) {
           logger.botInfo(`{${await this.api.getLogin(channelId)}} Failed to send message: ${msg}`)
@@ -332,9 +336,36 @@ export default class TwitchClient {
           // Emit own messages
           logger.botChat(`{${await this.api.getLogin(channelId)}} bot: ${msg}`)
 
-          const botId = await this.api.getId(this.opts.username)
-          if (!botId) return
-          this.emit('chat', channelId, botId, res.args[1] as PRIVMSG['tags'], msg, msg.search(/^(\.|\/|\\)me/) !== -1, true, undefined)
+          const botId = this.globaluserstate['user-id']
+
+          const resIrc = res.args[0]
+
+          const irc: PRIVMSG = {
+            cmd: 'PRIVMSG',
+            nick: this.opts.username,
+            user: this.opts.username,
+            params: [`#${login}`, msg],
+            prefix: resIrc.tags.prefix,
+            raw: resIrc.raw,
+            tags: {
+              'badge-info': resIrc.tags['badge-info'],
+              'turbo': undefined,
+              'subscriber': undefined,
+              'mod': undefined,
+              'id': resIrc.tags.id,
+              'flags': resIrc.tags.flags,
+              'emotes': resIrc.tags.emotes,
+              'color': resIrc.tags.color || this.globaluserstate.color,
+              'bits': resIrc.tags.bits,
+              'badges': resIrc.tags.badges,
+              'user-type': resIrc.tags['user-type'],
+              'user-id': resIrc.tags['user-id'] || this.globaluserstate['user-id'],
+              'tmi-sent-ts': resIrc.tags['tmi-sent-ts'],
+              'room-id': resIrc.tags['room-id'],
+              'display-name': resIrc.tags['display-name'] || this.globaluserstate['display-name'],
+            },
+          }
+          this.emit('chat', channelId, botId, msg, irc, msg.search(/^(\.|\/|\\)me/) !== -1, true)
         }
       })
     })
@@ -542,22 +573,23 @@ export default class TwitchClient {
   }
 
   /** Handle an IRCv3 message */
-  private async handleMessage(msg: IrcMessage) {
-    if (msg === null) return
+  private async handleMessage(irc: IrcMessage) {
+    if (irc === null) return
+
+    this.emit('raw', irc)
+    logger.raw(irc)
 
     let channel: string
     let channelId: void | number
 
-    logger.raw(msg)
-
-    if (typeof msg.tags['user-id'] === 'number' && typeof msg.user === 'string' && typeof msg.tags['display-name'] === 'string') {
-      this.api.cacheUser(msg.tags['user-id'], msg.user, msg.tags['display-name'])
+    if (typeof irc.tags['user-id'] === 'number' && typeof irc.user === 'string' && typeof irc.tags['display-name'] === 'string') {
+      this.api.cacheUser(irc.tags['user-id'], irc.user, irc.tags['display-name'])
     }
 
-    switch (msg.cmd) {
+    switch (irc.cmd) {
       case '001': // <prefix> 001 <you> :Welcome, GLHF!
         this.reconnects = 0
-        if (msg.params[0] !== this.opts.username) throw new Error('Username doesn\'t match with username reported by the server. It is possible that this is happening because the oauth token isn\'t from the username\'s account')
+        if (irc.params[0] !== this.opts.username) throw new Error('Username doesn\'t match with username reported by the server. It is possible that this is happening because the oauth token isn\'t from the username\'s account')
         logger.botInfo('Bot is welcome')
         this.join([...Object.keys(this.clientData.channels).map(v => Number(v)), ...this.opts.join])
         this.opts.join = [] // Join only once
@@ -572,24 +604,24 @@ export default class TwitchClient {
       case '376': // <prefix> 376 <you> :>
         break
       case '353': // :nomodbot.<prefix> 353 <you> = #<channel> :<user1> <user2> ... <userN>
-        channel = msg.params[2].slice(1)
+        channel = irc.params[2].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return logger.strange('no channelId', msg)
-        for (const user of msg.params[3].split(' ')) this.userJoin(channelId, user)
+        if (!channelId) return logger.strange('no channelId', irc)
+        for (const user of irc.params[3].split(' ')) this.userJoin(channelId, user)
         break
       case 'CAP':
         break
       case 'MODE': // :jtv MODE #<channel> +o||-o <user>
-        channel = msg.params[0].slice(1)
+        channel = irc.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return logger.strange('no channelId', msg)
-        this.mod(channelId, msg.params[2], msg.params[1] === '+o')
+        if (!channelId) return logger.strange('no channelId', irc)
+        this.mod(channelId, irc.params[2], irc.params[1] === '+o')
         break
       case 'JOIN': // :<user>!<user>@<user>.tmi.twitch.tv JOIN #<channel>
-        channel = msg.params[0].slice(1)
+        channel = irc.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return logger.strange('no channelId', msg)
-        if (msg.user === this.opts.username) {
+        if (!channelId) return logger.strange('no channelId', irc)
+        if (irc.user === this.opts.username) {
           this.clientData.channels[channelId] = { userstate: {}, phase: false }
           this.channels[channelId] = channel
           this.ids[channel] = channelId
@@ -600,107 +632,114 @@ export default class TwitchClient {
             delete this.opts.joinMessage[channelId]
           }
         }
-        this.userJoin(channelId, msg.user || 'undefined')
+        this.userJoin(channelId, irc.user || 'undefined')
         break
       case 'PART': // :<user>!<user>@<user>.tmi.twitch.tv PART #<channel>
-        channel = msg.params[0].slice(1)
+        channel = irc.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return logger.strange('no channelId', msg)
-        if (msg.user === this.opts.username) {
+        if (!channelId) return logger.strange('no channelId', irc)
+        if (irc.user === this.opts.username) {
           delete this.channels[channelId]
           delete this.ids[channel]
           this.api.unloadChannelCache(channelId)
           this.emit('part', channelId)
           delete this.clientData.channels[channelId]
         }
-        this.userPart(channelId, msg.user || 'undefined')
+        this.userPart(channelId, irc.user || 'undefined')
         break
       case 'CLEARCHAT': {
         // @ban-duration=10;room-id=62300805;target-user-id=274274870;tmi-sent-ts=1551880699566 <prefix> CLEARCHAT #<channel> :<user>
         // @room-id=61365582;tmi-sent-ts=1553598835278 :tmi.twitch.tv CLEARCHAT #satsaa
-        channel = msg.params[0].slice(1)
+        channel = irc.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return logger.strange('no channelId', msg)
-        if (msg.params[1]) {
-          logger.userInfo(`${msg.params[1]} ${typeof msg.tags['ban-duration'] === 'number'
-            ? `is timed out for ${msg.tags['ban-duration']} seconds`
+        if (!channelId) return logger.strange('no channelId', irc)
+        if (irc.params[1]) {
+          logger.userInfo(`${irc.params[1]} ${typeof irc.tags['ban-duration'] === 'number'
+            ? `is timed out for ${irc.tags['ban-duration']} seconds`
             : 'is banned'}`)
         } else {
-          logger.channelInfo(`{${channel}} Chat cleared`)
+          logger.botInfo(`{${channel}} Chat cleared`)
         }
-        if (!msg.params[1]) {
+        if (!irc.params[1]) {
           this.emit('clear', channelId)
           return
         }
 
-        const userId = await this.api.getId(msg.params[1])
-        if (!userId) return logger.strange('no userId', msg)
-        if (typeof msg.tags['ban-duration'] === 'number') this.emit('timeout', channelId, userId, msg.tags['ban-duration'])
+        const userId = await this.api.getId(irc.params[1])
+        if (!userId) return logger.strange('no userId', irc)
+        if (typeof irc.tags['ban-duration'] === 'number') this.emit('timeout', channelId, userId, irc.tags['ban-duration'])
         else this.emit('timeout', channelId, userId)
         break
       }
       case 'ROOMSTATE': // <tags> :tmi.twitch.tv ROOMSTATE #<channel>
-        channel = msg.params[0].slice(1)
+        channel = irc.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return logger.strange('no channelId', msg)
-        if (msg.tags['emote-only'] === 1) { logger.channelInfo(`{${channel}} is in emote only mode`) }
-        if (msg.tags['followers-only'] !== -1) { logger.channelInfo(`{${channel}} is in follower only mode (${msg.tags['followers-only']})`) }
-        if (msg.tags['subs-only'] === 1) { logger.channelInfo(`{${channel}} is in subscriber only mode`) }
-        if (msg.tags.slow === 1) { logger.channelInfo(`{${channel}} is in slow mode`) }
-        this.emit('roomstate', channelId, msg.tags)
+        if (!channelId) return logger.strange('no channelId', irc)
+        if (irc.tags['emote-only'] === 1) { logger.botInfo(`{${channel}} is in emote only mode`) }
+        if (irc.tags['followers-only'] !== -1) { logger.botInfo(`{${channel}} is in follower only mode (${irc.tags['followers-only']})`) }
+        if (irc.tags['subs-only'] === 1) { logger.botInfo(`{${channel}} is in subscriber only mode`) }
+        if (irc.tags.slow === 1) { logger.botInfo(`{${channel}} is in slow mode`) }
+        this.emit('roomstate', channelId, irc.tags)
         // broadcaster-lang=;emote-only=0;followers-only=-1;r9k=0;rituals=0;room-id=62300805;slow=0;subs-only=0
         break
       case 'USERSTATE': // <tags> <prefix> USERSTATE #<channel>
         // @badges=;color=#008000;display-name=NoModBot;emote-sets=0,326755;mod=0;subscriber=0;user-type=
-        channel = msg.params[0].slice(1)
+        channel = irc.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return logger.strange('no channelId', msg)
-        this.clientData.channels[channelId].userstate = { ...this.clientData.channels[channelId].userstate, ...msg ? msg.tags : {} }
-        if (msg.tags && msg.tags.badges) this.mod(channelId, this.opts.username, Boolean(msg.tags.badges.moderator))
-        this.emit('userstate', channelId, msg.tags)
+        if (!channelId) return logger.strange('no channelId', irc)
+        this.clientData.channels[channelId].userstate = { ...this.clientData.channels[channelId].userstate, ...irc ? irc.tags : {} }
+        if (irc.tags && irc.tags.badges) this.mod(channelId, this.opts.username, Boolean(irc.tags.badges.moderator))
+        this.emit('userstate', channelId, irc.tags)
         break
       case 'GLOBALUSERSTATE': // <tags> <prefix> GLOBALUSERSTATE
-        this.globaluserstate = { ...this.globaluserstate, ...msg.tags }
-        // badges=;color=#008000;display-name=NoModBot;emote-sets=0,326755;user-id=266132990;user-type= <prefix> GLOBALUSERSTATE
+      // badges=;color=#008000;display-name=NoModBot;emote-sets=0,326755;user-id=266132990;user-type= <prefix> GLOBALUSERSTATE
+        this.globaluserstate = { ...this.globaluserstate, ...irc.tags }
+
+        if (!this.globaluserstate['badge-info']) logger.warn('badge-info not present in globaluserstate')
+        if (!this.globaluserstate.badges) logger.warn('badges not present in globaluserstate')
+        if (!this.globaluserstate.color) logger.warn('color not present in globaluserstate')
+        if (!this.globaluserstate['display-name']) logger.warn('display-name not present in globaluserstate')
+        if (!this.globaluserstate['emote-sets']) logger.warn('emote-sets not present in globaluserstate')
+        if (!this.globaluserstate['user-id']) logger.warn('user-id not present in globaluserstate')
         break
       case 'HOSTTARGET':
-        channel = msg.params[0].slice(1)
+        channel = irc.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return logger.strange('no channelId', msg)
-        if (msg.params[1]) {
-          const targetId = await this.api.getId(msg.params[1].slice(0, -2))
-          if (!targetId) return logger.strange('no targetId', msg)
-          this.emit('hosttarget', channelId, targetId, msg.params[2] === undefined ? undefined : ~~msg.params[2])
+        if (!channelId) return logger.strange('no channelId', irc)
+        if (irc.params[1]) {
+          const targetId = await this.api.getId(irc.params[1].slice(0, -2))
+          if (!targetId) return logger.strange('no targetId', irc)
+          this.emit('hosttarget', channelId, targetId, irc.params[2] === undefined ? undefined : ~~irc.params[2])
         } else {
-          this.emit('hosttarget', channelId, undefined, msg.params[2] === undefined ? undefined : ~~msg.params[2])
+          this.emit('hosttarget', channelId, undefined, irc.params[2] === undefined ? undefined : ~~irc.params[2])
         }
         // HOSTTARGET #<channel> :<targetchannel> -
         // HOSTTARGET #<channel> :- 0
         // Host off has ":- 0"?
         break
       case 'PRIVMSG': { // @userstate :<user>!<user>@<user>.tmi.twitch.tv PRIVMSG #<channel> :<message>
-        channel = msg.params[0].slice(1)
+        channel = irc.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return logger.strange('no channelId', msg)
-        if (msg.user && msg.tags.badges && msg.tags.badges.moderator) {
-          this.mod(channelId, msg.user, Boolean(msg.tags.badges.moderator))
+        if (!channelId) return logger.strange('no channelId', irc)
+        if (irc.user && irc.tags.badges && irc.tags.badges.moderator) {
+          this.mod(channelId, irc.user, Boolean(irc.tags.badges.moderator))
         }
 
-        const _msg = msg.params[1].endsWith(this.opts.dupeAffix)
-          ? msg.params[1].substring(0, msg.params[1].length - this.opts.dupeAffix.length)
-          : msg.params[1]
-        logger.chat(`{${channel}} ${msg.tags['display-name']}: ${_msg}`)
+        const _msg = irc.params[1].endsWith(this.opts.dupeAffix)
+          ? irc.params[1].substring(0, irc.params[1].length - this.opts.dupeAffix.length)
+          : irc.params[1]
+        logger.chat(`{${channel}} ${irc.tags['display-name']}: ${_msg}`)
         if (_msg.startsWith('ACTION ')) {
-          this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as PRIVMSG['tags'], _msg.slice(8, -1), true, msg.user === this.opts.username, msg as PRIVMSG)
+          this.emit('chat', channelId, irc.tags['user-id']!, _msg.slice(8, -1), irc as PRIVMSG, true, irc.user === this.opts.username)
         } else {
-          this.emit('chat', channelId, msg.tags['user-id']!, msg.tags as PRIVMSG['tags'], _msg, false, msg.user === this.opts.username, msg as PRIVMSG)
+          this.emit('chat', channelId, irc.tags['user-id']!, _msg, irc as PRIVMSG, false, irc.user === this.opts.username)
         }
         break
       }
       case 'WHISPER': // @userstate :<user>!<user>@<user>.tmi.twitch.tv WHISPER <you> :<message>
-        if (!msg.tags['user-id']) return logger.strange('no userId:', msg)
-        logger.whisper(`${msg.tags['display-name']} -> bot: ${msg}`)
-        this.emit('whisper', msg.tags['user-id'], msg.params[1])
+        if (!irc.tags['user-id']) return logger.strange('no userId:', irc)
+        logger.whisper(`${irc.tags['display-name']} -> bot: ${irc}`)
+        this.emit('whisper', irc.tags['user-id'], irc.params[1])
         break
       case 'PING':
         this.send('PONG')
@@ -712,55 +751,55 @@ export default class TwitchClient {
         this.reconnect()
         break
       case 'CLEARMSG': // @login=<login>;target-msg-id=<target-msg-id> :tmi.twitch.tv CLEARMSG #<channel> :<message>
-        channel = msg.params[0].slice(1)
+        channel = irc.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return logger.strange('no channelId', msg)
-        this.emit('clearmsg', channelId, msg.tags['target-msg-id'], msg.tags, msg.params[1])
+        if (!channelId) return logger.strange('no channelId', irc)
+        this.emit('clearmsg', channelId, irc.tags['target-msg-id'], irc.tags, irc.params[1])
         break
       case 'SERVERCHANGE':
         // NEED MORE INFO
-        logger.strange('SERVERCHANGE:', msg)
+        logger.strange('SERVERCHANGE:', irc)
         break
       case '421': // Unknown command
         logger.botInfo('Unknown command')
         break
       case 'USERNOTICE': // <tags> <prefix> USERNOTICE #<channel> :<message>
-        channel = msg.params[0].slice(1)
+        channel = irc.params[0].slice(1)
         channelId = await this.api.getId(channel)
-        if (!channelId) return logger.strange('no channelId', msg)
-        this.emit('usernotice', channelId, msg.tags, msg.params[1])
-        switch (msg.tags['msg-id']) {
+        if (!channelId) return logger.strange('no channelId', irc)
+        this.emit('usernotice', channelId, irc.tags, irc.params[1])
+        switch (irc.tags['msg-id']) {
           case 'resub':
           case 'sub': {
-            const userId = msg.tags['user-id']
-            const streak = msg.tags['msg-param-months']
-            const cumulative = msg.tags['msg-param-cumulative-months']
-            const tier = msg.tags['msg-param-sub-plan'] === '2000' ? 2 : msg.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
+            const userId = irc.tags['user-id']
+            const streak = irc.tags['msg-param-months']
+            const cumulative = irc.tags['msg-param-cumulative-months']
+            const tier = irc.tags['msg-param-sub-plan'] === '2000' ? 2 : irc.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
             let prime = false
-            if (msg.tags['msg-param-sub-plan']) prime = Boolean((msg.tags['msg-param-sub-plan'] || '').match(/prime/i))
-            if (!userId) return logger.strange('no userId', msg)
-            logger.userInfo(`${msg.tags['display-name']} subbed`
+            if (irc.tags['msg-param-sub-plan']) prime = Boolean((irc.tags['msg-param-sub-plan'] || '').match(/prime/i))
+            if (!userId) return logger.strange('no userId', irc)
+            logger.userInfo(`${irc.tags['display-name']} subbed`
               + `${prime ? ' with Twitch Prime' : ''}`
               + `${tier ? ` at tier ${tier}` : ''}`
               + `${streak ? ` (streak ${streak})` : ''}`
               + `${cumulative ? ` (total ${cumulative})` : ''}`)
-            this.emit('sub', channelId, userId, streak, cumulative, tier, false, prime, msg.params[1])
+            this.emit('sub', channelId, userId, streak, cumulative, tier, false, prime, irc.params[1])
             break
           }
           case 'subgift':
           case 'anonsubgift': {
-            const gifterId = msg.tags['msg-param-origin-id']
-            const targetId = msg.tags['msg-param-recipient-id']
-            const streak = msg.tags['msg-param-months']
-            const total = msg.tags['msg-param-sender-count']
+            const gifterId = irc.tags['msg-param-origin-id']
+            const targetId = irc.tags['msg-param-recipient-id']
+            const streak = irc.tags['msg-param-months']
+            const total = irc.tags['msg-param-sender-count']
             const prime = false
-            const tier = msg.tags['msg-param-sub-plan'] === '2000' ? 2 : msg.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
-            if (!targetId) return logger.strange('Subgift notice had no "msg-param-recipient-id"', msg)
-            if (!total) return logger.strange('Subgift notice had no "msg-param-sender-count"', msg)
+            const tier = irc.tags['msg-param-sub-plan'] === '2000' ? 2 : irc.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
+            if (!targetId) return logger.strange('Subgift notice had no "msg-param-recipient-id"', irc)
+            if (!total) return logger.strange('Subgift notice had no "msg-param-sender-count"', irc)
             if (!targetId || !total) return
-            logger.userInfo(`${msg.tags['display-name'] || 'Anonymous'} gifted a `
+            logger.userInfo(`${irc.tags['display-name'] || 'Anonymous'} gifted a `
               + `${tier ? `tier ${tier} ` : ''}`
-              + `sub to ${msg.tags['msg-param-recipient-display-name']} `
+              + `sub to ${irc.tags['msg-param-recipient-display-name']} `
               + `${total ? `(total ${total}) ` : ''}`
               + `${streak ? `(streak ${streak}) ` : ''}`)
             this.emit('gift', channelId, gifterId, targetId, tier, total)
@@ -769,37 +808,37 @@ export default class TwitchClient {
           }
           case 'submysterygift':
           case 'anonsubmysterygift': {
-            const gifterId = msg.tags['msg-param-origin-id']
-            const count = msg.tags['msg-param-mass-gift-count']
-            const total = msg.tags['msg-param-sender-count']
-            const tier = msg.tags['msg-param-sub-plan'] === '2000' ? 2 : msg.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
-            if (!count) return logger.strange('Submysterygift notice had no "msg-param-sender-count"', msg)
-            logger.userInfo(`${msg.tags['display-name'] || 'Anonymous'} gifted ${total} `
+            const gifterId = irc.tags['msg-param-origin-id']
+            const count = irc.tags['msg-param-mass-gift-count']
+            const total = irc.tags['msg-param-sender-count']
+            const tier = irc.tags['msg-param-sub-plan'] === '2000' ? 2 : irc.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
+            if (!count) return logger.strange('Submysterygift notice had no "msg-param-sender-count"', irc)
+            logger.userInfo(`${irc.tags['display-name'] || 'Anonymous'} gifted ${total} `
               + `${tier === 1 ? '' : `tier ${tier} `}subs to the community `
               + `${total ? `(total ${total})` : ''}`)
             this.emit('massgift', channelId, gifterId, count, tier, total)
             break
           }
           case 'charity':
-            logger.strange('CHARITY', msg)
+            logger.strange('CHARITY', irc)
             break
           case 'unraid':
             this.emit('unraid', channelId)
             break
           case 'raid': {
-            const viewerCount = msg.tags['viewer-count']
-            const userId = await this.api.getId(`${msg.tags.login}`)
-            if (!userId) return logger.strange('no userid', msg)
+            const viewerCount = irc.tags['viewer-count']
+            const userId = await this.api.getId(`${irc.tags.login}`)
+            if (!userId) return logger.strange('no userid', irc)
             this.emit('raid', channelId, userId, viewerCount)
             break
           }
           case 'ritual': {
-            const id = await this.api.getId(`${msg.tags.login}`)
-            const ritual = msg.tags['msg-param-ritual-name']
-            if (!id) return logger.strange('invalid login', msg)
-            if (!ritual) return logger.strange('invalid ritual', msg)
-            logger.userInfo(`${msg.tags.login} coming in hot with a ${msg.tags['msg-param-ritual-name']} ritual`)
-            this.emit('ritual', channelId, id, ritual, msg.params[1])
+            const id = await this.api.getId(`${irc.tags.login}`)
+            const ritual = irc.tags['msg-param-ritual-name']
+            if (!id) return logger.strange('invalid login', irc)
+            if (!ritual) return logger.strange('invalid ritual', irc)
+            logger.userInfo(`${irc.tags.login} coming in hot with a ${irc.tags['msg-param-ritual-name']} ritual`)
+            this.emit('ritual', channelId, id, ritual, irc.params[1])
             break
           }
           // Not actual subscriptions? Advertisement of sorts. Subtember
@@ -814,43 +853,43 @@ export default class TwitchClient {
           case 'bitsbadgetier':
             break
           default:
-            logger.strange('unknown USERNOTICE', msg)
+            logger.strange('unknown USERNOTICE', irc)
             break
         }
         break
       case 'NOTICE': // <tags> <prefix> NOTICE #<channel> :<message>
-        channel = msg.params[0].slice(1)
+        channel = irc.params[0].slice(1)
         channelId = await this.api.getId(channel)
         if (!channelId) {
-          const message = msg.params[msg.params.length - 1] || ''
+          const message = irc.params[irc.params.length - 1] || ''
           if (message === 'Login authentication failed'
             || message === 'Login unsuccessful'
             || message === 'Improperly formatted auth') {
             logger.error(message)
             process.exit(1)
           }
-          return logger.strange('no channelid', msg)
+          return logger.strange('no channelid', irc)
         }
-        this.emit('notice', channelId, msg.tags, msg.params[1])
-        switch (msg.tags['msg-id']) {
+        this.emit('notice', channelId, irc.tags, irc.params[1])
+        switch (irc.tags['msg-id']) {
           case 'msg_ratelimit':
             logger.warn('Rate limited')
             break
           case 'msg_timedout': {
-            const duration = typeof msg.params[1] === 'string' ? ~~msg.params[1].match(/(\d*)[a-zA-Z .]*$/)![1] : 0
+            const duration = typeof irc.params[1] === 'string' ? ~~irc.params[1].match(/(\d*)[a-zA-Z .]*$/)![1] : 0
             const userId = await this.api.getId(this.opts.username)
-            if (!userId) return logger.strange(msg, msg.tags['msg-id'])
+            if (!userId) return logger.strange(irc, irc.tags['msg-id'])
             logger.warn(`{${channel}} Timedout for ${duration}`)
             break
           }
           case 'msg_banned': {
             const userId = await this.api.getId(this.opts.username)
-            if (!userId) return logger.strange(msg, msg.tags['msg-id'])
+            if (!userId) return logger.strange(irc, irc.tags['msg-id'])
             logger.warn(`{${channel}} Banned`)
             break
           }
           default: // Handled in the near to infinite future
-            if (msg.tags['msg-id'] && [
+            if (irc.tags['msg-id'] && [
               'subs_on', 'subs_off', 'emote_only_on', 'emote_only_off', 'slow_on', 'slow_off', 'followers_on_zero', 'invalid_user ',
               'followers_on', 'followers_off', 'r9k_on', 'r9k_off', 'host_on', 'host_off', 'room_mods', 'no_mods', 'msg_channel_suspended',
               'already_banned', 'bad_ban_admin', 'bad_ban_broadcaster', 'bad_ban_global_mod', 'bad_ban_self', 'bad_ban_staff', 'usage_ban',
@@ -864,16 +903,16 @@ export default class TwitchClient {
               'bad_unban_no_ban', 'usage_unhost', 'not_hosting', 'whisper_invalid_login', 'whisper_invalid_self', 'unrecognized_cmd',
               'no_permission', 'whisper_limit_per_min', 'whisper_limit_per_sec', 'whisper_restricted_recipient', 'host_target_went_offline',
             ]
-              .includes(msg.tags['msg-id']!)) {
-              logger.channelInfo(`${channel}: ${msg.params[1]}`)
+              .includes(irc.tags['msg-id']!)) {
+              logger.botInfo(`${channel}: ${irc.params[1]}`)
             } else {
-              logger.strange('unknown NOTICE', msg)
+              logger.strange('unknown NOTICE', irc)
             }
             break
         }
         break
       default:
-        logger.strange('unknown command', msg)
+        logger.strange('unknown command', irc)
         break
     }
   }
