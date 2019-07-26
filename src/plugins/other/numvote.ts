@@ -46,8 +46,8 @@ export class Instance implements PluginInstance {
     this.opts = {
       minVotes: 2,
       minTotal: 10,
-      time: 3000,
-      decay: 0.94,
+      time: 5000,
+      decay: 0.95,
     }
 
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', '', this.callMain)

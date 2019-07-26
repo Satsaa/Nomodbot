@@ -23,8 +23,10 @@ export interface SteamData {
 
 
 export interface SteamExtension {
-  /** Pairs the userId` to `steamId` */
-  setUserSteamId(userId: number, steamId: number): boolean
+  /** Pairs `userId` to `steamId` */
+  setUserSteamId: Instance['setUserSteamId']
+  /** Returns the bots steam username (not nickname) */
+  getUsername: Instance['getUsername']
   /** Gets the cached rich presence string received of steam user known for `userId` */
   getRichPresenceString: Instance['getRichPresenceString']
 }
@@ -52,6 +54,7 @@ export class Instance implements PluginInstance {
     const extension: SteamExtension = {
       setUserSteamId: this.setUserSteamId.bind(this),
       getRichPresenceString: this.getRichPresenceString.bind(this),
+      getUsername: this.getUsername.bind(this),
     }
     this.l.extend(options.id, extension)
 
@@ -68,6 +71,12 @@ export class Instance implements PluginInstance {
       console.error('Username and password required for steam in keys.json file')
     } else {
       this.client = new SteamUser()
+
+      const oldEmit = this.client.emit.bind(this.client)
+      this.client.emit = (...args: any[]) => {
+        if (!`${args[0]}`.includes('debug')) console.log(args)
+        return oldEmit(...args)
+      }
 
       this.client.on('loggedOn', this.onLoggedOn.bind(this))
       this.client.on('error', this.onError.bind(this))
@@ -152,5 +161,9 @@ export class Instance implements PluginInstance {
 
     const steamId = data.steamIds[userId]
     return this.richPrecenseStrings[steamId]
+  }
+
+  private getUsername(): string {
+    return this.client.username || this.username
   }
 }

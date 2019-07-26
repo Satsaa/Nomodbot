@@ -26,11 +26,11 @@ export const options: PluginOptions = {
 export class Instance implements PluginInstance {
   public handlers: PluginInstance['handlers']
   private l: PluginLibrary
-  private ext: SteamExtension
+  private steam: SteamExtension
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
-    this.ext = this.l.ext.steam as SteamExtension
+    this.steam = this.l.ext.steam as SteamExtension
 
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'set <NUMBER>', this.callSetId)
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', '', this.callMain)
@@ -41,7 +41,7 @@ export class Instance implements PluginInstance {
 
     if (!this.l.getData('global', 'steam')) return 'Steam data is currently unavailable'
 
-    const rp = this.ext.getRichPresenceString(channelId)
+    const rp = this.steam.getRichPresenceString(channelId)
 
     if (rp) return `${rp}`
     else return `The steamId of ${await this.l.api.getDisplay(channelId)} has not been set`
@@ -54,9 +54,9 @@ export class Instance implements PluginInstance {
       return `You must be a ${this.l.userlvlString(userlvls.mod)} change the Steam ID`
     }
 
-    const res = this.ext.setUserSteamId(channelId, steamId)
+    const res = this.steam.setUserSteamId(channelId, steamId)
 
-    if (res) return `Steam ID for ${await this.l.api.getDisplay(channelId)} set! Some commands require the bot (NoModBot) to be added as a friend on Steam by the streamer`
+    if (res) return `Steam ID for ${await this.l.api.getDisplay(channelId)} set! Some commands require the bot (${this.steam.getUsername()}) to be added as a friend on Steam by the streamer`
     return 'Setting steam id failed :/'
   }
 }
