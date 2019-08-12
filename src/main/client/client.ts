@@ -791,12 +791,10 @@ export default class TwitchClient {
             const gifterId = irc.tags['msg-param-origin-id']
             const targetId = irc.tags['msg-param-recipient-id']
             const streak = irc.tags['msg-param-months']
-            const total = irc.tags['msg-param-sender-count']
+            const total = irc.tags['msg-param-sender-count'] || 0
             const prime = false
             const tier = irc.tags['msg-param-sub-plan'] === '2000' ? 2 : irc.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
             if (!targetId) return logger.strange('Subgift notice had no "msg-param-recipient-id"', irc)
-            if (!total) return logger.strange('Subgift notice had no "msg-param-sender-count"', irc)
-            if (!targetId || !total) return
             logger.userInfo(`${irc.tags['display-name'] || 'Anonymous'} gifted a `
               + `${tier ? `tier ${tier} ` : ''}`
               + `sub to ${irc.tags['msg-param-recipient-display-name']} `
@@ -812,7 +810,7 @@ export default class TwitchClient {
             const count = irc.tags['msg-param-mass-gift-count']
             const total = irc.tags['msg-param-sender-count']
             const tier = irc.tags['msg-param-sub-plan'] === '2000' ? 2 : irc.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
-            if (!count) return logger.strange('Submysterygift notice had no "msg-param-sender-count"', irc)
+            if (typeof count !== 'number') return logger.strange('Submysterygift notice had no "msg-param-sender-count"', irc)
             logger.userInfo(`${irc.tags['display-name'] || 'Anonymous'} gifted ${total} `
               + `${tier === 1 ? '' : `tier ${tier} `}subs to the community `
               + `${total ? `(total ${total})` : ''}`)

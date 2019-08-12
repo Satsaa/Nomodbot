@@ -56,7 +56,7 @@ export class Instance implements PluginInstance {
       lastMs: Date.now(),
     }
 
-    return `Users will be informed that you are afk ${message ? 'and shown your message ' : ''}when they at you`
+    return 'Users will be informed that you are afk'
   }
 
   public async unload() {

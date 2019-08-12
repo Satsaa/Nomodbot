@@ -72,11 +72,12 @@ export class Instance implements PluginInstance {
     } else {
       this.client = new SteamUser()
 
-      const oldEmit = this.client.emit.bind(this.client)
-      this.client.emit = (...args: any[]) => {
-        if (!`${args[0]}`.includes('debug')) console.log(args)
-        return oldEmit(...args)
-      }
+      // Log all events in console
+      // const oldEmit = this.client.emit.bind(this.client)
+      // this.client.emit = (...args: any[]) => {
+      //   if (!`${args[0]}`.includes('debug')) console.log(args)
+      //   return oldEmit(...args)
+      // }
 
       this.client.on('loggedOn', this.onLoggedOn.bind(this))
       this.client.on('error', this.onError.bind(this))
