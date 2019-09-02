@@ -21,7 +21,7 @@ export const options: PluginOptions = {
     'Copy a command: {alias} copy <command> <new command>',
     'Delete a command: {alias} del <command>',
     'Edit a command: {alias} edit <command> <PLUGIN>',
-    'Rename a command: {alias} edit <command> <!command>',
+    'Rename a command: {alias} edit <old command> <new command>',
     'Disable a command: {alias} disable <command>',
     'Enable or disable a command: {alias} enable|disable <command>',
     'Hide or unhide a command: {alias} hide|unhide <command>',
