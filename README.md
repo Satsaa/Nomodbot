@@ -1,7 +1,7 @@
 # Nomodbot
 Twitch bot made with NodeJS. (Taking name suggestions :) )
 
-This readme contains techy stuff. For commands visit https://github.com/Satsaa/Nomodbot/wiki (under construction)
+[List of commands](https://github.com/Satsaa/Nomodbot/wiki/Commands)  
 
 Focus is to have somewhat modular plugins and high customizability.
 
