@@ -20,7 +20,7 @@ export const options: PluginOptions = {
   title: 'Suggest',
   description: 'Create bug reports, suggest features, etc.',
   default: {
-    alias: '$suggest',
+    alias: ['?suggest', '$suggest'],
     options: {
       cooldown: 10,
       userCooldown: 30,
