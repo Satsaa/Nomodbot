@@ -153,7 +153,7 @@ export class Instance implements PluginInstance {
   }
 
   public async callGet(channelId: number, userId: number, params: any, extra: Extra) {
-    const [action, aliasName, key]: ['set', string, 'blacklist' | 'bl' | 'cd' | 'cooldown' | 'disabled' | 'enabled' | 'group' | 'hidden' | 'plugin' | 'ucd' | 'userCooldown' | 'ul' | 'userlevel' | 'userlvl' | 'whitelist' | 'wl' | undefined] = params
+    const [action, aliasName, key]: ['set', string, 'blacklist' | 'bl' | 'cd' | 'cooldown' | 'disabled' | 'enabled' | 'group' | 'hidden' | 'plugin' | 'ucd' | 'usercooldown' | 'ul' | 'userlevel' | 'userlvl' | 'whitelist' | 'wl' | undefined] = params
 
     const alias = this.l.getAlias(channelId, aliasName)
     if (!alias) return 'No command'
@@ -166,31 +166,31 @@ export class Instance implements PluginInstance {
       case 'cd':
       case 'cooldown': {
         const cd = alias.cooldown || 0
-        return `${aliasName} has a cooldown of ${this.l.u.plural(cd, `${cd} second`)}}`
+        return `${aliasName} has a cooldown of ${this.l.u.plural(cd, 'second')}`
       }
       case 'enabled':
       case 'disabled': {
-        return `${aliasName} is ${alias.disabled ? 'disabled' : 'enabled'}}`
+        return `${aliasName} is ${alias.disabled ? 'disabled' : 'enabled'}`
       }
       case 'group': {
-        return `${aliasName} is in the group ${alias.group || 'default'}}`
+        return `${aliasName} is in the group ${alias.group || 'default'}`
       }
       case 'hidden': {
-        return `${aliasName} is ${alias.hidden ? 'hidden' : 'not hidden'}}`
+        return `${aliasName} is ${alias.hidden ? 'hidden' : 'not hidden'}`
       }
       case 'plugin': {
         return `${aliasName} is a command of ${alias.target}`
       }
       case 'ucd':
-      case 'userCooldown': {
+      case 'usercooldown': {
         const ucd = alias.userCooldown || 0
-        return `${aliasName} has a user cooldown of ${this.l.u.plural(ucd, `${ucd} second`)}}`
+        return `${aliasName} has a user cooldown of ${this.l.u.plural(ucd, 'second')}`
       }
       case 'ul':
       case 'userlvl':
       case 'userlevel': {
         const lvl = alias.userlvl || 0
-        return `${aliasName} has a userlevel of ${lvl}/${this.l.userlvlString(lvl) || 'unknown'}}`
+        return `${aliasName} has a userlevel of ${lvl}/${this.l.userlvlString(lvl) || 'unknown'}`
       }
       case 'wl':
       case 'whitelist': {
