@@ -165,7 +165,7 @@ export class Instance implements PluginInstance {
         return `${aliasName} is ${alias.hidden ? 'hidden' : 'not hidden'}}`
       }
       case 'plugin': {
-        return `${aliasName} is a command of ${alias.target}}`
+        return `${aliasName} is a command of ${alias.target}`
       }
       case 'ucd':
       case 'userCooldown': {

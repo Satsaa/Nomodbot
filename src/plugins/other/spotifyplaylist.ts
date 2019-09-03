@@ -52,7 +52,7 @@ export class Instance implements PluginInstance {
     }
 
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<1-Infinity>]', this.callMain, this.callMain)
-    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'list/list/i', this.callList, this.callList)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '<list/list/i>', this.callList, this.callList)
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'set <playlist_ID|playlist_link>', this.callSet)
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'del', this.callDelete)
   }
@@ -127,7 +127,7 @@ export class Instance implements PluginInstance {
     }
   }
 
-  private getPlaylist(playlist: string): Promise<{[x: string]: any} | string> {
+  private getPlaylist(playlist: string): Promise<{ [x: string]: any } | string> {
     return new Promise((resolve) => {
       const options = {
         host: 'api.spotify.com',

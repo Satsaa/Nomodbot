@@ -53,9 +53,22 @@ export class Instance implements PluginInstance {
     return ' 😇'
   }
 
+  /*
+    num: 0.04361098996947231
+    TOFIXED VALUE: -2
+    FORMULA: -4 / 2.302585092994046
+   */
   /** 0.50 -> 50% | 0.005555 -> 0.5% | 0.000050 -> 0.005% | 0.000... -> 0% */
   private getPctString(num: number) {
     num *= 100
-    return `${num.toFixed(Math.floor(Math.log(num) / Math.log(10)))}%`
+    try {
+      return `${num.toFixed(Math.floor(Math.log(num) / Math.log(10)))}%`
+    } catch (err) {
+      console.error('CRIMES TOFIXED FAIL:')
+      console.error(`num: ${num}`)
+      console.error(`TOFIXED VALUE: ${Math.floor(Math.log(num) / Math.log(10))}`)
+      console.error(`FORMULA: ${Math.floor(Math.log(num))} / ${Math.log(10)}`)
+      return `${num} (fallback return value)`
+    }
   }
 }
