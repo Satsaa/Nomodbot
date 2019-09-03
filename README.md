@@ -1,6 +1,9 @@
 # Nomodbot
-((((Under construction))))  
-Twitch bot with not bad things in mind (name is up for reconsideration).
+Twitch bot made with NodeJS. (Taking name suggestions :) )
+
+[List of commands](https://github.com/Satsaa/Nomodbot/wiki/Commands)  
+
+Focus is to have somewhat modular plugins and high customizability.
 
 # Parameter Validator
 The Parameter Validator validates user command calls against strings which describe what parameters are required.  

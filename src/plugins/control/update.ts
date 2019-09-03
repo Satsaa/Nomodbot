@@ -17,7 +17,7 @@ export const options: PluginOptions = {
       userlvl: userlvls.master,
     },
   },
-  help: ['Update repository and restart bot: {alias} [<branch>]'],
+  help: ['Update from repository and restart bot: {alias} [<branch>]'],
 }
 
 export class Instance implements PluginInstance {

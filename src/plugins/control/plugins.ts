@@ -7,7 +7,7 @@ export const options: PluginOptions = {
   title: 'Plugins',
   description: 'Displays enabled plugins',
   default: {
-    alias: '$plugins',
+    alias: ['$plugins', '?plugins'],
     options: {
       cooldown: 30,
       userCooldown: 60,

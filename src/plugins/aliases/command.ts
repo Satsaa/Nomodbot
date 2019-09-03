@@ -21,6 +21,7 @@ export const options: PluginOptions = {
     'Copy a command: {alias} copy <command> <new command>',
     'Delete a command: {alias} del <command>',
     'Edit a command: {alias} edit <command> <PLUGIN>',
+    'Rename a command: {alias} edit <old command> <new command>',
     'Disable a command: {alias} disable <command>',
     'Enable or disable a command: {alias} enable|disable <command>',
     'Hide or unhide a command: {alias} hide|unhide <command>',
@@ -38,7 +39,8 @@ export class Instance implements PluginInstance {
 
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'add <!COMMAND> <PLUGIN>', this.callAdd)
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'del <COMMAND>', this.callDelete)
-    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'edit <command> <PLUGIN>', this.callEdit)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'edit <COMMAND> <PLUGIN>', this.callEdit)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'rename <COMMAND> <!COMMAND>', this.callRename)
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'copy <COMMAND> <!COMMAND>', this.callCopy)
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'enable|disable <COMMAND>', this.callEnable)
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'hide|unhide <COMMAND>', this.callHide)
@@ -85,6 +87,18 @@ export class Instance implements PluginInstance {
     const res = this.l.setAlias(channelId, targetName, alias)
     if (res) return `"${sourceName}" copied to "${targetName}"`
     else return 'Command copy failed'
+  }
+
+  public async callRename(channelId: number, userId: number, params: any, extra: Extra) {
+    const [action, sourceAlias, targetAlias]: ['rename', string, string] = params
+
+    const alias = this.l.getAlias(channelId, sourceAlias)
+    if (!alias) return 'No command'
+
+    if (!this.l.setAlias(channelId, targetAlias, alias)) return 'Command copy failed'
+
+    if (!this.l.delAlias(channelId, sourceAlias)) return 'Source command delete failed'
+    else return `${sourceAlias} renamed to ${targetAlias}`
   }
 
   public async callEnable(channelId: number, userId: number, params: any, extra: Extra) {
