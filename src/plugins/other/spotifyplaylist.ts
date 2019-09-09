@@ -38,6 +38,7 @@ export class Instance implements PluginInstance {
   private clientSecret?: string | null
   private accessToken?: string
   private timeout?: NodeJS.Timeout
+  private tokenFail?: boolean
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
@@ -65,6 +66,9 @@ export class Instance implements PluginInstance {
     if (!data) return this.l.insertAtUser('Unavailable: required data is not present', extra)
 
     if (!data.playlist) return this.l.insertAtUser(`Playlist is not set. Find your playlist's id or it's link (like 4i8R1IsL69r7a7SHjGZ95d OR open.spotify.com/playlist/4i8R1IsL69r7a7SHjGZ95d) then use ${extra.words[0]} set <id or link>`, extra)
+
+    if (this.tokenFail) return this.l.insertAtUser('Token could not be retrieved. I didnt change anything wtf', extra)
+
 
     const playlist = await this.getPlaylist(data.playlist)
     if (typeof playlist === 'string') return this.l.insertAtUser('Invalid playlist', extra)
@@ -168,6 +172,7 @@ export class Instance implements PluginInstance {
     }
 
     const request = https.request(options, (res) => {
+      this.tokenFail = false
       if (res.statusCode === 200) { // success!
         let data = ''
         res.on('data', (chunk) => {
@@ -182,6 +187,7 @@ export class Instance implements PluginInstance {
           this.timeout = setTimeout(this.tokenLoop.bind(this), 10 * 1000)
         })
       } else {
+        this.tokenFail = true
         console.log('[SPOTIFYPLAYLIST] Unexpected response when requesting access token', res)
         this.timeout = setTimeout(this.tokenLoop.bind(this), 60 * 1000)
       }
