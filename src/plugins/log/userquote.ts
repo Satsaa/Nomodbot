@@ -17,7 +17,7 @@ export const options: PluginOptions = {
   },
   help: [
     'Show a random or specific message you have sent: {alias} [<INDEX>]',
-    'Show a random or specific message user has sent: {alias} <USER> [<INDEX>]',
+    'Show a random or specific message user has sent: {alias} [<USER>] [<INDEX>]',
   ],
   requirePlugins: ['log'],
   disableMention: true,
@@ -33,8 +33,7 @@ export class Instance implements PluginInstance {
     this.log = this.l.ext.log as LogExtension
 
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', '<INDEX>', this.callIndex)
-    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '<USER> [<INDEX>]', this.callUser)
-    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '', this.callUser)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<USER>] [<INDEX>]', this.callUser)
   }
 
   public async callRandom(channelId: number, userId: number, params: any, extra: Extra) {
