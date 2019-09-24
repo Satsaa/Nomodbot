@@ -74,11 +74,21 @@ export class Instance implements PluginInstance {
     if (typeof playlist === 'string') return this.l.insertAtUser('Invalid playlist', extra)
 
     const maxLength = playlist.tracks.items.length
-    const track = playlist.tracks.items[maxLength > index ? index : maxLength - 1].track
+    const root = playlist.tracks.items[maxLength > index ? index : maxLength - 1]
+    const track = root.track
     if (!track) return this.l.insertAtUser('No track found at that position', extra)
 
+    let songAge = 0
+    if (index === 0) {
+      songAge = Date.now() - Date.parse(root.added_at)
+    }
+
     const noFeat = track.name.replace(/ ?(\(with|\(feat).*\)/, '') // Remove feat stuff from track name
-    return `"${noFeat}" by ${this.l.u.commaPunctuate(track.artists.map((i: any) => i.name))}`
+    if (songAge > track.duration_ms) {
+      return `"${noFeat}" by ${this.l.u.commaPunctuate(track.artists.map((i: any) => i.name))} (Played ${this.l.u.timeDuration(songAge, 1)} ago)`
+    } else {
+      return `"${noFeat}" by ${this.l.u.commaPunctuate(track.artists.map((i: any) => i.name))}`
+    }
   }
 
   public async callList(channelId: number, userId: number, params: any, extra: Extra) {
