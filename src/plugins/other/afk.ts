@@ -52,7 +52,7 @@ export class Instance implements PluginInstance {
     if (data === undefined) return 'Data unavailable. Afk requests cannot be handled at this time'
 
     data[userId] = {
-      message: message ? message.join() : undefined,
+      message: message ? message.join(' ') : undefined,
       lastMs: Date.now(),
     }
 
