@@ -17,8 +17,8 @@ export const options: PluginOptions = {
 
 export interface SteamData {
   /** Known steamids of twitch users */
-  steamIds: {[userId: number]: number}
-  userIds: {[steamId: number]: number}
+  steamIds: { [userId: number]: number }
+  userIds: { [steamId: number]: number }
 }
 
 
@@ -43,7 +43,7 @@ export class Instance implements PluginInstance {
   private username?: string
   private password?: string
 
-  private richPrecenseStrings: {[steamId: number]: string | undefined}
+  private richPrecenseStrings: { [steamId: number]: string | undefined }
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
@@ -120,7 +120,7 @@ export class Instance implements PluginInstance {
   private onUser(steamId: any, user: any) {
     try {
       if (!user) return
-      this.richPrecenseStrings[steamId.accountid] = (user.rich_presence_string || 'Steam') as string
+      this.richPrecenseStrings[steamId.accountid] = user.rich_presence_string || (user.gameid === '0' ? 'Steam' : 'Unsupported game')
     } catch (err) {
       console.error('steam:', err)
     }

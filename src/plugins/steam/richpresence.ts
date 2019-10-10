@@ -7,7 +7,7 @@ export const options: PluginOptions = {
   type: 'command',
   id: 'richpresence',
   title: 'Steam Rich Presence',
-  description: 'Gets the Rich Presence string for the streamer',
+  description: 'Gets the Rich Presence string or the steam game name for the streamer',
   default: {
     alias: '?mode',
     options: {
@@ -16,8 +16,8 @@ export const options: PluginOptions = {
     },
   },
   help: [
-    'Get {channel} steam rich presence info: {alias}',
-    'Set {channel} steam id: {alias} set <NUMBER>',
+    'Get steam rich presence info or game info for {channel}: {alias}',
+    'Set steam id for {channel}: {alias} set <NUMBER>',
   ],
   requirePlugins: ['steam'],
   whisperOnCd: true,
@@ -43,8 +43,12 @@ export class Instance implements PluginInstance {
 
     const rp = this.steam.getRichPresenceString(channelId)
 
-    if (rp) return `${rp}`
-    else return `The steamId of ${await this.l.api.getDisplay(channelId)} has not been set`
+    if (rp) {
+      return `${rp}`
+    } else {
+      const channelName = await this.l.api.getDisplay(channelId)
+      return `The steamId of ${channelName} has not been set properly or ${channelName} is not added as a friend on Steam`
+    }
   }
 
   public async callSetId(channelId: number, userId: number, params: any, extra: Extra) {
