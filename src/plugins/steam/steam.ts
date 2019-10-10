@@ -1,4 +1,6 @@
 
+import https from 'https'
+
 import SteamUser from 'steam-user'
 
 import { PluginInstance, PluginOptions } from '../../main/commander'
@@ -29,6 +31,8 @@ export interface SteamExtension {
   getUsername: Instance['getUsername']
   /** Gets the cached rich presence string received of steam user known for `userId` */
   getRichPresenceString: Instance['getRichPresenceString']
+  /** Gets the steam game name for `appId` */
+  getAppName: Instance['getAppName']
 }
 
 export class Instance implements PluginInstance {
@@ -55,6 +59,7 @@ export class Instance implements PluginInstance {
       setUserSteamId: this.setUserSteamId.bind(this),
       getRichPresenceString: this.getRichPresenceString.bind(this),
       getUsername: this.getUsername.bind(this),
+      getAppName: this.getAppName.bind(this),
     }
     this.l.extend(options.id, extension)
 
@@ -117,10 +122,14 @@ export class Instance implements PluginInstance {
     }, 10000)
   }
 
-  private onUser(steamId: any, user: any) {
+  private async onUser(steamId: any, user: any) {
     try {
-      if (!user) return
-      this.richPrecenseStrings[steamId.accountid] = user.rich_presence_string || (user.gameid === '0' ? 'Steam' : 'Unsupported game')
+      if (!user) return // await this.getAppName(user.gameid)
+      if (!user.rich_presence_string && user.gameid !== '0') {
+        this.richPrecenseStrings[steamId.accountid] = await this.getAppName(user.gameid) || 'API overload'
+      } else {
+        this.richPrecenseStrings[steamId.accountid] = user.rich_presence_string || 'Steam'
+      }
     } catch (err) {
       console.error('steam:', err)
     }
@@ -166,5 +175,31 @@ export class Instance implements PluginInstance {
 
   private getUsername(): string {
     return this.client.username || this.username
+  }
+
+  private getAppName(appId: number | string): Promise<undefined | string> {
+    return new Promise((resolve) => {
+      const options = {
+        host: 'store.steampowered.com',
+        path: `/api/appdetails?appids=${appId}`,
+        headers: {
+
+        },
+      }
+
+      https.get(options, (res) => {
+        if (res.statusCode === 200) { // success!
+          let data = ''
+          res.on('data', (chunk) => {
+            data += chunk
+          }).on('end', () => {
+            const result = JSON.parse(data)
+            resolve(result[appId].data.name)
+          }).on('error', (err) => { resolve(undefined) })
+        } else {
+          resolve(undefined)
+        }
+      })
+    })
   }
 }
