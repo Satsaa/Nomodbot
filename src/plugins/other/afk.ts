@@ -6,7 +6,7 @@ export const options: PluginOptions = {
   type: 'command',
   id: 'afk',
   title: 'Afk',
-  description: 'Marks the current use as AFK and informs others when they mention the user with @user',
+  description: 'Marks the current user as AFK and informs others when they mention the user with @user',
   default: {
     alias: '?afk',
     options: {
@@ -25,6 +25,7 @@ interface AfkData {
   [userId: number]: {
     message?: string
     lastMs: number
+    count: number
   }
 }
 
@@ -54,6 +55,7 @@ export class Instance implements PluginInstance {
     data[userId] = {
       message: message ? message.join(' ') : undefined,
       lastMs: Date.now(),
+      count: 0,
     }
 
     return 'Users will be informed that you are afk'
@@ -69,7 +71,11 @@ export class Instance implements PluginInstance {
     const data = this.l.getData(channelId, 'afk') as AfkData
     if (data === undefined) return
 
-    if (data[userId]) delete data[userId]
+    if (data[userId]) {
+      const userData = data[userId]
+      this.l.chat(channelId, `@${irc.tags['display-name']} Welcome back! ${userData.count ? `${this.l.u.plural(userData.count, 'user')} got notified` : 'No one was notified :('}}`)
+      delete data[userId]
+    }
 
     const atIndex = message.indexOf('@')
     if (atIndex === -1) return
@@ -93,17 +99,25 @@ export class Instance implements PluginInstance {
     if (afks.length) {
       if (afks.length === 1) {
         const afkData = data[afkerIds[0]]
-        if (afkData && afkData.lastMs < Date.now() - MIN_INTERVAL) {
+        if (!afkData) return
+        afkData.count++
+        if (afkData.lastMs < Date.now() - MIN_INTERVAL) {
           afkData.lastMs = Date.now()
           this.l.chat(channelId, `@${irc.tags['display-name']} ${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${afkData.message ? `: ${afkData.message}` : ''}`)
         } else {
           this.l.whisper(userId, `${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${afkData.message ? `: ${afkData.message}` : ''}`)
         }
-      } else if (afkerIds.every(v => data[v].lastMs < Date.now() - MIN_INTERVAL)) { // Ignore if all are on cooldown
-        for (const uid of afkerIds) data[uid].lastMs = Date.now()
-        this.l.chat(channelId, `@${irc.tags['display-name']} ${this.l.u.commaPunctuate(afkerDisplays)} are afk`)
       } else {
-        this.l.whisper(userId, `${this.l.u.commaPunctuate(afkerDisplays)} are afk`)
+        afkerIds.forEach((id) => {
+          const afkData = data[id]
+          if (afkData) afkData.count++
+        })
+        if (afkerIds.every(v => data[v].lastMs < Date.now() - MIN_INTERVAL)) { // Whisper if all are on cooldown
+          for (const uid of afkerIds) data[uid].lastMs = Date.now()
+          this.l.chat(channelId, `@${irc.tags['display-name']} ${this.l.u.commaPunctuate(afkerDisplays)} are afk`)
+        } else {
+          this.l.whisper(userId, `${this.l.u.commaPunctuate(afkerDisplays)} are afk`)
+        }
       }
     }
   }
