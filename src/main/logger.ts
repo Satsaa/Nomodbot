@@ -74,9 +74,9 @@ const bgColors = {
  * @param options Options object with following optional settings:
  * `noSave` disables saving functionality. Ensures each category preserver line number.
  */
-function makeLogger<T extends {[cat: string]: Category}>(cats: T, path: string, options: Options): {[P in keyof T]: (...messages: any[]) => any} {
+function makeLogger<T extends { [cat: string]: Category }>(cats: T, path: string, options: Options): { [P in keyof T]: (...messages: any[]) => any } {
   const res = {}
-  const streams: {[path: string]: fs.WriteStream} = {}
+  const streams: { [path: string]: fs.WriteStream } = {}
   path = resolve(path)
   fs.mkdirSync(path, { recursive: true })
 
@@ -168,7 +168,7 @@ export const categories = {
   strange: { saved: true, handler: console.error },
   chat: { prefix: '[CHAT]', color: 'gray' },
   botChat: { prefix: '[BOT]', color: 'green' },
-  whisper: {},
+  whisper: { color: 'green' },
 
   apiError: { saved: true, handler: console.error },
   apiInfo: {},

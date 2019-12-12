@@ -79,7 +79,7 @@ export class Instance implements PluginInstance {
     }
   }
 
-  public define(term: string, lang: string, appId: string, appKey: string): Promise<string | {[x: string]: any}> {
+  public define(term: string, lang: string, appId: string, appKey: string): Promise<string | { [x: string]: any }> {
     return new Promise((resolve, reject) => {
       const options = {
         host: 'od-api.oxforddictionaries.com',
