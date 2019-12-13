@@ -97,24 +97,29 @@ export class Instance implements PluginInstance {
     }
 
     if (afks.length) {
-      if (afks.length === 1) {
-        const userData = afks[0]
-        if (!userData) return
-        userData.count++
-        if (userData.lastMs < Date.now() - MIN_INTERVAL) {
-          userData.lastMs = Date.now()
-          this.l.chat(channelId, `@${irc.tags['display-name']} ${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${userData.message ? `: ${userData.message}` : ''}`)
+      try {
+        if (afks.length === 1) {
+          const userData = afks[0]
+          if (!userData) return
+          userData.count++
+          if (userData.lastMs < Date.now() - MIN_INTERVAL) {
+            userData.lastMs = Date.now()
+            this.l.chat(channelId, `@${irc.tags['display-name']} ${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${userData.message ? `: ${userData.message}` : ''}`)
+          } else {
+            this.l.whisper(userId, `${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${userData.message ? `: ${userData.message}` : ''}`)
+          }
         } else {
-          this.l.whisper(userId, `${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${userData.message ? `: ${userData.message}` : ''}`)
+          afks.forEach(afk => afk.count++)
+          if (afkerIds.every(v => data[v].lastMs < Date.now() - MIN_INTERVAL)) { // Whisper if all are on cooldown
+            for (const uid of afkerIds) data[uid].lastMs = Date.now()
+            this.l.chat(channelId, `@${irc.tags['display-name']} ${this.l.u.commaPunctuate(afkerDisplays)} are afk`)
+          } else {
+            this.l.whisper(userId, `${this.l.u.commaPunctuate(afkerDisplays)} are afk`)
+          }
         }
-      } else {
-        afks.forEach(afk => afk.count++)
-        if (afkerIds.every(v => data[v].lastMs < Date.now() - MIN_INTERVAL)) { // Whisper if all are on cooldown
-          for (const uid of afkerIds) data[uid].lastMs = Date.now()
-          this.l.chat(channelId, `@${irc.tags['display-name']} ${this.l.u.commaPunctuate(afkerDisplays)} are afk`)
-        } else {
-          this.l.whisper(userId, `${this.l.u.commaPunctuate(afkerDisplays)} are afk`)
-        }
+      } catch (err) {
+        const asd: Error = err
+        return ` ${asd.name} || ${asd.message} || ${asd.stack}`
       }
     }
   }
