@@ -69,12 +69,6 @@ export class Instance implements PluginInstance {
   private async onChat(channelId: number, userId: number, message: string, irc: PRIVMSG, me: boolean, self: boolean) {
     if (self) return
 
-
-    if (message.includes('Stop it bot!')) {
-      this.enabled = false
-      this.l.chat(channelId, 'ok okay chill its disabled')
-    }
-
     const data = this.l.getData(channelId, 'afk') as AfkData
     if (data === undefined) return
 
@@ -87,7 +81,7 @@ export class Instance implements PluginInstance {
     const atIndex = message.indexOf('@')
     if (atIndex === -1) return
 
-    const mentions = this.l.u.deduplicate(this.l.getMentions(message), true)
+    const mentions = this.l.u.deduplicate(this.l.getMentions(message).map(str => str.toLowerCase()), true)
 
     const afks: Array<AfkData[number]> = []
     const afkerIds: number[] = []
