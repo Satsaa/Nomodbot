@@ -82,11 +82,11 @@ export class Instance implements PluginInstance {
 
     const mentions = this.l.u.deduplicate(this.l.getMentions(message), true)
 
-    const afks: AfkData[] = []
+    const afks: Array<AfkData[number]> = []
     const afkerIds: number[] = []
     const afkerDisplays: string[] = []
-    for (const user of mentions) {
-      const uid = this.l.api.cachedId(user)
+    for (const mention of mentions) {
+      const uid = this.l.api.cachedId(mention)
       if (!uid) continue
 
       if (data[uid]) {
@@ -98,20 +98,17 @@ export class Instance implements PluginInstance {
 
     if (afks.length) {
       if (afks.length === 1) {
-        const afkData = data[afkerIds[0]]
-        if (!afkData) return
-        afkData.count++
-        if (afkData.lastMs < Date.now() - MIN_INTERVAL) {
-          afkData.lastMs = Date.now()
-          this.l.chat(channelId, `@${irc.tags['display-name']} ${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${afkData.message ? `: ${afkData.message}` : ''}`)
+        const userData = afks[0]
+        if (!userData) return
+        userData.count++
+        if (userData.lastMs < Date.now() - MIN_INTERVAL) {
+          userData.lastMs = Date.now()
+          this.l.chat(channelId, `@${irc.tags['display-name']} ${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${userData.message ? `: ${userData.message}` : ''}`)
         } else {
-          this.l.whisper(userId, `${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${afkData.message ? `: ${afkData.message}` : ''}`)
+          this.l.whisper(userId, `${this.l.api.cachedDisplay(afkerDisplays[0])} is afk${userData.message ? `: ${userData.message}` : ''}`)
         }
       } else {
-        afkerIds.forEach((id) => {
-          const afkData = data[id]
-          if (afkData) afkData.count++
-        })
+        afks.forEach(afk => afk.count++)
         if (afkerIds.every(v => data[v].lastMs < Date.now() - MIN_INTERVAL)) { // Whisper if all are on cooldown
           for (const uid of afkerIds) data[uid].lastMs = Date.now()
           this.l.chat(channelId, `@${irc.tags['display-name']} ${this.l.u.commaPunctuate(afkerDisplays)} are afk`)
