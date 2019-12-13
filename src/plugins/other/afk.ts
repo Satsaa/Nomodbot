@@ -119,7 +119,7 @@ export class Instance implements PluginInstance {
         }
       } catch (err) {
         const asd: Error = err
-        return ` ${asd.name} || ${asd.message} || ${asd.stack}`
+        this.l.chat(channelId, `${asd.name} || ${asd.message} || ${asd.stack}`)
       }
     }
   }
