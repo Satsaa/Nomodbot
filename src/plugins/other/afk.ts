@@ -73,7 +73,7 @@ export class Instance implements PluginInstance {
 
     if (data[userId]) {
       const userData = data[userId]
-      this.l.chat(channelId, `@${irc.tags['display-name']} Welcome back! ${userData.count ? `${this.l.u.plural(userData.count, 'user')} got notified` : 'No one was notified :('}`)
+      this.l.chat(channelId, `@${irc.tags['display-name']} Welcome back! ${userData.count ? `Notified people ${this.l.u.plural(userData.count, 'time')}` : ''}`)
       delete data[userId]
     }
 
