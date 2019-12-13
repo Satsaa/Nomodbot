@@ -35,7 +35,6 @@ export class Instance implements PluginInstance {
   public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private listener: any
-  private enabled: boolean = true
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
@@ -88,10 +87,8 @@ export class Instance implements PluginInstance {
     const afkerDisplays: string[] = []
     for (const mention of mentions) {
       const uid = this.l.api.cachedId(mention)
-      if (!uid) {
-        if (this.enabled) this.l.chat(channelId, `no id for ${mention}`)
-        continue
-      }
+      if (!uid) continue
+
 
       if (data[uid]) {
         afks.push(data[uid])
@@ -104,10 +101,6 @@ export class Instance implements PluginInstance {
       try {
         if (afks.length === 1) {
           const userData = afks[0]
-          if (!userData) {
-            if (this.enabled) this.l.chat(channelId, `no data for ${afkerDisplays[0]}`)
-            return
-          }
           userData.count++
           if (userData.lastMs < Date.now() - MIN_INTERVAL) {
             userData.lastMs = Date.now()
