@@ -35,7 +35,7 @@ export class Instance implements PluginInstance {
   public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private listener: any
-  private enabled: boolean = false
+  private enabled: boolean = true
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
