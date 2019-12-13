@@ -35,7 +35,7 @@ export class Instance implements PluginInstance {
   public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private listener: any
-  private disabled: boolean = false
+  private enabled: boolean = false
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
@@ -67,20 +67,16 @@ export class Instance implements PluginInstance {
   }
 
   private async onChat(channelId: number, userId: number, message: string, irc: PRIVMSG, me: boolean, self: boolean) {
-    if (self) { return }
+    if (self) return
 
-    const atIndex3 = message.indexOf('$$$money$$$bitches$$$')
-    if (atIndex3 !== -1) {
-      this.l.chat(channelId, 'Disabled!')
-      this.disabled = true
-      return
+
+    if (message.includes('Stop it bot!')) {
+      this.enabled = false
+      this.l.chat(channelId, 'ok okay chill its disabled')
     }
 
     const data = this.l.getData(channelId, 'afk') as AfkData
-    if (data === undefined) {
-      if (!this.disabled) { this.l.chat(channelId, 'No data') }
-      return
-    }
+    if (data === undefined) return
 
     if (data[userId]) {
       const userData = data[userId]
@@ -89,10 +85,7 @@ export class Instance implements PluginInstance {
     }
 
     const atIndex = message.indexOf('@')
-    if (atIndex === -1) {
-      if (!this.disabled) { this.l.chat(channelId, 'No index') }
-      return
-    }
+    if (atIndex === -1) return
 
     const mentions = this.l.u.deduplicate(this.l.getMentions(message), true)
 
@@ -101,7 +94,10 @@ export class Instance implements PluginInstance {
     const afkerDisplays: string[] = []
     for (const mention of mentions) {
       const uid = this.l.api.cachedId(mention)
-      if (!uid) continue
+      if (!uid) {
+        if (this.enabled) this.l.chat(channelId, `no id for ${mention}`)
+        continue
+      }
 
       if (data[uid]) {
         afks.push(data[uid])
@@ -114,7 +110,10 @@ export class Instance implements PluginInstance {
       try {
         if (afks.length === 1) {
           const userData = afks[0]
-          if (!userData) return
+          if (!userData) {
+            if (this.enabled) this.l.chat(channelId, `no data for ${afkerDisplays[0]}`)
+            return
+          }
           userData.count++
           if (userData.lastMs < Date.now() - MIN_INTERVAL) {
             userData.lastMs = Date.now()
@@ -135,6 +134,6 @@ export class Instance implements PluginInstance {
         const asd: Error = err
         this.l.chat(channelId, `${asd.name} || ${asd.message} || ${asd.stack}`)
       }
-    } else if (!this.disabled) { this.l.chat(channelId, 'No length') }
+    }
   }
 }
