@@ -35,6 +35,7 @@ export class Instance implements PluginInstance {
   public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private listener: any
+  private disabled: boolean = false
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
@@ -66,19 +67,32 @@ export class Instance implements PluginInstance {
   }
 
   private async onChat(channelId: number, userId: number, message: string, irc: PRIVMSG, me: boolean, self: boolean) {
-    if (self) return
+    if (self) { return }
+
+    const atIndex3 = message.indexOf('$$$money$$$bitches$$$')
+    if (atIndex3 !== -1) {
+      this.l.chat(channelId, 'Disabled!')
+      this.disabled = true
+      return
+    }
 
     const data = this.l.getData(channelId, 'afk') as AfkData
-    if (data === undefined) return
+    if (data === undefined) {
+      if (!this.disabled) { this.l.chat(channelId, 'No data') }
+      return
+    }
 
     if (data[userId]) {
       const userData = data[userId]
-      this.l.chat(channelId, `@${irc.tags['display-name']} Welcome back! ${userData.count ? `${this.l.u.plural(userData.count, 'user')} got notified` : 'No one was notified :('}}`)
+      this.l.chat(channelId, `@${irc.tags['display-name']} Welcome back! ${userData.count ? `${this.l.u.plural(userData.count, 'user')} got notified` : 'No one was notified :('}`)
       delete data[userId]
     }
 
     const atIndex = message.indexOf('@')
-    if (atIndex === -1) return
+    if (atIndex === -1) {
+      if (!this.disabled) { this.l.chat(channelId, 'No index') }
+      return
+    }
 
     const mentions = this.l.u.deduplicate(this.l.getMentions(message), true)
 
@@ -121,6 +135,6 @@ export class Instance implements PluginInstance {
         const asd: Error = err
         this.l.chat(channelId, `${asd.name} || ${asd.message} || ${asd.stack}`)
       }
-    }
+    } else if (!this.disabled) { this.l.chat(channelId, 'No length') }
   }
 }
