@@ -83,9 +83,7 @@ The following parameters are accepted as valid if the parameter is defined but a
 **COMMAND**: Checks that the inputted command exists. Input is converted to lowercase  
 **!COMMAND**: Checks that the inputted command DOESN'T exists. Input is converted to lowercase  
 **PLUGIN**: Checks that the inputted plugin (by id) exists. Input is converted to lowercase  
-**!PLUGIN**: Checks that the inputted plugin (by id) DOESN'T exists. Input is converted to lowercase  
-
-Plural versions are also accepted, INDEX -> INDEXES or USER -> USERS and so on.  
+**!PLUGIN**: Checks that the inputted plugin (by id) DOESN'T exists. Input is converted to lowercase    
 
 </details>
 
