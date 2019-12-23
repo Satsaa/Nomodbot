@@ -70,10 +70,11 @@ Accepted when each of the upcoming words passes the check. No other parameter ca
 ```
 
 **NUMBER**: Accepted if a valid number (Anything that doesn't convert to NaN with `+str`)  
-**WORD**: Accepted if NOT a valid number (Anything that converts to NaN with `+str`)  
 **INTEGER**, **INDEX**: Accepted if a valid whole number  
+**WORD**: Accepted if NOT a valid number (Anything that converts to NaN with `+str`)  
+**NOTHING**: Accepted if no parameter was given  
 **Range (X-Y)**: Accepts numbers between the lowest inputted number and the highest (inclusive). Negative values are typed like "<-100--90>".  
-Accepts whole numbers if none of the numbers had a decimal place, otherwise, fractions are allowed  
+Only accepts whole numbers if none of the numbers had a decimal place, otherwise, fractions are allowed  
 **Regexp (name/regex/flags)**: Accepts anything that matches with the regex  
 
 
@@ -82,8 +83,8 @@ The following parameters are accepted as valid if the parameter is defined but a
 **USER**, **CHANNEL**: Checks for the existence of the inputted user. Input is converted to user ids   
 **COMMAND**: Checks that the inputted command exists. Input is converted to lowercase  
 **!COMMAND**: Checks that the inputted command DOESN'T exists. Input is converted to lowercase  
-**PLUGIN**: Checks that the inputted plugin (by id) exists. Input is converted to lowercase  
-**!PLUGIN**: Checks that the inputted plugin (by id) DOESN'T exists. Input is converted to lowercase    
+**PLUGIN**: Checks that the inputted plugin (by plugin id (usually lowercase plugin title)) exists. Input is converted to lowercase  
+**!PLUGIN**: Checks that the inputted plugin (by plugin id) DOESN'T exists. Input is converted to lowercase    
 
 </details>
 
