@@ -1,7 +1,7 @@
 import util from 'util'
 import { exec as _exec } from 'child_process'
 
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 const exec = util.promisify(_exec)
@@ -14,7 +14,7 @@ export const options: PluginOptions = {
   default: {
     alias: '$update',
     options: {
-      userlvl: userlvls.master,
+      userlvl: Userlvl.master,
     },
   },
   help: ['Update from repository and restart bot: {alias} [<branch>]'],

@@ -1,7 +1,7 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
-type userlvlParam = undefined | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+type UserlvlParam = undefined | keyof Userlvl
 
 export const options: PluginOptions = {
   type: 'command',
@@ -37,8 +37,8 @@ export class Instance implements PluginInstance {
 
 
   public async callDisabled(channelId: number, userId: number, params: any, extra: Extra) {
-    const [action, _userlvl]: ['disabled', userlvlParam] = params
-    const userlvl = _userlvl === undefined ? userlvls.any : _userlvl // Don't show master commands by default
+    const [action, _userlvl]: ['disabled', UserlvlParam] = params
+    const userlvl = _userlvl === undefined ? Userlvl.any : _userlvl // Don't show master commands by default
 
     const results = []
     const aliases = this.l.getAliases(channelId)
@@ -53,8 +53,8 @@ export class Instance implements PluginInstance {
   }
 
   public async callHidden(channelId: number, userId: number, params: any, extra: Extra) {
-    const [action, _userlvl]: ['hidden', userlvlParam] = params
-    const userlvl = _userlvl === undefined ? userlvls.any : _userlvl // Don't show master commands by default
+    const [action, _userlvl]: ['hidden', UserlvlParam] = params
+    const userlvl = _userlvl === undefined ? Userlvl.any : _userlvl // Don't show master commands by default
 
     const results = []
     const aliases = { ...this.l.getEnabledGlobalAliases(), ...this.l.getEnabledAliases(channelId) }
@@ -68,8 +68,8 @@ export class Instance implements PluginInstance {
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
-    const [_userlvl]: [userlvlParam] = params
-    const userlvl = _userlvl === undefined ? userlvls.any : _userlvl // Don't show master commands by default
+    const [_userlvl]: [UserlvlParam] = params
+    const userlvl = _userlvl === undefined ? Userlvl.any : _userlvl // Don't show master commands by default
 
     const results = []
     const aliases = { ...this.l.getEnabledGlobalAliases(), ...this.l.getEnabledAliases(channelId) }

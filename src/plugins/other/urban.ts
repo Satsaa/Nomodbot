@@ -1,6 +1,6 @@
 import https from 'https'
 
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -13,7 +13,7 @@ export const options: PluginOptions = {
     options: {
       cooldown: 30,
       userCooldown: 60,
-      userlvl: userlvls.sub,
+      userlvl: Userlvl.sub,
     },
   },
   help: ['Get a random or specific urban definition: {alias} [<term...>]'],
@@ -69,7 +69,7 @@ export class Instance implements PluginInstance {
     return this.l.u.fontify(match.substring(1, match.length - 1), 'mathSansBold')
   }
 
-  public getUrban(term?: string): Promise<{[x: string]: any} | string> {
+  public getUrban(term?: string): Promise<{ [x: string]: any } | string> {
     return new Promise((resolve, reject) => {
       const options = term
         ? {

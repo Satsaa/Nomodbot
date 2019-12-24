@@ -1,6 +1,6 @@
 import https from 'https'
 
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -105,7 +105,7 @@ export class Instance implements PluginInstance {
   public async callSet(channelId: number, userId: number, params: any, extra: Extra) {
     const [action, input]: [string, string] = params
 
-    if (!this.l.isPermitted({ userlvl: userlvls.mod }, userId, extra.irc.tags.badges)) return this.l.insertAtUser('You are not permitted to do this operation', extra)
+    if (!this.l.isPermitted({ userlvl: Userlvl.mod }, userId, extra.irc.tags.badges)) return this.l.insertAtUser('You are not permitted to do this operation', extra)
 
     const inputId = (input.replace(/\/+$/, '').match(/[a-zA-Z0-9]*$/) || [])[0]
     if (!inputId) return this.l.insertAtUser('Invalid input', extra)
@@ -125,7 +125,7 @@ export class Instance implements PluginInstance {
   public async callDelete(channelId: number, userId: number, params: any, extra: Extra) {
     const [action]: ['del'] = params
 
-    if (!this.l.isPermitted({ userlvl: userlvls.mod }, userId, extra.irc.tags.badges)) return this.l.insertAtUser('You are not permitted to do this operation', extra)
+    if (!this.l.isPermitted({ userlvl: Userlvl.mod }, userId, extra.irc.tags.badges)) return this.l.insertAtUser('You are not permitted to do this operation', extra)
 
     const data = this.l.getData(channelId, 'spotifyPlaylist') as SpotifyPlaylistData
     if (!data) return this.l.insertAtUser('Unavailable: required data is not present', extra)

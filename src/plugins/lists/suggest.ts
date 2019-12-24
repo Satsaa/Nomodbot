@@ -1,4 +1,4 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 import { fitStrings } from '../../main/lib/util'
 
@@ -62,7 +62,7 @@ export class Instance implements PluginInstance {
     const suggestions = this.lists.getGlobalList<Suggestion>(options.id, [])
     if (!suggestions) return 'Suggestion data unavailable'
 
-    if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit suggestions'
+    if (!this.l.isPermitted({ userlvl: Userlvl.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit suggestions'
 
     const [finalIndex, suggestion] = suggestions.getEntry(index)
     if (!suggestion) return 'No suggestions'
@@ -91,7 +91,7 @@ export class Instance implements PluginInstance {
     const suggestions = this.lists.getGlobalList<Suggestion>(options.id, [])
     if (!suggestions) return 'Suggestion data unavailable'
 
-    if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to read suggestions'
+    if (!this.l.isPermitted({ userlvl: Userlvl.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to read suggestions'
 
     const [finalIndex, suggestion] = suggestions.getEntry(index)
     if (!suggestion) return 'No suggestions'
@@ -105,7 +105,7 @@ export class Instance implements PluginInstance {
     const suggestions = this.lists.getGlobalList<Suggestion>(options.id, [])
     if (!suggestions) return 'Suggestion data unavailable'
 
-    if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to read suggestions'
+    if (!this.l.isPermitted({ userlvl: Userlvl.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to read suggestions'
     for (let i = suggestions.entries.length - 1; i >= 0; i--) {
       const suggestion = suggestions.entries[i]
       if (!suggestion.read) {
@@ -122,7 +122,7 @@ export class Instance implements PluginInstance {
     const suggestions = this.lists.getGlobalList<Suggestion>(options.id, [])
     if (!suggestions) return 'Suggestion data unavailable'
 
-    if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to read suggestions'
+    if (!this.l.isPermitted({ userlvl: Userlvl.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to read suggestions'
 
     let i = 0
     for (const suggestion of suggestions.entries) {

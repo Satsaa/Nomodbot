@@ -1,4 +1,4 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -9,10 +9,10 @@ export const options: PluginOptions = {
   default: {
     alias: '$part',
     options: {
-      userlvl: userlvls.master,
+      userlvl: Userlvl.master,
     },
   },
-  help: ['Leave {channel} or channels: {alias} [<CHANNELS...>]'],
+  help: ['Leave {channel} or channels: {alias} [<channels...>]'],
 }
 
 export class Instance implements PluginInstance {
@@ -22,7 +22,7 @@ export class Instance implements PluginInstance {
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
 
-    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<CHANNELS...>]', this.callMain)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<CHANNEL...>]', this.callMain)
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {

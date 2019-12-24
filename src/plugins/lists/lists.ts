@@ -1,4 +1,4 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import defaultKeys from '../../main/lib/defaultKeys'
 import PluginLibrary from '../../main/pluginLib'
 
@@ -40,7 +40,7 @@ export interface ListsExtension {
 }
 
 interface ListsType {
-  channels: { [id: number]: {[listName: string]: any[]} }
+  channels: { [id: number]: { [listName: string]: any[] } }
   globals: { [listName: string]: any[] }
 }
 

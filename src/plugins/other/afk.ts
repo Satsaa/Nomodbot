@@ -1,4 +1,4 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 import { PRIVMSG } from '../../main/client/parser'
 
@@ -10,7 +10,7 @@ export const options: PluginOptions = {
   default: {
     alias: '?afk',
     options: {
-      userlvl: userlvls.sub, // Safety
+      userlvl: Userlvl.sub, // Safety
       cooldown: 10,
       userCooldown: 30,
     },

@@ -12,7 +12,7 @@ interface GenericCache {
   /** Time of update */
   time: number
   /** Previous cached result */
-  res?: {[x: string]: any}
+  res?: { [x: string]: any }
 }
 
 interface GenericOptions {
@@ -48,9 +48,9 @@ export default class TwitchApi {
       recentBroadcasts: GenericCache
     }
   }
-  private ids: {[login: string]: number}
-  private logins: {[uid: number]: string}
-  private displays: {[uid: number]: string}
+  private ids: { [login: string]: number }
+  private logins: { [uid: number]: string }
+  private displays: { [uid: number]: string }
   /** Default blueprint for channels' cache entries */
   private readonly channelCacheDefault: DeepReadonly<{
     recentBroadcasts: GenericCache
@@ -215,14 +215,37 @@ export default class TwitchApi {
 
   /**
    * Gets the user IDs for `logins`  
-   * Each from cache if available or otherwise from the API  
+   * Each from cache if available  
    * @returns Object containing inputted `logins` with the correspoding result
    */
-  public async getIds(logins: readonly string[]): Promise<{[login: string]: number | undefined}> {
+  public async cachedIds(logins: readonly string[]): Promise<{ [login: string]: number | undefined }> {
     logins = logins.map(v => v.toLowerCase())
 
     // Create return object which removes duplicates as a side effect
-    const res: {[login: string]: number | undefined} = {}
+    const res: { [login: string]: number | undefined } = {}
+    for (const login of logins) {
+      res[login] = undefined
+    }
+    logins = Object.keys(res) // Now has no duplicates
+
+    const notInCache = []
+    for (const login of logins) {
+      if (this.ids[login]) {
+        res[login] = this.ids[login]
+      }
+    }
+    return res
+  }
+  /**
+   * Gets the user IDs for `logins`  
+   * Each from cache if available or otherwise from the API  
+   * @returns Object containing inputted `logins` with the correspoding result
+   */
+  public async getIds(logins: readonly string[]): Promise<{ [login: string]: number | undefined }> {
+    logins = logins.map(v => v.toLowerCase())
+
+    // Create return object which removes duplicates as a side effect
+    const res: { [login: string]: number | undefined } = {}
     for (const login of logins) {
       res[login] = undefined
     }
@@ -254,18 +277,37 @@ export default class TwitchApi {
         }
       }
     }
-
     return res
   }
 
   /**
    * Gets the login names for `ids`  
+   * Each from cache if available  
+   * @returns Object containing inputted `ids` with the correspoding result
+   */
+  public async cachedLogins(ids: readonly number[]): Promise<{ [id: number]: string | undefined }> {
+    // Create return object which removes duplicates as a side effect
+    const res: { [id: number]: string | undefined } = {}
+    for (const id of ids) {
+      res[id] = undefined
+    }
+    ids = Object.keys(res).map(v => ~~v) // Now has no duplicates
+
+    for (const id of ids) {
+      if (this.logins[id]) {
+        res[id] = this.logins[id]
+      }
+    }
+    return res
+  }
+  /**
+   * Gets the login names for `ids`  
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `ids` with the correspoding result
    */
-  public async getLogins(ids: readonly number[]): Promise<{[id: number]: string | undefined}> {
+  public async getLogins(ids: readonly number[]): Promise<{ [id: number]: string | undefined }> {
     // Create return object which removes duplicates as a side effect
-    const res: {[id: number]: string | undefined} = {}
+    const res: { [id: number]: string | undefined } = {}
     for (const id of ids) {
       res[id] = undefined
     }
@@ -302,29 +344,81 @@ export default class TwitchApi {
 
   /**
    * Gets the display names for `ids`  
+   * Each from cache if available  
+   * @returns Object containing inputted `ids` with the correspoding result
+   */
+  public cachedDisplays(ids: readonly number[]): { [id: number]: string | undefined }
+  /**
+   * Gets the display names for `logins`  
+   * `logins` are converted to lowercase and it is reflected in the result  
+   * Each from cache if available  
+   * @returns Object containing inputted `logins` with the correspoding result
+   */
+  public cachedDisplays(logins: readonly string[]): { [login: string]: string | undefined }
+  /**
+   * Gets the display names for `users`  
+   * Each from cache if available  
+   * @returns Object containing inputted `users` with the correspoding result
+   */
+  public cachedDisplays(users: readonly number[] | readonly string[]): { [user: string]: string | undefined } {
+    if (typeof users[0] === 'string') { // Using logins
+      let logins = (users as string[]).map(v => v.toLowerCase())
+
+      // Create return object which removes duplicates as a side effect
+      const res: { [login: string]: string | undefined } = {}
+      for (const login of logins) {
+        res[login] = undefined
+      }
+      logins = Object.keys(res) // Now has no duplicates
+
+      for (const login of logins) {
+        if (this.ids[login]) {
+          res[login] = this.displays[this.ids[login]]
+        }
+      }
+      return res
+    } else { // Using ids or empty array
+      let ids = users as number[]
+      // Create return object which removes duplicates as a side effect
+      const res: { [id: number]: string | undefined } = {}
+      for (const id of ids) {
+        res[id] = undefined
+      }
+      ids = Object.keys(res).map(v => ~~v) // Now has no duplicates
+
+      for (const id of ids) {
+        if (this.displays[id]) {
+          res[id] = this.displays[id]
+        }
+      }
+      return res
+    }
+  }
+  /**
+   * Gets the display names for `ids`  
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `ids` with the correspoding result
    */
-  public getDisplays(ids: readonly number[]): Promise<{[id: number]: string | undefined}>
+  public getDisplays(ids: readonly number[]): Promise<{ [id: number]: string | undefined }>
   /**
    * Gets the display names for `logins`  
    * `logins` are converted to lowercase and it is reflected in the result  
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `logins` with the correspoding result
    */
-  public getDisplays(logins: readonly string[]): Promise<{[login: string]: string | undefined}>
+  public getDisplays(logins: readonly string[]): Promise<{ [login: string]: string | undefined }>
   /**
    * Gets the display names for `users`  
    * Each from cache if available or otherwise from the API  
    * @returns Object containing inputted `users` with the correspoding result
    */
-  public async getDisplays(users: readonly number[] | readonly string[]): Promise<{[user: string]: string | undefined}> {
+  public async getDisplays(users: readonly number[] | readonly string[]): Promise<{ [user: string]: string | undefined }> {
     if (typeof users[0] === 'string') { // Using logins
       let logins = users as string[]
       logins = logins.map(v => v.toLowerCase())
 
       // Create return object which removes duplicates as a side effect
-      const res: {[login: string]: string | undefined} = {}
+      const res: { [login: string]: string | undefined } = {}
       for (const login of logins) {
         res[login] = undefined
       }
@@ -334,7 +428,9 @@ export default class TwitchApi {
       for (const login of logins) {
         if (this.ids[login]) {
           res[login] = this.displays[this.ids[login]]
-        } else { notInCache.push(login) }
+        } else {
+          notInCache.push(login)
+        }
       }
 
       const hundreds: string[][] = []
@@ -359,7 +455,7 @@ export default class TwitchApi {
     } else { // Using ids or empty array
       let ids = users as number[]
       // Create return object which removes duplicates as a side effect
-      const res: {[id: number]: string | undefined} = {}
+      const res: { [id: number]: string | undefined } = {}
       for (const id of ids) {
         res[id] = undefined
       }
@@ -529,7 +625,7 @@ export default class TwitchApi {
     })
   }
 
-  private get(path: string, params: {[param: string]: any}): Promise<object | string | undefined> {
+  private get(path: string, params: { [param: string]: any }): Promise<object | string | undefined> {
     return new Promise((resolve) => {
       if (this.rlRemaining < 3 && this.rlReset > Date.now()) {
         logger.apiInfo('API being ratelimited')

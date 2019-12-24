@@ -1,7 +1,7 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
-const exp: Array<{options: PluginOptions, Instance: any}> = [
+const exp: Array<{ options: PluginOptions, Instance: any }> = [
   {
     options: {
       type: 'command',
@@ -11,7 +11,7 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
       default: {
         alias: ['?blacklist'],
         options: {
-          userlvl: userlvls.mod,
+          userlvl: Userlvl.mod,
         },
       },
       help: ['Forbid user from using command: {alias} <user> <command>'],
@@ -59,7 +59,7 @@ const exp: Array<{options: PluginOptions, Instance: any}> = [
       default: {
         alias: ['?unblacklist'],
         options: {
-          userlvl: userlvls.mod,
+          userlvl: Userlvl.mod,
         },
       },
       help: ['Remove user from the blacklist of command: {alias} <user> <command>'],

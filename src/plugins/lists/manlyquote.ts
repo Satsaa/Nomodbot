@@ -1,4 +1,4 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 import { ListsExtension } from './lists'
@@ -48,7 +48,7 @@ export class Instance implements PluginInstance {
 
     const quotes = this.lists.getGlobalList<string>(options.id, defaultQuotes)
     if (!quotes) return 'Manlyquote data unavailable'
-    if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit manly quotes'
+    if (!this.l.isPermitted({ userlvl: Userlvl.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit manly quotes'
 
     const [finalIndex] = quotes.pushEntry(quote.join(' '))
     if (finalIndex) return `Added new entry at index ${finalIndex}`
@@ -60,7 +60,7 @@ export class Instance implements PluginInstance {
 
     const quotes = this.lists.getGlobalList<string>(options.id, defaultQuotes)
     if (!quotes) return 'Manlyquote data unavailable'
-    if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit manly quotes'
+    if (!this.l.isPermitted({ userlvl: Userlvl.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit manly quotes'
 
     const [finalIndex] = quotes.setEntry(index, quote.join(' '))
     if (index) return `Modified entry at index ${finalIndex}`
@@ -72,7 +72,7 @@ export class Instance implements PluginInstance {
 
     const quotes = this.lists.getGlobalList<string>(options.id, defaultQuotes)
     if (!quotes) return 'Manlyquote data unavailable'
-    if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit manly quotes'
+    if (!this.l.isPermitted({ userlvl: Userlvl.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit manly quotes'
 
     const [finalIndex] = quotes.insertEntry(index, quote.join(' '))
     if (finalIndex) return `Added new entry at index ${finalIndex}`
@@ -84,7 +84,7 @@ export class Instance implements PluginInstance {
 
     const quotes = this.lists.getGlobalList<string>(options.id, defaultQuotes)
     if (!quotes) return 'Manlyquote data unavailable'
-    if (!this.l.isPermitted({ userlvl: userlvls.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit manly quotes'
+    if (!this.l.isPermitted({ userlvl: Userlvl.master }, userId, extra.irc.tags.badges)) return 'You are not permitted to edit manly quotes'
 
     const [finalIndex, value] = quotes.delEntry(index)
     if (finalIndex) return `Deleted at ${finalIndex}: ${value}`

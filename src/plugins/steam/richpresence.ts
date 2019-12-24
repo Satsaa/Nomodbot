@@ -1,4 +1,4 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 import { SteamExtension } from './steam'
@@ -54,8 +54,8 @@ export class Instance implements PluginInstance {
   public async callSetId(channelId: number, userId: number, params: any, extra: Extra) {
     const [action, steamId]: ['set', number] = params
 
-    if (!this.l.isPermitted({ userlvl: userlvls.mod }, userId, extra.irc.tags.badges)) {
-      return `You must be a ${this.l.userlvlString(userlvls.mod)} change the Steam ID`
+    if (!this.l.isPermitted({ userlvl: Userlvl.mod }, userId, extra.irc.tags.badges)) {
+      return `You must be a ${this.l.userlvlString(Userlvl.mod)} change the Steam ID`
     }
 
     const res = this.steam.setUserSteamId(channelId, steamId)

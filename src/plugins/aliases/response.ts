@@ -1,4 +1,4 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl, AdvancedMessage } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -9,7 +9,7 @@ export const options: PluginOptions = {
   default: {
     alias: '?response',
     options: {
-      userlvl: userlvls.mod,
+      userlvl: Userlvl.mod,
     },
   },
   help: {
@@ -21,7 +21,6 @@ export const options: PluginOptions = {
     ],
     response: ['Respond with message: {alias} [<parameters...>]'],
   },
-  allowMentions: true,
 }
 
 export class Instance implements PluginInstance {
@@ -124,8 +123,8 @@ export class Instance implements PluginInstance {
         const pureVar = token.slice(2, -1)
         switch (pureVar) {
           case 'channel': {
-            const cid = await this.l.api.getDisplay(channelId)
-            if (!cid) return 'Cannot find channel???'
+            const cid = this.l.api.cachedDisplay(channelId)
+            if (!cid) return 'Cannot find channel name???'
             result += cid
             break
           }
@@ -139,7 +138,7 @@ export class Instance implements PluginInstance {
             if (pureVar.startsWith('param')) {
               const index = ~~pureVar.slice(5) - 1
               const param = parameters[index]
-              if (!param) return `Parameter ${index + 1} needs to be defined`
+              if (!param) return `Parameter ${index + 1} must be defined`
               result += parameters[index]
             } else {
               result += token
@@ -150,6 +149,8 @@ export class Instance implements PluginInstance {
         result += token
       } // Normal
     }
-    return result
+
+    const adv: AdvancedMessage = { segments: [result], atUser: false }
+    return adv
   }
 }

@@ -1,4 +1,4 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 /*
@@ -26,7 +26,7 @@ export const options: PluginOptions = {
     alias: '!example',
     options: {
       disabled: true,
-      userlvl: userlvls.any,
+      userlvl: Userlvl.any,
       cooldown: 30,
       userCooldown: 60,
     },
@@ -57,7 +57,7 @@ export class Instance implements PluginInstance {
 
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'exact <var> [<opt_vars>]', this.callPrimary, this.cooldownPrimary)
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'name/regex/flags <message...>', this.callSecondary)
-    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'join|part <CHANNELS...>', this.callTertiary)
+    this.handlers = this.l.addHandlers(this, this.handlers, 'default', 'join|part <CHANNEL...>', this.callTertiary)
   }
 
   public async init() {

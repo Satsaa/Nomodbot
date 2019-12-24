@@ -1,7 +1,7 @@
 import { exec as _exec } from 'child_process'
 import util from 'util'
 
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 
@@ -14,7 +14,7 @@ export const options: PluginOptions = {
   description: 'Do operations on commands',
   default: {
     alias: '?command',
-    options: { userlvl: userlvls.mod },
+    options: { userlvl: Userlvl.mod },
   },
   help: [
     'Add a command: {alias} add <new command> <plugin>',

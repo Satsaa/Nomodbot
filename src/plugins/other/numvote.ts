@@ -1,4 +1,4 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -22,7 +22,7 @@ export class Instance implements PluginInstance {
   private voteData: {
     [channel: string]: {
       voters: number[]
-      votes: {[vote: string]: number}
+      votes: { [vote: string]: number }
       time: number
       timeout?: NodeJS.Timeout
     }
@@ -69,7 +69,7 @@ export class Instance implements PluginInstance {
     if (voting.timeout) clearTimeout(voting.timeout)
     voting.timeout = setTimeout(() => {
       let total = 0
-      const accepted: {[vote: string]: number} = {}
+      const accepted: { [vote: string]: number } = {}
       for (const vote in voting.votes) {
         total += voting.votes[vote]
         if (voting.votes[vote] >= this.opts.minVotes) accepted[vote] = voting.votes[vote]

@@ -41,7 +41,7 @@ type ValidateResult = {
 export default class ParamValidator {
   private commander: Commander
   private client: TwitchClient
-  private cmdParams: {[pluginId: string]: {[group: string]: Bundle}}
+  private cmdParams: { [pluginId: string]: { [group: string]: Bundle } }
   private checkables: string[]
 
   constructor(commander: Commander, client: TwitchClient) {
@@ -49,7 +49,7 @@ export default class ParamValidator {
     this.client = client
     this.cmdParams = {}
 
-    this.checkables = ['USER', 'USERS', 'CHANNEL', 'CHANNELS', 'COMMAND', 'COMMANDS', '!COMMAND', '!COMMANDS', 'PLUGIN', 'PLUGINS', '!PLUGIN', '!PLUGINS']
+    this.checkables = ['USER', 'CHANNEL', 'COMMAND', '!COMMAND', 'PLUGIN', '!PLUGIN']
   }
 
   /** Generates user readable output when usage is not valid */
@@ -75,7 +75,7 @@ export default class ParamValidator {
       checks.push(check)
       if (check.pass) {
         let values: any[] = []
-        const users: {[user: string]: number} = {}
+        const users: { [user: string]: number } = {}
         const dupUserIndexes = []
         for (let i = 0; i < params.length; i++) {
           const pure = params[i].pure
@@ -90,15 +90,12 @@ export default class ParamValidator {
 
               const lc = word.toLowerCase()
               switch (pure) {
-                case 'USERS':
                 case 'USER':
                 case 'CHANNEL':
-                case 'CHANNELS':
                   if (users[lc] === undefined) users[lc] = i + ii
                   else dupUserIndexes.push(i + ii)
                   break
                 case 'COMMAND':
-                case 'COMMANDS':
                   if (!this.commander.getAlias(channelId, word)) {
                     return { pass: false, message: `No command with that name (param ${i + ii + 1})` }
                   }
@@ -106,7 +103,6 @@ export default class ParamValidator {
                   else values[i] = lc
                   break
                 case '!COMMAND':
-                case '!COMMANDS':
                   if (this.commander.getAlias(channelId, word)) {
                     return { pass: false, message: `There is already a command with that name (param ${i + ii + 1})` }
                   }
@@ -114,13 +110,11 @@ export default class ParamValidator {
                   else values[i] = lc
                   break
                 case 'PLUGIN':
-                case 'PLUGINS':
                   if (!this.commander.plugins[lc]) return { pass: false, message: `No plugin with that id (param ${i + ii + 1})` }
                   if (params[i].multi) values[i].push(lc)
                   else values[i] = lc
                   break
                 case '!PLUGIN':
-                case '!PLUGINS':
                   if (this.commander.plugins[lc]) return { pass: false, message: `There is already a plugin with that id (param ${i + ii + 1}` }
                   if (params[i].multi) values[i].push(lc)
                   else values[i] = lc
@@ -255,32 +249,23 @@ export default class ParamValidator {
     }
     return { pass: false, message: 'Unhandled invalid parameters' }
 
-    /** Converts types like NUMBER, USER to number, user */
+    /** Converts parameter names to a more human readable format */
     function getName(name: string | string[], multi: boolean) {
       if (typeof name === 'string') return main(name, multi)
       else return name.map(v => main(v, multi)).join(', ')
       function main(name: string, multi: boolean) {
         switch (name) {
-          case 'NUMBER': return 'a number'
-          case 'NUMBERS': return 'numbers'
-          case 'WORD': return 'a word'
-          case 'WORDS': return 'words'
-          case 'INTEGER': return 'a whole number'
-          case 'INTEGERS': return 'whole numbers'
-          case 'INDEX': return 'an index number'
-          case 'INDEXES': return 'index numbers'
-          case 'USER': return 'a user'
-          case 'USERS': return 'users'
-          case 'CHANNEL': return 'a channel'
-          case 'CHANNELS': return 'channels'
-          case 'COMMAND': return 'a command'
-          case 'COMMANDS': return 'commands'
-          case '!COMMAND': return 'an unexisting command'
-          case '!COMMANDS': return 'unexisting commands'
-          case 'PLUGIN': return 'a plugin'
-          case 'PLUGINS': return 'plugins'
-          case '!PLUGIN': return 'an unexisting plugin'
-          case '!PLUGINS': return 'unexisting plugins'
+          case 'NUMBER': return multi ? 'numbers' : 'a number'
+          case 'NOTHING': return 'nothing'
+          case 'WORD': return multi ? 'words' : 'a word'
+          case 'INTEGER': return multi ? 'integers' : 'an integer'
+          case 'INDEX': return multi ? 'index numbers' : 'an index number'
+          case 'USER': return multi ? 'users' : 'a user'
+          case 'CHANNEL': return multi ? 'channels' : 'a channel'
+          case 'COMMAND': return multi ? 'commands' : 'a command'
+          case '!COMMAND': return multi ? 'unexisting commands' : 'an unexisting command'
+          case 'PLUGIN': return multi ? 'plugins' : 'a plugin'
+          case '!PLUGIN': return multi ? 'unexisting plugins' : 'an unexisting plugin'
           default: {
             // Range (1-99, -Infinity-0)
             const splitNums = name.split(/(?<!-|^)-/).map(v => Number(v))
@@ -308,8 +293,8 @@ export default class ParamValidator {
    * @param cmdParams commandParameters  
    */
   public check(cmdParams: Params, words: string[], channelId?: number): { pass: boolean, fields: boolean[], rep: any[] } {
-    let passes = true
-    const resFields: boolean[] = []
+    let pass = true
+    const fields: boolean[] = []
     const rep: any[] = []
 
     for (let i = 0; i < cmdParams.length; i++) {
@@ -328,13 +313,14 @@ export default class ParamValidator {
         }
       }
 
-      resFields[i] = !fail
-      if (fail) passes = false
+      fields[i] = !fail
+      if (fail) pass = false
     }
 
-    return { pass: passes, fields: resFields, rep }
+    return { pass, fields, rep }
 
-    function main(field: Bit, word: string, commander?: Commander, channelId?: number): {pass: boolean, rep?: any} {
+    function main(field: Bit, word: string, commander?: Commander, channelId?: number): { pass: boolean, rep?: any } {
+      if (field.raw === '<NOTHING>') return { pass: !word }
       if (typeof field.pure === 'object') { // Tuple
         if (!word) {
           if (!field.opt) return { pass: false }
@@ -359,7 +345,7 @@ export default class ParamValidator {
     }
 
     /** Validate some types like NUMBER, INT, ranges etc */
-    function types(field: Bit, word: string): {pass: boolean, rep?: any} {
+    function types(field: Bit, word: string): { pass: boolean, rep?: any } {
       if (!field.var && typeof field.pure === 'object') return { pass: true }
       if (typeof field.pure === 'object') {
         for (let i = 0; i < field.pure.length; i++) {
@@ -370,21 +356,19 @@ export default class ParamValidator {
       }
       return switcheroo(field.regex as RegExp | undefined, field.pure, word)
 
-      function switcheroo(regex: RegExp | undefined, pure: string, word: string): {pass: boolean, rep?: any} {
+      function switcheroo(regex: RegExp | undefined, pure: string, word: string): { pass: boolean, rep?: any } {
         if (regex) return { pass: Boolean(word.match(regex)) }
         switch (pure) {
-          case 'NUMBER':
-          case 'NUMBERS': {
+          case 'NUMBER': {
             const res = Number(word)
             return { pass: !isNaN(res), rep: res }
           }
           case 'WORD':
-          case 'WORDS':
             return { pass: isNaN(Number(word)) }
+          case 'NOTHING':
+            return { pass: false }
           case 'INTEGER':
-          case 'INTEGERS':
-          case 'INDEX':
-          case 'INDEXES': {
+          case 'INDEX': {
             const res = Number(word)
             return { pass: Number.isInteger(res), rep: res }
           }
@@ -414,7 +398,7 @@ export default class ParamValidator {
 
   /** Handle command plugin's instance#call field. Caching parameter types. Throws on invalid params strings */
   public cacheHelp(pluginId: string, callHandlers: Handlers['call']) {
-    const res: {[group: string]: Bundle} = {}
+    const res: { [group: string]: Bundle } = {}
 
     const source = callHandlers
 
@@ -512,8 +496,12 @@ export default class ParamValidator {
       const leftSquare = field.raw.split('[').length - 1
       const rightSquare = field.raw.split(']').length - 1
 
+      if (field.var && field.raw !== '<NOTHING>' && field.pure.includes('NOTHING')) {
+        errors.push('"NOTHING" in a variable parameter must be used by itself (exactly "<NOTHING>")')
+      }
+
       if (typeof field.pure === 'object') {
-        if (field.regex) errors.push('Regex parameter in tuple is disallowed')
+        if (field.regex) errors.push('A regex parameter in a tuple is not allowed')
         for (const pure of field.pure) {
           if (!pure) errors.push(`Parameter name was falsy: ${pure}`)
           if (this.checkables.includes(pure)) errors.push(`Advanced variable ${pure} is forbidden in tuples`)

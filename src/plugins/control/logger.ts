@@ -1,4 +1,4 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 import { Category, categories } from '../../main/logger'
 
@@ -12,7 +12,7 @@ export const options: PluginOptions = {
   default: {
     alias: '$logger',
     options: {
-      userlvl: userlvls.master,
+      userlvl: Userlvl.master,
     },
   },
   help: ['Enable or disable a logging category: {alias} enable|disable <category>'],
@@ -29,7 +29,7 @@ export class Instance implements PluginInstance {
   }
 
   public async callMain(channelId: number, userId: number, params: any, extra: Extra) {
-    const [action, key]: ['enable'|'disable', string] = params
+    const [action, key]: ['enable' | 'disable', string] = params
 
     for (const name of categoryNames) {
       if (key === name.toLowerCase()) {

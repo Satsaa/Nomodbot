@@ -1,6 +1,6 @@
 import https from 'https'
 
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -57,7 +57,7 @@ export class Instance implements PluginInstance {
     }
   }
 
-  public wiki(subject: string): Promise<{[x: string]: any} | string> {
+  public wiki(subject: string): Promise<{ [x: string]: any } | string> {
     let redirects = 0
     return get.bind(this)(subject)
 

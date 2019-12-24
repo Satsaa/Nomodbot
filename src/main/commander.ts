@@ -53,7 +53,7 @@ export interface Command {
    * Usage instructions  
    * Object form allows aliases to use specific groups of help strings with their `group` key  
    */
-  help: string[] | {default: string[], [group: string]: string[]}
+  help: string[] | { default: string[], [group: string]: string[] }
   /**
    * Disable dynamic insertion of @user before messages  
    * \@user is inserted when the message is short and doesn't include the user's login or display name
@@ -66,6 +66,7 @@ export interface Command {
 }
 
 interface IsPermittedOptions {
+  ignoreBlackList?: boolean
   ignoreWhiteList?: boolean
 }
 
@@ -78,7 +79,7 @@ export interface CommandAlias {
    * Controls who can use this command  
    * Number: 0: anyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
    */
-  userlvl?: userlvls
+  userlvl?: Userlvl
   /** Cooldowns are in seconds */
   cooldown?: number
   /** Cooldowns are in seconds */
@@ -101,17 +102,17 @@ export type ReadonlyCommandAlias = DeepReadonly<CommandAlias>
 
 type DefaultCommandAlias = Readonly<Omit<CommandAlias, 'blacklist' | 'whitelist'>>
 
-type Source = MaybeArray<{options: PluginOptions, Instance: new() => PluginInstance}>
+type Source = MaybeArray<{ options: PluginOptions, Instance: new () => PluginInstance }>
 
 /** isPermitted helper type */
 type CommandAliasLike = {
-  userlvl?: userlvls
+  userlvl?: Userlvl
   whitelist?: number[]
   blacklist?: number[]
-} | DeepReadonly<{userlvl?: userlvls, whitelist?: number[], blacklist?: number[]}>
+} | DeepReadonly<{ userlvl?: Userlvl, whitelist?: number[], blacklist?: number[] }>
 
 /** userlvls */
-export enum userlvls {
+export enum Userlvl {
   any = 0,
   sub = 2,
   vip = 4,
@@ -148,25 +149,42 @@ export interface Extra {
   cooldown: number
   /** IRCv3 parsed message that caused this call */
   irc: PRIVMSG
+  /** IRCv3 parsed message that caused this call */
+  userlvl: Userlvl
+}
+
+export interface AdvancedMessage {
+  /** Ordered message segments */
+  segments: string[]
+  /** Priority of segments when truncating to maxmimum message length */
+  segmentPriority?: number[]
+  /** Override default truncation options */
+  truncationSettings?: Omit<util.FitStringOptions, 'maxLength'>
+  /** Override whisper handling */
+  whisper?: boolean
+  /** Override @user handling */
+  atUser?: boolean
+  /** Length of message will be truncated to maximum message length multiplied by this */
+  lengthMult?: number
 }
 
 export interface Handlers {
   call: {
     default: Array<{
       params: string
-      handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+      handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<AdvancedMessage | string | void>
     }>
     [group: string]: Array<{
       params: string
-      handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+      handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<AdvancedMessage | string | void>
     }>
   }
   cd: {
     default: Array<{
-      handler?: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+      handler?: (channelId: number, userId: number, params: any, extra: Extra) => Promise<AdvancedMessage | string | void>
     }>
     [group: string]: Array<{
-      handler?: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
+      handler?: (channelId: number, userId: number, params: any, extra: Extra) => Promise<AdvancedMessage | string | void>
     }>
   }
 }
@@ -183,16 +201,16 @@ export interface PluginInstance {
 }
 
 export default class Commander {
-  public defaultAliases: {[alias: string]: DefaultCommandAlias}
-  public paths: {[pluginId: string]: string}
-  public plugins: {[pluginId: string]: PluginOptions}
-  public instances: {[pluginId: string]: PluginInstance}
+  public defaultAliases: { [alias: string]: DefaultCommandAlias }
+  public paths: { [pluginId: string]: string }
+  public plugins: { [pluginId: string]: PluginOptions }
+  public instances: { [pluginId: string]: PluginInstance }
   /** Big bois with big privileges */
   public masters: readonly number[]
   private client: TwitchClient
   private data: Data
   private pluginLib: PluginLibrary
-  private waits: {[pluginId: string]: Array<(result: boolean) => any>}
+  private waits: { [pluginId: string]: Array<(result: boolean) => any> }
   private validator: ParamValidator
 
   constructor(client: TwitchClient, data: Data, masters: readonly number[]) {
@@ -323,20 +341,20 @@ export default class Commander {
     return this.data.data[channelId].aliases.aliases[alias]
   }
 
-  public getAliases(channelId: number): {[x: string]: ReadonlyCommandAlias} | void {
+  public getAliases(channelId: number): { [x: string]: ReadonlyCommandAlias } | void {
     if (!(this.data.data[channelId] || {}).aliases) return
 
-    const defaults: {[x: string]: ReadonlyCommandAlias} = {}
+    const defaults: { [x: string]: ReadonlyCommandAlias } = {}
     for (const key in this.defaultAliases) {
       if (!this.data.data[channelId].aliases.deletes[key]) defaults[key] = this.defaultAliases[key]
     }
     return { ...defaults, ...this.data.data[channelId].aliases.aliases }
   }
 
-  public getAliasesById(channelId: number, pluginId: string): {[x: string]: ReadonlyCommandAlias} | void {
+  public getAliasesById(channelId: number, pluginId: string): { [x: string]: ReadonlyCommandAlias } | void {
     if (!(this.data.data[channelId] || {}).aliases) return
 
-    const res: {[x: string]: ReadonlyCommandAlias} = {}
+    const res: { [x: string]: ReadonlyCommandAlias } = {}
     for (const key in this.defaultAliases) {
       if (!this.data.data[channelId].aliases.deletes[key] && this.defaultAliases[key].target === pluginId) {
         res[key] = this.defaultAliases[key]
@@ -350,36 +368,28 @@ export default class Commander {
     return res
   }
 
+  /** Determine userlevel */
+  public getUserlvl(userId: number, badges: IrcMessage['tags']['badges']): number {
+    // Number: 0: anyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
+    if (this.masters.includes(userId)) return Userlvl.master // Master
+    if (!badges) return Userlvl.any
+    if (typeof badges.broadcaster !== 'undefined') return Userlvl.streamer
+    if (typeof badges.moderator !== 'undefined') return Userlvl.mod
+    if (typeof badges.vip !== 'undefined') return Userlvl.vip
+    if (typeof badges.subscriber !== 'undefined') return Userlvl.sub
+    return Userlvl.any
+  }
+
   /** Determine if `userId` with `badges` would be permitted to call this alias */
   public isPermitted(alias: CommandAliasLike, userId: number, badges: IrcMessage['tags']['badges'], options: IsPermittedOptions = {}) {
-    // Number: 0: anyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
-    if (this.masters.includes(userId)) return true // Master
-    if (!badges) badges = {}
-    if (alias.blacklist && alias.blacklist.includes(userId) && !badges.moderator && !badges.broadcaster) return false
-    if (!options.ignoreWhiteList && alias.whitelist && alias.whitelist.includes(userId)) return true
-    switch (alias.userlvl) {
-      case undefined:
-      case userlvls.any:
-        return true
-      case userlvls.sub:
-        if (typeof badges.subscriber !== 'undefined') return true
-        // Fallthrough
-      case userlvls.vip:
-        if (typeof badges.vip !== 'undefined') return true
-        // Fallthrough
-      case userlvls.mod:
-        if (typeof badges.moderator !== 'undefined') return true
-        // Fallthrough
-      case userlvls.streamer:
-        if (typeof badges.broadcaster !== 'undefined') return true
-        // Fallthrough
-      case userlvls.master:
-        // Handled above
-        return false
-      default:
-        logger.warn(`Unknown permission level: ${alias.userlvl}`)
-        return true
+    const userlvl = this.getUserlvl(userId, badges)
+    if (userlvl >= Userlvl.master) return true
+    if (!badges) return alias.userlvl === Userlvl.any
+    if (userlvl < Userlvl.mod) {
+      if (!options.ignoreBlackList && alias.blacklist && alias.blacklist.includes(userId)) return false
+      if (!options.ignoreWhiteList && alias.whitelist && alias.whitelist.includes(userId)) return true
     }
+    return userlvl >= (alias.userlvl || 0)
   }
 
   /** Determine the remaining cooldown of `alias` in `channelId` for `userId` */
@@ -401,7 +411,7 @@ export default class Commander {
     }
     return Math.max(cd, ucd)
 
-    function next(times: number[], opts: number | {duration?: number, delay?: number, limit?: number}) {
+    function next(times: number[], opts: number | { duration?: number, delay?: number, limit?: number }) {
       if (typeof opts === 'number') {
         opts = { duration: opts, delay: 0, limit: 1 }
       } else {
@@ -447,8 +457,8 @@ export default class Commander {
       return [handle.bind(this)(path, source)]
     }
 
-    function handle(this: Commander, path: string, plugin: {options: PluginOptions, Instance: new() => PluginInstance}) {
-      const _plugin: {options: PluginOptions, Instance: new() => PluginInstance} = plugin
+    function handle(this: Commander, path: string, plugin: { options: PluginOptions, Instance: new () => PluginInstance }) {
+      const _plugin: { options: PluginOptions, Instance: new () => PluginInstance } = plugin
       const options = _plugin.options
       if (options) {
         const type = options.type // Cant use options in default case
@@ -610,7 +620,7 @@ export default class Commander {
     return true
   }
 
-  private async instantiatePlugin(options: PluginOptions, instantiator: new(pluginLib: PluginLibrary) => PluginInstance) {
+  private async instantiatePlugin(options: PluginOptions, instantiator: new (pluginLib: PluginLibrary) => PluginInstance) {
     // logger.info(`Instantiating ${options.id}`)
     let res: Array<object | undefined> = []
     // Wait for requirements. Do not wait for channel data requirements
@@ -670,18 +680,21 @@ export default class Commander {
     if (!instance.handlers || !instance.handlers.call) throw new Error(`No handlers on command plugin: ${alias.target}`)
     // Check permissions (master users always have permissions)
     if (this.isPermitted(alias, userId, irc.tags.badges)) {
-      if (this.masters.includes(userId) || (irc.tags.badges && (irc.tags.badges.broadcaster || irc.tags.badges.moderator))) {
+      const userlvl = this.getUserlvl(userId, irc.tags.badges)
+      if (userlvl >= Userlvl.mod) {
         // Master users, mods and the broadcaster don't care about cooldowns
         const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
         if (!validation.pass) {
-          return this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, validation.message, irc)}${validation.message}`)
+          return this.client.chat(channelId, `${addUser(this, plugin.disableMention, validation.message, irc)}${validation.message}`)
         }
 
-        const extra: Extra = { alias, words, message, me, cooldown: 0, irc }
+        const extra: Extra = { alias, words, message, me, cooldown: 0, irc, userlvl }
         let res = await instance.handlers.call[group][validation.index].handler(channelId, userId, validation.values, extra)
+        if (typeof res === 'object') {
+          res = handleAdvanced(this, res, plugin, false)
+        }
         if (res) {
-          res = res.replace(/\n/, ' ')
-          this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
+          this.client.chat(channelId, `${addUser(this, plugin.disableMention, res, irc)}${res}`)
         }
       } else {
         const cooldown = this.getCooldown(channelId, userId, alias)
@@ -701,16 +714,18 @@ export default class Commander {
           const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
           if (!validation.pass) {
             if (whisperCall) this.client.whisper(userId, validation.message)
-            else this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, validation.message, irc)}${validation.message}`)
+            else this.client.chat(channelId, `${addUser(this, plugin.disableMention, validation.message, irc)}${validation.message}`)
             return
           }
 
-          const extra: Extra = { alias, words, message, me, cooldown, irc }
+          const extra: Extra = { alias, words, message, me, cooldown, irc, userlvl }
           let res = await instance.handlers.call[group][validation.index].handler(channelId, userId, validation.values, extra)
+          if (typeof res === 'object') {
+            res = handleAdvanced(this, res, plugin, whisperCall)
+          }
           if (res) {
-            res = res.replace(/\n/, ' ')
             if (whisperCall) this.client.whisper(userId, res)
-            else this.client.chat(channelId, `${await addUser.bind(this)(plugin.disableMention, res, irc)}${res}`)
+            else this.client.chat(channelId, `${addUser(this, plugin.disableMention, res, irc)}${res}`)
           }
         } else if (instance.handlers.cd[group]) { // Call cooldown handlers if defined
           const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
@@ -718,14 +733,37 @@ export default class Commander {
 
           if (!instance.handlers.cd[group][validation.index].handler) return
 
-          const extra: Extra = { alias, words, message, me, cooldown, irc }
-          const res = await instance.handlers.cd[group][validation.index].handler!(channelId, userId, validation.values, extra)
+          const extra: Extra = { alias, words, message, me, cooldown, irc, userlvl }
+          let res = await instance.handlers.cd[group][validation.index].handler!(channelId, userId, validation.values, extra)
+          if (typeof res === 'object') res = handleAdvanced(this, res, plugin, true)
           if (res) this.client.whisper(userId, res)
         }
       }
     }
-    async function addUser(this: Commander, atUser: true | undefined, message: string, irc: PRIVMSG): Promise<string> {
-      return this.shouldAtUser(atUser, message, irc) ? `${this.getAtUser(await this.client.api.getDisplay(userId) || 'Unknown')}` : ''
+    function handleAdvanced(com: Commander, adv: AdvancedMessage, plugin: Command & PluginBase, whisper: boolean): string {
+      if (adv.segmentPriority && adv.segmentPriority.length) {
+        const fitParams: Array<[string, number]> = []
+        // Add @user as a "high" priority segment
+        if (!whisper && ((adv.atUser === undefined && plugin.allowMentions) || adv.atUser)) {
+          fitParams.push([com.getAtUser(com.client.api.cachedDisplay(userId) || 'Unknown'), Infinity])
+        }
+        for (let i = 0; i < adv.segments.length; i++) {
+          const segment = adv.segments[i]
+          fitParams.push([segment, adv.segmentPriority[i] || 0])
+        }
+
+        const fitOps: util.FitStringOptions = { maxLength: com.client.opts.maxMsgLength * (adv.lengthMult || 1), ...adv.truncationSettings }
+
+        const fitted = util.fitStrings(fitOps, ...fitParams)
+        return fitted
+      }
+      if (!whisper && ((adv.atUser === undefined && plugin.allowMentions) || adv.atUser)) {
+        return com.getAtUser(com.client.api.cachedDisplay(userId) || 'Unknown') + adv.segments.join('')
+      }
+      return adv.segments.join('')
+    }
+    function addUser(self: Commander, atUser: true | undefined, message: string, irc: PRIVMSG): string {
+      return self.shouldAtUser(atUser, message, irc) ? `${self.getAtUser(self.client.api.cachedDisplay(userId) || 'Unknown')}` : ''
     }
   }
 }

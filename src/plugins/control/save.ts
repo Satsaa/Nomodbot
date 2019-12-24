@@ -1,4 +1,4 @@
-import { Extra, PluginInstance, PluginOptions, userlvls } from '../../main/commander'
+import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 
 export const options: PluginOptions = {
@@ -9,7 +9,7 @@ export const options: PluginOptions = {
   default: {
     alias: '$save',
     options: {
-      userlvl: userlvls.master,
+      userlvl: Userlvl.master,
     },
   },
   help: [

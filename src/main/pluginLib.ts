@@ -1,5 +1,5 @@
 import TwitchClient from './client/client'
-import Commander, { CommandAlias, Extra, PluginInstance, PluginOptions, userlvls, Handlers, ReadonlyCommandAlias } from './commander'
+import Commander, { CommandAlias, Extra, PluginInstance, PluginOptions, Userlvl, Handlers, ReadonlyCommandAlias } from './commander'
 import Data from './data'
 import * as secretKey from './lib/secretKey'
 import * as util from './lib/util'
@@ -9,7 +9,7 @@ export default class PluginLibrary {
   /** util library */
   public u: typeof util
   /** Libaries shared by plugins */
-  public ext: {[commandId: string]: {[x: string]: any}}
+  public ext: { [commandId: string]: { [x: string]: any } }
 
   public emitter: {
     on: TwitchClient['on']
@@ -181,9 +181,9 @@ export default class PluginLibrary {
   /** Set pluginLib.ext[pluginId][sub] */
   public extend(pluginId: string, sub: string, value: any): void
   /** Set pluginLib.ext[pluginId] */
-  public extend(pluginId: string, value: {[key: string]: any}): void
+  public extend(pluginId: string, value: { [key: string]: any }): void
   /** Extend pluginLib.ext */
-  public extend(pluginId: string, sub: string | {[key: string]: any}, value?: any) {
+  public extend(pluginId: string, sub: string | { [key: string]: any }, value?: any) {
     if (typeof sub === 'object') {
       this.ext[pluginId] = sub
     } else {
@@ -268,17 +268,17 @@ export default class PluginLibrary {
   public userlvlString(userlvl: number | undefined) {
     if (userlvl) {
       switch (userlvl) {
-        case userlvls.any:
+        case Userlvl.any:
           return
-        case userlvls.sub:
+        case Userlvl.sub:
           return 'subscriber'
-        case userlvls.vip:
+        case Userlvl.vip:
           return 'vip'
-        case userlvls.mod:
+        case Userlvl.mod:
           return 'moderator'
-        case userlvls.streamer:
+        case Userlvl.streamer:
           return 'broadcaster'
-        case userlvls.master:
+        case Userlvl.master:
           return 'master'
       }
     }
@@ -310,7 +310,7 @@ export default class PluginLibrary {
   }
 
   /** Returns the emotes in `message` as an array of emote strings */
-  public getEmotes(emotes: {[emote: string]: {start: number, end: number}}, message: string): string[] {
+  public getEmotes(emotes: { [emote: string]: { start: number, end: number } }, message: string): string[] {
     const res = []
     for (const emote in emotes) {
       res.push(message.slice(emotes[emote].start, emotes[emote].end + 1))
@@ -382,20 +382,20 @@ export default class PluginLibrary {
   }
 
   /** Returns active default aliases or active aliases of `channelId` */
-  public getEnabledAliases(channelId: number): {[alias: string]: ReadonlyCommandAlias} {
+  public getEnabledAliases(channelId: number): { [alias: string]: ReadonlyCommandAlias } {
     return this._getEnabledAliases(channelId)
   }
   /** Returns active default aliases */
-  public getEnabledGlobalAliases(): {[x: string]: ReadonlyCommandAlias} {
+  public getEnabledGlobalAliases(): { [x: string]: ReadonlyCommandAlias } {
     return this._getEnabledAliases()
   }
 
   /** Returns active aliases of `channelId` */
-  private _getEnabledAliases(channelId: number): {[alias: string]: ReadonlyCommandAlias}
+  private _getEnabledAliases(channelId: number): { [alias: string]: ReadonlyCommandAlias }
   /** Returns active default aliases */
-  private _getEnabledAliases(): {[x: string]: ReadonlyCommandAlias}
+  private _getEnabledAliases(): { [x: string]: ReadonlyCommandAlias }
   /** Returns active default aliases or active aliases of `channelId` */
-  private _getEnabledAliases(channelId?: number): {[alias: string]: ReadonlyCommandAlias} {
+  private _getEnabledAliases(channelId?: number): { [alias: string]: ReadonlyCommandAlias } {
     const result: { [alias: string]: ReadonlyCommandAlias } = {}
     if (channelId) {
       // Channel aliases
