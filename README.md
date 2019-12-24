@@ -71,11 +71,11 @@ Accepted when each of the upcoming words passes the check. No other parameter ca
 
 **NUMBER**: Accepted if a valid number (Anything that doesn't convert to NaN with `+str`)  
 **INTEGER**, **INDEX**: Accepted if a valid whole number  
-**WORD**: Accepted if NOT a valid number (Anything that converts to NaN with `+str`)  
-**NOTHING**: Accepted if no parameter was given  
-**Range (X-Y)**: Accepts numbers between the lowest inputted number and the highest (inclusive). Negative values are typed like "<-100--90>".  
-Only accepts whole numbers if none of the numbers had a decimal place, otherwise, fractions are allowed  
+**WORD**: Accepted if NOT a valid number (Anything that converts to NaN with `+str`)   
+**Range (X-Y)**: Accepts numbers between the lowest inputted number and the highest (inclusive). Negative values are typed like "<-100--90>". Only accepts whole numbers if none of the numbers had a decimal place, otherwise, fractions are allowed  
 **Regexp (name/regex/flags)**: Accepts anything that matches with the regex  
+
+**\<NOTHING\>**: Accepted if no parameter was given. Must be exactly `<NOTHING>` 
 
 
 The following parameters are accepted as valid if the parameter is defined but a message is returned if the check is not passed.  
