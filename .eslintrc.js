@@ -9,7 +9,7 @@ module.exports = {
     SharedArrayBuffer: 'readonly',
   },
   plugins: [
-    "@typescript-eslint", 
+    "@typescript-eslint",
     "only-warn",
     "import",
     "unicorn",
@@ -212,7 +212,7 @@ module.exports = {
     'no-continue': 'off',
     'no-inline-comments': 'off',
     'no-lonely-if': 'error',
-    'no-mixed-operators': ["error", {"groups": [["&&", "||"]]}],
+    'no-mixed-operators': ["error", { "groups": [["&&", "||"]] }],
     'no-mixed-spaces-and-tabs': "error",
     'no-multi-assign': 'error',
     'no-multiple-empty-lines': ["error", { "max": 2, "maxEOF": 0 }],
@@ -231,15 +231,15 @@ module.exports = {
     'object-curly-newline': ["error", { "multiline": true, "consistent": true }],
     'object-curly-spacing': ["error", "always", { "objectsInObjects": true }],
     'object-property-newline': 'off',
-    'one-var':  ["error", "never"],
+    'one-var': ["error", "never"],
     'one-var-declaration-per-line': ["error", "always"],
     'operator-assignment': 'error',
     'operator-linebreak': ["error", "before"],
     'padded-blocks': ["error", "never"],
     'padding-line-between-statements': [
       "error",
-      {"blankLine": "always", "prev": "*", "next": ["const", "let"]},
-      {"blankLine": "any", "prev": ["const", "let", "var"], "next": ["const", "let"]}
+      { "blankLine": "always", "prev": "*", "next": ["const", "let"] },
+      { "blankLine": "any", "prev": ["const", "let", "var"], "next": ["const", "let"] }
     ],
     'prefer-object-spread': 'error',
     'quote-props': ["error", "consistent-as-needed"],
@@ -250,7 +250,7 @@ module.exports = {
     'sort-keys': 'off',
     'sort-vars': 'off',
     'space-before-blocks': "error",
-    'space-before-function-paren':  ["error", {
+    'space-before-function-paren': ["error", {
       "anonymous": "never",
       "named": "never",
       "asyncArrow": "always"
@@ -269,7 +269,7 @@ module.exports = {
     'arrow-parens': [2, "as-needed", { "requireForBlockBody": true }],
     'arrow-spacing': 'error',
     'constructor-super': 'off', // Already checked by typescript
-    'generator-star-spacing': ["error", {"before": false, "after": true}],
+    'generator-star-spacing': ["error", { "before": false, "after": true }],
     'no-class-assign': 'off', // Handled well enough by typescript
     'no-confusing-arrow': 'off',
     'no-const-assign': 'off', // Typescript disallows
@@ -304,10 +304,11 @@ module.exports = {
     '@typescript-eslint/await-thenable': 'error',
     '@typescript-eslint/ban-ts-ignore': 'off',
     '@typescript-eslint/ban-types': 'error',
-    '@typescript-eslint/camelcase': ["error", {'properties': "never"}],
+    '@typescript-eslint/camelcase': ["error", { 'properties': "never" }],
     '@typescript-eslint/class-name-casing': 'error',
     '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/explicit-member-accessibility': ['error', { "accessibility": "explicit",
+    '@typescript-eslint/explicit-member-accessibility': ['error', {
+      "accessibility": "explicit",
       overrides: {
         accessors: 'explicit',
         constructors: 'off',
@@ -319,12 +320,12 @@ module.exports = {
     '@typescript-eslint/func-call-spacing': 'error',
     '@typescript-eslint/generic-type-naming': 'off', // Type argument rule
     '@typescript-eslint/indent': [
-      "error", 2,{ // Tabs are not well supported
+      "error", 2, { // Tabs are not well supported
         "SwitchCase": 1,
         "VariableDeclarator": "first"
       }],
     '@typescript-eslint/interface-name-prefix': ['error', 'never'],
-    '@typescript-eslint/member-delimiter-style': ['error', { "multiline": { "delimiter": "none", }, "singleline": { "delimiter": "comma", }}],
+    '@typescript-eslint/member-delimiter-style': ['error', { "multiline": { "delimiter": "none", }, "singleline": { "delimiter": "comma", } }],
     '@typescript-eslint/member-naming': 'off',
     '@typescript-eslint/member-ordering': ['error', { // Aids remove
       "default": [
@@ -390,6 +391,11 @@ module.exports = {
     '@typescript-eslint/promise-function-async': 'off',
     '@typescript-eslint/require-array-sort-compare': 'off',
     '@typescript-eslint/restrict-plus-operands': 'off',
+    '@typescript-eslint/restrict-template-expressions': ['error', {
+      allowNumber: true,
+      allowBoolean: true,
+      allowNullable: true,
+    }],
     '@typescript-eslint/semi': 'off',
     '@typescript-eslint/type-annotation-spacing': 'error',
     '@typescript-eslint/unbound-method': 'off', // False positives?
@@ -427,7 +433,7 @@ module.exports = {
     'import/no-duplicates': 'off',
     'import/no-namespace': 'off',
     'import/extensions': 'off',
-    'import/order': ["error", {"newlines-between": "always"}],
+    'import/order': ["error", { "newlines-between": "always" }],
     'import/newline-after-import': 'off',
     'import/prefer-default-export': 'off',
     'import/max-dependencies': 'off',
