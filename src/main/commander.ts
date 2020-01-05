@@ -242,7 +242,7 @@ export default class Commander {
     const optionsArr = (await Promise.all(files.map(file => this.loadFromPath(file)))).flat()
     this.findConflicts(optionsArr, files)
     await Promise.all(optionsArr)
-    return optionsArr.map(v => v.id)
+    return optionsArr.map((v: any) => v.id)
   }
 
   /** Check for duplicate data type creations and if a plugin requires data that no present plugin creates */

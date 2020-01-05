@@ -21,6 +21,7 @@ export const options: PluginOptions = {
     ],
     response: ['Respond with message: {alias} [<parameters...>]'],
   },
+  disableMention: true
 }
 
 export class Instance implements PluginInstance {
@@ -123,9 +124,9 @@ export class Instance implements PluginInstance {
         const pureVar = token.slice(2, -1)
         switch (pureVar) {
           case 'channel': {
-            const cid = this.l.api.cachedDisplay(channelId)
-            if (!cid) return 'Cannot find channel name???'
-            result += cid
+            const channel = this.l.api.cachedDisplay(channelId)
+            if (!channel) return 'Cannot find channel name???'
+            result += channel
             break
           }
           case 'user':

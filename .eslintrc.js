@@ -300,7 +300,7 @@ module.exports = {
 
     // @typescript-eslint // !!!
     '@typescript-eslint/adjacent-overload-signatures': 'error',
-    '@typescript-eslint/array-type': ["error", "array-simple"],
+    '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
     '@typescript-eslint/await-thenable': 'error',
     '@typescript-eslint/ban-ts-ignore': 'off',
     '@typescript-eslint/ban-types': 'error',
@@ -356,7 +356,6 @@ module.exports = {
         "field", // fix index types
       ],
     }],
-    '@typescript-eslint/no-angle-bracket-type-assertion': 'error',
     '@typescript-eslint/no-array-constructor': 'error',
     '@typescript-eslint/no-empty-interface': 'error',
     '@typescript-eslint/no-explicit-any': 'off', // Blocks typing as any
@@ -384,7 +383,6 @@ module.exports = {
     '@typescript-eslint/prefer-for-of': 'off', // Unicorn variant preferred
     '@typescript-eslint/prefer-function-type': 'off',
     '@typescript-eslint/prefer-includes': 'off',
-    '@typescript-eslint/prefer-interface': 'error',
     '@typescript-eslint/prefer-namespace-keyword': 'off',
     '@typescript-eslint/prefer-regexp-exec': 'off',
     '@typescript-eslint/prefer-string-starts-ends-with': 'error',
