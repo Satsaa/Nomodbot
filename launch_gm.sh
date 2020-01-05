@@ -1,1 +1,0 @@
-screen node bin/main/index -gm
