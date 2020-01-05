@@ -1,5 +1,4 @@
 import * as path from 'path'
-import { error } from 'util'
 
 import TwitchClient from './client/client'
 import { IrcMessage, PRIVMSG } from './client/parser'
