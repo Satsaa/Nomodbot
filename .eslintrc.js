@@ -234,7 +234,7 @@ module.exports = {
     'one-var': ["error", "never"],
     'one-var-declaration-per-line': ["error", "always"],
     'operator-assignment': 'error',
-    'operator-linebreak': ["error", "before"],
+    'operator-linebreak': ["error", "after"],
     'padded-blocks': ["error", "never"],
     'padding-line-between-statements': [
       "error",
@@ -389,7 +389,7 @@ module.exports = {
     '@typescript-eslint/promise-function-async': 'off',
     '@typescript-eslint/require-array-sort-compare': 'off',
     '@typescript-eslint/restrict-plus-operands': 'off',
-    '@typescript-eslint/restrict-template-expressions': ['error', {
+    '@typescript-eslint/restrict-template-expressions': ['off', { // Too annyoing
       allowNumber: true,
       allowBoolean: true,
       allowNullable: true,

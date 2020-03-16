@@ -128,8 +128,8 @@ interface AliasData {
 }
 
 interface CooldownData {
-  user: { [commandId: string]: { [userId: number]: number[] } }
-  shared: { [commandId: string]: number[] }
+  user: { [pluginId: string]: { [userId: number]: number[] } }
+  shared: { [pluginId: string]: number[] }
 }
 
 export interface Extra {
@@ -148,14 +148,14 @@ export interface Extra {
   cooldown: number
   /** IRCv3 parsed message that caused this call */
   irc: PRIVMSG
-  /** IRCv3 parsed message that caused this call */
+  /** Userlevel of user */
   userlvl: Userlvl
 }
 
 export interface AdvancedMessage {
   /** Ordered message segments */
   segments: string[]
-  /** Priority of segments when truncating to maxmimum message length */
+  /** Priority of segments when truncating to maximum message length */
   segmentPriority?: number[]
   /** Override default truncation options */
   truncationSettings?: Omit<util.FitStringOptions, 'maxLength'>
@@ -368,7 +368,7 @@ export default class Commander {
   }
 
   /** Determine userlevel */
-  public getUserlvl(userId: number, badges: IrcMessage['tags']['badges']): number {
+  public getUserlvl(userId: number, badges: IrcMessage['tags']['badges']): Userlvl {
     // Number: 0: anyone, 2: subscriber, 4: vip, 6: moderator, 8: broadcaster, 10: master
     if (this.masters.includes(userId)) return Userlvl.master // Master
     if (!badges) return Userlvl.any
@@ -684,7 +684,7 @@ export default class Commander {
         // Master users, mods and the broadcaster don't care about cooldowns
         const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
         if (!validation.pass) {
-          return this.client.chat(channelId, `${addUser(this, plugin.disableMention, validation.message, irc)}${validation.message}`)
+          return this.client.chat(channelId, `${addAtUser(this, plugin.disableMention, validation.message, irc)}${validation.message}`)
         }
 
         const extra: Extra = { alias, words, message, me, cooldown: 0, irc, userlvl }
@@ -693,7 +693,7 @@ export default class Commander {
           res = handleAdvanced(this, res, plugin, false)
         }
         if (res) {
-          this.client.chat(channelId, `${addUser(this, plugin.disableMention, res, irc)}${res}`)
+          this.client.chat(channelId, `${addAtUser(this, plugin.disableMention, res, irc)}${res}`)
         }
       } else {
         const cooldown = this.getCooldown(channelId, userId, alias)
@@ -713,7 +713,7 @@ export default class Commander {
           const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
           if (!validation.pass) {
             if (whisperCall) this.client.whisper(userId, validation.message)
-            else this.client.chat(channelId, `${addUser(this, plugin.disableMention, validation.message, irc)}${validation.message}`)
+            else this.client.chat(channelId, `${addAtUser(this, plugin.disableMention, validation.message, irc)}${validation.message}`)
             return
           }
 
@@ -724,7 +724,7 @@ export default class Commander {
           }
           if (res) {
             if (whisperCall) this.client.whisper(userId, res)
-            else this.client.chat(channelId, `${addUser(this, plugin.disableMention, res, irc)}${res}`)
+            else this.client.chat(channelId, `${addAtUser(this, plugin.disableMention, res, irc)}${res}`)
           }
         } else if (instance.handlers.cd[group]) { // Call cooldown handlers if defined
           const validation = await this.validator.validate(channelId, plugin.id, words.slice(1), alias.group)
@@ -761,7 +761,7 @@ export default class Commander {
       }
       return adv.segments.join('')
     }
-    function addUser(self: Commander, atUser: true | undefined, message: string, irc: PRIVMSG): string {
+    function addAtUser(self: Commander, atUser: true | undefined, message: string, irc: PRIVMSG): string {
       return self.shouldAtUser(atUser, message, irc) ? `${self.getAtUser(self.client.api.cachedDisplay(userId) || 'Unknown')}` : ''
     }
   }

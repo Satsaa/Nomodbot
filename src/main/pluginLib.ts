@@ -228,30 +228,6 @@ export default class PluginLibrary {
     }
   }
 
-  /** 
-   * @example 
-   * {
-   *   call: {
-   *     default: Array<{
-   *       params: string
-   *       handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
-   *     }>
-   *     [group: string]: Array<{
-   *       params: string
-   *       handler: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
-   *     }>
-   *   }
-   *   cd: {
-   *     default: Array<{
-   *       handler?: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
-   *     }>
-   *     [group: string]: Array<{
-   *       handler?: (channelId: number, userId: number, params: any, extra: Extra) => Promise<string | void>
-   *     }>
-   *   }
-   * } 
-   */
-
   /** Throws if conflicts are found */
   public findConflicts() {
     this.commander.findConflicts(Object.values(this.commander.plugins), Object.values(this.commander.paths))

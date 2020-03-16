@@ -21,7 +21,7 @@ export const options: PluginOptions = {
     ],
     response: ['Respond with message: {alias} [<parameters...>]'],
   },
-  disableMention: true
+  disableMention: true,
 }
 
 export class Instance implements PluginInstance {
@@ -53,7 +53,7 @@ export class Instance implements PluginInstance {
     let data: string[] = []
     const unknowns = []
     let toDataIndex = 0
-    const varRegex = /(\$\([^\$()]+\)|\$\{[^\${)]+\})/g
+    const varRegex = /(\$\([^$()]+\)|\${[^$){]+})/g
     let match = varRegex.exec(messageLc)
     while (match !== null) {
       // Fill alias data
@@ -119,8 +119,8 @@ export class Instance implements PluginInstance {
 
     let result = ''
     for (const token of extra.alias.data as string[]) {
-      if ((token.startsWith('$(') && token.endsWith(')'))
-        || (token.startsWith('${') && token.endsWith('}'))) { // Variable
+      if ((token.startsWith('$(') && token.endsWith(')')) ||
+        (token.startsWith('${') && token.endsWith('}'))) { // Variable
         const pureVar = token.slice(2, -1)
         switch (pureVar) {
           case 'channel': {

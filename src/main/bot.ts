@@ -28,7 +28,6 @@ export default class Bot {
 
     if (this.args.args['preserve-log']) logOpts.noSave = true
 
-    const joinMessage: {[channelId: number]: string} = {}
     if (this.args.args.global) {
       const _global = global as any
       if (_global[this.args.args.global[0] || 'bot']) {
@@ -38,6 +37,7 @@ export default class Bot {
       }
     }
 
+    const joinMessage: {[channelId: number]: string} = {}
     if (this.args.args['join-message']) {
       for (const element of this.args.args['join-message']) {
         const split: string[] = element.split(/:/)

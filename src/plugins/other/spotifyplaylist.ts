@@ -107,7 +107,7 @@ export class Instance implements PluginInstance {
 
     if (!this.l.isPermitted({ userlvl: Userlvl.mod }, userId, extra.irc.tags.badges)) return this.l.insertAtUser('You are not permitted to do this operation', extra)
 
-    const inputId = (input.replace(/\/+$/, '').match(/[a-zA-Z0-9]*$/) || [])[0]
+    const inputId = (input.replace(/\/+$/, '').match(/[\dA-Za-z]*$/) || [])[0]
     if (!inputId) return this.l.insertAtUser('Invalid input', extra)
 
     const playlist = await this.getPlaylist(inputId)
