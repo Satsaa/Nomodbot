@@ -11,12 +11,14 @@ export const options: PluginOptions = {
   default: {
     alias: ['?toplines', '?topchatters'],
     options: {
-      cooldown: 60,
+      cooldown: 300,
+      userlvl: Userlvl.sub,
     },
   },
   help: ['Show the top 10 chatters: {alias}'],
   requirePlugins: ['log'],
   whisperOnCd: true,
+  disableMention: true,
 }
 
 export class Instance implements PluginInstance {
@@ -63,7 +65,7 @@ export class Instance implements PluginInstance {
 
       let res = ''
       for (let i = 0; i < 10; i++) {
-        res += `${await this.l.api.getDisplay(topIds[i])}, ${topPoints[i]} lines; `
+        res += `${await this.l.api.getDisplay(topIds[i])} ${topPoints[i]} lines; `
       }
       return res
     } catch (err) {
