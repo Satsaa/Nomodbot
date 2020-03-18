@@ -48,7 +48,7 @@ export class Instance implements PluginInstance {
   private getCrimeEmoji(crimePercent: number) {
     if (crimePercent > 1 / 50) return ' 👺'
     if (crimePercent > 1 / 100) return ' 😈'
-    if (crimePercent > 1 / 1000) return ''
+    if (crimePercent > 1 / 1000) return ' 🤨'
 
     return ' 😇'
   }

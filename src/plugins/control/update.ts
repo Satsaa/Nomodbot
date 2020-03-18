@@ -36,8 +36,10 @@ export class Instance implements PluginInstance {
 
     if (!process.send) return 'Process manager is not available'
 
-    if (!await this.exec(`git pull origin ${branch}`)) return 'An error occurred while updating repository'
-    if (!await this.exec('tsc')) return 'An error occurred during compilation'
+    let res = await this.exec(`git pull origin ${branch}`)
+    if (res) return `An error occurred while updating repository: ${res}`
+    res = await this.exec('tsc')
+    if (res) return `An error occurred during compilation: ${res}`
 
     process.send({ cmd: 'PUSH_ARGS', val: ['-j', `${channelId}:Restarted_and_updated`] })
     process.send({ cmd: 'AUTO_RESTART_NEXT', val: true })
@@ -49,13 +51,13 @@ export class Instance implements PluginInstance {
     return 'Restarting...'
   }
 
-  private async exec(cmd: string) {
+  private async exec(cmd: string): Promise<false | string> {
     try {
       console.log(await exec(cmd))
-      return true
+      return false
     } catch (err) {
       console.error(err)
-      return false
+      return (err as Error).message
     }
   }
 }
