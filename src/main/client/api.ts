@@ -580,48 +580,53 @@ export default class TwitchApi {
     return true
   }
 
-  private refreshBearer() {
+  private async refreshBearer() {
     if (this.blockBearerTimeout) return
     if (!this.opts.clientSecret) return
-    if (this.bearerTimeout) clearTimeout(this.bearerTimeout)
-    this.bearerTimeout = null
-    this.blockBearerTimeout = true
-    this.bearer = null
-    this.expire = 0
+    return new Promise((resolve) => {
+      if (this.bearerTimeout) clearTimeout(this.bearerTimeout)
+      this.bearerTimeout = null
+      this.blockBearerTimeout = true
+      this.bearer = null
+      this.expire = 0
 
-    const scope = 'channel:moderate+chat:edit+chat:read+whispers:read+whispers:edit+channel_editor'
-    const options = {
-      host: 'id.twitch.tv',
-      path: `/oauth2/token?client_id=${this.opts.clientId}&client_secret=${this.opts.clientSecret}&grant_type=client_credentials&scope=${scope}`,
-      method: 'POST',
-    }
-    https.get(options, (res) => {
-      if (res.statusCode === 200) { // success!
-        let data = ''
-        res.on('data', (chunk) => {
-          data += chunk
-        }).on('end', () => {
-          const result = JSON.parse(data)
-          logger.apiInfo('Bearer refreshed')
-          this.bearer = result.access_token
-          this.expire = Date.now() + result.expires_in * 1000
+      const scope = 'channel:moderate+chat:edit+chat:read+whispers:read+whispers:edit+channel_editor'
+      const options = {
+        host: 'id.twitch.tv',
+        path: `/oauth2/token?client_id=${this.opts.clientId}&client_secret=${this.opts.clientSecret}&grant_type=client_credentials&scope=${scope}`,
+        method: 'POST',
+      }
+      https.get(options, (res) => {
+        if (res.statusCode === 200) { // success!
+          let data = ''
+          res.on('data', (chunk) => {
+            data += chunk
+          }).on('end', () => {
+            const result = JSON.parse(data)
+            logger.apiInfo('Bearer refreshed')
+            this.bearer = result.access_token
+            this.expire = Date.now() + result.expires_in * 1000
 
-          const timeout = Math.min(2 ** 31 - 1, Math.max(this.expire - Date.now(), 5 * 60 * 1000))
-          logger.apiInfo(`Next refresh in: ${util.timeUntil(Date.now() + Math.max(this.expire - Date.now(), 5 * 60 * 1000))}`)
-          if (!this.bearerTimeout) this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), timeout)
-          this.blockBearerTimeout = false
-        }).on('error', (err) => {
+            const timeout = Math.min(2 ** 31 - 1, Math.max(this.expire - Date.now(), 5 * 60 * 1000))
+            logger.apiInfo(`Next refresh in: ${util.timeUntil(Date.now() + Math.max(this.expire - Date.now(), 5 * 60 * 1000))}`)
+            if (!this.bearerTimeout) this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), timeout)
+            this.blockBearerTimeout = false
+            resolve()
+          }).on('error', (err) => {
+            logger.apiError('Bearer refresh failed')
+            logger.apiError(err)
+            if (!this.bearerTimeout) this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), 1 * 60 * 1000)
+            this.blockBearerTimeout = false
+            resolve()
+          })
+        } else {
           logger.apiError('Bearer refresh failed')
-          logger.apiError(err)
+          logger.apiError(res.statusMessage)
           if (!this.bearerTimeout) this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), 1 * 60 * 1000)
           this.blockBearerTimeout = false
-        })
-      } else {
-        logger.apiError('Bearer refresh failed')
-        logger.apiError(res.statusMessage)
-        if (!this.bearerTimeout) this.bearerTimeout = setTimeout(this.refreshBearer.bind(this), 1 * 60 * 1000)
-        this.blockBearerTimeout = false
-      }
+          resolve()
+        }
+      })
     })
   }
 
@@ -647,18 +652,19 @@ export default class TwitchApi {
       const options = {
         host: 'api.twitch.tv',
         path: path + queryP,
-        headers: this.bearer
-          ? {
-            Authorization: `Bearer ${this.bearer}`,
-          }
-          : {
+        headers: this.bearer ?
+          {
+            'Authorization': `Bearer ${this.bearer}`,
+            'client-id': this.opts.clientId,
+          } :
+          {
             'client-id': this.opts.clientId,
           },
       }
       https.get(options, (res) => {
         if (typeof res.headers['ratelimit-limit'] === 'string') this.rlLimit = ~~res.headers['ratelimit-limit']!
-        if (typeof res.headers['ratelimit-remaining'] === 'string') this.rlRemaining = ~~res.headers['ratelimit-remaining']!
-        logger.apiDebug(`Ratelimit remaning: ${res.headers['ratelimit-remaining']}`)
+        if (typeof res.headers['ratelimit-remaining'] === 'string') this.rlRemaining = ~~res.headers['ratelimit-remaining'] || 0
+        logger.apiDebug(`Ratelimit remaning: ${res.headers['ratelimit-remaining'] || 0}`)
         if (typeof res.headers['ratelimit-reset'] === 'string') this.rlReset = ~~res.headers['ratelimit-reset']! * 1000
         if (res.statusCode === 200) { // success!
           let data = ''
@@ -671,8 +677,11 @@ export default class TwitchApi {
             logger.apiError(err)
             resolve(undefined)
           })
+        } else if (res.statusCode === 401) {
+          this.refreshBearer().finally(() => {
+            resolve(`${res.statusCode}: ${util.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
+          }) // Unauthorized
         } else {
-          if (res.statusCode === 401) this.refreshBearer() // Unauthorized
           resolve(`${res.statusCode}: ${util.cap((res.statusMessage || 'Unknown response').toLowerCase())}`)
         }
       })
