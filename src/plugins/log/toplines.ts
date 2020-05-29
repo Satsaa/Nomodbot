@@ -2,6 +2,7 @@ import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/comman
 import PluginLibrary from '../../main/pluginLib'
 
 import { LogExtension } from './log'
+import { BanLinesExtension } from './banlines'
 
 export const options: PluginOptions = {
   type: 'command',
@@ -25,10 +26,12 @@ export class Instance implements PluginInstance {
   public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private log: LogExtension
+  private bans: BanLinesExtension
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.log = this.l.ext.log as LogExtension
+    this.bans = this.l.ext.banlines as BanLinesExtension
 
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', '', this.callMain)
   }
@@ -43,8 +46,16 @@ export class Instance implements PluginInstance {
       const logs = this.log.getData(channelId)
       if (!logs) return 'Data unavailable'
 
-      for (const id in logs.users) {
-        const userLogs = logs.users[~~id]
+      for (const _id in logs.users) {
+        const id = ~~_id
+
+        if (id === 0 || isNaN(id)) continue
+
+        const banned = this.bans.isBanned(channelId, id)
+        if (banned) continue
+
+        const userLogs = logs.users[id]
+
 
         if (!userLogs.events.chat) continue
 
@@ -54,7 +65,7 @@ export class Instance implements PluginInstance {
           for (let i = 0; i < 10; i++) {
             if (topPoints[i] < count) {
               topPoints.splice(i, 0, count)
-              topIds.splice(i, 0, ~~id)
+              topIds.splice(i, 0, id)
               topPoints.pop()
               topIds.pop()
               break
@@ -65,6 +76,7 @@ export class Instance implements PluginInstance {
 
       let res = ''
       for (let i = 0; i < 10; i++) {
+        if (topIds[i] === 0 || isNaN(topIds[i])) continue
         res += `${await this.l.api.getDisplay(topIds[i])} ${topPoints[i]} lines; `
       }
       return res

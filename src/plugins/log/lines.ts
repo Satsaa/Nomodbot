@@ -2,6 +2,7 @@ import { Extra, PluginInstance, PluginOptions, Userlvl } from '../../main/comman
 import PluginLibrary from '../../main/pluginLib'
 
 import { LogExtension } from './log'
+import { BanLinesExtension } from './banlines'
 
 export const options: PluginOptions = {
   type: 'command',
@@ -9,14 +10,14 @@ export const options: PluginOptions = {
   title: 'Lines',
   description: 'Shows how many messages a user has sent',
   default: {
-    alias: '?lines',
+    alias: ['?lines', '?linecount'],
     options: {
       cooldown: 10,
       userCooldown: 30,
     },
   },
   help: ['Show the total amount of messages sent by you or user: {alias} [<USER>]'],
-  requirePlugins: ['log'],
+  requirePlugins: ['log', 'banlines'],
   whisperOnCd: true,
 }
 
@@ -24,10 +25,12 @@ export class Instance implements PluginInstance {
   public handlers: PluginInstance['handlers']
   private l: PluginLibrary
   private log: LogExtension
+  private bans: BanLinesExtension
 
   constructor(pluginLib: PluginLibrary) {
     this.l = pluginLib
     this.log = this.l.ext.log as LogExtension
+    this.bans = this.l.ext.banlines as BanLinesExtension
 
     this.handlers = this.l.addHandlers(this, this.handlers, 'default', '[<USER>]', this.callMain)
   }
@@ -40,6 +43,13 @@ export class Instance implements PluginInstance {
 
     const res = this.log.eventCount(channelId, targetId, 'chat')
     if (res === undefined) return 'Log data is unavailable at the moment'
+
+    const banned = this.bans.isBanned(channelId, targetId)
+    if (banned) {
+      return extra.words[1] ?
+        `${await this.l.api.getDisplay(targetId)} has been banned from appearing in line count commands` :
+        'You have been banned from appearing in line count commands'
+    }
 
     return extra.words[1] ?
       `${await this.l.api.getDisplay(targetId)} has sent ${this.l.u.plural(res, 'message')}` :
