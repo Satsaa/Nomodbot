@@ -30,8 +30,8 @@ Optionally if the alias was on cooldown `this.cdAdd` or `this.cdDelete` is calle
 ```
 add | del | notcasesensitive | cAseSensitive
 ```
-Accepted when the input is exactly the same (case-sensitive if the parameter name contains uppercase characters).  
-Input is converted to lowercase if only lowercase characters were in the parameter  
+Accepted when the input is the same as the parameter name (case-sensitive if the parameter name contains uppercase letters).  
+Input is converted to lowercase if only lowercase characters appeared in the parameter name.  
 
 ### Variable parameter
 ```
@@ -69,21 +69,21 @@ Accepted when each of the upcoming words passes the check. No other parameter ca
 <USER> | <COMMAND> | <NUMBER> | <0-100> | <-Infinity-0> | <byte/^[01]{8}$/i>
 ```
 
-**NUMBER**: Accepted if a valid number (Anything that doesn't convert to NaN with `+str`)  
-**INTEGER**, **INDEX**: Accepted if a valid whole number  
-**WORD**: Accepted if NOT a valid number (Anything that converts to NaN with `+str`)   
-**Range (X-Y)**: Accepts numbers between the lowest inputted number and the highest (inclusive). Negative values are typed like "<-100--90>". Only accepts whole numbers if none of the numbers had a decimal place, otherwise, fractions are allowed  
-**Regexp (name/regex/flags)**: Accepts anything that matches with the regex  
-**\<NOTHING\>**: Accepted if no parameter was given. Must be exactly `<NOTHING>` 
+**NUMBER**: Accepted if a valid number (Anything that doesn't convert to NaN with `+string`).  
+**INTEGER**, **INDEX**: Accepted if a valid whole number.  
+**WORD**: Accepted if NOT a valid number (Anything that converts to NaN with `+string`).   
+**Range (X-Y)**: Accepts numbers between the lowest inputted number and the highest (inclusive). Negative values are typed like "<-100--90>". Only accepts whole numbers if none of the numbers had a decimal place, otherwise, fractions are allowed.  
+**Regexp (name/regex/flags)**: Accepts anything that matches with the regex.  
+**\<NOTHING\>**: Accepted if no parameter was given. Must be exactly `<NOTHING>`. 
 
 
 The following parameters are accepted as valid if the parameter is defined but a message is returned if the check is not passed.  
 
-**USER**, **CHANNEL**: Checks for the existence of the inputted user. Input is converted to user ids   
-**COMMAND**: Checks that the inputted command exists. Input is converted to lowercase  
-**!COMMAND**: Checks that the inputted command DOESN'T exists. Input is converted to lowercase  
-**PLUGIN**: Checks that the inputted plugin (by plugin id (usually lowercase plugin title)) exists. Input is converted to lowercase  
-**!PLUGIN**: Checks that the inputted plugin (by plugin id) DOESN'T exists. Input is converted to lowercase    
+**USER**, **CHANNEL**: Checks that the inputted user exists. Input is converted to user ids.   
+**COMMAND**: Checks that the inputted command/alias exists. Input is converted to lowercase.  
+**!COMMAND**: Inverse of COMMAND.  
+**PLUGIN**: Checks that the inputted plugin id exists. Input is converted to lowercase.  
+**!PLUGIN**: Inverse of PLUGIN.    
 
 </details>
 
