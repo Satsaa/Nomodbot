@@ -74,7 +74,6 @@ Accepted when each of the upcoming words passes the check. No other parameter ca
 **WORD**: Accepted if NOT a valid number (Anything that converts to NaN with `+str`)   
 **Range (X-Y)**: Accepts numbers between the lowest inputted number and the highest (inclusive). Negative values are typed like "<-100--90>". Only accepts whole numbers if none of the numbers had a decimal place, otherwise, fractions are allowed  
 **Regexp (name/regex/flags)**: Accepts anything that matches with the regex  
-
 **\<NOTHING\>**: Accepted if no parameter was given. Must be exactly `<NOTHING>` 
 
 
