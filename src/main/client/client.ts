@@ -856,6 +856,10 @@ export default class TwitchClient {
           case 'firstcheer':
           case 'anoncheer':
           case 'bitsbadgetier':
+          case 'primepaidupgrade':
+          case 'standardpayforward':
+          case 'communitypayforward':
+          case 'extendsub':
             break
           default:
             logger.strange('unknown USERNOTICE', irc)
@@ -883,13 +887,13 @@ export default class TwitchClient {
           case 'msg_timedout': {
             const duration = typeof irc.params[1] === 'string' ? ~~irc.params[1].match(/(\d*)[ .A-Za-z]*$/)![1] : 0
             const userId = await this.api.getId(this.opts.username)
-            if (!userId) return logger.strange(irc, irc.tags['msg-id'])
+            if (!userId) return logger.strange(irc.tags['msg-id'], irc)
             logger.warn(`{${channel}} Timedout for ${duration}`)
             break
           }
           case 'msg_banned': {
             const userId = await this.api.getId(this.opts.username)
-            if (!userId) return logger.strange(irc, irc.tags['msg-id'])
+            if (!userId) return logger.strange(irc.tags['msg-id'], irc)
             logger.warn(`{${channel}} Banned`)
             break
           }
@@ -907,6 +911,7 @@ export default class TwitchClient {
               'bad_timeout_duration', 'bad_timeout_global_mod', 'bad_timeout_self', 'bad_timeout_staff', 'unban_success', 'usage_unban',
               'bad_unban_no_ban', 'usage_unhost', 'not_hosting', 'whisper_invalid_login', 'whisper_invalid_self', 'unrecognized_cmd',
               'no_permission', 'whisper_limit_per_min', 'whisper_limit_per_sec', 'whisper_restricted_recipient', 'host_target_went_offline',
+              'rewardgift',
             ]
               .includes(irc.tags['msg-id']!)) {
               logger.botInfo(`${channel}: ${irc.params[1]}`)
