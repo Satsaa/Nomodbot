@@ -73,7 +73,7 @@ export class Instance implements PluginInstance {
     const res = await this.l.whisper(suggestion.userId, fitStrings(this.l.maxMsgLength,
       [`Reply from ${await this.l.api.getDisplay(userId)} to suggestion #${finalIndex} (`, 2],
       [suggestion.message, 0],
-      [`) ${suggestion.reply}`, 1])
+      [`) ${suggestion.reply}`, 1]),
     )
 
     if (res) {

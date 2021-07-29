@@ -119,8 +119,8 @@ export class Instance implements PluginInstance {
 
     let result = ''
     for (const token of extra.alias.data as string[]) {
-      if ((token.startsWith('$(') && token.endsWith(')')) ||
-        (token.startsWith('${') && token.endsWith('}'))) { // Variable
+      if ((token.startsWith('$(') && token.endsWith(')'))
+        || (token.startsWith('${') && token.endsWith('}'))) { // Variable
         const pureVar = token.slice(2, -1)
         switch (pureVar) {
           case 'channel': {

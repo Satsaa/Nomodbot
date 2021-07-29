@@ -661,9 +661,9 @@ export default class TwitchClient {
         channelId = await this.api.getId(channel)
         if (!channelId) return logger.strange('no channelId', irc)
         if (irc.params[1]) {
-          logger.userInfo(`${irc.params[1]} ${typeof irc.tags['ban-duration'] === 'number' ?
-            `is timed out for ${irc.tags['ban-duration']} seconds` :
-            'is banned'}`)
+          logger.userInfo(`${irc.params[1]} ${typeof irc.tags['ban-duration'] === 'number'
+            ? `is timed out for ${irc.tags['ban-duration']} seconds`
+            : 'is banned'}`)
         } else {
           logger.botInfo(`{${channel}} Chat cleared`)
         }
@@ -732,14 +732,14 @@ export default class TwitchClient {
           this.mod(channelId, irc.user, Boolean(irc.tags.badges.moderator))
         }
 
-        const _msg = irc.params[1].endsWith(this.opts.dupeAffix) ?
-          irc.params[1].substring(0, irc.params[1].length - this.opts.dupeAffix.length) :
-          irc.params[1]
+        const _msg = irc.params[1].endsWith(this.opts.dupeAffix)
+          ? irc.params[1].substring(0, irc.params[1].length - this.opts.dupeAffix.length)
+          : irc.params[1]
         logger.chat(`{${channel}} ${irc.tags['display-name']}: ${_msg}`)
         if (_msg.startsWith('ACTION ')) {
-          this.emit('chat', channelId, irc.tags['user-id']!, _msg.slice(8, -1), irc as PRIVMSG, true, irc.user === this.opts.username)
+          this.emit('chat', channelId, irc.tags['user-id']!, _msg.slice(8, -1), irc as unknown as PRIVMSG, true, irc.user === this.opts.username)
         } else {
-          this.emit('chat', channelId, irc.tags['user-id']!, _msg, irc as PRIVMSG, false, irc.user === this.opts.username)
+          this.emit('chat', channelId, irc.tags['user-id']!, _msg, irc as unknown as PRIVMSG, false, irc.user === this.opts.username)
         }
         break
       }
@@ -785,11 +785,11 @@ export default class TwitchClient {
             let prime = false
             if (irc.tags['msg-param-sub-plan']) prime = Boolean((irc.tags['msg-param-sub-plan'] || '').match(/prime/i))
             if (!userId) return logger.strange('no userId', irc)
-            logger.userInfo(`${irc.tags['display-name']} subbed` +
-              `${prime ? ' with Twitch Prime' : ''}` +
-              `${tier ? ` at tier ${tier}` : ''}` +
-              `${streak ? ` (streak ${streak})` : ''}` +
-              `${cumulative ? ` (total ${cumulative})` : ''}`)
+            logger.userInfo(`${irc.tags['display-name']} subbed`
+              + `${prime ? ' with Twitch Prime' : ''}`
+              + `${tier ? ` at tier ${tier}` : ''}`
+              + `${streak ? ` (streak ${streak})` : ''}`
+              + `${cumulative ? ` (total ${cumulative})` : ''}`)
             this.emit('sub', channelId, userId, streak, cumulative, tier, false, prime, irc.params[1])
             break
           }
@@ -802,11 +802,11 @@ export default class TwitchClient {
             const prime = false
             const tier = irc.tags['msg-param-sub-plan'] === '2000' ? 2 : irc.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
             if (!targetId) return logger.strange('Subgift notice had no "msg-param-recipient-id"', irc)
-            logger.userInfo(`${irc.tags['display-name'] || 'Anonymous'} gifted a ` +
-              `${tier ? `tier ${tier} ` : ''}` +
-              `sub to ${irc.tags['msg-param-recipient-display-name']} ` +
-              `${total ? `(total ${total}) ` : ''}` +
-              `${streak ? `(streak ${streak}) ` : ''}`)
+            logger.userInfo(`${irc.tags['display-name'] || 'Anonymous'} gifted a `
+              + `${tier ? `tier ${tier} ` : ''}`
+              + `sub to ${irc.tags['msg-param-recipient-display-name']} `
+              + `${total ? `(total ${total}) ` : ''}`
+              + `${streak ? `(streak ${streak}) ` : ''}`)
             this.emit('gift', channelId, gifterId, targetId, tier, total)
             this.emit('sub', channelId, targetId, streak, undefined, tier, prime, true, undefined)
             break
@@ -818,9 +818,9 @@ export default class TwitchClient {
             const total = irc.tags['msg-param-sender-count']
             const tier = irc.tags['msg-param-sub-plan'] === '2000' ? 2 : irc.tags['msg-param-sub-plan'] === '3000' ? 3 : 1
             if (typeof count !== 'number') return logger.strange('Submysterygift notice had no "msg-param-sender-count"', irc)
-            logger.userInfo(`${irc.tags['display-name'] || 'Anonymous'} gifted ${total} ` +
-              `${tier === 1 ? '' : `tier ${tier} `}subs to the community ` +
-              `${total ? `(total ${total})` : ''}`)
+            logger.userInfo(`${irc.tags['display-name'] || 'Anonymous'} gifted ${total} `
+              + `${tier === 1 ? '' : `tier ${tier} `}subs to the community `
+              + `${total ? `(total ${total})` : ''}`)
             this.emit('massgift', channelId, gifterId, count, tier, total)
             break
           }
@@ -871,9 +871,9 @@ export default class TwitchClient {
         channelId = await this.api.getId(channel)
         if (!channelId) {
           const message = irc.params[irc.params.length - 1] || ''
-          if (message === 'Login authentication failed' ||
-            message === 'Login unsuccessful' ||
-            message === 'Improperly formatted auth') {
+          if (message === 'Login authentication failed'
+            || message === 'Login unsuccessful'
+            || message === 'Improperly formatted auth') {
             logger.error(message)
             process.exit(1)
           }

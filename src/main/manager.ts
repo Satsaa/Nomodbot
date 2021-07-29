@@ -106,7 +106,7 @@ export class Manager {
 
   private gracedBirth(this: Manager) {
     console.log('Manager birthing')
-    if (this.child.once) birth.bind(this)()
+    if (this.child.once as any) birth.bind(this)()
     else this.child.once('close', birth.bind(this))
 
     function birth(this: Manager) {

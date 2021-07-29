@@ -247,7 +247,6 @@ export default class ParamValidator {
         ? `Params ${maxValidDepth + 1}+ must be ${commaPunctuate(possibleNames, ', ', ' or ')}`
         : `Param ${maxValidDepth + 1} must be ${commaPunctuate(possibleNames, ', ', ' or ')}`,
     }
-    return { pass: false, message: 'Unhandled invalid parameters' }
 
     /** Converts parameter names to a more human readable format */
     function getName(name: string | string[], multi: boolean) {
@@ -533,14 +532,14 @@ export default class ParamValidator {
   private parse(input: string): AdvancedResult<Params> {
     const output: Params = []
     for (const raw of input.split(' ')) {
-      const _var = Boolean(raw.match(/^[\[\].]*\<.*\>[\[\].]*$/)) // Has <>
-      const opt = Boolean(raw.match(/^[<>.]*\[.*\][<>.]*$/)) // Has []
-      const multi = Boolean(raw.match(/\.{3}[\]>]*$/)) // Has ...
+      const _var = Boolean(raw.match(/^[.[\]]*<.*>[.[\]]*$/)) // Has <>
+      const opt = Boolean(raw.match(/^[.<>]*\[.*][.<>]*$/)) // Has []
+      const multi = Boolean(raw.match(/\.{3}[>\]]*$/)) // Has ...
       const _case = raw.toLowerCase() !== raw
       let regex: RegExp | RegExp[] | undefined
       // Edge tokens only: /^[[\]<>]+|(\.{3}|[[\]<>])+$/g
       // All tokens: /[\[\]<>.]+/g
-      let pure: Bit['pure'] = raw.replace(/^[\[\]<>]+|(\.{3}|[\[\]<>])+$/g, '') // Remove edge tokens
+      let pure: Bit['pure'] = raw.replace(/^[<>[\]]+|(\.{3}|[<>[\]])+$/g, '') // Remove edge tokens
       if (raw.includes('|')) {
         pure = pure.split('|') // Tuple
 

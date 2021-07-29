@@ -197,7 +197,7 @@ const parseTimeTypes: Array<{strings: string[], value: number}> = [
  * Any non numeric or alphabetic characters are removed
  */
 export function parseTimeStr(str: string): number {
-  const split = str.replace(/\W/, '').toLowerCase().match(/[a-zA-Z]+|\d+/g)
+  const split = str.replace(/\W/, '').toLowerCase().match(/[A-Za-z]+|\d+/g)
   if (!split) return 0
 
   let total = 0
@@ -289,7 +289,7 @@ export async function readDirRecursive(dir: string) {
 async function _readDirRecursive(dir: string, allFiles: string[] = []) {
   const files = (await fsp.readdir(dir)).map(file => path.resolve(dir, file))
   allFiles.push(...files)
-  await Promise.all(files.map(async file => (await fsp.stat(file)).isDirectory() && _readDirRecursive(file, allFiles)
+  await Promise.all(files.map(async file => (await fsp.stat(file)).isDirectory() && _readDirRecursive(file, allFiles),
   ))
   return allFiles
 }
@@ -308,7 +308,7 @@ export function promiseTimeout(ms: number): Promise<void> {
 
 export interface FitStringOptions {
   /** Fitting length */
-  maxLength: number
+  maxLength?: number
   /** Truncated strings are ended with '...' by default */
   ender?: string
   /** Strings are separated by this. Defaults to no separator */

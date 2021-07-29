@@ -604,7 +604,7 @@ export default class Commander {
           // Resolve only if not resolved yet and remove from wait list
           if (this.waits[pluginId].includes(resolve)) {
             this.waits[pluginId].splice(this.waits[pluginId].indexOf(resolve), 1)
-            resolve()
+            resolve(true)
           }
         }, timeout, false)
       }

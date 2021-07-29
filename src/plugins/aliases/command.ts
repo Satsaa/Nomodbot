@@ -97,8 +97,8 @@ export class Instance implements PluginInstance {
 
     if (!this.l.setAlias(channelId, targetAlias, alias)) return 'Command copy failed'
 
-    if (!this.l.delAlias(channelId, sourceAlias)) return 'Source command delete failed'
-    else return `${sourceAlias} renamed to ${targetAlias}`
+    if (this.l.delAlias(channelId, sourceAlias)) return `${sourceAlias} renamed to ${targetAlias}`
+    else return 'Source command delete failed'
   }
 
   public async callEnable(channelId: number, userId: number, params: any, extra: Extra) {

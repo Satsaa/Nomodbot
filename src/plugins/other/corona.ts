@@ -50,14 +50,14 @@ export class Instance implements PluginInstance {
           const res: AdvancedMessage = { segments: ['Can\'t find that country :('], atUser: true }
           return res
         }
-        return `Corona stats for ${stats.country} | ` +
-          `Cases: ${this.formatNumber(stats.cases)} | Deaths: ${this.formatNumber(stats.deaths)} | Recovered: ${this.formatNumber(stats.recovered)} | ` +
-          `Cases today: ${this.formatNumber(stats.todayCases)} | Deaths today: ${this.formatNumber(stats.todayDeaths)}`
+        return `Corona stats for ${stats.country} | `
+          + `Cases: ${this.formatNumber(stats.cases)} | Deaths: ${this.formatNumber(stats.deaths)} | Recovered: ${this.formatNumber(stats.recovered)} | `
+          + `Cases today: ${this.formatNumber(stats.todayCases)} | Deaths today: ${this.formatNumber(stats.todayDeaths)}`
       } else {
         const stats = data.global
-        return 'Global corona stats | ' +
-          `Cases: ${this.formatNumber(stats.cases)} | Deaths: ${this.formatNumber(stats.deaths)} | Recovered: ${this.formatNumber(stats.recovered)} | ` +
-          `Cases today: ${this.formatNumber(stats.todayCases)} | Deaths today: ${this.formatNumber(stats.todayDeaths)}`
+        return 'Global corona stats | '
+          + `Cases: ${this.formatNumber(stats.cases)} | Deaths: ${this.formatNumber(stats.deaths)} | Recovered: ${this.formatNumber(stats.recovered)} | `
+          + `Cases today: ${this.formatNumber(stats.todayCases)} | Deaths today: ${this.formatNumber(stats.todayDeaths)}`
       }
     } catch (err) {
       console.error(err)

@@ -583,7 +583,7 @@ export default class TwitchApi {
   private async refreshBearer() {
     if (this.blockBearerTimeout) return
     if (!this.opts.clientSecret) return
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       if (this.bearerTimeout) clearTimeout(this.bearerTimeout)
       this.bearerTimeout = null
       this.blockBearerTimeout = true
@@ -652,12 +652,12 @@ export default class TwitchApi {
       const options = {
         host: 'api.twitch.tv',
         path: path + queryP,
-        headers: this.bearer ?
-          {
+        headers: this.bearer
+          ? {
             'Authorization': `Bearer ${this.bearer}`,
             'client-id': this.opts.clientId,
-          } :
-          {
+          }
+          : {
             'client-id': this.opts.clientId,
           },
       }

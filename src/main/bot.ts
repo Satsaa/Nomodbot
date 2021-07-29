@@ -9,7 +9,7 @@ import { getArgs } from './argRules'
 import logger, { options as logOpts } from './logger'
 
 export interface BotOptions {
-  masters: readonly number[]
+  masters?: readonly number[]
 }
 
 export default class Bot {

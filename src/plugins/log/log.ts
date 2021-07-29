@@ -138,9 +138,9 @@ export interface LogExtension {
    * @param oneIndex Smart index of the returned event.
    * Uses one based indexes and constraints the index to valid indexes. Negative indexes return the -nth most last event.
    */
-  getSmartEvent(channelId: number, userId: number, event: Events, oneIndex: number): Promise<EventData | undefined>
+  getSmartEvent(channelId: number, userId: number, event: Events, oneIndex: number): Promise<EventData | void>
   /** Parses the log line at `offset` in `channelId`, if log data is loaded. */
-  readOffset(channelId: number, offset: number): Promise<EventData | undefined>
+  readOffset(channelId: number, offset: number): Promise<EventData | void>
   /** Returns the channel event data, if log data is loaded. */
   eventData(channelId: number, event: Events): undefined | LogData['events'][Events]
   /** Returns the total count of events logged in `channelId` optionally by `userId` and/or `event, if log data is loaded. */
@@ -285,7 +285,7 @@ export class Instance implements PluginInstance {
     return this.l.getData(channelId, 'log') as LogData | undefined
   }
 
-  public async getSmartEvent(channelId: number, userId: number, event: Events, oneIndex: number): Promise<EventData | undefined> {
+  public async getSmartEvent(channelId: number, userId: number, event: Events, oneIndex: number): Promise<EventData | void> {
     const data = this.l.getData(channelId, 'log') as LogData
     if (!data || !data.users[userId] || !data.users[userId].events[event]) return
 
@@ -342,7 +342,7 @@ export class Instance implements PluginInstance {
     return merged.sort((a, b) => a - b)
   }
 
-  public readOffset(channelId: number, offset: number): Promise<EventData | undefined> {
+  public readOffset(channelId: number, offset: number): Promise<EventData | void> {
     return new Promise((resolve) => {
       if (!this.fds[channelId]) return resolve()
 
@@ -473,7 +473,7 @@ export class Instance implements PluginInstance {
   }
 
   private trackLog(channelId: number, offset = 0) {
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       console.log(offset ? `[LOG] Tracking at offset ${offset} in ${channelId}` : `[LOG] Retracking ${this.l.api.cachedDisplay(channelId)} completely`)
 
       const start = Date.now()

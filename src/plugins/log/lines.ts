@@ -46,13 +46,13 @@ export class Instance implements PluginInstance {
 
     const banned = this.bans.isBanned(channelId, targetId)
     if (banned) {
-      return extra.words[1] ?
-        `${await this.l.api.getDisplay(targetId)} has been banned from appearing in line count commands` :
-        'You have been banned from appearing in line count commands'
+      return extra.words[1]
+        ? `${await this.l.api.getDisplay(targetId)} has been banned from appearing in line count commands`
+        : 'You have been banned from appearing in line count commands'
     }
 
-    return extra.words[1] ?
-      `${await this.l.api.getDisplay(targetId)} has sent ${this.l.u.plural(res, 'message')}` :
-      `You have sent ${this.l.u.plural(res, 'message')}`
+    return extra.words[1]
+      ? `${await this.l.api.getDisplay(targetId)} has sent ${this.l.u.plural(res, 'message')}`
+      : `You have sent ${this.l.u.plural(res, 'message')}`
   }
 }

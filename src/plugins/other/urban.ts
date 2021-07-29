@@ -44,11 +44,11 @@ export class Instance implements PluginInstance {
 
       const def = data.list[0]
       const word = this.l.u.cap(def.word)
-      const definition = this.l.u.endPunctuate(def.definition).replace(/\[.*?\]/g, this.tidyBrackets.bind(this))
-      const example = this.l.u.endPunctuate(def.example).replace(/\[.*?\]/g, this.tidyBrackets.bind(this))
+      const definition = this.l.u.endPunctuate(def.definition).replace(/\[.*?]/g, this.tidyBrackets.bind(this))
+      const example = this.l.u.endPunctuate(def.example).replace(/\[.*?]/g, this.tidyBrackets.bind(this))
       const good = def.thumbs_up
       const bad = def.thumbs_down
-      const link = 'http://' + def.permalink.replace('http://', '').replace(/^[a-zA-Z0-9]*\./, '')
+      const link = `http://${def.permalink.replace('http://', '').replace(/^[\dA-Za-z]*\./, '')}`
       const dateStr = this.l.u.dateString(Date.parse(def.written_on))
 
       return this.l.u.fitStrings(Math.min(this.l.maxMsgLength, 200),
