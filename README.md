@@ -3,7 +3,35 @@ Twitch bot made with NodeJS. (Taking name suggestions :) )
 
 [List of commands](https://github.com/Satsaa/Nomodbot/wiki/Commands)  
 
-Focus is to have somewhat modular plugins and high customizability.
+Focus is to have modular plugins and high customizability.
+
+# Features
+The command list can give a more thorough list of features, but here a some of the biggest ones and framework features:
+
+- Fully supports any number of channels
+- Chat and event logging
+- Login to Steam and read the streamers current game info
+- Read out definitions from Wikipedia, Oxford Dictionary or Urban Dictionary
+- Create custom message commands which can display dynamic content like the user's display name
+- So much more
+
+Internals
+- Plugin system (features)
+  - Drag and drop plugins
+  - Dependency checking and load ordering
+  - Invidually enableable plugins
+- Alias system for easy command creation
+  - Highly customizable settings: cooldown, per-user cooldowns, permissions etc.
+  - Comprehensive parameter validator with common syntax, conversions and generated user error messages. See [Parameter Validator](#parameter-validator)
+- Custom client and Twitch API framework 
+  - Fast IRC parser
+  - Automatic ratelimiting and message truncation or deduplication
+  - Automatic caching of userId to username conversions and API results
+- Custom data system for safe and reliable persistent data storage
+  - Automatic saving, dynamic loading, asynchronous operations   
+- Custom utilities for e.g. text manipulation, settings, command line arguments, log levels
+- Manager application for automatic restarts
+- And so so much more
 
 # Parameter Validator
 The Parameter Validator validates user command calls against strings which describe what parameters are required.  
