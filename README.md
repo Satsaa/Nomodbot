@@ -192,7 +192,7 @@ Input: `"archimo"`
 | **\<USER>**    |     ✅     |
 | **<not_user>** |           |
 
-Expectedly the first one is selected because it is a valid user (**this is not why it was selected**)  
+Expectedly the first one is selected because it is a valid user (**it would be selected even if it is not an existing/valid username**)  
 \<USER> parameters are also converted to user id's when passed to the command plugin.
 
 Input: `"not-real-user"`  
