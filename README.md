@@ -1,7 +1,9 @@
-# Nomodbot
-Twitch bot made with NodeJS. (Taking name suggestions :) )
+###### While this project is not currently actively developed by me, contributions/questions/issues are still welcome.
 
-[List of commands](https://github.com/Satsaa/Nomodbot/wiki/Commands)  
+# Nomodbot
+Twitch bot made using NodeJS.
+
+[List of default commands](https://github.com/Satsaa/Nomodbot/wiki/Commands)  
 
 Focus is to have modular plugins and high customizability.
 
@@ -22,11 +24,11 @@ Internals
   - Invidually enableable plugins
 - Alias system for easy command creation
   - Highly customizable settings: cooldown, per-user cooldowns, permissions etc.
-  - Comprehensive parameter validator with common syntax, conversions and generated user error messages. See [Parameter Validator](#parameter-validator)
-- Custom client and Twitch API framework 
+  - Comprehensive parameter validator with common syntax, conversions and generated response error messages. See [Parameter Validator](#parameter-validator)
+- Custom Twitch IRC client and Twitch API framework 
   - Fast IRC parser
   - Automatic ratelimiting and message truncation or deduplication
-  - Automatic caching of userId to username conversions and API results
+  - Automatic caching of userId/username conversions and API results
 - Custom data system for safe and reliable persistent data storage
   - Automatic saving, dynamic loading, asynchronous operations   
 - Custom utilities for e.g. text manipulation, settings, command line arguments, log levels
