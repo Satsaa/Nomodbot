@@ -1,4 +1,5 @@
-###### While this project is not currently actively developed by me, contributions/questions/issues are still welcome. I will maintain compability with Twitch and Steam, if they introduce breaking changes.
+###### While this project is not currently actively developed by me, contributions/questions/issues are still welcome.
+###### I will still maintain compability with Twitch and Steam (in the case they introduce breaking changes).
 
 # Nomodbot
 Twitch bot made using NodeJS.
