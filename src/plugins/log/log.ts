@@ -117,7 +117,7 @@ interface GiftEvent {
   ms: number
   type: typeof events.gift
   userId?: number
-  data: {targetId: number, tier: 1 | 2 | 3, total?: number}
+  data: {targetId?: number, tier: 1 | 2 | 3, total?: number, count?: number }
 }
 interface MassGiftEvent {
   ms: number
@@ -489,8 +489,13 @@ export class Instance implements PluginInstance {
         chunks[0] = splitEnd + chunks[0] // Combine previous chunks partial last line and partial first line of this chunk
         splitEnd = chunks.pop() as string
         for (const line of chunks) {
-          if (this.trackLine(channelId, line)) tracked++
-          else failed++
+          if (this.trackLine(channelId, line)) {
+            tracked++
+          } else {
+            if (failed < 50) console.warn(`Failed tracking of line: ${chunk}`)
+            else if (failed === 50) console.warn('Logging of failed lines has been disabled.')
+            failed++
+          }
         }
         stream.resume()
       })
@@ -525,7 +530,7 @@ export class Instance implements PluginInstance {
 
     const smallEvent = _event === 'actionOverride' ? 'a' : events[event]
 
-    const final = `${timeSec}:${smallEvent}:${userId || ''}:${trailerData.replace(/\n/, ' ')}\n`
+    const final = `${timeSec}:${smallEvent}:${userId || ''}:${trailerData.replace(/\r\n|\r|\n/g, ' ')}\n`
     if (!noWrite) this.streams[channelId].write(final)
 
     const data = this.l.getData(channelId, 'log') as LogData
@@ -595,21 +600,33 @@ export class Instance implements PluginInstance {
     const type = colonSep[1]
     if (!type) return
 
-    const userId = Number(colonSep[2])
-    if (!userId) return
+    const userId = colonSep[2] === '' ? undefined : Number(colonSep[2])
 
     const data = colonSep.splice(3).join(':')
 
     switch (type) {
       case events.chat:
         // TIMESEC:c:USERID:MESSAGE
+        if (!userId) {
+          console.warn('No userid in chatEvent!')
+          return
+        }
         return { ms, type, userId, action: false, message: data }
       case 'a':
         // TIMESEC:a:USERID:MESSAGE
+        if (!userId) {
+          console.warn('No userid in chat event!')
+          return
+        }
         return { ms, type: events.chat, userId, action: true, message: data }
       case events.sub: {
-        // TIMESEC:c|a:USERID:{streak?: number, cumulative?: number, tier: 1|2|3, prime?: true, gifted?: true, message?: string}
+        // TIMESEC:s:USERID:{streak?: number, cumulative?: number, tier: 1|2|3, prime?: true, gifted?: true, message?: string}
         try {
+          if (!userId) {
+            console.warn('No userid in sub event!')
+            return
+          }
+
           const parsed = JSON.parse(data)
           if (typeof parsed !== 'object' || parsed === null || !parsed.tier) return void console.error(`Invalid JSON in sub event: ${data}`)
           return { ms, type, userId, data: parsed }
@@ -619,10 +636,10 @@ export class Instance implements PluginInstance {
         }
       }
       case events.gift: {
-        // TIMESEC:c|a:USERID?:{targetId: number, tier: 1 | 2 | 3, total?: number}
+        // TIMESEC:g:USERID?:{targetId?: number, tier: 1 | 2 | 3, total?: number, count?: number }
         try {
           const parsed = JSON.parse(data)
-          if (typeof parsed !== 'object' || parsed === null || !parsed.targetId || !parsed.tier) {
+          if (typeof parsed !== 'object' || parsed === null || !parsed.tier) {
             return void console.error(`Invalid JSON in gift event: ${data}`)
           }
           return { ms, type, userId: colonSep[2] ? userId : undefined, data: parsed }
@@ -632,7 +649,7 @@ export class Instance implements PluginInstance {
         }
       }
       case events.massGift: {
-        // TIMESEC:c|a:USERID?:{count: number, tier: 1 | 2 | 3, total?: number}
+        // TIMESEC:m:USERID?:{count: number, tier: 1 | 2 | 3, total?: number}
         try {
           const parsed = JSON.parse(data)
           if (typeof parsed !== 'object' || parsed === null || !parsed.count || !parsed.tier) {
@@ -645,7 +662,11 @@ export class Instance implements PluginInstance {
         }
       }
       case events.timeout: {
-        // TIMESEC:c|a:USERID:{duration?: number, reason?: string}
+        // TIMESEC:t:USERID:{duration?: number, reason?: string}
+        if (!userId) {
+          console.warn('No userid in timeoutEvent!')
+          return
+        }
         try {
           const parsed = JSON.parse(data)
           if (typeof parsed !== 'object' || parsed === null) {

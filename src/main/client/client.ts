@@ -297,7 +297,7 @@ export default class TwitchClient {
   /** Send `msg` to `channelId` */
   public chat(channelId: number, msg: string, options: {command?: boolean} = {}) {
     return new Promise((resolve) => {
-      msg = msg.replace(/\n/g, '')
+      msg = msg.replace(/\r\n|\r|\n/g, '')
 
       const login = this.channels[channelId]
       if (!login) return resolve(false)
@@ -373,7 +373,7 @@ export default class TwitchClient {
 
   /** Whisper `msg` to `userId` */
   public async whisper(userId: number, msg: string) {
-    msg = msg.replace(/\n/g, '')
+    msg = msg.replace(/\r\n|\r|\n/g, '')
 
     const login = await this.api.getLogin(userId)
     if (!login) return false
