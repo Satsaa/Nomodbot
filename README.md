@@ -1,40 +1,9 @@
-###### While this project is not currently actively developed by me, contributions/questions/issues are still welcome.
-###### I will still maintain compability with Twitch and Steam (in the case they introduce breaking changes).
-
 # Nomodbot
-Twitch bot made using NodeJS.
+Twitch bot made with NodeJS. (Taking name suggestions :) )
 
-[List of default commands](https://github.com/Satsaa/Nomodbot/wiki/Commands)  
+[List of commands](https://github.com/Satsaa/Nomodbot/wiki/Commands)  
 
-Focus is to have modular plugins and high customizability.
-
-# Features
-The command list can give a more thorough list of features, but here a some of the biggest ones and framework features:
-
-- Fully supports any number of channels
-- Chat and event logging
-- Login to Steam and read the streamers current game info
-- Read out definitions from Wikipedia, Oxford Dictionary or Urban Dictionary
-- Create custom message commands which can display dynamic content like the user's display name
-- So much more
-
-Internals
-- Plugin system (features)
-  - Drag and drop plugins
-  - Dependency checking and load ordering
-  - Invidually enableable plugins
-- Alias system for easy command creation
-  - Highly customizable settings: cooldown, per-user cooldowns, permissions etc.
-  - Comprehensive parameter validator with common syntax, conversions and generated response error messages. See [Parameter Validator](#parameter-validator)
-- Custom Twitch IRC client and Twitch API framework 
-  - Fast IRC parser
-  - Automatic ratelimiting and message truncation or deduplication
-  - Automatic caching of userId/username conversions and API results
-- Custom data system for safe and reliable persistent data storage
-  - Automatic saving, dynamic loading, asynchronous operations   
-- Custom utilities for e.g. text manipulation, settings, command line arguments, log levels
-- Manager application for automatic restarts
-- And so so much more
+Focus is to have somewhat modular plugins and high customizability.
 
 # Parameter Validator
 The Parameter Validator validates user command calls against strings which describe what parameters are required.  
@@ -193,7 +162,7 @@ Input: `"archimo"`
 | **\<USER>**    |     ✅     |
 | **<not_user>** |           |
 
-Expectedly the first one is selected because it is a valid user (**it would be selected even if it is not an existing/valid username**)  
+Expectedly the first one is selected because it is a valid user (**this is not why it was selected**)  
 \<USER> parameters are also converted to user id's when passed to the command plugin.
 
 Input: `"not-real-user"`  

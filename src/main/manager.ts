@@ -8,8 +8,10 @@ import { rules } from './argRules'
 export interface ManagerOptions {
   childPath?: string
   args?: string[]
-  /** Exit process if restarting too often */
+  /** Exit process if restarting too quickly */
   minRestartInterval?: number
+  /** Allow quick restarts this many times */
+  minRestartAllowedTimes?: number
   noAutoRestart?: boolean
   autoRestartNext?: boolean
   /** Add --inspect flag to child processes */
@@ -21,6 +23,7 @@ export class Manager {
   private extraArgs: string[]
   private child: ChildProcess
   private lastRestart: number
+  private quickRestarts: number
 
   constructor(options: ManagerOptions = {}) {
     console.log('Manager started')
@@ -28,6 +31,7 @@ export class Manager {
       childPath: path.join(__dirname, '/index'),
       args: process.argv,
       minRestartInterval: 10 * 1000,
+      minRestartAllowedTimes: 3,
       noAutoRestart: false,
       autoRestartNext: false,
       inspect: false,
@@ -44,6 +48,7 @@ export class Manager {
     console.log('Child birth')
 
     this.lastRestart = 0
+    this.quickRestarts = 0
 
     this.registerEvents()
   }
@@ -110,7 +115,8 @@ export class Manager {
     else this.child.once('close', birth.bind(this))
 
     function birth(this: Manager) {
-      if (Date.now() - this.lastRestart < this.opts.minRestartInterval) {
+      let quickRestart = Date.now() - this.lastRestart < this.opts.minRestartInterval;
+      if (quickRestart && this.quickRestarts + 1 >= this.opts.minRestartAllowedTimes) {
         console.log('Too quick restarts')
         // Delay closing so the bot can finish writing data and thus shouldn't corrupt files
         setTimeout(() => {
@@ -120,6 +126,11 @@ export class Manager {
       }
       setTimeout(() => {
         this.lastRestart = Date.now()
+        if (!quickRestart) {
+          this.quickRestarts = 0
+        } else {
+          this.quickRestarts++
+        }
         this.child = fork(this.opts.childPath, this.getArgs(), { cwd: process.cwd(), stdio: 'inherit', execArgv: this.getExecArgs() })
         console.log('Child birth')
         this.extraArgs = []

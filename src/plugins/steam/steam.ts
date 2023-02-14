@@ -3,6 +3,8 @@ import https from 'https'
 
 import SteamUser from 'steam-user'
 
+import { inspect } from 'util'
+
 import { PluginInstance, PluginOptions } from '../../main/commander'
 import PluginLibrary from '../../main/pluginLib'
 import eventTimeout from '../../main/lib/eventTimeout'
@@ -103,7 +105,7 @@ export class Instance implements PluginInstance {
   }
 
   private async logOn(timeout?: number) {
-    if (!this.username || !this.password) throw new Error('No username and/or no password when trying to logon steam')
+    if (!this.username || !this.password) throw new Error('No username and/or no password when trying to log onto steam')
     this.client.logOn({
       accountName: this.username,
       password: this.password,
@@ -115,7 +117,7 @@ export class Instance implements PluginInstance {
   }
 
   private reconnect() {
-    console.log('reconnecting in 10 seconds')
+    console.log('reconnecting to steam in 10 seconds')
     this.reconnectTimeout = setTimeout(() => {
       this.logOn()
       this.reconnect()
@@ -126,7 +128,11 @@ export class Instance implements PluginInstance {
     try {
       if (!user) return // await this.getAppName(user.gameid)
       if (!user.rich_presence_string && user.gameid !== '0') {
-        this.richPrecenseStrings[steamId.accountid] = await this.getAppName(user.gameid) || 'API overload'
+        if (user.gameid === null) {
+          this.richPrecenseStrings[steamId.accountid] = "Offline"
+        } else {
+          this.richPrecenseStrings[steamId.accountid] = await this.getAppName(user.gameid) || "Failed to get App Name"  
+        }
       } else {
         this.richPrecenseStrings[steamId.accountid] = user.rich_presence_string || 'Steam'
       }

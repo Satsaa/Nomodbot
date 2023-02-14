@@ -1,6 +1,7 @@
 
 import fs from 'fs'
 import { resolve } from 'path'
+import { onExit } from './lib/util'
 
 export interface Category {
   /** Whether or not this category is saved on disk */
@@ -72,7 +73,7 @@ const bgColors = {
  * @param cats
  * @param path Path to a directory where logging-enabled messages will be saved (*path*\/*cat*.txt).
  * @param options Options object with following optional settings:
- * `noSave` disables saving functionality. Ensures each category preserver line number.
+ * `noSave` disables saving functionality. Ensures each category preserves line number.
  */
 function makeLogger<T extends { [cat: string]: Category }>(cats: T, path: string, options: Options): { [P in keyof T]: (...messages: any[]) => any } {
   const res = {}
@@ -90,15 +91,15 @@ function makeLogger<T extends { [cat: string]: Category }>(cats: T, path: string
             if (!cats[cat].disabled) {
               const handler = cats[cat].handler || console.log
               if (cats[cat].prefix === undefined) {
-                if (colorPrefix) handler(colorPrefix, `[${cat.toUpperCase()}]`, ...messages)
-                else handler(`[${cat.toUpperCase()}]`, ...messages)
+                if (colorPrefix) handler(colorPrefix, `[${cat.toUpperCase()}]`, ...messages, '\x1b[0m')
+                else handler(`[${cat.toUpperCase()}]`, ...messages, '\x1b[0m')
               } else if (cats[cat].prefix === '') {
-                if (colorPrefix) handler(colorPrefix, ...messages)
-                else handler(...messages)
+                if (colorPrefix) handler(colorPrefix, ...messages, '\x1b[0m')
+                else handler(...messages, '\x1b[0m')
               } else if (colorPrefix) {
-                handler(colorPrefix, `${cats[cat].prefix}`, ...messages)
+                handler(colorPrefix, `${cats[cat].prefix}`, ...messages, '\x1b[0m')
               } else {
-                handler(`${cats[cat].prefix}`, ...messages)
+                handler(`${cats[cat].prefix}`, ...messages, '\x1b[0m')
               }
             }
           }
@@ -184,6 +185,12 @@ export const categories = {
 } as const
 
 const logger = makeLogger(categories, './data/logs/', options)
+
+onExit(loggerOnExit.bind(this))
+
+function loggerOnExit(code: number) {
+  process.stdout.write('\x1b[0m')
+}
 
 /**
  * Copy of the logger. All imports receive the same logger.
